@@ -719,6 +719,7 @@ function enhancePetitionerDocuments(){
   checklist.querySelector('.field')?.insertAdjacentHTML('beforebegin',`<div class="check" data-petitioner-documents-ready><b>✓</b><span>ตรวจเอกสารที่ผู้ยื่นแนบครบถ้วน ${petitionerDocuments.length} ประเภท (${fileCount} ไฟล์)</span></div>`);
  }
 }
+function returnToCaseRoute(){const item=demoCases.find(c=>c.no===activeCaseNo);return item?.caseRoute||'case'}
 function formCaseContext(formNumber){
  const activeCase=demoCases.find(c=>c.no===activeCaseNo),urgent=activeCase?.form==='คบ.2',origin=urgent?'คบ.2':'คบ.1';
  const known=urgent?{
@@ -922,7 +923,7 @@ executeAction=function(name){
  if(name==='cancel-withdrawal'){kb3Mode='normal';kb3TestifierSigned=false;kb3OfficerSigned=false;formSection=0;manualKb3Page=null;render();return}
  if(name==='sign-kb3-testifier'){kb3TestifierSigned=true;render();successAlert('ผู้ให้ถ้อยคำลงลายมือชื่อแล้ว','ต่อไปเจ้าพนักงานผู้บันทึกถ้อยคำตรวจและลงนามรับรอง');return}
  if(name==='sign-kb3-officer'){if(!kb3TestifierSigned){Swal.fire({icon:'warning',title:'รอลายมือชื่อผู้ให้ถ้อยคำ',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb3OfficerSigned=true;render();successAlert('ลงลายมือชื่อครบแล้ว','บันทึกข้อเท็จจริงพร้อมส่งกลับเข้าแฟ้ม');return}
- if(name==='submit-kb3'){successAlert('บันทึก คบ.3 สมบูรณ์แล้ว','ข้อมูลและลายมือชื่ออยู่ในแฟ้มเดิม',()=>go('case'));return}
+ if(name==='submit-kb3'){successAlert('บันทึก คบ.3 สมบูรณ์แล้ว','ข้อมูลและลายมือชื่ออยู่ในแฟ้มเดิม',()=>go(returnToCaseRoute()));return}
  if(name==='submit-withdrawal'){
   withdrawalSubmitted=true;
   const item=currentCaseItem();
@@ -934,9 +935,9 @@ executeAction=function(name){
    item.owner='นางสาวอรุณี ใจมั่น';
    item.next=withdrawalHasKb5?'ปรับ คบ.6 เสนอไม่อนุมัติ และเปิด คบ.7 ยุติคุ้มครองชั่วคราวแยกต่างหาก':'ปรับ คบ.6 เป็นความเห็นเสนอไม่อนุมัติ';
   }
-  successAlert('ส่งบันทึกถอนคำร้องแล้ว',withdrawalHasKb5?'คำร้องหลักเข้าสู่สายเสนอไม่อนุมัติ ส่วน คบ.5 ยังมีผลจนกว่าจะดำเนิน คบ.7 แยกต่างหาก':'เรื่องเข้าสู่สายพิจารณาเพื่อมีคำสั่งอย่างเป็นทางการ',()=>go('case'));return
+  successAlert('ส่งบันทึกถอนคำร้องแล้ว',withdrawalHasKb5?'คำร้องหลักเข้าสู่สายเสนอไม่อนุมัติ ส่วน คบ.5 ยังมีผลจนกว่าจะดำเนิน คบ.7 แยกต่างหาก':'เรื่องเข้าสู่สายพิจารณาเพื่อมีคำสั่งอย่างเป็นทางการ',()=>go(returnToCaseRoute()));return
  }
- if(route==='form/3'&&(name==='next-section'||name==='back-section')){const form=forms.find(item=>item.n===3),sections=kb3Sections(form);manualKb3Page=null;if(name==='next-section'){if(formSection<sections.length-1){formSection++;render()}else document.querySelector('.signature-step')?.scrollIntoView({behavior:'smooth'});return}if(formSection>0){formSection--;render()}else go('case');return}
+ if(route==='form/3'&&(name==='next-section'||name==='back-section')){const form=forms.find(item=>item.n===3),sections=kb3Sections(form);manualKb3Page=null;if(name==='next-section'){if(formSection<sections.length-1){formSection++;render()}else document.querySelector('.signature-step')?.scrollIntoView({behavior:'smooth'});return}if(formSection>0){formSection--;render()}else go(returnToCaseRoute());return}
  return executeActionBeforeKb3(name);
 };
 const kb6ProtectionMethodOptions=[
@@ -1112,9 +1113,9 @@ executeAction=function(name){
  if(name==='sign-kb6-supervisor'){if(!kb6OfficerSigned){Swal.fire({icon:'warning',title:'รอลายมือชื่อเจ้าหน้าที่เจ้าของเรื่อง',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6SupervisorSigned=true;render();successAlert('ผู้บังคับบัญชาชั้นต้นลงนามแล้ว','ความเห็นถูกเพิ่มตามลำดับโดยไม่เขียนทับข้อเสนอของเจ้าหน้าที่');return}
  if(name==='sign-kb6-director'){if(!kb6SupervisorSigned){Swal.fire({icon:'warning',title:'รอความเห็นผู้บังคับบัญชาชั้นต้น',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6DirectorSigned=true;render();successAlert('ผอ.สำนัก/กองลงนามแล้ว','ความเห็นถูกบันทึกและพร้อมส่งแฟ้มไปกิจกรรมที่ 7');return}
  if(name==='complete-kb6'){
-  successAlert('บันทึก คบ.6 ในแฟ้มแล้ว','ข้อมูล ความเห็น และลายมือชื่อยังอยู่ครบตามลำดับ',()=>go('case'));return;
+  successAlert('บันทึก คบ.6 ในแฟ้มแล้ว','ข้อมูล ความเห็น และลายมือชื่อยังอยู่ครบตามลำดับ',()=>go(returnToCaseRoute()));return;
  }
- if(route==='form/6'&&(name==='next-section'||name==='back-section')){const form=forms.find(item=>item.n===6),sections=kb6Sections(form);manualKb6Page=null;if(name==='next-section'){if(formSection<sections.length-1){formSection++;render()}else document.querySelector('.signature-step')?.scrollIntoView({behavior:'smooth'});return}if(formSection>0){formSection--;render()}else go('case');return}
+ if(route==='form/6'&&(name==='next-section'||name==='back-section')){const form=forms.find(item=>item.n===6),sections=kb6Sections(form);manualKb6Page=null;if(name==='next-section'){if(formSection<sections.length-1){formSection++;render()}else document.querySelector('.signature-step')?.scrollIntoView({behavior:'smooth'});return}if(formSection>0){formSection--;render()}else go(returnToCaseRoute());return}
  return executeActionBeforeKb6(name);
 };
 function setStickyPrimaryAction(actionName,html){
