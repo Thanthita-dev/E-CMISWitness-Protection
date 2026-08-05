@@ -272,6 +272,7 @@
       <button class="nav-link level-two" data-route="queue-officer" data-role-nav="officer"><i class="fa-solid fa-user-check icon" aria-hidden="true"></i><span>เจ้าหน้าที่ ป.ป.ท.</span></button>
       <button class="nav-link level-two" data-route="queue-supervisor" data-role-nav="supervisor"><i class="fa-solid fa-user-tie icon" aria-hidden="true"></i><span>ผู้บังคับบัญชาชั้นต้น</span></button>
       <button class="nav-link level-two" data-route="queue-director" data-role-nav="director"><i class="fa-solid fa-building-user icon" aria-hidden="true"></i><span>ผอ.สำนัก/กอง</span></button>
+      <button class="nav-link level-two" data-route="protection" data-role-nav="protection"><i class="fa-solid fa-people-group icon" aria-hidden="true"></i><span>ชุดคุ้มครอง</span></button>
       <div class="nav-section-label">งานหลังพิจารณา</div>
       <button class="nav-link level-one" data-route="notice"><i class="fa-solid fa-paper-plane icon" aria-hidden="true"></i><span>แจ้งผลแก่พยาน</span></button>
       <button class="nav-link level-one" data-route="protection"><i class="fa-solid fa-shield icon" aria-hidden="true"></i><span>คุ้มครอง/ติดตาม</span></button>
@@ -322,6 +323,7 @@ const demoCases=[
   {no:'WP-2569-000477',form:'คบ.1',person:'นายธนกร ประดิษฐ์ธรรม',status:'ใกล้ครบ 90 วัน',stage:'protection',owner:'ร.ต.อ. ณัฐวุฒิ พิทักษ์ธรรม',next:'ตรวจ คบ.13 และเตรียม คบ.14',risk:'ปานกลาง',sla:true},
   {no:'WP-2569-000478',form:'คบ.2',person:'นางสาวกัลยา เที่ยงธรรม',status:'รอขยายเวลา',stage:'protection',owner:'ร.ต.อ. ณัฐวุฒิ พิทักษ์ธรรม',next:'ติดตามผลขอขยายเวลา คบ.14',risk:'สูง'},
   {no:'WP-2569-000479',form:'คบ.1',person:'นายภาสกร ยุติธรรม',status:'รายงานเหตุสำคัญ',stage:'protection',owner:'ร.ต.อ. ณัฐวุฒิ พิทักษ์ธรรม',next:'ตรวจอ่าน คบ.13 และแจ้งผู้เกี่ยวข้อง',risk:'วิกฤต',urgent:true},
+  {no:'WP-2569-000492',form:'คบ.2',person:'นายอัครวินท์ ศรีสง่า',status:'รอชุดคุ้มครองรับทราบคำสั่ง',stage:'protection',owner:'ร.ต.อ. ณัฐวุฒิ พิทักษ์ธรรม',next:'ยืนยันรับทราบคำสั่ง คบ.5 และเริ่มจัดทำแผนปฏิบัติการชั่วคราว',risk:'วิกฤต',urgent:true,sla:true},
   {no:'WP-2569-000462',form:'คบ.2',person:'นางสาวชนากานต์ นิติวงศ์',status:'อยู่ระหว่างอุทธรณ์',stage:'appeal',owner:'นางสาววราภรณ์ นิติธรรม',next:'ส่ง Activity 7 และติดตามผล',risk:'ปานกลาง'},
   {no:'WP-2569-000480',form:'คบ.1',person:'นางสาวอารียา สุจริตวงศ์',status:'อุทธรณ์ใกล้ครบกำหนด',stage:'appeal',owner:'นางสาววราภรณ์ นิติธรรม',next:'ตรวจหลักฐานและส่ง Activity 7 ภายใน 3 วัน',risk:'สูง',sla:true},
   {no:'WP-2569-000481',form:'คบ.1',person:'นายวรพจน์ พิทักษ์ราษฎร์',status:'เกินกำหนดอุทธรณ์',stage:'appeal',owner:'นางสาววราภรณ์ นิติธรรม',next:'บันทึกเหตุผลล่าช้าและตรวจสอบการรับคำอุทธรณ์',risk:'ปานกลาง',sla:true,returned:true},
