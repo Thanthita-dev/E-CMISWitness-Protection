@@ -1247,7 +1247,7 @@ function enhanceRoleCasePage(){
   const button=sendCard.querySelector('[data-action="forward"]');
   if(button){
    button.dataset.action=currentRole==='supervisor'?'forward-director':'forward-external';
-   button.textContent=currentRole==='supervisor'?'ส่ง ผอ.สำนัก/กอง →':'ส่งกิจกรรมที่ 7 →';
+   button.textContent=currentRole==='supervisor'?'ส่ง ผอ.สำนัก/กอง →':'ส่งเลขาธิการคณะกรรมการ ป.ป.ท. →';
    button.disabled=!completed;
   }
  }
