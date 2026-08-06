@@ -1328,10 +1328,11 @@ function kb6FieldHtml(label){
 }
 const fieldHtmlBeforeKb6=fieldHtml;
 fieldHtml=function(label,index){return location.hash.replace(/^#\//,'')==='form/6'?kb6FieldHtml(label,index):fieldHtmlBeforeKb6(label,index)};
+function isWithdrawalKb6Officer(){return Boolean(currentCaseItem()?.withdrawal)&&(currentRole==='officer'||currentRole==='admin')}
 function kb6Signer(){
  if(currentRole==='supervisor')return {name:'นายกิตติศักดิ์ ธรรมรักษ์',role:'ผู้บังคับบัญชาชั้นต้น',position:'ผู้อำนวยการกลุ่มงานสืบสวนสอบสวน 2',action:'sign-kb6-supervisor',signed:kb6SupervisorSigned,ready:kb6OfficerSigned};
  if(currentRole==='director')return {name:'นางสาวพิมพ์ชนก วัฒนกิจ',role:'ผู้อำนวยการสำนัก/กอง',position:'ผู้อำนวยการสำนักปราบปรามการทุจริต 1',action:'sign-kb6-director',signed:kb6DirectorSigned,ready:kb6SupervisorSigned};
- return {name:'นางสาวอรุณี ใจมั่น',role:'เจ้าหน้าที่เจ้าของเรื่อง',position:'นักสืบสวนสอบสวนชำนาญการ',action:'sign-kb6-officer',signed:kb6OfficerSigned,ready:true};
+ return {name:'นางสาวอรุณี ใจมั่น',role:'เจ้าหน้าที่เจ้าของเรื่อง',position:'นักสืบสวนสอบสวนชำนาญการ',action:isWithdrawalKb6Officer()?'send-kb6-withdrawal':'sign-kb6-officer',signed:kb6OfficerSigned,ready:true};
 }
 function kb6RoleSigned(){return kb6Signer().signed}
 function kb6OpinionHistory(){
@@ -1343,7 +1344,8 @@ function kb6OpinionHistory(){
  return `<section class="opinion-history"><header><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><div><strong>ความเห็นและลายมือชื่อที่บันทึกแล้ว</strong><small>แสดงเฉพาะรายการที่ผู้มีอำนาจดำเนินการจริง</small></div></header>${rows.map(row=>`<article><div><span>${esc(row.role)}</span><strong>${esc(row.opinion)}</strong><small>${esc(row.name)} · ${esc(row.position)}</small></div><span class="badge success"><i class="fa-solid fa-circle-check"></i>ลงนามแล้ว</span></article>`).join('')}</section>`;
 }
 function kb6SignatureHtml(){
- const signer=kb6Signer(),blocked=!signer.ready&&!signer.signed;
+ const signer=kb6Signer(),blocked=!signer.ready&&!signer.signed,isSend=signer.action==='send-kb6-withdrawal';
+ if(isSend)return `<section class="signature-step kb6-signature"><header class="signature-head"><div><em>ขั้นส่ง คบ.6</em><h3>${esc(signer.role)}</h3><p>กรณีถอนคำร้องไม่ต้องลงลายมือชื่อ ตรวจข้อมูลให้ครบแล้วส่งต่อผู้บังคับบัญชาชั้นต้นได้ทันที</p></div><span class="badge ${signer.signed?'success':'warning'}">${signer.signed?'ส่งแล้ว':'รอส่ง'}</span></header><div class="kb6-signature-card"><div><span>ผู้บันทึก</span><strong>${esc(signer.name)}</strong><small>${esc(signer.position)}</small></div><button class="btn ${signer.signed?'secondary':'gold'}" data-action="${signer.action}" ${signer.signed?'disabled':''}><i class="fa-solid fa-paper-plane"></i>${signer.signed?'ส่งแล้ว':'ส่ง คบ.6'}</button></div>${kb6OpinionHistory()}</section>`;
  return `<section class="signature-step kb6-signature"><header class="signature-head"><div><em>ขั้นลงลายมือชื่อ คบ.6</em><h3>${esc(signer.role)}</h3><p>${currentRole==='officer'||currentRole==='admin'?'ตรวจข้อมูลที่ดึงจากคำร้อง คดีหลัก และ คบ.3 แล้วลงนามในข้อเสนอของเจ้าหน้าที่':'บันทึกเฉพาะความเห็นในอำนาจของตนและลงนาม โดยไม่แก้ไขความเห็นของชั้นก่อนหน้า'}</p></div><span class="badge ${signer.signed?'success':'warning'}">${signer.signed?'ลงนามแล้ว':blocked?'รอขั้นก่อนหน้า':'รอลงนาม'}</span></header><div class="kb6-signature-card"><div><span>ผู้ลงนาม</span><strong>${esc(signer.name)}</strong><small>${esc(signer.position)}</small></div><div class="kb6-signature-proof"><i class="fa-solid ${signer.signed?'fa-circle-check':'fa-file-signature'}" aria-hidden="true"></i><span>${signer.signed?'ลายมือชื่อผูกกับเอกสารรุ่นนี้แล้ว':'ยืนยันด้วยบัญชีผู้ใช้งานในบทบาทปัจจุบัน'}</span></div><button class="btn ${signer.signed?'secondary':'gold'}" data-action="${signer.action}" ${signer.signed||blocked?'disabled':''}><i class="fa-solid fa-file-signature"></i>${signer.signed?'ลงนามแล้ว':'ยืนยันและลงลายมือชื่อ'}</button></div>${blocked?`<div class="role-opinion-note"><i class="fa-solid fa-hourglass-half"></i>รอ${currentRole==='director'?'ผู้บังคับบัญชาชั้นต้น':'เจ้าหน้าที่เจ้าของเรื่อง'}บันทึกและลงนามก่อน</div>`:''}${kb6OpinionHistory()}</section>`;
 }
 const signatureHtmlBeforeKb6=signatureHtml;
@@ -1377,6 +1379,7 @@ const actionBeforeKb6=action;
 action=function(name){
  const confirmations={
   'sign-kb6-officer':['ยืนยันลงลายมือชื่อเจ้าหน้าที่ผู้จัดทำ คบ.6','ลายมือชื่อของนางสาวอรุณี ใจมั่น ตำแหน่งนักสืบสวนสอบสวนชำนาญการ จะผูกกับเอกสารรุ่นนี้'],
+  'send-kb6-withdrawal':['ยืนยันส่ง คบ.6','ระบบจะบันทึกข้อเสนอไม่อนุมัติของเจ้าหน้าที่และส่งต่อผู้บังคับบัญชาชั้นต้นโดยไม่ต้องลงลายมือชื่อ'],
   'sign-kb6-supervisor':['ยืนยันความเห็นและลายมือชื่อผู้บังคับบัญชาชั้นต้น','ความเห็นของผู้บังคับบัญชาจะถูกเพิ่มต่อจากข้อเสนอของเจ้าหน้าที่โดยไม่เขียนทับข้อมูลเดิม'],
   'sign-kb6-director':['ยืนยันความเห็นและลายมือชื่อ ผอ.สำนัก/กอง','ความเห็นของ ผอ. จะถูกเพิ่มตามลำดับโดยไม่เขียนทับข้อมูลเดิม'],
   'complete-kb6':['ยืนยันบันทึก คบ.6 และกลับหน้าแฟ้ม','ระบบจะบันทึกข้อมูล ความเห็น และลายมือชื่อในแฟ้ม การส่งต่อจะดำเนินการจากหน้าแฟ้มเพียงจุดเดียว']
@@ -1388,6 +1391,7 @@ const executeActionBeforeKb6=executeAction;
 executeAction=function(name){
  const route=location.hash.replace(/^#\//,'');
  if(name==='sign-kb6-officer'){kb6OfficerSigned=true;render();successAlert('เจ้าหน้าที่ลงลายมือชื่อ คบ.6 แล้ว','ข้อเสนอของเจ้าหน้าที่ถูกผูกกับเอกสารรุ่นนี้');return}
+ if(name==='send-kb6-withdrawal'){kb6OfficerSigned=true;render();successAlert('ส่ง คบ.6 แล้ว','บันทึกข้อเสนอของเจ้าหน้าที่และส่งต่อผู้บังคับบัญชาชั้นต้นแล้ว');return}
  if(name==='sign-kb6-supervisor'){if(!kb6OfficerSigned){Swal.fire({icon:'warning',title:'รอลายมือชื่อเจ้าหน้าที่เจ้าของเรื่อง',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6SupervisorSigned=true;render();successAlert('ผู้บังคับบัญชาชั้นต้นลงนามแล้ว','ความเห็นถูกเพิ่มตามลำดับโดยไม่เขียนทับข้อเสนอของเจ้าหน้าที่');return}
  if(name==='sign-kb6-director'){if(!kb6SupervisorSigned){Swal.fire({icon:'warning',title:'รอความเห็นผู้บังคับบัญชาชั้นต้น',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6DirectorSigned=true;render();successAlert('ผอ.สำนัก/กองลงนามแล้ว','ความเห็นถูกบันทึกและพร้อมส่งแฟ้มไปกิจกรรมที่ 7');return}
  if(name==='complete-kb6'){
@@ -1487,11 +1491,12 @@ function enhanceCaseCompletionStatus(){
  if(currentItem?.activity7State==='rejected'||currentItem?.activity7State==='approved'||currentItem?.stage==='protection')return;
  const roleReview=['supervisor','director'].includes(currentRole);
  const kb6Done=currentRole==='supervisor'?kb6SupervisorSigned:currentRole==='director'?kb6DirectorSigned:kb6OfficerSigned;
+ const isWithdrawal=Boolean(currentItem?.withdrawal);
  const workCard=[...document.querySelectorAll('section.card')].find(card=>card.querySelector('h2')?.textContent.includes('งานที่ต้องดำเนินการ'));
  if(workCard){
   const rows=[...workCard.querySelectorAll('.task-row')];
   setCaseTaskStatus(rows[0],true,roleReview?'ตรวจแล้วและลงนามครบ':'กรอกครบและลงนามแล้ว','');
-  setCaseTaskStatus(rows[1],kb6Done,roleReview?'บันทึกความเห็นและลงนามแล้ว':'ข้อมูลและลายมือชื่อเจ้าหน้าที่ครบ',roleReview?'รอบันทึกความเห็นและลงลายมือชื่อ':'รอบันทึกข้อมูลและลงลายมือชื่อ');
+  setCaseTaskStatus(rows[1],kb6Done,roleReview?'บันทึกความเห็นและลงนามแล้ว':(isWithdrawal?'บันทึกและส่งแล้ว':'ข้อมูลและลายมือชื่อเจ้าหน้าที่ครบ'),roleReview?'รอบันทึกความเห็นและลงลายมือชื่อ':(isWithdrawal?'รอบันทึกข้อมูลและส่ง':'รอบันทึกข้อมูลและลงลายมือชื่อ'));
  }
  const sendCard=[...document.querySelectorAll('section.card')].find(card=>card.querySelector('h2')?.textContent.includes('ส่งงานขั้นตอนนี้'));
  if(sendCard){
@@ -1501,7 +1506,7 @@ function enhanceCaseCompletionStatus(){
    const icon=kb6Check.querySelector('b');
    const label=kb6Check.querySelector('span');
    if(icon)icon.textContent=kb6OfficerSigned?'✓':'!';
-   if(label)label.textContent=kb6OfficerSigned?'คบ.6 ข้อมูลและลายมือชื่อเจ้าหน้าที่ครบ':'คบ.6 ยังบันทึกและลงลายมือชื่อไม่ครบ';
+   if(label)label.textContent=kb6OfficerSigned?(isWithdrawal?'คบ.6 บันทึกและส่งแล้ว':'คบ.6 ข้อมูลและลายมือชื่อเจ้าหน้าที่ครบ'):(isWithdrawal?'คบ.6 ยังบันทึกและส่งไม่ครบ':'คบ.6 ยังบันทึกและลงลายมือชื่อไม่ครบ');
   }
   const forward=sendCard.querySelector('[data-action="forward"]');
   if(forward)forward.disabled=!(linked&&kb6OfficerSigned);
@@ -1511,7 +1516,7 @@ function enhanceCaseCompletionStatus(){
   const rows=[...documentCard.querySelectorAll('.task-row')];
   setCaseTaskStatus(rows[0],true,'ลงนามแล้ว · รุ่น 1','');
   setCaseTaskStatus(rows[1],true,'ลงนามแล้ว · รุ่น 1','');
-  setCaseTaskStatus(rows[2],kb6Done,'ลงนามแล้ว · รุ่น 2','ร่าง · รุ่น 2 · ยังไม่เสร็จ');
+  setCaseTaskStatus(rows[2],kb6Done,isWithdrawal?'ส่งแล้ว · รุ่น 2':'ลงนามแล้ว · รุ่น 2','ร่าง · รุ่น 2 · ยังไม่เสร็จ');
  }
 }
 function enhanceRoleCasePage(){
