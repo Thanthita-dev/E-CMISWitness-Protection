@@ -693,7 +693,7 @@ function kb10ReferenceCard(){
  const item=currentCaseItem();if(!item)return'';
  return `<section class="card kb10-ref-card"><div class="kb10-ref-head"><div class="kb10-ref-title"><span class="kb10-ref-icon"><i class="fa-solid fa-file-circle-xmark"></i></span><div><h2>ผลพิจารณาที่รับเข้าแฟ้ม</h2><p>ผลพิจารณาจากเลขาธิการคณะกรรมการ ป.ป.ท.</p></div></div><span class="badge danger"><i class="fa-solid fa-circle-xmark"></i> ไม่อนุมัติ</span></div>
  <div class="kb10-ref-grid"><div><small>เลขอ้างอิงผล</small><strong>${esc(item.externalReference||'-')}</strong></div><div><small>เลขคำสั่ง</small><strong>${esc(item.decisionNumber||'-')}</strong></div><div><small>วันที่รับผล</small><strong>${esc(item.resultAt||'-')}</strong></div><div><small>ผู้ลงนามคำสั่ง</small><strong>${esc(item.resultSigner||'-')}</strong></div></div>
- <div class="kb10-ref-reason"><i class="fa-solid fa-circle-info"></i><div><strong>เหตุผลตามคำสั่ง (อ้างอิงลงใน คบ.10)</strong><p>${esc(item.resultReason||item.resultNote||'ไม่ระบุ')}</p></div></div>
+ <div class="kb10-ref-reason"><i class="fa-solid fa-circle-info"></i><div><strong>เหตุผลตามคำสั่ง</strong><p>${esc(item.resultReason||item.resultNote||'ไม่ระบุ')}</p></div></div>
  <div class="kb10-ref-actions"><button class="btn secondary" data-kb10-doc="คำสั่งไม่อนุมัติต้นฉบับ ${esc(item.decisionNumber||'')}"><i class="fa-solid fa-file-lines"></i> เปิดคำสั่งต้นฉบับ</button><button class="btn secondary" data-kb10-doc="หลักฐานการแจ้ง (${esc(item.notifyChannel||'-')})"><i class="fa-solid fa-envelope-open-text"></i> เปิดหลักฐานการแจ้ง</button><button class="btn" data-kb10-copy-reason><i class="fa-solid fa-copy"></i> คัดลอกเหตุผลใส่หนังสือ</button></div></section>`;
 }
 function kb10ChannelField(){
