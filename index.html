@@ -431,7 +431,7 @@ const demoCases=[
   {no:'WP-2569-000485',form:'คบ.2',person:'นางสาวอภิญญา พิทักษ์กิจ',status:'รอ ผอ.พิจารณา',stage:'director_review',owner:'นางสาวพิมพ์ชนก วัฒนกิจ',next:'พิจารณาชุดคำร้องเร่งด่วนและร่าง คบ.5',risk:'สูง'},
   {no:'WP-2569-000486',form:'คบ.1',person:'นางสาวอัญชลี ธรรมรักษ์',status:'พยานขอถอน · รอจัดทำ คบ.3',stage:'staff_review',owner:'นางสาวอรุณี ใจมั่น',next:'บันทึก คบ.3 กรณีถอนและปรับ คบ.6 เสนอไม่อนุมัติ',risk:'ปานกลาง',withdrawal:true},
   {no:'WP-2569-000487',form:'คบ.2',person:'นายทศพล จิตมั่น',status:'พยานขอถอน · มี คบ.5',stage:'staff_review',owner:'นางสาวอรุณี ใจมั่น',next:'ทำ คบ.3/คบ.6 และเปิด คบ.7 ยุติคุ้มครองชั่วคราวคู่ขนาน',risk:'สูง',withdrawal:true,hasKb5:true},
-  {no:'WP-2569-000493',form:'คบ.2',person:'นายวรากร สุขสถิตย์',status:'รอจัดทำ คบ.6',stage:'staff_review',owner:'นางสาวอรุณี ใจมั่น',next:'จัดทำ คบ.6 คู่ขนานไปกับการคุ้มครองชั่วคราว',risk:'วิกฤต',urgent:true,caseRoute:'case-urgent-kb2'},
+  {no:'WP-2569-000493',form:'คบ.2',person:'นายวรากร สุขสถิตย์',status:'รอส่ง ผอ.สำนัก/กองพิจารณา',stage:'staff_review',owner:'นางสาวอรุณี ใจมั่น',next:'จัดทำ คบ.3 คบ.4 และร่าง คบ.5 เสนอ ผอ.สำนัก/กอง',risk:'วิกฤต',urgent:true,caseRoute:'case-urgent-kb2'},
   {no:'WP-2569-000488',form:'คบ.1',person:'นางสาวศศิธร วัฒนธรรม',status:'พยานขอถอน · รอผลกิจกรรมที่ 7',stage:'external_pending',owner:'นายธนภัทร ศรีสุวรรณ',next:'รับผลไม่อนุมัติตามความประสงค์ของพยาน',risk:'ปานกลาง',withdrawal:true},
   {no:'WP-2569-000489',form:'คบ.1',person:'นายชาญณรงค์ พิทักษ์กิจ',status:'พยานขอถอน · รอแจ้งผล',stage:'notice',owner:'นางสาวชลธิชา มั่นคง',next:'จัดทำและส่งหนังสือแจ้งผลแก่พยาน',risk:'ต่ำ',withdrawal:true,withdrawalDecision:'not_approved',externalReference:'EXT-WIT-2569-0489'},
   {no:'WP-2569-000490',form:'คบ.2',person:'นางสาวสุพัตรา เที่ยงธรรม',status:'พยานขอถอน · รอบันทึกหลักฐานการรับ',stage:'notice',owner:'นางสาวชลธิชา มั่นคง',next:'บันทึกวันเวลา ผู้รับ และหลักฐานการรับก่อนปิดแฟ้ม',risk:'สูง',withdrawal:true,hasKb5:true,withdrawalDecision:'not_approved',externalReference:'EXT-WIT-2569-0490',withdrawalNoticeSent:true,noticeRecipient:'นางสาวสุพัตรา เที่ยงธรรม',noticeChannel:'ไปรษณีย์ตอบรับ',noticeSentAt:'2026-08-05T10:00'},
@@ -1701,10 +1701,6 @@ const renderPage=render;render=function(){
  if(requestedRoute==='case-urgent-kb2'&&lastRouteForUrgentKb2Reset!=='case-urgent-kb2'&&!(lastRouteForUrgentKb2Reset||'').startsWith('form/')){
   if(skipNextUrgentKb2Reset){
    skipNextUrgentKb2Reset=false;
-  }else if(activeCaseNo==='WP-2569-000493'){
-   kb5SentToDirector=true;urgentKb5Approved=true;signed=true;
-   const doneItem=demoCases.find(caseItem=>caseItem.no==='WP-2569-000493');
-   if(doneItem){doneItem.kb5Step=5;doneItem.kb6Handoff=true;doneItem.stage='staff_review';doneItem.status='รอจัดทำ คบ.6';doneItem.owner='นางสาวอรุณี ใจมั่น';doneItem.next='จัดทำ คบ.6 คู่ขนานไปกับการคุ้มครองชั่วคราว';delete doneItem.kb6Signed;delete doneItem.kb6Forwarded}
   }else if(!activeCaseNo||activeCaseNo==='WP-2569-000483'){
    kb5SentToDirector=false;urgentKb5Approved=false;signed=false;
    const urgentItem=demoCases.find(caseItem=>caseItem.no==='WP-2569-000483');
