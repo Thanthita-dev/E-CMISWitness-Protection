@@ -1775,23 +1775,6 @@ function rejectedCaseFolderPageLegacy(item){
   <section class="card"><div class="card-head"><div><h2>เอกสารในแฟ้ม</h2><p>แบบและคำสั่งทั้งหมดอยู่ในแฟ้มเดียวกัน</p></div></div>${nonApprovalDocumentRows(item,Math.max(step,1))}</section>
  </aside></div>`;
 }
-function nonApprovalFolderTaskRows(item,step,canOperate){
- const tasks=[
-  {code:'คบ.10',title:'จัดทำหนังสือแจ้งคำสั่งไม่อนุมัติ',detail:'กรอกข้อมูลคำสั่ง เหตุผล และข้อความแจ้งสิทธิอุทธรณ์ให้ครบ'},
-  {code:'ลงนาม',title:'ส่ง คบ.10 ให้เลขาธิการคณะกรรมการ ป.ป.ท.',detail:'ส่งเอกสารผ่านกิจกรรมที่ 7 เพื่อให้ผู้มีอำนาจตรวจและลงนาม'},
-  {code:'ฉบับลงนาม',title:'รับ คบ.10 ที่ลงนามแล้ว',detail:'ตรวจเลขหนังสือ ผู้ลงนาม และวันที่ลงนามก่อนนำส่งผู้ร้อง'},
-  {code:'แจ้งผล',title:'นำส่งหนังสือ คบ.10 ให้ผู้ร้อง',detail:'รองรับส่งโดยตรง ไปรษณีย์ตอบรับ และอีเมลพร้อมหนังสือตาม'},
-  {code:'หลักฐานรับ',title:'บันทึกวันรับและหลักฐานการรับ',detail:'ใช้วันรับจริงเป็นจุดเริ่มนับสิทธิอุทธรณ์ 30 วัน'}
- ];
- return tasks.map((task,index)=>{
-  const complete=index<step,current=index===step&&step<5,rowClass=complete?'task-complete':current?'task-pending':'task-future',stateClass=complete?'done':current?'pending':'waiting',stateIcon=complete?'fa-circle-check':current?'fa-clock':'fa-lock',stateLabel=complete?'เสร็จแล้ว':current?'งานปัจจุบัน':'รอขั้นก่อนหน้า';
-  let action='';
-  if(complete)action=`<button class="btn secondary" type="button" data-nonapproval-doc="${esc(task.code)}"><i class="fa-solid fa-eye"></i> เปิดดู</button>`;
-  else if(current){const actionAttribute=index===0?'data-action="open-kb10"':`data-nonapproval-action="${esc(item.no)}"`;action=`<button class="btn secondary" type="button" ${canOperate?'':'disabled'} ${actionAttribute}>${esc(nonApprovalActionLabels[index])} <i class="fa-solid fa-arrow-right"></i></button>`}
-  else action='<button class="btn secondary" type="button" disabled><i class="fa-solid fa-lock"></i> รอขั้นก่อนหน้า</button>';
-  return `<div class="task-row ${rowClass}"><span class="task-no">${esc(task.code)}</span><div><strong>${esc(task.title)}</strong><small>${esc(task.detail)}</small><span class="task-state ${stateClass}"><i class="fa-solid ${stateIcon}"></i>${stateLabel}</span></div>${action}</div>`
- }).join('')
-}
 function rejectedCaseFolderPage(item){
  const step=Math.min(Math.max(Number.isInteger(item?.nonApprovalStep)?item.nonApprovalStep:0,0),5),canOperate=['officer','admin'].includes(currentRole),received=item.noticeReceivedAt||'-',deadline=item.appealDeadline||'-',owner=item.assignedOfficer||item.owner;
  const history=[{label:`รับผลไม่อนุมัติ ${item.externalReference||''}`.trim(),detail:`${item.resultAt||'-'} · ระบบสร้างงานให้ ${owner}`}];
