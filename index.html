@@ -844,6 +844,7 @@ function bindAppealEvents(){
  document.querySelectorAll('[data-activity7-results-tab]').forEach(button=>button.onclick=()=>{activity7ResultsTab=Number(button.dataset.activity7ResultsTab);render()});
  document.querySelectorAll('[data-notice-tab]').forEach(button=>button.onclick=()=>{noticeTab=Number(button.dataset.noticeTab);render()});
  document.querySelectorAll('[data-protection-tab]').forEach(button=>button.onclick=()=>{protectionTab=Number(button.dataset.protectionTab);render()});
+ document.querySelectorAll('[data-director-tab]').forEach(button=>button.onclick=()=>{directorTab=Number(button.dataset.directorTab);render()});
  document.querySelectorAll('[data-appeal-open]').forEach(button=>button.onclick=()=>{appealActiveTab=0;go(`appeal-folder/${button.dataset.appealOpen}`)});
  document.querySelectorAll('[data-appeal-tab]').forEach(button=>button.onclick=()=>{appealActiveTab=Number(button.dataset.appealTab);render()});
  document.querySelectorAll('[data-appeal-doc]').forEach(button=>button.onclick=()=>Swal.fire({icon:'info',title:`เอกสาร ${button.dataset.appealDoc}`,text:'เปิดเอกสารจากแฟ้มอุทธรณ์เดียวกัน',confirmButtonText:'ปิด',confirmButtonColor:'#1d5a91'}));
@@ -2079,6 +2080,27 @@ function kb14OpinionDialog(item){const request=item.extensionRequests.at(-1);if(
 function bindProtectionOperations(){document.querySelectorAll('[data-protection-start]').forEach(button=>button.onclick=()=>{const item=demoCases.find(entry=>entry.no===button.dataset.protectionStart);if(item)protectionStartDialog(ensureProtectionData(item))});document.querySelectorAll('[data-kb13-create]').forEach(button=>button.onclick=()=>kb13Dialog(ensureProtectionData(currentCaseItem()),button.dataset.kb13Create));document.querySelectorAll('[data-protection-monitor]').forEach(button=>button.onclick=()=>{const item=demoCases.find(entry=>entry.no===button.dataset.protectionMonitor);if(item)protectionMonitoringDialog(ensureProtectionData(item))});document.querySelectorAll('[data-protection-change]').forEach(button=>button.onclick=()=>{const item=demoCases.find(entry=>entry.no===button.dataset.protectionChange);if(item)protectionChangeDialog(ensureProtectionData(item))});document.querySelectorAll('[data-kb14-create]').forEach(button=>button.onclick=()=>{const item=demoCases.find(entry=>entry.no===button.dataset.kb14Create);if(item)kb14Dialog(ensureProtectionData(item))});document.querySelectorAll('[data-kb14-opinion]').forEach(button=>button.onclick=()=>{const item=demoCases.find(entry=>entry.no===button.dataset.kb14Opinion);if(item)kb14OpinionDialog(ensureProtectionData(item))})}
 const queueBeforeProtectionOperations=queue;
 queue=function(route){return route==='protection'?protectionQueuePage():queueBeforeProtectionOperations(route)};
+let directorTab=0;
+const directorTabDefs=['งานกลั่นกรองก่อนอนุมัติ','รายงาน คบ.13 รอตรวจ','เหตุสำคัญรอรับทราบ/ส่งต่อ','รายงานที่ส่งผู้มีอำนาจแล้ว'];
+function directorMonitoringItems(tab){
+ const items=demoCases.filter(item=>item.stage==='protection').map(ensureProtectionData);
+ if(tab===1)return items.filter(item=>item.kb13Reports.some(report=>report.type==='รายงานประจำงวด'));
+ if(tab===2)return items.filter(item=>item.importantEvents.length>0);
+ return [];
+}
+const queueBeforeDirectorTabs=queue;
+queue=function(route){
+ if(route!=='queue-director')return queueBeforeDirectorTabs(route);
+ const tabNav=`<div class="form-tabs-shell"><button type="button" class="tab-scroll" data-tab-scroll="-1" aria-label="เลื่อนหัวข้อไปทางซ้าย"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button><nav class="form-tabs" aria-label="แท็บงานผู้อำนวยการ">${directorTabDefs.map((label,i)=>`<button class="${i===directorTab?'active':''}" data-director-tab="${i}"><span>${label}</span></button>`).join('')}</nav><button type="button" class="tab-scroll" data-tab-scroll="1" aria-label="เลื่อนหัวข้อไปทางขวา"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button></div>`;
+ if(directorTab===0){
+  const [title,desc,stage]=queueMeta[route],items=demoCases.filter(c=>c.stage===stage),statusOptions=[...new Set(items.map(c=>c.status))];
+  const stats=[['งานทั้งหมด',items.length,'ตามบทบาท'],['เร่งด่วน',items.filter(isUrgentCase).length,'คบ.2 ต้องดำเนินการก่อน'],['ใกล้เกิน SLA',items.filter(c=>c.sla).length,'ภายในวันนี้'],['ส่งกลับแก้ไข',items.filter(c=>c.returned).length,'รอข้อมูล'],['พร้อมส่งต่อ',items.filter(c=>c.ready).length,'ข้อมูลและลายมือชื่อครบ']];
+  return base(title,desc,'<button class="btn secondary" data-go="registry">ทะเบียนคำร้อง</button>')+`<section class="stats">${stats.map((x,i)=>`<div class="stat ${i===1?'warning':i===2?'danger':i===4?'success':''}"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></div>`).join('')}</section>${tabNav}<section class="toolbar"><div class="field"><label>ค้นหาเลขคำร้องหรือชื่อ</label><input data-table-search placeholder="เลขคำร้อง ชื่อ หรือเลขคดีหลัก"></div><div class="field"><label>สถานะ</label><select data-status-filter><option value="__all">ทุกสถานะ</option><option value="__normal">กรณีปกติ (คบ.1)</option><option value="__urgent">กรณีจำเป็นเร่งด่วน (คบ.2)</option>${statusOptions.map(status=>`<option value="${esc(status)}">${esc(status)}</option>`).join('')}</select></div><button class="btn" data-action="search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>ค้นหา</button><button class="btn secondary" data-action="reset"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i>ล้างเงื่อนไข</button></section>${advancedFilters()}${tableCard(title,items)}`;
+ }
+ const items=directorMonitoringItems(directorTab);
+ return base('งานผู้อำนวยการสำนัก/กอง','พิจารณาความเห็น ลงนาม และติดตามงานหลังเริ่มคุ้มครอง','<button class="btn secondary" data-go="registry">ทะเบียนคำร้อง</button>')+tabNav+
+ `${items.length?tableCard(directorTabDefs[directorTab],items,true):`<section class="card"><div class="card-head"><div><h2>${directorTabDefs[directorTab]}</h2><p>ยังไม่มีรายการในขั้นนี้ในชุดข้อมูลตัวอย่างปัจจุบัน</p></div></div></section>`}`;
+};
 casePage=function(){const item=currentCaseItem();if(item?.activity7State==='rejected')return rejectedCaseFolderPage(item);if(item?.activity7State==='approved'&&(item.approvalStep||0)<9)return approvedCaseFolderPage(item);if(item?.stage==='protection')return protectionCaseFolderPage(item);return normalCaseFolderPage()};
 const renderBeforeUnifiedActivity7=render;
 render=function(){
