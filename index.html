@@ -1120,6 +1120,16 @@ function autoShowReturnDetail(){
  lastReturnPopupCaseNo=item.no;
  showReturnDetailPopup(item);
 }
+let lastProtectionStartPopupCaseNo=null;
+function autoShowProtectionStartDialog(){
+ const route=location.hash.replace(/^#\//,'')||'registry';
+ if(route!=='case'&&route!=='case-urgent-kb2'){lastProtectionStartPopupCaseNo=null;return}
+ if(currentRole!=='protection')return;
+ const item=currentCaseItem();
+ if(!item||item.stage!=='protection'||item.teamAcknowledged||item.no===lastProtectionStartPopupCaseNo)return;
+ lastProtectionStartPopupCaseNo=item.no;
+ protectionStartDialog(item);
+}
 function openWithdrawalRequestDialog(){
  const item=currentCaseItem();
  const routesToOfficer=['supervisor','director'].includes(currentRole),confirmText=routesToOfficer?'บันทึกและส่งให้เจ้าหน้าที่ตรวจสอบ':'บันทึกและเปิด คบ.3';
@@ -1717,7 +1727,7 @@ const renderPage=render;render=function(){
  lastRouteForUrgentKb2Reset=requestedRoute;
  if(['case-return-supervisor','case-return-director','case-correction'].includes(requestedRoute))history.replaceState(null,'',`${location.pathname}${location.search}#/case`);
  demoCases.forEach(item=>{if(item.caseRoute!=='case-urgent-kb2')delete item.caseRoute});
- renderPage();syncRoleNavigation();syncFormCaseContext();syncSignedFormAction();enhanceMainCaseSelector();enhancePetitionerDocuments();enhanceWithdrawalAction();enhanceKb3Bindings();enhanceKb6Bindings();enhanceRoleCasePage();enhanceCaseCompletionStatus();enhanceReviewReturnAction();bindCaseTableFilters();autoShowReturnDetail();bindKb5PostStep()
+ renderPage();syncRoleNavigation();syncFormCaseContext();syncSignedFormAction();enhanceMainCaseSelector();enhancePetitionerDocuments();enhanceWithdrawalAction();enhanceKb3Bindings();enhanceKb6Bindings();enhanceRoleCasePage();enhanceCaseCompletionStatus();enhanceReviewReturnAction();bindCaseTableFilters();autoShowReturnDetail();autoShowProtectionStartDialog();bindKb5PostStep()
 };
 const executePageAction=executeAction;executeAction=function(name){if(name==='submit-kb1'){Swal.fire({icon:'question',title:'ยืนยันส่งคำร้องให้เจ้าหน้าที่ ป.ป.ท.',text:'คำร้องและลายมือชื่อจะเข้าสู่คิวเจ้าหน้าที่เพื่อตรวจสอบ',showCancelButton:true,confirmButtonText:'ยืนยันส่งคำร้อง',cancelButtonText:'ตรวจสอบอีกครั้ง',confirmButtonColor:'#1d5a91',cancelButtonColor:'#718198',reverseButtons:true,customClass:{popup:'ecmis-swal'}}).then(result=>{if(result.isConfirmed)successAlert('ส่งคำร้องสำเร็จ','คำร้องเข้าสู่คิวเจ้าหน้าที่ ป.ป.ท. แล้ว',()=>go('queue-officer'))});return}const result=executePageAction(name);syncSignedFormAction();return result};
 const actionBeforeUrgentKb2=action;
