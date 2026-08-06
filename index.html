@@ -1195,6 +1195,7 @@ function syncSignedFormAction(){
  if(route==='form/3'&&kb3IsSigned())setStickyPrimaryAction(kb3Mode==='withdrawal'?'submit-withdrawal':'submit-kb3',kb3Mode==='withdrawal'?'<i class="fa-solid fa-paper-plane"></i>ส่งบันทึกถอนคำร้องตามลำดับ':'<i class="fa-solid fa-folder-check"></i>บันทึก คบ.3 และกลับหน้าแฟ้ม');
  if(route==='form/6'&&kb6RoleSigned())setStickyPrimaryAction('complete-kb6',kb6CompleteLabel());
  if(route==='form/10'&&signed)setStickyPrimaryAction('submit-kb10','<i class="fa-solid fa-folder-check" aria-hidden="true"></i>บันทึก คบ.10 และกลับหน้าแฟ้ม');
+ if(route==='form/10'&&!signed){const f10=forms.find(x=>x.n===10);if(formSection===f10.sections.length-1&&!['director','admin'].includes(currentRole))setStickyPrimaryAction('next-section','<i class="fa-solid fa-circle-check" aria-hidden="true"></i>ตรวจสอบเสร็จสิ้น →')}
 }
 function syncRoleNavigation(){
  const roleSelect=document.getElementById('role');
