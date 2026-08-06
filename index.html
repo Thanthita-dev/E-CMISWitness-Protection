@@ -373,7 +373,7 @@
       <div class="nav-section-label">งานหลังพิจารณา</div>
       <button class="nav-link level-one" data-route="activity7-results"><i class="fa-solid fa-inbox icon" aria-hidden="true"></i><span>ผลพิจารณาและคำสั่ง</span></button>
       <button class="nav-link level-one" data-route="notice"><i class="fa-solid fa-paper-plane icon" aria-hidden="true"></i><span>แจ้งผลแก่พยาน</span></button>
-      <button class="nav-link level-one" data-route="protection"><i class="fa-solid fa-shield icon" aria-hidden="true"></i><span>คุ้มครอง/ติดตาม</span></button>
+      <button class="nav-link level-one" data-route="protection" data-hide-for-role="protection"><i class="fa-solid fa-shield icon" aria-hidden="true"></i><span>คุ้มครอง/ติดตาม</span></button>
       <button class="nav-link level-one" data-route="appeal"><i class="fa-solid fa-rotate-left icon" aria-hidden="true"></i><span>อุทธรณ์</span></button>
       <button class="nav-link level-one" data-route="reports"><i class="fa-solid fa-chart-column icon" aria-hidden="true"></i><span>รายงาน</span></button>
     </nav>
@@ -1464,6 +1464,11 @@ function syncRoleNavigation(){
   const hasVisibleRoleItem=roleItems.some(item=>!item.classList.contains('nav-role-hidden'));
   label.classList.toggle('nav-role-hidden',!hasVisibleRoleItem);
  }
+ document.querySelectorAll('[data-hide-for-role]').forEach(item=>{
+  const hidden=item.dataset.hideForRole.split(',').includes(currentRole);
+  item.classList.toggle('nav-role-hidden',hidden);
+  item.setAttribute('aria-hidden',String(hidden));
+ });
 }
 function setCaseTaskStatus(row,done,doneText,pendingText){
  if(!row)return;
