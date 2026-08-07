@@ -1833,7 +1833,7 @@ const approvalStepLabels=['ตรวจผลอนุมัติและ ค�
 const approvalActionLabels=['ตรวจรับและลงทะเบียน คบ.8','จัดทำและส่ง คบ.9 ลงนาม','นำส่ง คบ.9 และแจ้งคำสั่ง คบ.8','บันทึกหลักฐานการรับและรับทราบคำสั่ง','จัดทำและลงนาม คบ.11','มอบหมายชุดคุ้มครอง','หัวหน้าชุดยืนยันรับงาน','ยืนยันแผนและความพร้อม','บันทึกเริ่มคุ้มครองหลัก'];
 function approvalStepFormNumber(step){return step===0?8:step===1?9:step===4?11:null}
 function approvalTaskRowsHtml(item,step,canOperate,currentRoleLabel){
- return approvalActionLabels.map((label,index)=>({label,index})).filter(({index})=>index<=step).map(({label,index})=>{
+ return approvalActionLabels.map((label,index)=>({label,index})).filter(({index})=>index<=step+1).map(({label,index})=>{
   const isDone=index<step,isCurrent=index===step,formNumber=approvalStepFormNumber(index),rowClass=isDone?'task-complete':'task-pending',noLabel=formNumber?`คบ.${formNumber}`:`ขั้น ${index+1}`;
   const detail=isDone?(item.approvalHistory?.[index]||'ดำเนินการแล้ว'):isCurrent?(canOperate?'เปิดแบบเพื่อกรอกและลงลายมือชื่อ':'เปลี่ยนบทบาทเป็น '+currentRoleLabel+' เพื่อดำเนินการขั้นนี้'):'รอบันทึกข้อมูลและลงลายมือชื่อ';
   const stateBadge=isDone?'<span class="task-state done"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>เสร็จแล้ว</span>':'<span class="task-state pending"><i class="fa-solid fa-clock" aria-hidden="true"></i>ยังไม่เสร็จ</span>';
