@@ -3784,6 +3784,25 @@ function approvedNonFormTaskRowV37(item,workflowCase){
  const icon=step>=6?'fa-people-group':step===5?'fa-user-pen':'fa-paper-plane';
  return `<div class="task-row task-pending"><span class="task-no"><i class="fa-solid ${icon}" aria-hidden="true"></i></span><div><strong>${esc(approvalStepLabels[step])}</strong><small>${canOperate?'เปิดดำเนินการขั้นนี้':`เปลี่ยนบทบาทเป็น${roleLabel}เพื่อดำเนินการ`}</small><span class="task-state pending"><i class="fa-solid fa-clock"></i>งานปัจจุบัน</span></div><button type="button" class="btn secondary" ${canOperate?'':'disabled'} data-activity7-next="${esc(workflowCase.no)}">เปิดดำเนินการ <i class="fa-solid fa-arrow-right"></i></button></div>`;
 }
+function dossierKb6ReviewRowV83(item,workflowCase,canRemoveForms){
+ const itemState=item.kb6SignatureStatus||{},workflowState=workflowCase?.kb6SignatureStatus||{};
+ const officerSigned=Boolean(itemState.officer||workflowState.officer||item.formSignedStatus?.[6]||item.kb6Signed||workflowCase?.kb6Signed);
+ const supervisorSigned=Boolean(itemState.supervisor||workflowState.supervisor);
+ const directorSigned=Boolean(itemState.director||workflowState.director);
+ let completed=officerSigned,detail=officerSigned?'เจ้าหน้าที่เจ้าของเรื่องลงนามแล้ว':'รอเจ้าหน้าที่เจ้าของเรื่องลงนาม';
+ if(currentRole==='supervisor'){
+  completed=supervisorSigned;
+  detail=supervisorSigned?'ผู้บังคับบัญชาชั้นต้นบันทึกความเห็นและลงนามแล้ว':officerSigned?'เจ้าหน้าที่ลงนามแล้ว · รอผู้บังคับบัญชาชั้นต้นลงนาม':'รอลายมือชื่อเจ้าหน้าที่ชั้นก่อนหน้า';
+ }else if(currentRole==='director'){
+  completed=directorSigned;
+  detail=directorSigned?'ผอ.สำนัก/กองบันทึกความเห็นและลงนามแล้ว':supervisorSigned?'ผู้บังคับบัญชาชั้นต้นลงนามแล้ว · รอ ผอ.สำนัก/กองลงนาม':'รอลายมือชื่อผู้บังคับบัญชาชั้นต้นก่อน';
+ }
+ if(completed){
+  ensureFormDocumentEntryV49(item,6);
+  return `<div class="task-row complete"><span class="task-no">คบ.6</span><div><strong>${esc(dossierFormTitleV16(6))}</strong><small>${esc(detail)} · ฉบับลงนามเก็บอยู่ในเอกสารในแฟ้ม</small><span class="task-state done"><i class="fa-solid fa-circle-check"></i>เสร็จแล้ว</span></div><button type="button" class="btn secondary" data-dossier-open-form="6">เปิดดูแบบ <i class="fa-solid fa-arrow-right"></i></button></div>`;
+ }
+ return `<div class="task-row recommended"><span class="task-no">คบ.6</span><div><strong>${esc(dossierFormTitleV16(6))}</strong><small>${esc(detail)}</small><span class="badge warning">รอลงนาม</span></div><div style="display:flex;gap:6px"><button type="button" class="btn secondary" data-dossier-open-form="6">เปิด/ลงนาม <i class="fa-solid fa-arrow-right"></i></button>${canRemoveForms?`<button type="button" class="btn secondary" data-dossier-remove-form="6" title="นำแบบนี้ออกจากแฟ้ม" aria-label="นำ คบ.6 ออกจากแฟ้ม"><i class="fa-solid fa-trash-can"></i></button>`:''}</div></div>`;
+}
 function dossierFormRowsV21(item,workflowCase){
  // V42 fix (client feedback: "รับ คบ.10 ที่ลงนามแล้ว" should not be its own step-tracker dialog --
  // it should live in the "แบบ คบ. ในแฟ้ม" list itself as a yellow "still needs a signature" row,
@@ -3803,6 +3822,7 @@ function dossierFormRowsV21(item,workflowCase){
  const attached=dossierAttachedFormsV16(item);
  const formRows=attached.map(number=>{
   const files=item.formFileUploads?.[number]||[];
+  if(number===6)return dossierKb6ReviewRowV83(item,workflowCase,canRemoveForms);
   if(number===10&&workflowCase?.activity7State==='rejected'){
    const nonApprovalStep=Number.isInteger(workflowCase.nonApprovalStep)?workflowCase.nonApprovalStep:0;
    if(nonApprovalStep===1||nonApprovalStep===2){
@@ -3947,7 +3967,13 @@ function dossierSubmissionPreviewV27(item,onConfirm){
  const forwardTargetLabel=(currentRole==='receiver'||needsDirectorAssignmentBeforeWorkflowV73(item))?'ผอ.สำนัก/กองจัดสรรเจ้าของสำนวน':'ผู้บังคับบัญชาชั้นต้น';
  Swal.fire({title:`พรีวิวเอกสารทั้งหมดก่อนส่ง${forwardTargetLabel}`,html:'<p style="margin:0 0 12px;color:#52657c;font-size:13px">ตรวจสอบเอกสารทุกฉบับในแฟ้มให้ครบถ้วนก่อนส่ง รวมถึงเอกสารหลักฐานของพยาน สลับดูแต่ละแบบได้จากแท็บด้านล่าง</p><div id="dossier-submission-preview-root"></div>',width:760,showCancelButton:true,confirmButtonText:`ยืนยันและส่ง${forwardTargetLabel}`,cancelButtonText:'กลับไปแก้ไข',confirmButtonColor:'#1d5a91',cancelButtonColor:'#718198',reverseButtons:true,customClass:{popup:'ecmis-swal kb1-preview-swal'},didOpen:renderPreview}).then(result=>{if(result.isConfirmed)onConfirm()});
 }
+function dossierKb6LayerSignedV83(item,role){
+ const workflowCase=demoCases.find(entry=>entry.no===item?.no),itemState=item?.kb6SignatureStatus||{},workflowState=workflowCase?.kb6SignatureStatus||{};
+ if(role==='officer')return Boolean(itemState.officer||workflowState.officer||item?.formSignedStatus?.[6]||item?.kb6Signed||workflowCase?.kb6Signed);
+ return Boolean(itemState[role]||workflowState[role]);
+}
 function forwardDossierToSupervisorV27(item){
+ if(!dossierKb6LayerSignedV83(item,'officer')){Swal.fire({icon:'warning',title:'รอเจ้าหน้าที่ลงนาม คบ.6',text:'ต้องบันทึกข้อมูลและลงลายมือชื่อเจ้าหน้าที่เจ้าของเรื่องใน คบ.6 ก่อนส่งผู้บังคับบัญชาชั้นต้น',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}
  dossierSubmissionPreviewV27(item,()=>{
   const at=nowDisplay(),actor=intakeDocumentActor(item),caseNo=item.applicationNo||item.no,supervisorName='นายกิตติศักดิ์ ธรรมรักษ์',supervisorUnit='ผู้บังคับบัญชาชั้นต้น';
   const previous=item.status||'อยู่ระหว่างจัดทำแฟ้ม';
@@ -3960,6 +3986,7 @@ function forwardDossierToSupervisorV27(item){
   logAssignment({caseNo,type:'ส่งแฟ้มเพื่อกลั่นกรอง',fromName:actor.name,fromRole:'เจ้าหน้าที่เจ้าของเรื่อง',toName:supervisorName,toRole:'ผู้บังคับบัญชาชั้นต้น',due:item.urgency==='urgent'?'ทันที':'ตาม SLA'});
   logNotification({caseNo,type:'แฟ้มคำร้องรอกลั่นกรอง',toName:supervisorName,channel:'ในระบบ',message:'โปรดตรวจ คบ.6 และเอกสารประกอบก่อนเสนอ ผอ.สำนัก/กอง',urgency:item.urgency==='urgent'?'ด่วน':'ปกติ'});
   logAudit({caseNo,actorName:actor.name,actorRole:'เจ้าหน้าที่เจ้าของเรื่อง',action:'ส่งผู้บังคับบัญชาชั้นต้น',before:previous,after:item.status,docRef:'คบ.6'});
+  ecmisSaveState();
   successAlert('ส่งแฟ้มให้ผู้บังคับบัญชาชั้นต้นแล้ว','ระบบสร้างงาน แจ้งเตือนผู้รับ และบันทึกประวัติการส่งต่อในแฟ้มแล้ว',()=>go('queue-supervisor'));
  })
 }
@@ -4110,11 +4137,13 @@ function confirmKb1RetroV34(item){
  successAlert('ยืนยันพบตัวพยานแล้ว','ระบบเปิดให้จัดทำ คบ.6 เข้ากระบวนการหลักได้ทันที',()=>render());
 }
 function dossierSupervisorActionPanelV28(item){
- const attached=dossierAttachedFormsV16(item),linked=item.mainCaseLinkStatus==='linked',hasKb3=attached.includes(3),hasKb6=attached.includes(6),hasEvidence=ensureIntakeDocuments(item).some(document=>!document.deleted&&document.category!=='kb_form');
+ const attached=dossierAttachedFormsV16(item),linked=item.mainCaseLinkStatus==='linked',hasKb3=attached.includes(3),hasKb6=dossierKb6LayerSignedV83(item,'officer'),hasEvidence=ensureIntakeDocuments(item).some(document=>!document.deleted&&document.category!=='kb_form');
  const checklist=`<div class="checklist"><div class="check ${hasKb3?'':'wait'}"><b>${hasKb3?'✓':'!'}</b><span>คบ.3 กรอกครบและลงนามแล้ว</span></div><div class="check ${linked?'':'wait'}"><b>${linked?'✓':'!'}</b><span>เชื่อมโยงคดีหลักและประเมินภัยแล้ว</span></div><div class="check ${hasKb6?'':'wait'}"><b>${hasKb6?'✓':'!'}</b><span>คบ.6 ข้อมูลและลายมือชื่อเจ้าหน้าที่ครบ</span></div><div class="check ${hasEvidence?'':'wait'}"><b>${hasEvidence?'✓':'!'}</b><span>เอกสารและหลักฐานประกอบอยู่ในแฟ้มแล้ว</span></div></div>`;
- return `<div class="two-col dossier-v26-layout"><section class="card dossier-v26-forward-card">${checklist}<div class="field"><label>ความเห็นผู้บังคับบัญชาชั้นต้น *</label><textarea data-dossier-supervisor-comment>ตรวจข้อมูลและเอกสารครบถ้วน เห็นควรเสนอ ผอ.สำนัก/กอง</textarea></div><div class="dossier-v26-forward"><button type="button" class="btn" data-dossier-forward-director>ส่ง ผอ.สำนัก/กอง <i class="fa-solid fa-arrow-right"></i></button></div></section><div aria-hidden="true"></div></div>`;
+ const signed=dossierKb6LayerSignedV83(item,'supervisor');
+ return `<div class="two-col dossier-v26-layout"><section class="card dossier-v26-forward-card">${checklist}<div class="field"><label>ความเห็นผู้บังคับบัญชาชั้นต้น *</label><textarea data-dossier-supervisor-comment>ตรวจข้อมูลและเอกสารครบถ้วน เห็นควรเสนอ ผอ.สำนัก/กอง</textarea></div>${signed?'':`<div class="doc-note"><i class="fa-solid fa-file-signature"></i> กรุณาเปิด คบ.6 บันทึกความเห็นและลงนามก่อนส่งต่อ</div>`}<div class="dossier-v26-forward"><button type="button" class="btn" data-dossier-forward-director ${signed?'':'disabled'}>ส่ง ผอ.สำนัก/กอง <i class="fa-solid fa-arrow-right"></i></button></div></section><div aria-hidden="true"></div></div>`;
 }
 function forwardDossierToDirectorV28(item){
+ if(!dossierKb6LayerSignedV83(item,'supervisor')){Swal.fire({icon:'warning',title:'รอผู้บังคับบัญชาชั้นต้นลงนาม คบ.6',text:'บันทึกความเห็นและลงลายมือชื่อใน คบ.6 ให้ครบก่อนส่ง ผอ.สำนัก/กอง',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}
  const commentEl=document.querySelector('[data-dossier-supervisor-comment]'),comment=commentEl?.value.trim()||'';
  if(!comment)return toast('กรุณาระบุความเห็นผู้บังคับบัญชาชั้นต้นก่อนส่ง');
  const at=nowDisplay(),actor=roleNames[currentRole],caseNo=item.applicationNo||item.no,directorName='นางสาวปิยะดา ศรีสมบูรณ์',directorUnit='ผู้อำนวยการสำนัก/กอง';
@@ -4126,12 +4155,15 @@ function forwardDossierToDirectorV28(item){
  logAssignment({caseNo,type:'ส่งแฟ้มเพื่อพิจารณา',fromName:actor,fromRole:'ผู้บังคับบัญชาชั้นต้น',toName:directorName,toRole:'ผอ.สำนัก/กอง',due:item.urgency==='urgent'?'ทันที':'ตาม SLA'});
  logNotification({caseNo,type:'แฟ้มคำร้องรอพิจารณา',toName:directorName,channel:'ในระบบ',message:'โปรดตรวจความเห็นผู้บังคับบัญชาชั้นต้นก่อนลงนาม',urgency:item.urgency==='urgent'?'ด่วน':'ปกติ'});
  logAudit({caseNo,actorName:actor,actorRole:'ผู้บังคับบัญชาชั้นต้น',action:'ส่ง ผอ.สำนัก/กองพิจารณา',before:previous,after:item.status,docRef:'คบ.6'});
+ ecmisSaveState();
  successAlert('ส่งแฟ้มให้ ผอ.สำนัก/กองแล้ว','ระบบสร้างงาน แจ้งเตือนผู้รับ และบันทึกประวัติการส่งต่อในแฟ้มแล้ว',()=>go('queue-director'));
 }
 function dossierDirectorActionPanelV28(item){
- return `<div class="two-col dossier-v26-layout"><section class="card dossier-v26-forward-card"><div class="field"><label>ความเห็น ผอ.สำนัก/กอง *</label><textarea data-dossier-director-comment>เห็นควรอนุมัติและส่งกิจกรรมที่ 7</textarea></div><div class="dossier-v26-forward"><button type="button" class="btn" data-dossier-forward-activity7>ส่งเลขาธิการ ป.ป.ท. (กิจกรรมที่ 7) <i class="fa-solid fa-arrow-right"></i></button></div></section><div aria-hidden="true"></div></div>`;
+ const signed=dossierKb6LayerSignedV83(item,'director');
+ return `<div class="two-col dossier-v26-layout"><section class="card dossier-v26-forward-card"><div class="field"><label>ความเห็น ผอ.สำนัก/กอง *</label><textarea data-dossier-director-comment>เห็นควรอนุมัติและส่งกิจกรรมที่ 7</textarea></div>${signed?'':`<div class="doc-note"><i class="fa-solid fa-file-signature"></i> กรุณาเปิด คบ.6 บันทึกความเห็นและลงนามก่อนส่งกิจกรรมที่ 7</div>`}<div class="dossier-v26-forward"><button type="button" class="btn" data-dossier-forward-activity7 ${signed?'':'disabled'}>ส่งเลขาธิการ ป.ป.ท. (กิจกรรมที่ 7) <i class="fa-solid fa-arrow-right"></i></button></div></section><div aria-hidden="true"></div></div>`;
 }
 function forwardDossierToActivity7V28(item){
+ if(!dossierKb6LayerSignedV83(item,'director')){Swal.fire({icon:'warning',title:'รอ ผอ.สำนัก/กองลงนาม คบ.6',text:'ต้องบันทึกความเห็นและลงลายมือชื่อ ผอ.สำนัก/กอง ใน คบ.6 ก่อนส่งกิจกรรมที่ 7',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}
  const commentEl=document.querySelector('[data-dossier-director-comment]'),comment=commentEl?.value.trim()||'';
  if(!comment)return toast('กรุณาระบุความเห็น ผอ.สำนัก/กอง ก่อนส่ง');
  const at=nowDisplay(),actor=roleNames[currentRole],caseNo=item.applicationNo||item.no;
@@ -4142,6 +4174,7 @@ function forwardDossierToActivity7V28(item){
  if(workflowCase)Object.assign(workflowCase,{status:item.status,stage:'external_pending',next:item.next});
  logAssignment({caseNo,type:'ส่งกิจกรรมที่ 7',fromName:actor,fromRole:'ผอ.สำนัก/กอง',toName:'เลขาธิการ ป.ป.ท.',toRole:'ผู้มีอำนาจกิจกรรมที่ 7',due:'ตาม SLA'});
  logAudit({caseNo,actorName:actor,actorRole:'ผอ.สำนัก/กอง',action:'ส่งกิจกรรมที่ 7',before:previous,after:item.status,docRef:'คบ.6'});
+ ecmisSaveState();
  successAlert('ส่งเรื่องเข้ากิจกรรมที่ 7 แล้ว','ระบบบันทึกประวัติการส่งต่อในแฟ้มแล้ว รอผลพิจารณาจากเลขาธิการ ป.ป.ท.',()=>go('queue-director'));
 }
 function returnDossierToOfficerV28(item){
