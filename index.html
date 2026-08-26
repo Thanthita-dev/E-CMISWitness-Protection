@@ -42,7 +42,13 @@
     @font-face{font-family:"Kanit";font-style:normal;font-weight:700;font-display:swap;src:url("./assets/fonts/Kanit-Bold.ttf") format("truetype")}
     :root{--navy:#10284b;--navy2:#1d3975;--blue:#16558f;--blue2:#e8f1fa;--gold:#c6a13d;--gold2:#fff8e8;--ink:#172943;--muted:#62738a;--line:#d6e0ea;--soft:#f1f5f9;--paper:#fbfdff;--green:#24714a;--green2:#e9f6ee;--red:#ad3f3d;--red2:#fff0ef;--orange:#8a6111;--orange2:#fff6df;--shadow:0 5px 18px rgba(16,40,75,.07)}
     @media(max-width:1180px){.stats{grid-template-columns:repeat(3,1fr)}.catalog{grid-template-columns:repeat(2,1fr)}.case-context{grid-template-columns:repeat(3,1fr)}.workspace,.two-col{grid-template-columns:1fr}.paper-wrap{position:static;max-height:none}.chart-grid{grid-template-columns:1fr}}
-    @media(max-width:820px){.app{grid-template-columns:84px minmax(0,1fr)}.brand>div:last-child,.nav button span,.nav-group,.profile>div:last-child{display:none}.nav button,.nav button.sub{justify-content:center;padding:10px}.top{padding:0 14px}.global-search{display:none}.content{padding:18px 14px 45px}.form-page{margin:-18px -14px -45px}.form-header{padding:18px 14px}.workspace{padding:14px 12px 95px}.sticky-actions{left:84px}.catalog{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.stats{grid-template-columns:repeat(2,1fr)}.case-context{grid-template-columns:1fr 1fr}.role-select{min-width:145px;max-width:180px}.top-right .icon-btn:nth-of-type(n+2){display:none}}
+    .secretary-review-panel{border-left:5px solid #1d5a91;background:linear-gradient(135deg,#fff 0%,#f5f9fd 100%)}
+    .secretary-review-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+    .secretary-review-grid>div{padding:12px;border:1px solid #d7e3ef;border-radius:10px;background:#fff;display:flex;flex-direction:column;gap:4px}
+    .secretary-review-grid small{color:#6b7c91}.secretary-review-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+    .secretary-review-checks span{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:9px;background:#eaf6ef;color:#246c49;font-weight:700}
+    .secretary-review-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+    @media(max-width:820px){.app{grid-template-columns:84px minmax(0,1fr)}.brand>div:last-child,.nav button span,.nav-group,.profile>div:last-child{display:none}.nav button,.nav button.sub{justify-content:center;padding:10px}.top{padding:0 14px}.global-search{display:none}.content{padding:18px 14px 45px}.form-page{margin:-18px -14px -45px}.form-header{padding:18px 14px}.workspace{padding:14px 12px 95px}.sticky-actions{left:84px}.catalog{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.stats{grid-template-columns:repeat(2,1fr)}.case-context{grid-template-columns:1fr 1fr}.role-select{min-width:145px;max-width:180px}.top-right .icon-btn:nth-of-type(n+2){display:none}.secretary-review-grid{grid-template-columns:1fr 1fr}.secretary-review-checks{grid-template-columns:1fr}}
     @media(max-width:560px){.app{display:block}.side{display:none}.mobile-only{display:inline-flex}.top{height:64px}.top .collapse{display:none}.role-select{width:150px}.page-head,.card-head,.signature-head,.signature-action{flex-direction:column}.toolbar,.form-grid,.signature-fields{grid-template-columns:1fr}.field.wide,.signature-step{grid-column:auto}.stats{grid-template-columns:1fr 1fr}.stat{min-height:102px;padding:12px}.case-context{grid-template-columns:1fr}.catalog{grid-template-columns:1fr}.form-tile{grid-template-columns:48px 1fr}.form-tile .btn{grid-column:1/-1}.sticky-actions{left:0;padding:10px 12px}.repeat-table{grid-template-columns:34px 1fr auto}.repeat-table>*:nth-child(3n){display:none}}
   </style>
   <style id="kb1-preview-upgrade">
@@ -621,7 +627,7 @@
         <select id="org-unit" class="role-select org-unit-select" aria-label="หน่วยงานที่ปฏิบัติงาน" autocomplete="off" hidden></select>
         <select id="officer-account" class="role-select" aria-label="บัญชีเจ้าหน้าที่ ป.ป.ท. ที่กำลังจำลอง" autocomplete="off" hidden></select>
         <select id="role" class="role-select" aria-label="บทบาทผู้ใช้งาน" autocomplete="off">
-          <option value="receiver">ธุรการสำนัก/กอง</option><option value="officer">เจ้าหน้าที่ ป.ป.ท.</option><option value="supervisor">ผู้บังคับบัญชาชั้นต้น</option><option value="director">ผอ.สำนัก/กอง</option><option value="protection">ชุดคุ้มครอง</option><option value="appeal">นางสาววราภรณ์ นิติธรรม</option><option value="admin">Super Admin</option>
+          <option value="receiver">ธุรการสำนัก/กอง</option><option value="officer">เจ้าหน้าที่ ป.ป.ท.</option><option value="supervisor">ผู้บังคับบัญชาชั้นต้น</option><option value="director">ผอ.สำนัก/กอง</option><option value="secretary">เลขาธิการ ป.ป.ท.</option><option value="protection">ชุดคุ้มครอง</option><option value="appeal">นางสาววราภรณ์ นิติธรรม</option><option value="admin">Super Admin</option>
         </select>
         <button class="icon-btn" aria-label="การแจ้งเตือน" data-go="notifications"><i class="fa-solid fa-bell" aria-hidden="true"></i><span class="notification-dot"></span></button><button class="icon-btn" aria-label="คู่มือ"><i class="fa-solid fa-book" aria-hidden="true"></i></button><button class="icon-btn" aria-label="โหมดกลางคืน"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
       </div>
@@ -4164,16 +4170,17 @@ function forwardDossierToActivity7V28(item){
  if(!dossierKb6LayerSignedV83(item,'director')){Swal.fire({icon:'warning',title:'รอ ผอ.สำนัก/กองลงนาม คบ.6',text:'ต้องบันทึกความเห็นและลงลายมือชื่อ ผอ.สำนัก/กอง ใน คบ.6 ก่อนส่งกิจกรรมที่ 7',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}
  const commentEl=document.querySelector('[data-dossier-director-comment]'),comment=commentEl?.value.trim()||'';
  if(!comment)return toast('กรุณาระบุความเห็น ผอ.สำนัก/กอง ก่อนส่ง');
- const at=nowDisplay(),actor=roleNames[currentRole],caseNo=item.applicationNo||item.no;
+ const director=currentDirectorAccount(),at=nowDisplay(),actor=director?.name||roleNames[currentRole],caseNo=item.applicationNo||item.no;
  const previous=item.status||'';
- item.status='รอผลกิจกรรมที่ 7';item.next='รอผลพิจารณาจากเลขาธิการ ป.ป.ท.';
- item.assignmentHistory=item.assignmentHistory||[];item.assignmentHistory.push({at,action:'ส่งกิจกรรมที่ 7 (เลขาธิการ ป.ป.ท.)',actor,detail:comment});
+ item.status='รอเลขาธิการ ป.ป.ท. ตรวจทานและลงนาม';item.next='เลขาธิการ ป.ป.ท. ตรวจเอกสารทั้งหมดและบันทึกผลพิจารณา';item.secretaryReviewState='pending';item.secretarySubmittedAt=at;item.secretarySubmittedBy=actor;item.secretarySubmittedByPosition=director?.position||'ผอ.สำนัก/กอง';
+ item.assignmentHistory=item.assignmentHistory||[];item.assignmentHistory.push({at,action:'ส่งเลขาธิการ ป.ป.ท. ตรวจทานและลงนาม',actor,detail:comment});
  const workflowCase=demoCases.find(entry=>entry.no===item.no);
- if(workflowCase)Object.assign(workflowCase,{status:item.status,stage:'external_pending',next:item.next});
- logAssignment({caseNo,type:'ส่งกิจกรรมที่ 7',fromName:actor,fromRole:'ผอ.สำนัก/กอง',toName:'เลขาธิการ ป.ป.ท.',toRole:'ผู้มีอำนาจกิจกรรมที่ 7',due:'ตาม SLA'});
- logAudit({caseNo,actorName:actor,actorRole:'ผอ.สำนัก/กอง',action:'ส่งกิจกรรมที่ 7',before:previous,after:item.status,docRef:'คบ.6'});
+ if(workflowCase)Object.assign(workflowCase,{status:item.status,stage:'external_pending',next:item.next,secretaryReviewState:'pending',secretarySubmittedAt:at,secretarySubmittedBy:actor,secretarySubmittedByPosition:item.secretarySubmittedByPosition});
+ logAssignment({caseNo,type:'ตรวจทานและลงนามผลพิจารณา',fromName:actor,fromRole:'ผอ.สำนัก/กอง',toName:'เลขาธิการ ป.ป.ท.',toRole:'เลขาธิการ ป.ป.ท.',due:'ตาม SLA'});
+ logNotification({caseNo,type:'แฟ้มรอตรวจทานและลงนาม',toName:'เลขาธิการ ป.ป.ท.',channel:'ในระบบ',message:`${actor} ส่งแฟ้มให้ตรวจทานเอกสารและบันทึกผลพิจารณา`,urgency:item.urgency==='urgent'?'ด่วน':'ปกติ'});
+ logAudit({caseNo,actorName:actor,actorRole:'ผอ.สำนัก/กอง',action:'ส่งเลขาธิการ ป.ป.ท. ตรวจทานและลงนาม',before:previous,after:item.status,docRef:'คบ.6'});
  ecmisSaveState();
- successAlert('ส่งเรื่องเข้ากิจกรรมที่ 7 แล้ว','ระบบบันทึกประวัติการส่งต่อในแฟ้มแล้ว รอผลพิจารณาจากเลขาธิการ ป.ป.ท.',()=>go('queue-director'));
+ successAlert('ส่งให้เลขาธิการ ป.ป.ท. แล้ว','แฟ้มเข้าคิวรอตรวจทานและลงนาม พร้อมบันทึกผู้ส่ง วันเวลา และประวัติการดำเนินงานแล้ว',()=>go('queue-director'));
 }
 function returnDossierToOfficerV28(item){
  const roleLabel=currentRole==='director'?'ผอ.สำนัก/กอง':'ผู้บังคับบัญชาชั้นต้น',catalog=returnIssueCatalog[currentRole]||returnIssueCatalog.supervisor||[];
@@ -5839,6 +5846,115 @@ formPage=function(n){
 };
 const bindBeforeKb1EvidenceV69=bind;
 bind=function(){bindBeforeKb1EvidenceV69();bindIntakeFormEvidenceUploadV70()};
+// ==== V84: เลขาธิการ ป.ป.ท. ตรวจทาน ลงนาม และส่งผลกลับในระบบเดียวกัน ====
+const secretaryDemoAccountV84={id:'SEC-001',name:'นายสุรศักดิ์ ธรรมพิทักษ์',position:'เลขาธิการคณะกรรมการ ป.ป.ท.',unit:'สำนักงาน ป.ป.ท. (ส่วนกลาง)'};
+roleNames.secretary='เลขาธิการ ป.ป.ท.';
+roleRoutes.secretary='queue-secretary';
+roleOrgAssignments.secretary={units:orgUnits.map(unit=>unit.id),central:true};
+queueMeta['queue-secretary']=['งานเลขาธิการ ป.ป.ท.','ตรวจทานเอกสารทั้งหมด บันทึกผลพิจารณา และลงลายมือชื่อก่อนส่งผลกลับ ผอ.สำนัก/กอง','external_pending'];
+
+const activity7ResultRowBeforeSecretaryV84=activity7ResultRow;
+activity7ResultRow=function(item){
+ const html=activity7ResultRowBeforeSecretaryV84(item);
+ if(currentRole==='secretary'||item.activity7State!=='pending')return html;
+ return html.replace(/<button class="btn" data-activity7-result="[^"]+">[\s\S]*?<\/button>/,'');
+};
+
+const intakeDocumentCanAccessBeforeSecretaryV84=intakeDocumentCanAccess;
+intakeDocumentCanAccess=function(document){return currentRole==='secretary'||intakeDocumentCanAccessBeforeSecretaryV84(document)};
+
+const roleQueueItemsBeforeSecretaryV84=roleQueueItems;
+roleQueueItems=function(role){
+ if(role==='secretary')return demoCases.filter(item=>item.stage==='external_pending'&&(!item.activity7State||item.activity7State==='pending'));
+ return roleQueueItemsBeforeSecretaryV84(role);
+};
+
+const syncRoleNavigationBeforeSecretaryV84=syncRoleNavigation;
+syncRoleNavigation=function(){
+ syncRoleNavigationBeforeSecretaryV84();
+ if(currentRole!=='secretary')return;
+ const profileName=document.querySelector('.profile>div:last-child>strong');
+ if(profileName)profileName.textContent=secretaryDemoAccountV84.name;
+ const myWork=document.querySelector('[data-my-work]');
+ if(myWork){
+  myWork.dataset.route='queue-secretary';
+  myWork.querySelector('[data-my-work-role]').textContent='แฟ้มที่รอตรวจทานและลงนาม';
+  myWork.querySelector('[data-my-work-count]').textContent=roleQueueItems('secretary').length;
+ }
+};
+
+const workflowCaseVisibleBeforeSecretaryV84=workflowCaseVisibleV12;
+workflowCaseVisibleV12=function(caseNo){
+ if(currentRole==='secretary'){const item=demoCases.find(entry=>entry.no===caseNo);return Boolean(item&&(item.stage==='external_pending'||item.secretaryReviewState));}
+ return workflowCaseVisibleBeforeSecretaryV84(caseNo);
+};
+const workflowScopeMetaBeforeSecretaryV84=workflowScopeMetaV12;
+workflowScopeMetaV12=function(){return currentRole==='secretary'?['แฟ้มที่เสนอให้เลขาธิการ ป.ป.ท. พิจารณา','เห็นเอกสารและประวัติทั้งแฟ้มเพื่อการตรวจทานและลงนาม']:workflowScopeMetaBeforeSecretaryV84()};
+const openWorkflowNotificationBeforeSecretaryV84=openWorkflowNotificationV12;
+openWorkflowNotificationV12=function(entry){if(currentRole==='secretary'){go(`dossier/${encodeURIComponent(entry.caseNo)}`);return}openWorkflowNotificationBeforeSecretaryV84(entry)};
+
+function secretaryReviewPanelV84(item,workflowCase){
+ const documents=ensureIntakeDocuments(item).filter(document=>!document.deleted),signedDocuments=documents.filter(document=>document.signed).length,forms=dossierAttachedFormsV16(item),state=item.secretaryReviewState||workflowCase?.secretaryReviewState||'pending',completed=state==='signed',returned=state==='returned';
+ const stateLabel=completed?'ลงนามและส่งผลแล้ว':returned?'ส่งกลับแก้ไขแล้ว':'รอตรวจทานและลงนาม';
+ return `<section class="card secretary-review-panel" data-secretary-review-panel><div class="card-head"><div><h2><i class="fa-solid fa-stamp" aria-hidden="true"></i> ตรวจทานและลงนามผลพิจารณา</h2><p>เปิดดูเอกสารและแบบ คบ. ทุกฉบับในแฟ้ม ตรวจลำดับลายมือชื่อ แล้วบันทึกผลในระบบ</p></div><span class="badge ${completed?'success':returned?'danger':'warning'}">${esc(stateLabel)}</span></div><div class="secretary-review-grid"><div><small>ผู้ส่งเสนอ</small><strong>${esc(item.secretarySubmittedBy||workflowCase?.secretarySubmittedBy||'ผอ.สำนัก/กอง')}</strong><span>${esc(item.secretarySubmittedByPosition||workflowCase?.secretarySubmittedByPosition||'ผอ.สำนัก/กอง')}</span></div><div><small>วันที่และเวลาส่ง</small><strong>${esc(item.secretarySubmittedAt||workflowCase?.secretarySubmittedAt||'-')}</strong><span>${esc(item.ownerUnit||item.receivingUnit||'-')}</span></div><div><small>แบบ คบ. ในแฟ้ม</small><strong>${forms.length} แบบ</strong><span>${forms.length?forms.sort((a,b)=>a-b).map(number=>`คบ.${number}`).join(', '):'ยังไม่มีแบบ'}</span></div><div><small>เอกสารทั้งหมด</small><strong>${documents.length} รายการ</strong><span>ลงนามแล้ว ${signedDocuments} รายการ</span></div></div><div class="secretary-review-checks"><span><i class="fa-solid fa-circle-check"></i> ตรวจเอกสารและหลักฐานครบทั้งแฟ้ม</span><span><i class="fa-solid fa-circle-check"></i> ตรวจลายมือชื่อเจ้าหน้าที่และผู้บังคับบัญชาตามลำดับ</span><span><i class="fa-solid fa-circle-check"></i> ตรวจข้อมูลคดีหลักและผลประเมินภัย</span><span><i class="fa-solid fa-circle-check"></i> ตรวจความเห็น ผอ.สำนัก/กองและข้อเสนอ</span></div><div class="secretary-review-actions"><button type="button" class="btn secondary" data-secretary-open-documents><i class="fa-solid fa-folder-open"></i>เปิดเอกสารทั้งหมด</button>${state==='pending'?'<button type="button" class="btn danger-outline" data-secretary-return><i class="fa-solid fa-rotate-left"></i>ส่งกลับแก้ไข</button><button type="button" class="btn" data-secretary-sign><i class="fa-solid fa-file-signature"></i>ลงนามและบันทึกผล</button>':''}</div></section>`;
+}
+
+function secretaryFinalDocumentV84(item,decisionNo,decisionLabel){
+ const documents=ensureIntakeDocuments(item),existing=documents.find(document=>document.reference===decisionNo);
+ if(existing)return existing;
+ const suffix=item.no.slice(-6),document=seedIntakeDocument(item,'official',`ผลพิจารณา_${item.no}_ฉบับลงนาม.pdf`,decisionNo,{signed:true,signers:[`${secretaryDemoAccountV84.name} · ${secretaryDemoAccountV84.position}`],confidentiality:'ลับมาก',accessKey:'management',uploadedBy:secretaryDemoAccountV84.name,unit:secretaryDemoAccountV84.unit,note:`${decisionLabel}และลงลายมือชื่ออิเล็กทรอนิกส์แล้ว`});
+ document.name=`ผลพิจารณา_${suffix}_ฉบับลงนาม.pdf`;
+ documents.push(document);
+ item.documentAuditTrail=item.documentAuditTrail||[];
+ document.audit.forEach(entry=>item.documentAuditTrail.push({...entry,documentId:document.id,documentName:document.name}));
+ return document;
+}
+
+function secretarySignDecisionV84(item){
+ const workflowCase=demoCases.find(entry=>entry.no===item.no)||item,defaultNo=`ลธ.ปปท./${item.no.slice(-6)}/2569`;
+ Swal.fire({icon:'question',title:'ลงนามและบันทึกผลพิจารณา',width:700,html:`<div class="nonapproval-dialog"><div><label>ผลพิจารณา *</label><select id="secretary-decision"><option value="approved">อนุมัติให้ความคุ้มครอง</option><option value="rejected">ไม่อนุมัติให้ความคุ้มครอง</option></select></div><div><label>เลขที่คำสั่ง/เลขอ้างอิงผล *</label><input id="secretary-decision-no" value="${esc(defaultNo)}"></div><div><label>เหตุผลและข้อสั่งการ *</label><textarea id="secretary-decision-reason" placeholder="ระบุเหตุผลประกอบผลพิจารณาและงานที่ต้องดำเนินการต่อ"></textarea></div><div class="choice"><label><input id="secretary-certify" type="checkbox" style="width:auto"><span>ข้าพเจ้าได้ตรวจทานเอกสาร แบบ คบ. และลำดับลายมือชื่อในแฟ้มครบถ้วนแล้ว</span></label></div></div>`,showCancelButton:true,confirmButtonText:'ลงนามและส่งผล',cancelButtonText:'ยกเลิก',confirmButtonColor:'#1d5a91',cancelButtonColor:'#718198',reverseButtons:true,preConfirm:()=>{const decision=document.getElementById('secretary-decision')?.value,no=document.getElementById('secretary-decision-no')?.value.trim(),reason=document.getElementById('secretary-decision-reason')?.value.trim(),certified=document.getElementById('secretary-certify')?.checked;if(!no||!reason){Swal.showValidationMessage('กรุณาระบุเลขที่ผลพิจารณาและเหตุผลให้ครบ');return false}if(!certified){Swal.showValidationMessage('กรุณายืนยันว่าตรวจทานแฟ้มครบถ้วนแล้ว');return false}return{decision,no,reason}}}).then(result=>{
+  if(!result.isConfirmed)return;
+  const data=result.value,at=nowDisplay(),approved=data.decision==='approved',decisionLabel=approved?'อนุมัติให้ความคุ้มครอง':'ไม่อนุมัติให้ความคุ้มครอง',originalOwner=item.assignedOfficer||item.protectionOwner||item.currentAssignee||item.postAckOwner||item.receivedBy,directorName=item.secretarySubmittedBy||workflowCase.secretarySubmittedBy||'ผอ.สำนัก/กอง';
+  const update={activity7State:data.decision,activity7Label:decisionLabel,externalReference:data.no,decisionNumber:data.no,resultAt:at,resultNote:data.reason,resultReason:data.reason,resultSigner:`${secretaryDemoAccountV84.name} · ${secretaryDemoAccountV84.position}`,secretaryReviewState:'signed',secretarySignedAt:at,secretarySignedBy:secretaryDemoAccountV84.name,resultPendingAck:true,postAckOwner:originalOwner,owner:directorName,stage:'director_review',status:'รอ ผอ.สำนัก/กองรับทราบผลจากเลขาธิการฯ',next:'ผอ.สำนัก/กองรับทราบผลและมอบหมายเจ้าหน้าที่ดำเนินการต่อ'};
+  if(approved)Object.assign(update,{postAckStatus:'อนุมัติแล้ว · รอตรวจรับ คบ.8',postAckNext:'ตรวจผลอนุมัติและคำสั่ง คบ.8',kb8Signed:true,approvalStep:0});
+  else Object.assign(update,{postAckStatus:'เลขาธิการมีคำสั่งไม่อนุมัติ · รอจัดทำ คบ.10',postAckNext:'เจ้าหน้าที่เจ้าของเรื่องจัดทำ คบ.10',nonApprovalStep:0,caseRoute:'case-nonapproval'});
+  Object.assign(item,update);if(workflowCase!==item)Object.assign(workflowCase,update);
+  secretaryFinalDocumentV84(item,data.no,decisionLabel);
+  item.assignmentHistory=item.assignmentHistory||[];item.assignmentHistory.push({at,action:`เลขาธิการ ป.ป.ท. ${decisionLabel}และลงนาม`,actor:secretaryDemoAccountV84.name,detail:`${data.no} · ${data.reason}`});
+  logAssignment({caseNo:item.no,type:'รับทราบผลพิจารณาจากเลขาธิการ ป.ป.ท.',fromName:secretaryDemoAccountV84.name,fromRole:secretaryDemoAccountV84.position,toName:directorName,toRole:'ผอ.สำนัก/กอง',due:'ทันที'});
+  logNotification({caseNo:item.no,type:'ผลพิจารณาลงนามแล้ว',toName:directorName,channel:'ในระบบ',message:`${decisionLabel} · ${data.no} กรุณารับทราบและมอบหมายงานต่อ`,urgency:item.urgency==='urgent'?'ด่วน':'ปกติ'});
+  logAudit({caseNo:item.no,actorName:secretaryDemoAccountV84.name,actorRole:secretaryDemoAccountV84.position,action:`${decisionLabel}และลงลายมือชื่อ`,before:'รอตรวจทานและลงนาม',after:update.status,docRef:data.no});
+  ecmisSaveState();successAlert('ลงนามและส่งผลแล้ว',`ระบบสร้างเอกสารฉบับลงนาม เก็บเข้าแฟ้ม และแจ้ง ${directorName} ให้รับทราบผลแล้ว`,()=>go('queue-secretary'));
+ });
+}
+
+function secretaryReturnV84(item){
+ const workflowCase=demoCases.find(entry=>entry.no===item.no)||item;
+ Swal.fire({icon:'question',title:'ส่งกลับให้แก้ไข',width:660,html:`<div class="nonapproval-dialog"><div><label>ประเด็นที่ต้องแก้ไข *</label><select id="secretary-return-topic"><option>ข้อเท็จจริงหรือเอกสารประกอบไม่ครบ</option><option>ความเห็นตามลำดับชั้นไม่ชัดเจน</option><option>ผลประเมินภัยหรือวิธีคุ้มครองไม่ครบ</option><option>ลายมือชื่อหรือฉบับเอกสารไม่ครบ</option></select></div><div><label>รายละเอียดและสิ่งที่ต้องดำเนินการ *</label><textarea id="secretary-return-reason" placeholder="ระบุรายการที่ต้องแก้ไขให้ตรวจสอบได้ชัดเจน"></textarea></div></div>`,showCancelButton:true,confirmButtonText:'ยืนยันส่งกลับแก้ไข',cancelButtonText:'ยกเลิก',confirmButtonColor:'#a24343',cancelButtonColor:'#718198',reverseButtons:true,preConfirm:()=>{const topic=document.getElementById('secretary-return-topic')?.value,reason=document.getElementById('secretary-return-reason')?.value.trim();if(!reason){Swal.showValidationMessage('กรุณาระบุรายละเอียดที่ต้องแก้ไข');return false}return{topic,reason}}}).then(result=>{
+  if(!result.isConfirmed)return;
+  const data=result.value,at=nowDisplay(),directorName=item.secretarySubmittedBy||workflowCase.secretarySubmittedBy||'ผอ.สำนัก/กอง',originalOwner=item.assignedOfficer||item.protectionOwner||item.currentAssignee||item.receivedBy,detail=`${data.topic} — ${data.reason}`,update={activity7State:'returned',activity7Label:'ส่งกลับแก้ไข',resultAt:at,resultNote:detail,returned:true,returnedBy:secretaryDemoAccountV84.position,returnIssueLabel:data.topic,returnNote:data.reason,secretaryReviewState:'returned',resultPendingAck:true,postAckOwner:originalOwner,postAckStatus:'เลขาธิการ ป.ป.ท. ส่งกลับแก้ไข',postAckNext:'แก้ไขตามข้อสั่งการและเสนอใหม่ตามลำดับชั้น',owner:directorName,stage:'director_review',status:'รอ ผอ.สำนัก/กองรับทราบรายการแก้ไข',next:'ผอ.สำนัก/กองรับทราบและมอบหมายเจ้าหน้าที่แก้ไข'};
+  Object.assign(item,update);if(workflowCase!==item)Object.assign(workflowCase,update);
+  item.assignmentHistory=item.assignmentHistory||[];item.assignmentHistory.push({at,action:'เลขาธิการ ป.ป.ท. ส่งกลับแก้ไข',actor:secretaryDemoAccountV84.name,detail});
+  logAssignment({caseNo:item.no,type:'ส่งกลับแก้ไขจากเลขาธิการ ป.ป.ท.',fromName:secretaryDemoAccountV84.name,fromRole:secretaryDemoAccountV84.position,toName:directorName,toRole:'ผอ.สำนัก/กอง',due:'ด่วน'});
+  logAudit({caseNo:item.no,actorName:secretaryDemoAccountV84.name,actorRole:secretaryDemoAccountV84.position,action:'ส่งกลับแก้ไข',before:'รอตรวจทานและลงนาม',after:update.status,docRef:item.no});
+  ecmisSaveState();successAlert('ส่งกลับแก้ไขแล้ว',`ระบบบันทึกเหตุผลในแฟ้มและแจ้ง ${directorName} แล้ว`,()=>go('queue-secretary'));
+ });
+}
+
+const bindDossierBeforeSecretaryV84=bindDossierV16;
+bindDossierV16=function(no){
+ bindDossierBeforeSecretaryV84(no);
+ if(currentRole!=='secretary')return;
+ const item=intakeItemV16(no),workflowCase=demoCases.find(entry=>entry.no===no)||item;if(!item||!workflowCase)return;
+ const target=document.querySelector('.two-col');
+ if(target&&!document.querySelector('[data-secretary-review-panel]'))target.insertAdjacentHTML('beforebegin',secretaryReviewPanelV84(item,workflowCase));
+ document.querySelectorAll('[data-dossier-add-form],[data-dossier-remove-form],[data-dossier-link-main],[data-dossier-change-main],[data-dossier-evidence-upload],[data-dossier-external-form],[data-dossier-set-urgency],[data-dossier-forward],[data-dossier-forward-director],[data-dossier-forward-activity7]').forEach(element=>element.hidden=true);
+ document.querySelectorAll('[data-dossier-open-form]').forEach(button=>{button.innerHTML='เปิดตรวจ <i class="fa-solid fa-arrow-right"></i>'});
+ document.querySelector('[data-secretary-open-documents]')?.addEventListener('click',()=>openIntakeDocumentFolder(item));
+ document.querySelector('[data-secretary-sign]')?.addEventListener('click',()=>secretarySignDecisionV84(item));
+ document.querySelector('[data-secretary-return]')?.addEventListener('click',()=>secretaryReturnV84(item));
+};
+
 document.getElementById('role').onchange=e=>{currentRole=e.target.value;currentOrgUnitId=null;const target=roleRoutes[currentRole]||'registry';toast('เปลี่ยนบทบาทเป็น '+roleNames[currentRole]);if((location.hash.replace(/^#\//,'')||'registry')===target)render();else go(target)};
 document.getElementById('officer-account').onchange=e=>{currentOfficerUserId=e.target.value;const account=currentOfficerAccount();if(account?.orgUnitId)currentOrgUnitId=account.orgUnitId;newWorkNoticeShown.clear();toast('เปลี่ยนบัญชีจำลองเป็น '+(account?.name||'ไม่ระบุ'));go('queue-officer')};
 document.getElementById('org-unit').onchange=e=>{currentOrgUnitId=e.target.value;toast('เปลี่ยนหน่วยงานที่ปฏิบัติงานเป็น '+(e.target.value==='__all'?'ทุกหน่วยงาน (ส่วนกลาง)':orgUnitLabel(e.target.value)));render()};function updateFieldModeIndicator(){const el=document.querySelector('[data-field-mode-indicator]');if(!el)return;const online=navigator.onLine;el.classList.toggle('offline',!online);el.innerHTML=online?'<i class="fa-solid fa-wifi" aria-hidden="true"></i><span>ออนไลน์ · ข้อมูลซิงค์อัตโนมัติ</span>':'<i class="fa-solid fa-wifi-slash" aria-hidden="true"></i><span>ออฟไลน์ · บันทึกในเครื่อง รอซิงค์</span>'}
