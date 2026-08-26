@@ -1474,7 +1474,7 @@ function action(name){if(name==='forward'){
   }
   showCaseDocsPreview(currentCaseItem(),()=>executeAction('forward'));
   return}const confirmations={'link-main':['ยืนยันเชื่อมโยงคดีหลัก','ระบบจะผูกเลขสำนวน กบค. 001/2569 กับแฟ้มนี้'],forward:['ยืนยันส่งผู้บังคับบัญชาชั้นต้น','หลังส่งแล้วแฟ้มจะเข้าสู่คิวกลั่นกรอง'],sign:['ยืนยันลงลายมือชื่อ','ลายมือชื่อจะผูกกับเอกสารรุ่นปัจจุบัน'],'sign-petitioner':['ยืนยันลายมือชื่อผู้ยื่นคำร้อง','ระบบจะผูกลายมือชื่อ วันเวลา และอุปกรณ์กับเอกสารรุ่นนี้'],'sign-officer':['ยืนยันการตรวจรับรองคำร้อง','เจ้าพนักงานผู้รับคำร้องจะรับรองด้วยบัญชีราชการ'],'remove-row':['ยืนยันลบรายการ','รายการที่เลือกจะถูกนำออกจากแบบ']};if(confirmations[name]){const [title,text]=confirmations[name];Swal.fire({icon:'question',title,text,showCancelButton:true,confirmButtonText:'ยืนยัน',cancelButtonText:'ตรวจสอบอีกครั้ง',confirmButtonColor:'#1d5a91',cancelButtonColor:'#718198',reverseButtons:true,customClass:{popup:'ecmis-swal'}}).then(result=>{if(result.isConfirmed)executeAction(name)});return}executeAction(name)}
-function markFormSignedV30(number){const item=intakeItemV16(activeCaseNo);if(!item||!number)return;item.formSignedStatus=item.formSignedStatus||{};item.formSignedStatus[number]=true;if(number===10){const workflowCase=demoCases.find(entry=>entry.no===item.no);if(workflowCase?.activity7State==='rejected'&&!(workflowCase.nonApprovalStep>=1))workflowCase.nonApprovalStep=1}}
+function markFormSignedV30(number){const item=intakeItemV16(activeCaseNo);if(!item||!number)return;item.formSignedStatus=item.formSignedStatus||{};item.formSignedStatus[number]=true;item.folderForms=item.folderForms||[];if(!item.folderForms.includes(number))item.folderForms.push(number);if(typeof ensureFormDocumentEntryV49==='function')ensureFormDocumentEntryV49(item,number);if(number===10){const workflowCase=demoCases.find(entry=>entry.no===item.no);if(workflowCase?.activity7State==='rejected'&&!(workflowCase.nonApprovalStep>=1))workflowCase.nonApprovalStep=1}if(typeof ecmisSaveState==='function')ecmisSaveState()}
 function executeAction(name){const route=location.hash.replace(/^#\//,'');if(name==='toggle-sidebar'){const app=document.querySelector('.app'),button=document.querySelector('[data-action="toggle-sidebar"]'),collapsed=app?.classList.toggle('sidebar-collapsed')??false;if(button){button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',collapsed?'ขยายเมนู':'ย่อเมนู')}return}if(name==='link-main'){linked=true;render();successAlert('เชื่อมโยงคดีหลักสำเร็จ','บันทึกเลขสำนวนและผลประเมินภัยในแฟ้มแล้ว');return}if(name==='find-main'){Swal.fire({icon:'info',title:'พบคดีหลัก 1 รายการ',text:'กบค. 001/2569 พร้อมให้เชื่อมโยงกับแฟ้มนี้',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91',customClass:{popup:'ecmis-swal'}});return}if(name==='forward'){successAlert('ส่งแฟ้มสำเร็จ','แฟ้มเข้าสู่คิวผู้บังคับบัญชาชั้นต้นแล้ว',()=>go('queue-supervisor'));return}if(name==='next-section'){const n=Number(route.split('/')[1]),f=forms.find(x=>x.n===n);manualKb1Page=null;if(formSection<f.sections.length-1){formSection++;render()}else{document.querySelector('.signature-step')?.scrollIntoView({behavior:'smooth'});toast('ลงลายมือชื่อตามลำดับที่แสดงในขั้นสุดท้าย')}return}if(name==='back-section'){manualKb1Page=null;if(formSection>0){formSection--;render()}else go(formReturnRoute);return}if(name==='sign-petitioner'){petitionerSigned=true;signed=petitionerSigned&&officerSigned;render();successAlert('ผู้ยื่นลงลายมือชื่อแล้ว','ลายมือชื่อถูกผูกกับรุ่นเอกสาร ต่อไปเจ้าพนักงานตรวจและรับรอง');return}if(name==='sign-officer'){if(!petitionerSigned){Swal.fire({icon:'warning',title:'รอลายมือชื่อผู้ยื่นคำร้อง',text:'ผู้ยื่นต้องลงลายมือชื่อก่อนเจ้าพนักงานรับรอง',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}officerSigned=true;signed=true;markFormSignedV30(Number(route.split('/')[1])||1);const intakeSignedItem=intakeItemV16(activeCaseNo);render();const signedMessage=intakeSignedItem?'ลายมือชื่อทั้งสองฝ่ายถูกผูกกับเอกสารรุ่นนี้แล้ว ระบบจะกลับไปที่แฟ้มเพื่อให้ดำเนินการต่อ':'ลายมือชื่อทั้งสองฝ่ายถูกผูกกับเอกสารรุ่นนี้';const signedCallback=intakeSignedItem?()=>go(`dossier/${encodeURIComponent(intakeSignedItem.no)}`):undefined;successAlert('เจ้าพนักงานรับรองคำร้องแล้ว',signedMessage,signedCallback);return}if(name==='sign'){signed=true;markFormSignedV30(Number(route.split('/')[1]));render();successAlert('ลงลายมือชื่อสำเร็จ','ลายมือชื่อถูกผูกกับเอกสารรุ่นนี้แล้ว');return}if(name==='print'){window.print();return}if(name==='add-row'){toast('เพิ่มรายการใหม่แล้ว');return}if(name==='remove-row'){successAlert('ลบรายการแล้ว','นำรายการออกจากแบบเรียบร้อยแล้ว');return}if(name==='export'){toast('สร้างไฟล์ส่งออกแล้ว');return}if(name==='save'){try{localStorage.setItem(`kb-draft-${activeCaseNo||'draft'}`,JSON.stringify({formDraft,savedAt:new Date().toISOString()}))}catch(e){}toast(navigator.onLine?'บันทึกร่างแล้ว ซิงค์กับระบบส่วนกลางแล้ว':'บันทึกร่างในเครื่องแล้ว (ออฟไลน์) รอซิงค์อัตโนมัติเมื่อมีสัญญาณ');return}toast('ดำเนินการเรียบร้อย')}
 function enhanceMainCaseSelector(){
  if((location.hash.replace(/^#\//,'')||'registry')!=='case')return;
@@ -2013,12 +2013,25 @@ function kb6FieldHtml(label){
 const fieldHtmlBeforeKb6=fieldHtml;
 fieldHtml=function(label,index){return location.hash.replace(/^#\//,'')==='form/6'?kb6FieldHtml(label,index):fieldHtmlBeforeKb6(label,index)};
 function isWithdrawalKb6Officer(){return Boolean(currentCaseItem()?.withdrawal)&&(currentRole==='officer'||currentRole==='admin')}
+function kb6CaseSignatureState(){
+ const item=intakeItemV16(activeCaseNo),saved=item?.kb6SignatureStatus||{};
+ return {item,officer:Boolean(saved.officer||item?.formSignedStatus?.[6]||item?.kb6Signed),supervisor:Boolean(saved.supervisor),director:Boolean(saved.director)};
+}
 function kb6Signer(){
- if(currentRole==='supervisor')return {name:'นายกิตติศักดิ์ ธรรมรักษ์',role:'ผู้บังคับบัญชาชั้นต้น',position:'ผู้อำนวยการกลุ่มงานสืบสวนสอบสวน 2',action:'sign-kb6-supervisor',signed:kb6SupervisorSigned,ready:kb6OfficerSigned};
- if(currentRole==='director'){const account=currentDirectorAccount();return {name:account?.name||'ยังไม่เลือกบัญชี ผอ.',role:'ผู้อำนวยการสำนัก/กอง',position:account?.position||'ผอ.สำนัก/กอง',action:'sign-kb6-director',signed:kb6DirectorSigned,ready:kb6SupervisorSigned};}
- const account=currentOfficerAccount();return {name:account?.name||'นางสาวอรุณี ใจมั่น',role:'เจ้าหน้าที่เจ้าของเรื่อง',position:account?.position||'นักสืบสวนสอบสวนชำนาญการ',action:isWithdrawalKb6Officer()?'send-kb6-withdrawal':'sign-kb6-officer',signed:kb6OfficerSigned,ready:true};
+ const state=kb6CaseSignatureState();
+ if(currentRole==='supervisor')return {name:'นายกิตติศักดิ์ ธรรมรักษ์',role:'ผู้บังคับบัญชาชั้นต้น',position:'ผู้อำนวยการกลุ่มงานสืบสวนสอบสวน 2',action:'sign-kb6-supervisor',signed:state.supervisor,ready:state.officer};
+ if(currentRole==='director'){const account=currentDirectorAccount();return {name:account?.name||'ยังไม่เลือกบัญชี ผอ.',role:'ผู้อำนวยการสำนัก/กอง',position:account?.position||'ผอ.สำนัก/กอง',action:'sign-kb6-director',signed:state.director,ready:state.supervisor};}
+ const account=currentOfficerAccount();return {name:account?.name||'นางสาวอรุณี ใจมั่น',role:'เจ้าหน้าที่เจ้าของเรื่อง',position:account?.position||'นักสืบสวนสอบสวนชำนาญการ',action:isWithdrawalKb6Officer()?'send-kb6-withdrawal':'sign-kb6-officer',signed:state.officer,ready:true};
 }
 function kb6RoleSigned(){return kb6Signer().signed}
+function saveKb6SignatureV82(role){
+ const item=intakeItemV16(activeCaseNo);if(!item)return null;
+ const workflowCase=demoCases.find(entry=>entry.no===item.no);
+ item.kb6SignatureStatus=item.kb6SignatureStatus||{};item.kb6SignatureStatus[role]=true;
+ if(workflowCase&&workflowCase!==item){workflowCase.kb6SignatureStatus=workflowCase.kb6SignatureStatus||{};workflowCase.kb6SignatureStatus[role]=true;if(role==='officer')workflowCase.kb6Signed=true}
+ if(role==='officer'){item.kb6Signed=true;markFormSignedV30(6)}else ecmisSaveState();
+ return item;
+}
 function kb6OpinionHistory(){
  const rows=[];
  if(kb6OfficerSigned&&currentRole!=='officer'&&currentRole!=='admin')rows.push({role:'เจ้าหน้าที่เจ้าของเรื่อง',name:'นางสาวอรุณี ใจมั่น',position:'นักสืบสวนสอบสวนชำนาญการ',opinion:kb6Value('ข้อเสนอของเจ้าหน้าที่')});
@@ -2074,13 +2087,13 @@ action=function(name){
 const executeActionBeforeKb6=executeAction;
 executeAction=function(name){
  const route=location.hash.replace(/^#\//,'');
- if(name==='sign-kb6-officer'){kb6OfficerSigned=true;markFormSignedV30(6);render();successAlert('เจ้าหน้าที่ลงลายมือชื่อ คบ.6 แล้ว','ข้อเสนอของเจ้าหน้าที่ถูกผูกกับเอกสารรุ่นนี้');return}
+ if(name==='sign-kb6-officer'){kb6OfficerSigned=true;saveKb6SignatureV82('officer');render();successAlert('เจ้าหน้าที่ลงลายมือชื่อ คบ.6 แล้ว','ข้อเสนอของเจ้าหน้าที่ถูกผูกกับเอกสารรุ่นนี้');return}
  if(name==='send-kb6-withdrawal'){kb6OfficerSigned=true;render();successAlert('ส่ง คบ.6 แล้ว','บันทึกข้อเสนอของเจ้าหน้าที่และส่งต่อผู้บังคับบัญชาชั้นต้นแล้ว');return}
- if(name==='sign-kb6-supervisor'){if(!kb6OfficerSigned){Swal.fire({icon:'warning',title:'รอลายมือชื่อเจ้าหน้าที่เจ้าของเรื่อง',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6SupervisorSigned=true;render();successAlert('ผู้บังคับบัญชาชั้นต้นลงนามแล้ว','ความเห็นถูกเพิ่มตามลำดับโดยไม่เขียนทับข้อเสนอของเจ้าหน้าที่');return}
- if(name==='sign-kb6-director'){if(!kb6SupervisorSigned){Swal.fire({icon:'warning',title:'รอความเห็นผู้บังคับบัญชาชั้นต้น',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6DirectorSigned=true;render();successAlert('ผอ.สำนัก/กองลงนามแล้ว','ความเห็นถูกบันทึกและพร้อมส่งแฟ้มไปกิจกรรมที่ 7');return}
+ if(name==='sign-kb6-supervisor'){if(!kb6Signer().ready){Swal.fire({icon:'warning',title:'รอลายมือชื่อเจ้าหน้าที่เจ้าของเรื่อง',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6SupervisorSigned=true;saveKb6SignatureV82('supervisor');render();successAlert('ผู้บังคับบัญชาชั้นต้นลงนามแล้ว','ความเห็นถูกเพิ่มตามลำดับโดยไม่เขียนทับข้อเสนอของเจ้าหน้าที่');return}
+ if(name==='sign-kb6-director'){if(!kb6Signer().ready){Swal.fire({icon:'warning',title:'รอความเห็นผู้บังคับบัญชาชั้นต้น',confirmButtonText:'ตกลง',confirmButtonColor:'#1d5a91'});return}kb6DirectorSigned=true;saveKb6SignatureV82('director');render();successAlert('ผอ.สำนัก/กองลงนามแล้ว','ความเห็นถูกบันทึกและพร้อมส่งแฟ้มไปกิจกรรมที่ 7');return}
  if(name==='complete-kb6'){
-  const item=demoCases.find(c=>c.no===activeCaseNo),target=returnToCaseRoute();
-  if(item){item.kb6Signed=true;item.ready=true;if(item.stage==='staff_review'){item.status='พร้อมส่งต่อ';item.next='ตรวจสอบความเห็น คบ.6 และส่งผู้บังคับบัญชา'}}
+  const item=intakeItemV16(activeCaseNo)||demoCases.find(c=>c.no===activeCaseNo),target=returnToCaseRoute();
+  if(item){item.kb6Signed=true;item.ready=true;saveKb6SignatureV82('officer');if(item.stage==='staff_review'){item.status='พร้อมส่งต่อ';item.next='ตรวจสอบความเห็น คบ.6 และส่งผู้บังคับบัญชา'}}
   if(target==='case-urgent-kb2')skipNextUrgentKb2Reset=true;
   successAlert('บันทึก คบ.6 ในแฟ้มแล้ว','ข้อมูล ความเห็น และลายมือชื่อยังอยู่ครบตามลำดับ',()=>go(target));return;
  }
@@ -3825,7 +3838,10 @@ function dossierFormRowsV21(item,workflowCase){
   // record while the signed PDF remains in "เอกสารในแฟ้ม". The two panels answer different questions:
   // this list shows which คบ. forms were used and their status; the document panel stores the
   // actual signed files and versions. Hiding a completed row made the form appear to disappear.
-  const isSigned=Boolean(item.formSignedStatus?.[number]);
+  // Older demo sessions saved the dedicated คบ.6 completion flag but not the shared
+  // per-form signature map. Treat that flag as signed and repair the persisted map in place.
+  const isSigned=Boolean(item.formSignedStatus?.[number]||(number===6&&(item.kb6Signed||workflowCase?.kb6Signed)));
+  if(isSigned&&!item.formSignedStatus?.[number]){item.formSignedStatus=item.formSignedStatus||{};item.formSignedStatus[number]=true;if(typeof ecmisSaveState==='function')ecmisSaveState()}
   if(isSigned){
    ensureFormDocumentEntryV49(item,number);
    return `<div class="task-row complete"><span class="task-no">คบ.${number}</span><div><strong>${esc(dossierFormTitleV16(number))}</strong><small>จัดทำและลงนามแล้ว · ฉบับลงนามเก็บอยู่ในเอกสารในแฟ้ม</small><span class="task-state done"><i class="fa-solid fa-circle-check"></i>เสร็จแล้ว</span></div><button type="button" class="btn secondary" data-dossier-open-form="${number}">เปิดดูแบบ <i class="fa-solid fa-arrow-right"></i></button></div>`
@@ -4503,7 +4519,7 @@ function bindDossierV16(no){
  // form here without resetting them left `signed` stuck at whatever the LAST-signed form set it
  // to, so a freshly-opened form could render its signature card as already-signed and disabled
  // before the officer ever touched it. data-approval-form-open already reset both; do the same here.
- document.querySelectorAll('[data-dossier-open-form]').forEach(button=>button.onclick=()=>{const number=Number(button.dataset.dossierOpenForm);if(number===3)item.kb3AutoQueued=false;activeCaseNo=item.no;formSection=0;signed=intakeInitialFormSignedV75(item,number);petitionerSigned=signed;officerSigned=signed;go(`form/${number}`)});
+ document.querySelectorAll('[data-dossier-open-form]').forEach(button=>button.onclick=()=>{const number=Number(button.dataset.dossierOpenForm);if(number===3)item.kb3AutoQueued=false;activeCaseNo=item.no;formSection=0;signed=intakeInitialFormSignedV75(item,number);petitionerSigned=signed;officerSigned=signed;if(number===6){const state=item.kb6SignatureStatus||{};kb6OfficerSigned=Boolean(state.officer||item.formSignedStatus?.[6]||item.kb6Signed);kb6SupervisorSigned=Boolean(state.supervisor);kb6DirectorSigned=Boolean(state.director)}go(`form/${number}`)});
  document.querySelector('[data-dossier-add-form]')?.addEventListener('click',()=>{const number=Number(document.querySelector('[data-dossier-form-select]')?.value);if(!number)return;const attached=dossierAttachedFormsV16(item);if(!attached.includes(number))attached.push(number);if(number===3)clearKb3SkipV78(item);item.assignmentHistory=item.assignmentHistory||[];item.assignmentHistory.push({at:nowDisplay(),action:`แนบ คบ.${number} เข้าแฟ้ม`,actor:roleNames[currentRole],detail:'เจ้าหน้าที่เลือกแบบและแนบเข้าแฟ้ม'});activeCaseNo=item.no;formSection=0;signed=false;petitionerSigned=false;officerSigned=false;go(`form/${number}`)});
  document.querySelectorAll('[data-dossier-choose-intake-form]').forEach(button=>button.addEventListener('click',()=>chooseDossierIntakeFormV16(item,Number(button.dataset.dossierChooseIntakeForm))));
  document.querySelector('[data-dossier-choose-intake-form-list]')?.addEventListener('click',()=>chooseDossierIntakeFormV16(item,Number(document.querySelector('[data-dossier-intake-form-select]')?.value)));
