@@ -7,7 +7,6 @@ import { SectionCard } from './SectionCard'
 import { useCaseStore } from '../../store/useCaseStore'
 import { CaseItem, Kb15Report, TerminationTrigger } from '../../types/case'
 import { TERMINATION_REASONS, TERMINATION_TRIGGERS } from '../../lib/constants'
-import { formatThaiDate } from '../../lib/utils'
 import { showToast } from '../../lib/swal'
 import { Kb15ReviewActions } from './Kb15ReviewActions'
 
@@ -49,7 +48,7 @@ export const TRIGGER_FIELDS: Record<
  * ต้องรอคำสั่ง คบ.16 ที่ลงนามและถึงวันที่มีผลก่อน
  */
 export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string; initialSource?: 'witness_kb7' }> = ({ caseItem, role, initialSource }) => {
-  const { recordTerminationTrigger, addTerminationAdditionalReason, draftKb15 } = useCaseStore()
+  const { recordTerminationTrigger, draftKb15 } = useCaseStore()
   const navigate = useNavigate()
   const kb7Draft = selectCaseDraft(useFormDraftStore.getState(), 7, caseItem.no)
   const openKb7 = () => navigate({ to: '/form/$formId', params: { formId: '7' }, search: { caseNo: caseItem.no, from: 'termination' } })
@@ -67,13 +66,6 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string; initialSo
     detail: initialSource ? String(kb7Draft['เหตุผลการยุติ'] || '') : '',
   })
 
-  // TC-144 — แขนงที่ยังไม่ถูกใช้เป็นเหตุหลักหรือเหตุเสริม ใช้เพิ่มเหตุยุติที่เกิดพร้อมกันได้ครบถ้วน
-  const usedSources = new Set([trigger?.source, ...(trigger?.additionalReasons || []).map((r) => r.source)])
-  const remainingTriggers = TERMINATION_TRIGGERS.filter((t) => !usedSources.has(t.value as TerminationTrigger['source']))
-  const [additionalForm, setAdditionalForm] = useState<{ source: TerminationTrigger['source'] | ''; ref: string; detail: string }>(
-    { source: '', ref: '', detail: '' }
-  )
-  const additionalFields = additionalForm.source ? TRIGGER_FIELDS[additionalForm.source] : undefined
   const [form, setForm] = useState({
     trigger: 'due_or_officer' as Kb15Report['trigger'],
     triggerRef: '',
@@ -84,117 +76,11 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string; initialSo
 
   return (
     <SectionCard
-      title="เริ่มเรื่องยุติการคุ้มครอง"
-      hint="บันทึกที่มา แล้วจัดทำ คบ.15 เสนอพิจารณา"
+      title={trigger ? "จัดทำ คบ.15" : "เริ่มเรื่องยุติการคุ้มครอง"}
+      hint={trigger ? undefined : "บันทึกที่มา แล้วจัดทำ คบ.15 เสนอพิจารณา"}
     >
       {/* ---------- WIT1125-WIT1128 — เหตุเริ่มยุติมาจากทางใด ---------- */}
-      {trigger ? (
-        <div className="rounded-lg border border-line bg-soft p-3 text-[0.8rem] text-slate-700 space-y-1">
-          <div>
-            <strong>เหตุเริ่มยุติ:</strong>{' '}
-            {TERMINATION_TRIGGERS.find((t) => t.value === trigger.source)?.label || trigger.source}
-          </div>
-          {trigger.ref && <div>อ้างอิง: {trigger.ref}</div>}
-          {trigger.documentName && (
-            <div className="text-[0.8rem] text-muted">
-              <i className="fa-solid fa-paperclip mr-1" />
-              {trigger.documentName} — อัปโหลดเข้ากับแฟ้มเดิมแล้ว
-            </div>
-          )}
-          {trigger.detail && <div className="text-[0.8rem] text-muted">{trigger.detail}</div>}
-          <div className="text-[0.8rem] text-muted">
-            บันทึกโดย {trigger.recordedBy} เมื่อ {trigger.recordedAt}
-            {trigger.receivedAt ? ` · วันที่รับเรื่อง ${formatThaiDate(trigger.receivedAt)}` : ''}
-          </div>
-
-          {/* TC-144 — เหตุยุติเสริมที่เกิดพร้อมกัน (เช่น คบ.7 + ครบกำหนด) ยังเป็นเรื่องยุติเดียวในแฟ้มนี้ */}
-          {(trigger.additionalReasons || []).length > 0 && (
-            <div className="mt-2 space-y-1.5 border-t border-slate-200 pt-2">
-              <span className="ws-label">เหตุยุติเสริม (เกิดพร้อมกัน)</span>
-              {(trigger.additionalReasons || []).map((r, i) => (
-                <div
-                  key={`${r.source}-${i}`}
-                  data-testid="termination-additional-reason"
-                  className="rounded-lg border border-blue-200 bg-blue-50/50 p-2 text-[0.8rem]"
-                >
-                  <strong>{TERMINATION_TRIGGERS.find((t) => t.value === r.source)?.label || r.source}</strong>
-                  {r.ref && <div>อ้างอิง: {r.ref}</div>}
-                  {r.detail && <div className="text-muted">{r.detail}</div>}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* TC-144 — ยังคงให้เพิ่มเหตุยุติแขนงอื่นที่เกิดพร้อมกันได้ แม้บันทึกเหตุหลักไปแล้ว (ไม่สร้างเรื่องยุติใหม่) */}
-          {isOfficer && remainingTriggers.length > 0 && (
-            <div className="mt-2 space-y-1.5 border-t border-slate-200 pt-2">
-              <span className="ws-label">เพิ่มเหตุยุติที่เกิดพร้อมกัน (ถ้ามี)</span>
-              {/* ใช้ radio (ไม่ใช่ select) เพื่อไม่ปนกับ dropdown อื่นของแท็บนี้ */}
-              <div className="grid gap-1.5">
-                {remainingTriggers.map((t) => {
-                  const value = t.value as TerminationTrigger['source']
-                  return (
-                    <label
-                      key={t.value}
-                      className={`flex cursor-pointer items-start gap-2 rounded-lg border p-2 text-[0.8rem] transition ${
-                        additionalForm.source === value
-                          ? 'border-blue bg-blue-50/60 text-navy-deep'
-                          : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={`additional-trigger-${caseItem.no}`}
-                        checked={additionalForm.source === value}
-                        onChange={() => setAdditionalForm({ source: value, ref: '', detail: '' })}
-                        className="mt-0.5 accent-blue"
-                      />
-                      <span>
-                        {t.label}
-                      </span>
-                    </label>
-                  )
-                })}
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {additionalForm.source && (
-                  <input
-                    value={additionalForm.ref}
-                    onChange={(e) => setAdditionalForm((p) => ({ ...p, ref: e.target.value }))}
-                    placeholder={additionalFields?.refLabel}
-                    className="ws-input"
-                  />
-                )}
-              </div>
-              {additionalForm.source && (
-                <input
-                  value={additionalForm.detail}
-                  onChange={(e) => setAdditionalForm((p) => ({ ...p, detail: e.target.value }))}
-                  placeholder={additionalFields?.detailLabel}
-                  className="ws-input w-full"
-                />
-              )}
-              <Button
-                type="button"
-                disabled={!additionalForm.source}
-                onClick={() => {
-                  if (!additionalForm.source) return
-                  addTerminationAdditionalReason(caseItem.no, {
-                    source: additionalForm.source,
-                    ref: additionalForm.ref || undefined,
-                    detail: additionalForm.detail || undefined,
-                  })
-                  setAdditionalForm({ source: '', ref: '', detail: '' })
-                  showToast('เพิ่มเหตุยุติเสริมแล้ว — ยังเป็นเรื่องยุติเดียวในแฟ้มนี้')
-                }}
-                className="rounded-lg border border-blue bg-white px-4 py-1.5 text-[0.8rem] font-bold text-blue hover:bg-blue-50 transition disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                เพิ่มเหตุยุติเสริม
-              </Button>
-            </div>
-          )}
-        </div>
-      ) : (
+      {!trigger && (
         isOfficer && (
           <div className="space-y-4" data-testid="termination-trigger-form">
             <fieldset>
@@ -276,15 +162,6 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string; initialSo
           </div>
           <div>{kb15.summary}</div>
           {kb15.evidenceNote && <div className="text-[0.8rem] text-muted">{kb15.evidenceNote}</div>}
-          {/* TC-144 — แสดงเหตุยุติเสริมทั้งหมดใน คบ.15 ด้วย เพื่อให้ครบถ้วนทุกทาง */}
-          {(trigger?.additionalReasons || []).length > 0 && (
-            <div className="text-[0.8rem] text-muted">
-              เหตุยุติเสริม:{' '}
-              {(trigger?.additionalReasons || [])
-                .map((r) => TERMINATION_TRIGGERS.find((t) => t.value === r.source)?.label || r.source)
-                .join(' · ')}
-            </div>
-          )}
           <div>
             สถานะ:{' '}
             {kb15.status === 'submitted'

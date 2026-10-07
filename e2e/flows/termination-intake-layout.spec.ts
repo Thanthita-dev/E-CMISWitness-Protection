@@ -45,5 +45,7 @@ test('เลือกที่มาของเรื่องยุติไ�
   expect((await readCase(page, NO)).stage).toBe('termination_review')
   expect((await readCase(page, NO)).kb15).toBeUndefined()
   await page.reload()
-  await expect(page.getByText('ผลประเมินล่าสุดไม่พบภัย ขอเสนอให้พิจารณายุติ', { exact: true })).toBeVisible()
+  await expect(page.getByText('เพิ่มเหตุยุติที่เกิดพร้อมกัน (ถ้ามี)', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('เหตุเริ่มยุติ:', { exact: true })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'จัดทำ คบ.15', exact: true })).toBeVisible()
 })
