@@ -1,0 +1,414 @@
+<title>ผลแก้ไข Prototype คุ้มครองพยาน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a verification dossier — summary sheet up top, then one case file per item, tester's finding beside the fix, evidence below */
+:root {
+  --paper:#f5f6f3; --sheet:#ffffff; --ink:#1b2430; --muted:#5b6673; --line:#d9dde0;
+  --navy:#1f3a5f; --seal:#c8243f; --seal-soft:#fbe7ea; --ok:#1d7a4a; --ok-soft:#e2f3ea;
+  --warn:#9a6a00; --warn-soft:#fbf1d6; --gap:#5b3e96; --gap-soft:#ece6f7; --was-bg:#fbf4f1; --now-bg:#eef6f1;
+  --display:"Bai Jamjuree","IBM Plex Sans Thai",system-ui,sans-serif;
+  --body:"IBM Plex Sans Thai",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#12161b; --sheet:#1a2027; --ink:#e6e9ec; --muted:#9aa5b1; --line:#2c343d;
+  --navy:#9cc0ea; --seal:#ff6b81; --seal-soft:#3a1c23; --ok:#5fd394; --ok-soft:#16301f;
+  --warn:#f0c14b; --warn-soft:#352b12; --gap:#b9a0f0; --gap-soft:#271f3a; --was-bg:#2a1e1c; --now-bg:#172920; color-scheme:dark } }
+:root[data-theme="dark"] {
+  --paper:#12161b; --sheet:#1a2027; --ink:#e6e9ec; --muted:#9aa5b1; --line:#2c343d;
+  --navy:#9cc0ea; --seal:#ff6b81; --seal-soft:#3a1c23; --ok:#5fd394; --ok-soft:#16301f;
+  --warn:#f0c14b; --warn-soft:#352b12; --gap:#b9a0f0; --gap-soft:#271f3a; --was-bg:#2a1e1c; --now-bg:#172920; color-scheme:dark }
+* { box-sizing:border-box }
+body { background:var(--paper); color:var(--ink); font:15px/1.7 var(--body); }
+.wrap { max-width:1180px; margin:0 auto; padding-inline:20px; padding-block:32px 80px; display:grid; gap:28px }
+h1,h2,h3,h4 { font-family:var(--display); text-wrap:balance; margin:0; line-height:1.3 }
+a { color:var(--navy) }
+code { font:13px var(--mono); overflow-wrap:anywhere }
+.masthead { display:grid; gap:10px; border-bottom:3px double var(--line); padding-bottom:22px }
+.eyebrow { font:600 12px var(--body); letter-spacing:.08em; color:var(--muted) }
+h1 { font-size:clamp(26px,4vw,38px); color:var(--navy) }
+.lede { max-width:70ch; color:var(--muted); margin:0 }
+.facts { display:flex; flex-wrap:wrap; gap:8px 22px; font-size:13px; color:var(--muted) }
+.facts b { color:var(--ink); font-weight:600 }
+.tally { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden }
+.tally div { background:var(--sheet); padding:14px 16px; display:grid; gap:2px }
+.tally strong { font:700 30px var(--display); font-variant-numeric:tabular-nums; color:var(--navy) }
+.tally strong.ok { color:var(--ok) }
+.tally span { font-size:13px; color:var(--muted) }
+.how { background:var(--sheet); border:1px solid var(--line); border-radius:10px; padding:16px 20px; display:grid; gap:6px }
+.how ol { margin:0; padding-left:1.3em }
+.mark { display:inline-block; border:2px solid var(--seal); color:var(--seal); border-radius:4px; padding:0 6px; font-weight:600; font-size:13px }
+.tablewrap { overflow-x:auto; background:var(--sheet); border:1px solid var(--line); border-radius:10px }
+table { border-collapse:collapse; width:100%; min-width:860px; font-size:14px }
+th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top }
+th { font:600 12px var(--body); letter-spacing:.05em; color:var(--muted); background:var(--paper) }
+td.num { font-variant-numeric:tabular-nums; color:var(--muted) }
+td.exp { max-width:42ch }
+.bug { display:inline-block; margin-left:6px; font:500 12px var(--mono); color:var(--seal); background:var(--seal-soft); border-radius:4px; padding:1px 6px }
+.kind { display:inline-block; font-size:12px; font-weight:600; border-radius:999px; padding:2px 10px; white-space:nowrap }
+.k-fail { background:var(--seal-soft); color:var(--seal) } .k-block { background:var(--warn-soft); color:var(--warn) }
+.k-gap { background:var(--gap-soft); color:var(--gap) } .k-note { background:var(--paper); color:var(--muted); border:1px solid var(--line) }
+.pill { display:inline-block; font-size:12px; font-weight:600; border-radius:4px; padding:1px 8px; white-space:nowrap }
+.pill.pass { background:var(--ok-soft); color:var(--ok) } .pill.fail { background:var(--seal-soft); color:var(--seal) }
+.chk { display:inline-flex; gap:6px; align-items:center; cursor:pointer; font-size:13px; white-space:nowrap }
+.chk input { width:17px; height:17px; accent-color:var(--ok) }
+.chk.big { font-size:14px; font-weight:600; margin-top:10px }
+.filters { display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+.filters button { font:500 13px var(--body); border:1px solid var(--line); background:var(--sheet); color:var(--ink); border-radius:999px; padding:4px 14px; cursor:pointer }
+.filters button[aria-pressed="true"] { background:var(--navy); border-color:var(--navy); color:var(--sheet) }
+.filters .count { margin-left:auto; font-size:13px; color:var(--muted) }
+.item { background:var(--sheet); border:1px solid var(--line); border-radius:12px; padding:22px; display:grid; gap:18px; scroll-margin-top:16px }
+.item.done { border-color:var(--ok) }
+.ihead { display:grid; gap:10px }
+.ids { display:flex; flex-wrap:wrap; align-items:center; gap:8px }
+.no { font:700 14px var(--mono); color:var(--muted) }
+.ids h3 { font-size:24px; color:var(--navy) }
+.meta { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:6px 18px; margin:0; font-size:13px }
+.meta div { min-width:0 } .meta dt { color:var(--muted); font-size:12px } .meta dd { margin:0 }
+.compare { display:grid; grid-template-columns:1fr 1fr; gap:14px }
+.compare section { border-radius:8px; padding:14px 16px; min-width:0 }
+.compare h4 { font-size:14px; margin-bottom:4px }
+.compare p { margin:0 }
+.was { background:var(--was-bg); border-left:4px solid var(--seal) } .was h4 { color:var(--seal) }
+.was .should { margin-top:8px; font-size:14px; color:var(--muted) }
+.now { background:var(--now-bg); border-left:4px solid var(--ok) } .now h4 { color:var(--ok) }
+.shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px }
+figure { margin:0; display:grid; gap:6px; min-width:0 }
+.zoom { padding:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:zoom-in; background:var(--paper); display:block }
+.zoom img { display:block; width:100%; height:auto }
+.zoom:focus-visible, .filters button:focus-visible { outline:3px solid var(--navy); outline-offset:2px }
+figcaption { font-size:13px; color:var(--muted) } figcaption b { font:500 12px var(--mono); color:var(--ink); margin-right:4px }
+.bottom { display:grid; grid-template-columns:3fr 2fr; gap:18px }
+.bottom section { min-width:0 }
+.bottom h4 { font-size:14px; margin-bottom:6px }
+.steps ol { margin:0; padding-left:1.4em; display:grid; gap:4px }
+.auto ul { list-style:none; margin:0; padding:0; display:grid; gap:8px; font-size:13px }
+.auto .tt { overflow-wrap:anywhere } .auto .dur { color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap }
+footer { font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:16px; display:grid; gap:4px }
+dialog { border:0; padding:0; background:transparent; max-width:min(96vw,1400px) }
+dialog::backdrop { background:rgba(10,14,20,.82) }
+dialog img { width:100%; height:auto; border-radius:8px; display:block }
+dialog p { color:#fff; margin:8px 0 0; font-size:14px }
+dialog button { position:absolute; top:8px; right:8px; font:600 14px var(--body); background:#fff; color:#111; border:0; border-radius:6px; padding:4px 12px; cursor:pointer }
+@media (max-width:760px) { .compare, .bottom { grid-template-columns:1fr } .item { padding:16px } }
+@media (prefers-reduced-motion:no-preference) { html { scroll-behavior:smooth } }
+</style>
+<div class="wrap">
+<header class="masthead">
+<div class="eyebrow">E-CMIS · ระบบคุ้มครองพยาน · Activity 6</div>
+<h1>ผลการแก้ไข Prototype ตามผลทดสอบวันที่ 28/09/2026</h1>
+<p class="lede">รายงานนี้ให้ผู้ทดสอบตรวจยืนยันว่าข้อที่ไม่ผ่านและข้อที่ติดขัดจากรอบทดสอบ Prototype 24/09/2026 ได้แก้แล้ว แต่ละข้อแสดงผลที่เคยเจอคู่กับผลหลังแก้ ภาพหน้าจอจากการทดสอบอัตโนมัติ (กรอบสีแดงคือจุดที่แก้) และขั้นตอนให้ทดสอบซ้ำด้วยตนเอง</p>
+<div class="facts"><span>ผู้ทดสอบเดิม <b>ปวริศร์</b></span><span>Prototype <b>https://pacc-a6.teerut-s.workers.dev</b></span><span>รันทดสอบ <b>2026-09-29 07:50 UTC</b></span><span>รุ่นโค้ด <b>99bf8be</b></span></div>
+</header>
+<section class="tally" aria-label="สรุป">
+<div><strong>17</strong><span>ข้อที่แก้ในรอบนี้</span></div>
+<div><strong>7</strong><span>บั๊ก (ไม่ผ่าน) BUG-001 ถึง 007</span></div>
+<div><strong>8</strong><span>เคสติดขัด</span></div>
+<div><strong class="ok">22/22</strong><span>เทสต์อัตโนมัติผ่าน</span></div>
+<div><strong>34</strong><span>ภาพหลักฐาน</span></div>
+</section>
+<section class="how">
+<h2 style="font-size:18px">วิธีตรวจ</h2>
+<ol><li>ดูภาพหลักฐานในแต่ละข้อ จุดที่แก้มีกรอบ <span class="mark">สีแดง</span> พร้อมป้ายคำอธิบาย กดที่ภาพเพื่อขยาย</li>
+<li>ทดสอบซ้ำบน Prototype ตามขั้นตอนในข้อนั้น แล้วติ๊ก <b>ผู้ทดสอบยืนยันว่าแก้แล้ว</b> (บันทึกไว้ในเบราว์เซอร์นี้เท่านั้น)</li>
+<li>ถ้ายังไม่ถูกต้อง ให้บันทึกในไฟล์ Excel ผลทดสอบเดิม ช่องผลทดสอบซ้ำ พร้อมรหัสข้อ</li></ol>
+</section>
+<section style="display:grid;gap:10px">
+<h2 style="font-size:20px">รายการที่แก้</h2>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>รหัส</th><th>ผลเดิม</th><th>แท็บ</th><th>ผลที่ควรได้</th><th>เทสต์อัตโนมัติ</th><th>ผู้ทดสอบ</th></tr></thead><tbody>
+<tr><td class="num">1</td><td><a href="#TC-010">TC-010</a><span class="bug">BUG-001</span></td>
+<td><span class="kind k-fail">ไม่ผ่าน</span></td><td>04 จัดทำเอกสาร</td><td class="exp">บันทึกไม่ได้ และแจ้งช่องบังคับที่ว่าง</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-010" id="idx-TC-010"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">2</td><td><a href="#TC-011">TC-011</a><span class="bug">BUG-002</span></td>
+<td><span class="kind k-fail">ไม่ผ่าน</span></td><td>05 ลำดับชั้น</td><td class="exp">ชื่อผู้ลงนามเป็นชื่อ ผบช.</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-011" id="idx-TC-011"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">3</td><td><a href="#TC-014">TC-014</a><span class="bug">BUG-003</span></td>
+<td><span class="kind k-fail">ไม่ผ่าน</span></td><td>05 ลำดับชั้น</td><td class="exp">ไม่มีปุ่มส่งกลับหลังส่งต่อแล้ว</td>
+<td><span class="pill pass">ผ่าน 2/2</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-014" id="idx-TC-014"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">4</td><td><a href="#TC-019">TC-019</a><span class="bug">BUG-004</span></td>
+<td><span class="kind k-fail">ไม่ผ่าน</span></td><td>06 กรณีเร่งด่วน</td><td class="exp">ต้องจัดทำ คบ.6 และผ่าน ผบช. ก่อน (แท็บ 05)</td>
+<td><span class="pill pass">ผ่าน 2/2</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-019" id="idx-TC-019"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">5</td><td><a href="#TC-028">TC-028</a><span class="bug">BUG-005</span></td>
+<td><span class="kind k-fail">ไม่ผ่าน</span></td><td>08A ปฏิบัติตามวิธีที่ 2</td><td class="exp">ระบบต้องกลับไปเลือกสถานที่ใหม่ (WIT0824) และเริ่มปฏิบัติไม่ได้</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-028" id="idx-TC-028"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">6</td><td><a href="#TC-037">TC-037</a><span class="bug">BUG-006</span></td>
+<td><span class="kind k-fail">ไม่ผ่าน</span></td><td>09B อุทธรณ์</td><td class="exp">มติเป็นที่สุด ไม่มีปุ่มส่งกลับเข้าสายพิจารณาปกติ</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-037" id="idx-TC-037"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">7</td><td><a href="#TC-043">TC-043</a><span class="bug">BUG-007</span></td>
+<td><span class="kind k-fail">ไม่ผ่าน</span></td><td>11A ทบทวน</td><td class="exp">เลือกไม่ได้ถ้ายังไม่ครบ 180 วัน หรือถ้าเลือกได้ต้องไปต่อที่ 08C ได้</td>
+<td><span class="pill pass">ผ่าน 2/2</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-043" id="idx-TC-043"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">8</td><td><a href="#TC-033">TC-033</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>08C ข้อ 14</td><td class="exp">ต้องบันทึกผลตอบรับจากกรมก่อน (WIT0860) จึงส่งมอบได้ (ตัดสินใจให้บันทึกในระบบ)</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-033" id="idx-TC-033"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">9</td><td><a href="#TC-034">TC-034</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>09A ไม่อนุมัติ</td><td class="exp">บันทึกว่าพยานไม่ประสงค์อุทธรณ์ หรือปิดเรื่องเมื่อพ้น 30 วันได้ (WIT0909)</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-034" id="idx-TC-034"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">10</td><td><a href="#TC-036">TC-036</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>09B อุทธรณ์</td><td class="exp">ผบช. ส่งต่อ ผอ. และ ผอ. ลงนามเสนอรองเลขาธิการฯ (WIT0916)</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-036" id="idx-TC-036"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">11</td><td><a href="#TC-039">TC-039</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>09B อุทธรณ์</td><td class="exp">ธุรการรับคำอุทธรณ์เข้าระบบได้ (WIT0912)</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-039" id="idx-TC-039"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">12</td><td><a href="#TC-045">TC-045</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>11A ทบทวน</td><td class="exp">มีปุ่มไปแท็บ 11B จัดทำ คบ.14</td>
+<td><span class="pill pass">ผ่าน 2/2</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-045" id="idx-TC-045"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">13</td><td><a href="#TC-050">TC-050</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>11D ยุติ</td><td class="exp">แสดงเลขคำสั่งและวันที่มีผลตามที่กรอก</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-050" id="idx-TC-050"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">14</td><td><a href="#TC-052">TC-052</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>10 รายงาน คบ.13</td><td class="exp">เปิดหน้ารายงาน คบ.13</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-052" id="idx-TC-052"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">15</td><td><a href="#TC-053">TC-053</a></td>
+<td><span class="kind k-block">ติดขัด</span></td><td>เมนู / การนำทาง</td><td class="exp">กลับหน้ารายการแบบฟอร์ม</td>
+<td><span class="pill pass">ผ่าน 2/2</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-053" id="idx-TC-053"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">16</td><td><a href="#TC-051">TC-051</a></td>
+<td><span class="kind k-note">ผ่าน (มีหมายเหตุ)</span></td><td>เมนู / การนำทาง</td><td class="exp">เปิดหน้าตรงชื่อเมนู</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="TC-051" id="idx-TC-051"> <span>ยืนยันแล้ว</span></label></td></tr><tr><td class="num">17</td><td><a href="#GAP-010">GAP-010</a></td>
+<td><span class="kind k-gap">พบเพิ่ม</span></td><td>04–06 แบบฟอร์ม คบ.3–คบ.6</td><td class="exp">ร่างแบบ คบ.3–คบ.6 แยกตามแฟ้ม ข้อมูลพยานไม่ปรากฏข้ามแฟ้ม และแต่ละแฟ้มผ่านด่านตรวจได้ด้วยข้อมูลของตัวเองเท่านั้น</td>
+<td><span class="pill pass">ผ่าน 1/1</span></td>
+<td><label class="chk"><input type="checkbox" data-tc="GAP-010" id="idx-GAP-010"> <span>ยืนยันแล้ว</span></label></td></tr>
+</tbody></table></div>
+</section>
+<div class="filters" role="group" aria-label="กรองรายการ">
+<button type="button" data-f="all" aria-pressed="true">ทั้งหมด</button>
+<button type="button" data-f="ไม่ผ่าน" aria-pressed="false">บั๊ก</button>
+<button type="button" data-f="ติดขัด" aria-pressed="false">ติดขัด</button>
+<button type="button" data-f="other" aria-pressed="false">อื่น ๆ</button>
+<button type="button" data-f="todo" aria-pressed="false">ยังไม่ยืนยัน</button>
+<span class="count" id="count"></span>
+</div>
+<article class="item" id="TC-010">
+<header class="ihead"><div class="ids"><span class="no">01</span><h3>TC-010</h3><span class="bug">BUG-001</span><span class="kind k-fail">ไม่ผ่าน</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>04 จัดทำเอกสาร</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.3 (แฟ้มกรณีปกติ)</dd></div><div><dt>หน้า</dt><dd><code>/form/6?caseNo=WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>บันทึกผ่านและกลับแฟ้ม</p><p class="should"><b>ผลที่ควรได้:</b> บันทึกไม่ได้ และแจ้งช่องบังคับที่ว่าง</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>เมื่อเว้นช่อง 1.1 และ 2.2 แล้วกดบันทึก ระบบจะไม่บันทึก อยู่หน้าเดิม และขึ้นข้อความแจ้งชื่อช่องที่ต้องกรอก ปุ่มส่งต่อในแฟ้มยังถูกล็อกจนกว่าจะกรอกครบและบันทึกสำเร็จ</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-010-a.jpg" data-cap="ระบบแจ้งช่องบังคับที่ว่าง (1.1 และ 2.2) บันทึกไม่ได้" aria-label="ขยายภาพ TC-010-a.png"><img src="img/TC-010-a.jpg" alt="ระบบแจ้งช่องบังคับที่ว่าง (1.1 และ 2.2) บันทึกไม่ได้" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-010-a</b> ระบบแจ้งช่องบังคับที่ว่าง (1.1 และ 2.2) บันทึกไม่ได้</figcaption></figure><figure><button class="zoom" data-src="img/TC-010-b.jpg" data-cap="ปุ่มส่งต่อยังถูกล็อก เพราะยังไม่ได้จัดทำ คบ.6" aria-label="ขยายภาพ TC-010-b.png"><img src="img/TC-010-b.jpg" alt="ปุ่มส่งต่อยังถูกล็อก เพราะยังไม่ได้จัดทำ คบ.6" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-010-b</b> ปุ่มส่งต่อยังถูกล็อก เพราะยังไม่ได้จัดทำ คบ.6</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev สลับบทบาทเป็นเจ้าหน้าที่ ป.ป.ท. แล้วโหลด Mock State Case 1.3 (หรือล้างข้อมูลแล้วใช้แฟ้มกรณีปกติ)</li><li>เปิดแฟ้ม WP-2569-000501 เลือก กรณีปกติ (ถ้าระบบถาม) แล้วกด ไปลงนามในแบบ คบ.6</li><li>ลบข้อความช่อง 1.1 ได้รับคำร้องจาก และ 2.2 ชื่อ-สกุล พยาน ให้ว่าง แล้วกด บันทึกแบบ คบ.6</li><li>ตรวจว่ามีข้อความแจ้งช่องที่ว่างและยังอยู่หน้า คบ.6</li><li>กลับเข้าแฟ้ม ตรวจว่าปุ่มส่งต่อยังกดไม่ได้ (เลื่อนเมาส์ดูข้อความว่ายังไม่ได้จัดทำ คบ.6)</li><li>กรอก 1.1 และ 2.2 ให้ครบ กด บันทึกแบบ คบ.6 ต้องบันทึกได้และปุ่มส่งต่อกดได้</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-010 · [BUG-001] เว้นช่อง 1.1 และ 2.2 แล้วกดบันทึก — บันทึกไม่ได้ แจ้งช่องที่ว่าง และยังไม่นับว่าจัดทำ คบ.6</span> <span class="dur">3.6 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-010" id="card-TC-010"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-011">
+<header class="ihead"><div class="ids"><span class="no">02</span><h3>TC-011</h3><span class="bug">BUG-002</span><span class="kind k-fail">ไม่ผ่าน</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>05 ลำดับชั้น</dd></div><div><dt>บทบาท</dt><dd>ผู้บังคับบัญชาชั้นต้น (ผบช.)</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 2</dd></div><div><dt>หน้า</dt><dd><code>/form/6?caseNo=WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>ชื่อผู้ลงนามขึ้น นางสาวอรุณี ใจมั่น (เจ้าหน้าที่)</p><p class="should"><b>ผลที่ควรได้:</b> ชื่อผู้ลงนามเป็นชื่อ ผบช.</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>เมื่อ ผบช.ชั้นต้นกดลงนามข้อ 10 ช่องชื่อผู้ลงนามจะเติมชื่อ นายกิตติศักดิ์ ธรรมรักษ์ (ผบช.) และชื่อนี้ไปแสดงในประวัติแฟ้มกับแบบ คบ.6 ฉบับพิมพ์ ไม่ใช่ชื่อเจ้าหน้าที่อีกต่อไป</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-011-a.jpg" data-cap="ช่องชื่อผู้ลงนามเป็นชื่อ ผบช.ชั้นต้น ไม่ใช่เจ้าหน้าที่" aria-label="ขยายภาพ TC-011-a.png"><img src="img/TC-011-a.jpg" alt="ช่องชื่อผู้ลงนามเป็นชื่อ ผบช.ชั้นต้น ไม่ใช่เจ้าหน้าที่" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-011-a</b> ช่องชื่อผู้ลงนามเป็นชื่อ ผบช.ชั้นต้น ไม่ใช่เจ้าหน้าที่</figcaption></figure><figure><button class="zoom" data-src="img/TC-011-b.jpg" data-cap="หลังลงนาม แบบ คบ.6 แสดงชื่อ ผบช. เป็นผู้ลงนามข้อ 10" aria-label="ขยายภาพ TC-011-b.png"><img src="img/TC-011-b.jpg" alt="หลังลงนาม แบบ คบ.6 แสดงชื่อ ผบช. เป็นผู้ลงนามข้อ 10" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-011-b</b> หลังลงนาม แบบ คบ.6 แสดงชื่อ ผบช. เป็นผู้ลงนามข้อ 10</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev โหลด Mock State Case 2</li><li>สลับบทบาทเป็น ผู้บังคับบัญชาชั้นต้น (ผบช.)</li><li>เปิดแฟ้ม WP-2569-000501 เข้าแบบ คบ.6 กรอกความเห็นข้อ 10 แล้วกด ลงนาม</li><li>ดูช่องชื่อผู้ลงนามในหน้าต่างลงนาม ต้องเป็นชื่อ ผบช.</li><li>ติ๊กรับรอง กดยืนยัน แล้วดูแถบล็อกลายมือชื่อและประวัติแฟ้ม ต้องเป็นชื่อ ผบช.</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-011 · [BUG-002] ผบช.ชั้นต้นลงนามข้อ 10 — ชื่อผู้ลงนามเป็นชื่อ ผบช. ไม่ใช่ชื่อเจ้าหน้าที่</span> <span class="dur">2.1 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-011" id="card-TC-011"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-014">
+<header class="ihead"><div class="ids"><span class="no">03</span><h3>TC-014</h3><span class="bug">BUG-003</span><span class="kind k-fail">ไม่ผ่าน</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>05 ลำดับชั้น</dd></div><div><dt>บทบาท</dt><dd>ผู้บังคับบัญชาชั้นต้น (ผบช.) / ผอ.สำนัก</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 2 และ Case 2.1</dd></div><div><dt>หน้า</dt><dd><code>/dossier/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>ผู้ส่งยังกดส่งกลับได้ แฟ้มถูกดึงกลับจากขั้นถัดไป</p><p class="should"><b>ผลที่ควรได้:</b> ไม่มีปุ่มส่งกลับหลังส่งต่อแล้ว</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>หลังส่งต่อไปขั้นถัดไปแล้ว ผู้ส่งเปิดแฟ้มเดิมจะไม่เห็นปุ่ม ส่งกลับแก้ไข / ตีกลับ อีก แฟ้มยังอยู่ที่ขั้นถัดไป ส่วนผู้ถือแฟ้มขั้นปัจจุบัน (เช่น รองเลขาธิการฯ) ยังส่งกลับได้ตามปกติ</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-014-a.jpg" data-cap="ผบช.ส่งต่อแล้ว ไม่มีปุ่มส่งกลับแก้ไข/ตีกลับให้ผู้ส่งอีก" aria-label="ขยายภาพ TC-014-a.png"><img src="img/TC-014-a.jpg" alt="ผบช.ส่งต่อแล้ว ไม่มีปุ่มส่งกลับแก้ไข/ตีกลับให้ผู้ส่งอีก" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-014-a</b> ผบช.ส่งต่อแล้ว ไม่มีปุ่มส่งกลับแก้ไข/ตีกลับให้ผู้ส่งอีก</figcaption></figure><figure><button class="zoom" data-src="img/TC-014-b.jpg" data-cap="ผอ.ส่งต่อแล้ว ไม่มีปุ่มส่งกลับเช่นกัน" aria-label="ขยายภาพ TC-014-b.png"><img src="img/TC-014-b.jpg" alt="ผอ.ส่งต่อแล้ว ไม่มีปุ่มส่งกลับเช่นกัน" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-014-b</b> ผอ.ส่งต่อแล้ว ไม่มีปุ่มส่งกลับเช่นกัน</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev โหลด Mock State Case 2 สลับเป็น ผบช.</li><li>เปิดแฟ้ม WP-2569-000501 ต้องเห็นปุ่ม ส่งกลับแก้ไข / ตีกลับ ในขั้นของตน</li><li>ลงนามข้อ 10 ใน คบ.6 แล้วกด ส่งต่อ (เสนอ ผอ.) ยืนยันส่งต่อ</li><li>เปิดแฟ้มเดิมอีกครั้งในบทบาท ผบช. ต้องไม่มีปุ่มส่งกลับ</li><li>ทดสอบซ้ำแบบ ผอ.: โหลด Mock State Case 2.1 สลับเป็น ผอ. ลงนามข้อ 11 ส่งรองเลขาธิการฯ แล้วเปิดแฟ้มเดิม ต้องไม่มีปุ่มส่งกลับ</li><li>สลับเป็นรองเลขาธิการฯ ต้องเห็นปุ่มส่งกลับ</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-014 · [BUG-003] ผบช. เสนอ ผอ. แล้ว — ผบช. ไม่เห็นปุ่มส่งกลับแก้ไข/ตีกลับอีก</span> <span class="dur">3.1 วินาที</span></li><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-014 · [BUG-003] ผอ. ลงนามแล้วส่งรองเลขาธิการฯ — ผอ. ไม่เห็นปุ่มส่งกลับ ส่วนรองเลขาฯ ยังส่งกลับได้</span> <span class="dur">4.2 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-014" id="card-TC-014"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-019">
+<header class="ihead"><div class="ids"><span class="no">04</span><h3>TC-019</h3><span class="bug">BUG-004</span><span class="kind k-fail">ไม่ผ่าน</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>06 กรณีเร่งด่วน</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท. (หลัง ผอ. ตัดสิน)</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 3.1</dd></div><div><dt>หน้า</dt><dd><code>/dossier/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>ส่งได้ทันทีโดยไม่มี คบ.6 ข้าม ผบช. และสถานะกลับเป็น รอ ผอ.พิจารณา (เร่งด่วน)</p><p class="should"><b>ผลที่ควรได้:</b> ต้องจัดทำ คบ.6 และผ่าน ผบช. ก่อน (แท็บ 05)</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>หลัง ผอ. ตัดสินคำขอเร่งด่วน (ไม่อนุมัติ หรืออนุมัติ) ปุ่มของเจ้าหน้าที่เป็น ส่งผู้บังคับบัญชาชั้นต้น และถูกล็อกจนกว่าจะจัดทำ คบ.6 เมื่อทำ คบ.6 แล้วจึงส่งไป ผบช.ชั้นต้น ไม่ข้ามไป ผอ.</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-019-a.jpg" data-cap="หลัง ผอ. ไม่อนุมัติ ต้องส่ง ผบช.ชั้นต้น และปุ่มล็อกจนกว่าจะมี คบ.6" aria-label="ขยายภาพ TC-019-a.png"><img src="img/TC-019-a.jpg" alt="หลัง ผอ. ไม่อนุมัติ ต้องส่ง ผบช.ชั้นต้น และปุ่มล็อกจนกว่าจะมี คบ.6" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-019-a</b> หลัง ผอ. ไม่อนุมัติ ต้องส่ง ผบช.ชั้นต้น และปุ่มล็อกจนกว่าจะมี คบ.6</figcaption></figure><figure><button class="zoom" data-src="img/TC-019-b.jpg" data-cap="หลังอนุมัติ คบ.5 และพยานยินยอม ยังต้องทำ คบ.6 ก่อนส่ง ผบช." aria-label="ขยายภาพ TC-019-b.png"><img src="img/TC-019-b.jpg" alt="หลังอนุมัติ คบ.5 และพยานยินยอม ยังต้องทำ คบ.6 ก่อนส่ง ผบช." loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-019-b</b> หลังอนุมัติ คบ.5 และพยานยินยอม ยังต้องทำ คบ.6 ก่อนส่ง ผบช.</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev โหลด Mock State Case 3.1 สลับเป็น ผอ.สำนัก</li><li>เปิดแฟ้ม WP-2569-000501 กด ยืนยันข้อมูลครบ แล้วเลือก ไม่อนุมัติชั่วคราว ใส่เหตุผลและยืนยัน (หรือเลือกอนุมัติ ออก คบ.5 และให้พยานลงนามยินยอม)</li><li>สลับเป็นเจ้าหน้าที่ ป.ป.ท. เปิดแฟ้มเดิม</li><li>ตรวจว่าปุ่มเป็น ส่งผู้บังคับบัญชาชั้นต้น (ไม่ใช่ เสนอ ผอ.) และกดไม่ได้ เพราะยังไม่ได้จัดทำ คบ.6</li><li>เข้า คบ.6 กรอกช่อง 1.1 และ 2.2 บันทึก แล้วกลับแฟ้ม กดส่งต่อ ต้องไปที่ ผบช.ชั้นต้น</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-019 · [BUG-004] ผอ. ไม่อนุมัติชั่วคราว — เจ้าหน้าที่ต้องทำ คบ.6 และส่ง ผบช.ชั้นต้นก่อน (ไม่ใช่เสนอ ผอ. ทันที)</span> <span class="dur">5.4 วินาที</span></li><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-019 · [BUG-004] ผอ. อนุมัติ คบ.5 + พยานยินยอม — คำร้องหลักเดินแท็บ 05 ต้องมี คบ.6 และผ่าน ผบช.ชั้นต้นก่อน ผอ.</span> <span class="dur">4.3 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-019" id="card-TC-019"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-028">
+<header class="ihead"><div class="ids"><span class="no">05</span><h3>TC-028</h3><span class="bug">BUG-005</span><span class="kind k-fail">ไม่ผ่าน</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>08A ปฏิบัติตามวิธีที่ 2</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.12 วิธีที่ 2</dd></div><div><dt>หน้า</dt><dd><code>/protection-method/2</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>บันทึกผลประเมินรอบล่าสุดเป็น ไม่เหมาะสม แล้วกด ไม่เหมาะสม — เลือกใหม่ กด ถัดไป และบันทึกเข้าพัก ระบบไม่กลับไปเลือกสถานที่ และไปขั้นที่ 4 เริ่มปฏิบัติ (ACTIVE) ได้</p><p class="should"><b>ผลที่ควรได้:</b> ระบบต้องกลับไปเลือกสถานที่ใหม่ (WIT0824) และเริ่มปฏิบัติไม่ได้</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>เมื่อกด ไม่เหมาะสม — เลือกใหม่ ระบบพากลับไปขั้นเสนอสถานที่ใหม่ทันที หากพยายามไปขั้นเริ่มปฏิบัติ จะมีข้อความแจ้งว่าผลประเมินรอบล่าสุดไม่เหมาะสม ต้องกลับไปเสนอสถานที่ใหม่และประเมินให้ผ่านก่อน และกดเริ่มปฏิบัติแล้วก็ไม่เป็น ACTIVE เมื่อเสนอสถานที่ใหม่และประเมินว่า เหมาะสม จึงเริ่มปฏิบัติได้</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-028-a.jpg" data-cap="หลังกด ไม่เหมาะสม — เลือกใหม่ ระบบกลับมาขั้นเสนอสถานที่ใหม่ (WIT0824)" aria-label="ขยายภาพ TC-028-a.png"><img src="img/TC-028-a.jpg" alt="หลังกด ไม่เหมาะสม — เลือกใหม่ ระบบกลับมาขั้นเสนอสถานที่ใหม่ (WIT0824)" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-028-a</b> หลังกด ไม่เหมาะสม — เลือกใหม่ ระบบกลับมาขั้นเสนอสถานที่ใหม่ (WIT0824)</figcaption></figure><figure><button class="zoom" data-src="img/TC-028-b.jpg" data-cap="ที่ขั้นเริ่มปฏิบัติ ระบบแจ้งว่าผลประเมินล่าสุดไม่เหมาะสม เริ่มปฏิบัติไม่ได้" aria-label="ขยายภาพ TC-028-b.png"><img src="img/TC-028-b.jpg" alt="ที่ขั้นเริ่มปฏิบัติ ระบบแจ้งว่าผลประเมินล่าสุดไม่เหมาะสม เริ่มปฏิบัติไม่ได้" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-028-b</b> ที่ขั้นเริ่มปฏิบัติ ระบบแจ้งว่าผลประเมินล่าสุดไม่เหมาะสม เริ่มปฏิบัติไม่ได้</figcaption></figure><figure><button class="zoom" data-src="img/TC-028-c.jpg" data-cap="เมื่อประเมินใหม่ว่า เหมาะสม จึงเริ่มปฏิบัติ (ACTIVE) ได้" aria-label="ขยายภาพ TC-028-c.png"><img src="img/TC-028-c.jpg" alt="เมื่อประเมินใหม่ว่า เหมาะสม จึงเริ่มปฏิบัติ (ACTIVE) ได้" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-028-c</b> เมื่อประเมินใหม่ว่า เหมาะสม จึงเริ่มปฏิบัติ (ACTIVE) ได้</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev แล้วโหลด Mock State Case 1.12 วิธีที่ 2</li><li>สลับบทบาทเป็น เจ้าหน้าที่ ป.ป.ท.</li><li>เปิดหน้า /protection-method/2 กด ถัดไป</li><li>กรอก สถานที่ที่เสนอ แล้วกด ถัดไป</li><li>กรอก ทางเข้า–ออกและจุดเสี่ยง แล้วกด ไม่เหมาะสม — เลือกใหม่ ตรวจว่ากลับมาช่อง สถานที่ที่เสนอ</li><li>กด ถัดไป 2 ครั้ง กรอกผู้ส่งมอบ/ผู้รับมอบ แนบไฟล์หลักฐาน ตรวจว่ามีข้อความผลประเมินไม่เหมาะสม</li><li>กด บันทึกเข้าพัก/ย้ายแล้ว · ACTIVE แล้วยืนยัน ตรวจว่าสถานะไม่เป็น ACTIVE</li><li>กด ย้อนกลับ ประเมิน สถานที่เหมาะสม กด ถัดไป แล้วเริ่มปฏิบัติอีกครั้ง ต้องเป็น ACTIVE ได้</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-028 · [BUG-005] วิธีที่ 2 ผลประเมินไม่เหมาะสม ต้องกลับไปเลือกสถานที่ (WIT0824) และเริ่มปฏิบัติไม่ได้จนกว่าจะประเมินใหม่ผ่าน</span> <span class="dur">2.4 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-028" id="card-TC-028"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-037">
+<header class="ihead"><div class="ids"><span class="no">06</span><h3>TC-037</h3><span class="bug">BUG-006</span><span class="kind k-fail">ไม่ผ่าน</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>09B อุทธรณ์</dd></div><div><dt>บทบาท</dt><dd>คณะกรรมการ (แล้วสลับดูทุกบทบาท)</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 4.3</dd></div><div><dt>หน้า</dt><dd><code>/appeal-folder/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>หลังบันทึกมติยืนคำสั่งเดิม ยังเปิดเรื่องกลับได้ และปุ่มส่งกลับแสดงทุกขั้น</p><p class="should"><b>ผลที่ควรได้:</b> มติเป็นที่สุด ไม่มีปุ่มส่งกลับเข้าสายพิจารณาปกติ</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>หลังคณะกรรมการบันทึกมติยืนคำสั่งเดิม แฟ้มอุทธรณ์ปิดเป็นที่สุด ปุ่ม &quot;ส่งกลับเข้าสายพิจารณาปกติ&quot; ไม่ปรากฏอีกในทุกบทบาท (คณะกรรมการ เจ้าหน้าที่ ผบช. รองเลขาฯ เลขาธิการฯ) และเรื่องไม่ถูกดึงกลับไปขั้นทบทวน</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-037-a.jpg" data-cap="ขั้นแฟ้มปิดเป็นที่สุดแล้ว ไม่มีปุ่มส่งกลับ" aria-label="ขยายภาพ TC-037-a.png"><img src="img/TC-037-a.jpg" alt="ขั้นแฟ้มปิดเป็นที่สุดแล้ว ไม่มีปุ่มส่งกลับ" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-037-a</b> ขั้นแฟ้มปิดเป็นที่สุดแล้ว ไม่มีปุ่มส่งกลับ</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev แล้วโหลด Mock State: Case 4.3</li><li>สลับเป็น คณะกรรมการ เปิดแฟ้มอุทธรณ์ WP-2569-000501</li><li>กรอกเลขมติและเหตุผล กดยืนคำสั่งเดิม แล้วยืนยัน</li><li>สลับทีละบทบาท (เจ้าหน้าที่ ผบช. รองเลขาฯ เลขาธิการฯ) เปิดแฟ้มเดิม ตรวจว่าไม่มีปุ่มส่งกลับเข้าสายพิจารณาปกติ</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-037 · [BUG-006] หลังมีมติยืนคำสั่งเดิมแล้วไม่มีทางส่งกลับเข้าสายพิจารณา (มติเป็นที่สุด)</span> <span class="dur">3.5 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-037" id="card-TC-037"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-043">
+<header class="ihead"><div class="ids"><span class="no">07</span><h3>TC-043</h3><span class="bug">BUG-007</span><span class="kind k-fail">ไม่ผ่าน</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>11A ทบทวน</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.14</dd></div><div><dt>หน้า</dt><dd><code>/protection-review/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>เลือก WIT1149 และเห็นชอบได้ทั้งที่สะสมยังไม่ครบ 180 วัน มีปุ่มไปแท็บ 08C แต่หน้าข้อ 14 ขึ้น ยังไม่มีสำนวนที่เข้าเงื่อนไข เดินต่อไม่ได้</p><p class="should"><b>ผลที่ควรได้:</b> เลือกไม่ได้ถ้ายังไม่ครบ 180 วัน หรือถ้าเลือกได้ต้องไปต่อที่ 08C ได้</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>เมื่อสะสมยังไม่ครบ 180 วัน (เช่น 1/180 วัน) ตัวเลือก WIT1149 ข้อ 14 ถูกล็อก กดเลือกไม่ได้ และระบบแจ้งเหตุผลว่ายังไม่ครบเพดาน 180 วัน ส่วนแนวทางอื่นยังเลือกได้ตามปกติ เมื่อครบ 180 วันแล้ว เลือก WIT1149 ได้ หลังเสนอ ผบช. เห็นชอบ และดำเนินการ ปุ่มไปแท็บ 08C ข้อ 14 พาไปหน้าข้อ 14 ที่มีสำนวนนี้ให้เดินต่อได้ ไม่ขึ้น ยังไม่มีสำนวนอีก</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-043-a.jpg" data-cap="ตัวเลือก WIT1149 ข้อ 14 ถูกล็อก กดเลือกไม่ได้ เพราะสะสมเพียง 1/180 วัน" aria-label="ขยายภาพ TC-043-a.png"><img src="img/TC-043-a.jpg" alt="ตัวเลือก WIT1149 ข้อ 14 ถูกล็อก กดเลือกไม่ได้ เพราะสะสมเพียง 1/180 วัน" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-043-a</b> ตัวเลือก WIT1149 ข้อ 14 ถูกล็อก กดเลือกไม่ได้ เพราะสะสมเพียง 1/180 วัน</figcaption></figure><figure><button class="zoom" data-src="img/TC-043-b.jpg" data-cap="ระบบแจ้งเหตุผลว่ายังไม่ครบเพดาน 180 วัน" aria-label="ขยายภาพ TC-043-b.png"><img src="img/TC-043-b.jpg" alt="ระบบแจ้งเหตุผลว่ายังไม่ครบเพดาน 180 วัน" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-043-b</b> ระบบแจ้งเหตุผลว่ายังไม่ครบเพดาน 180 วัน</figcaption></figure><figure><button class="zoom" data-src="img/TC-043-c.jpg" data-cap="ครบ 180 วันแล้ว เลือก WIT1149 ข้อ 14 ได้" aria-label="ขยายภาพ TC-043-c.png"><img src="img/TC-043-c.jpg" alt="ครบ 180 วันแล้ว เลือก WIT1149 ข้อ 14 ได้" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-043-c</b> ครบ 180 วันแล้ว เลือก WIT1149 ข้อ 14 ได้</figcaption></figure><figure><button class="zoom" data-src="img/TC-043-d.jpg" data-cap="หน้าข้อ 14 แสดงสำนวน WP-2569-000501 แล้ว เดินต่อได้" aria-label="ขยายภาพ TC-043-d.png"><img src="img/TC-043-d.jpg" alt="หน้าข้อ 14 แสดงสำนวน WP-2569-000501 แล้ว เดินต่อได้" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-043-d</b> หน้าข้อ 14 แสดงสำนวน WP-2569-000501 แล้ว เดินต่อได้</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev</li><li>โหลด Mock State Case 1.14 แล้วเลือกบทบาท เจ้าหน้าที่ ป.ป.ท.</li><li>เปิดหน้า ทบทวน (แท็บ 11A) ของสำนวน WP-2569-000501</li><li>ดูตัวเลือก WIT1149 ครบเพดานแต่ยังมีภัย ต้องเป็นสีเทา กดไม่ได้ และมีข้อความ ทำไม่ได้ — ยังไม่ครบเพดาน 180 วัน</li><li>โหลด Mock State Case 1.14 ที่สะสมครบ 180 วัน เลือกบทบาท เจ้าหน้าที่ ป.ป.ท.</li><li>เปิดหน้าทบทวน 11A เลือก WIT1149 กรอกผลประเมินและเหตุผล กดเสนอผลทบทวน</li><li>สลับเป็น ผบช. กดเห็นชอบ แล้วสลับกลับเป็นเจ้าหน้าที่ กดดำเนินการตามแนวทางที่เห็นชอบ</li><li>กดปุ่มไปแท็บ 08C ข้อ 14 แล้วตรวจว่าเห็นสำนวน WP-2569-000501</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-043 · [BUG-007] WIT1149 ข้อ 14 เลือกไม่ได้ก่อนครบ 180 วัน</span> <span class="dur">1.1 วินาที</span></li><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-043 · [BUG-007] ครบ 180 วันเลือก WIT1149 ได้ และหน้าข้อ 14 (08C) ต้องเห็นสำนวนให้เดินต่อ</span> <span class="dur">3.3 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-043" id="card-TC-043"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-033">
+<header class="ihead"><div class="ids"><span class="no">08</span><h3>TC-033</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>08C ข้อ 14</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 5 (คณะกรรมการเห็นชอบส่งกรมแล้ว)</dd></div><div><dt>หน้า</dt><dd><code>/article14</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>หลังบันทึกหนังสือขาออก กด บันทึกส่งมอบได้ทันที ไม่มีขั้นบันทึกหนังสือตอบรับจากกรม</p><p class="should"><b>ผลที่ควรได้:</b> ต้องบันทึกผลตอบรับจากกรมก่อน (WIT0860) จึงส่งมอบได้ (ตัดสินใจให้บันทึกในระบบ)</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>เพิ่มขั้นบันทึกหนังสือตอบรับจากกรมแล้ว หลังบันทึกหนังสือขาออก ปุ่มส่งมอบยังไม่ขึ้น ต้องกรอกเลขที่หนังสือตอบรับ ผู้ประสาน วันนัดส่งมอบ เงื่อนไข (ถ้ามี) และแนบไฟล์ให้ครบ แล้วกด บันทึกหนังสือตอบรับจากกรม จึงจะมีปุ่มส่งมอบให้กด</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-033-a.jpg" data-cap="ก่อนบันทึกหนังสือขาออก ยังบันทึกตอบรับไม่ได้ (ถูกล็อก) และไม่มีปุ่มส่งมอบ" aria-label="ขยายภาพ TC-033-a.png"><img src="img/TC-033-a.jpg" alt="ก่อนบันทึกหนังสือขาออก ยังบันทึกตอบรับไม่ได้ (ถูกล็อก) และไม่มีปุ่มส่งมอบ" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-033-a</b> ก่อนบันทึกหนังสือขาออก ยังบันทึกตอบรับไม่ได้ (ถูกล็อก) และไม่มีปุ่มส่งมอบ</figcaption></figure><figure><button class="zoom" data-src="img/TC-033-b.jpg" data-cap="หลังบันทึกหนังสือขาออก ต้องบันทึกหนังสือตอบรับจากกรมก่อน (WIT0860) ยังไม่มีปุ่มส่งมอบ" aria-label="ขยายภาพ TC-033-b.png"><img src="img/TC-033-b.jpg" alt="หลังบันทึกหนังสือขาออก ต้องบันทึกหนังสือตอบรับจากกรมก่อน (WIT0860) ยังไม่มีปุ่มส่งมอบ" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-033-b</b> หลังบันทึกหนังสือขาออก ต้องบันทึกหนังสือตอบรับจากกรมก่อน (WIT0860) ยังไม่มีปุ่มส่งมอบ</figcaption></figure><figure><button class="zoom" data-src="img/TC-033-c.jpg" data-cap="บันทึกตอบรับแล้ว ปุ่มส่งมอบจึงปรากฏและกดได้ (WIT0861)" aria-label="ขยายภาพ TC-033-c.png"><img src="img/TC-033-c.jpg" alt="บันทึกตอบรับแล้ว ปุ่มส่งมอบจึงปรากฏและกดได้ (WIT0861)" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-033-c</b> บันทึกตอบรับแล้ว ปุ่มส่งมอบจึงปรากฏและกดได้ (WIT0861)</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev แล้วโหลด Mock State Case 5 สลับบทบาทเป็น เจ้าหน้าที่</li><li>เปิดหน้า ข้อ 14 ส่งกรมคุ้มครองสิทธิฯ (/article14) กรอกเหตุความไม่ปลอดภัยและรายงานผล แล้วกดเสนอ</li><li>สลับเป็น หัวหน้า, เลขาธิการ ตามลำดับ เปิดหน้า /article14 แล้วกดเห็นชอบ</li><li>สลับเป็น คณะกรรมการ กรอกเลขที่มติและสาระสำคัญ แล้วกดเห็นชอบส่งกรม</li><li>สลับกลับเป็น เจ้าหน้าที่ เปิด /article14 ตรวจว่ายังไม่มีปุ่มส่งมอบ และบันทึกตอบรับถูกล็อก</li><li>กรอกเลขที่หนังสือขาออก กด บันทึกหนังสือขาออก ตรวจว่ายังไม่มีปุ่มส่งมอบ</li><li>กรอกเลขที่หนังสือตอบรับของกรม ผู้ประสาน วันนัดส่งมอบ แนบไฟล์ แล้วกด บันทึกหนังสือตอบรับจากกรม</li><li>ตรวจว่าปุ่ม บันทึกส่งมอบและเริ่มมาตรการภายใต้หน่วยงานใหม่ ปรากฏ แล้วกดส่งมอบได้</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-033 · [ข้อ 14] ต้องบันทึกหนังสือตอบรับจากกรม (WIT0860) ก่อนส่งมอบ (WIT0861) — ส่งมอบก่อนไม่ได้</span> <span class="dur">7.0 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-033" id="card-TC-033"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-034">
+<header class="ihead"><div class="ids"><span class="no">09</span><h3>TC-034</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>09A ไม่อนุมัติ</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 4.1</dd></div><div><dt>หน้า</dt><dd><code>/dossier/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>เปิดแฟ้มที่พยานรับ คบ.10 แล้วมีแต่ฟอร์มรับอุทธรณ์ ไม่มีปุ่มบันทึกไม่อุทธรณ์/ปิดเรื่อง</p><p class="should"><b>ผลที่ควรได้:</b> บันทึกว่าพยานไม่ประสงค์อุทธรณ์ หรือปิดเรื่องเมื่อพ้น 30 วันได้ (WIT0909)</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>ในแฟ้มที่พยานรับ คบ.10 แล้ว มีกล่อง &quot;พยานแจ้งไม่ประสงค์อุทธรณ์&quot; ให้กรอกรายละเอียดและชื่อไฟล์หลักฐานคำแจ้ง หากยังไม่แนบหลักฐานระบบจะไม่ให้ปิดเรื่อง เมื่อแนบแล้วกดยืนยัน ระบบปิดเรื่องอย่างเป็นทางการ แม้ยังไม่ครบ 30 วัน และกล่องนี้หายไปพร้อมแสดงว่าปิดเรื่องแล้ว</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-034-a.jpg" data-cap="กล่องใหม่สำหรับบันทึกพยานแจ้งไม่ประสงค์อุทธรณ์" aria-label="ขยายภาพ TC-034-a.png"><img src="img/TC-034-a.jpg" alt="กล่องใหม่สำหรับบันทึกพยานแจ้งไม่ประสงค์อุทธรณ์" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-034-a</b> กล่องใหม่สำหรับบันทึกพยานแจ้งไม่ประสงค์อุทธรณ์</figcaption></figure><figure><button class="zoom" data-src="img/TC-034-b.jpg" data-cap="หลังยืนยัน แฟ้มแสดงว่าปิดเรื่องแล้ว" aria-label="ขยายภาพ TC-034-b.png"><img src="img/TC-034-b.jpg" alt="หลังยืนยัน แฟ้มแสดงว่าปิดเรื่องแล้ว" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-034-b</b> หลังยืนยัน แฟ้มแสดงว่าปิดเรื่องแล้ว</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev แล้วโหลด Mock State: Case 4.1</li><li>สลับบทบาทเป็น เจ้าหน้าที่</li><li>เปิดแฟ้ม WP-2569-000501 (เมนูรายการเรื่อง แล้วเลือกแฟ้ม)</li><li>เลื่อนหากล่อง &quot;พยานแจ้งไม่ประสงค์อุทธรณ์&quot;</li><li>กรอกรายละเอียด กดบันทึกโดยยังไม่แนบหลักฐาน (ต้องไม่ผ่าน) จากนั้นกรอกชื่อไฟล์หลักฐานแล้วกดปิดเรื่อง และกดยืนยันปิดเรื่อง</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-034 · พยานไม่อุทธรณ์ → สิ้นสุด (WIT0909) บันทึกก่อนครบ 30 วันได้ ต้องมีหลักฐานคำแจ้ง</span> <span class="dur">1.6 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-034" id="card-TC-034"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-036">
+<header class="ihead"><div class="ids"><span class="no">10</span><h3>TC-036</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>09B อุทธรณ์</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ / ผบช.ชั้นต้น / ผอ.สำนัก/กอง</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 4.2</dd></div><div><dt>หน้า</dt><dd><code>/appeal-folder/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>ผบช. มีปุ่มเสนอรองเลขาธิการฯ ข้ามขั้น ผอ. และ ผอ. เข้าหน้าอุทธรณ์ไม่ได้</p><p class="should"><b>ผลที่ควรได้:</b> ผบช. ส่งต่อ ผอ. และ ผอ. ลงนามเสนอรองเลขาธิการฯ (WIT0916)</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>ผบช. เห็นเพียงปุ่ม &quot;ให้ความเห็นและเสนอ ผอ.สำนัก/กอง&quot; ไม่มีปุ่มเสนอรองเลขาธิการฯ ข้ามขั้น หลัง ผบช. เสนอแล้ว ผอ. เปิดหน้า /appeal และแฟ้มอุทธรณ์ได้ เห็นช่องความเห็นของ ผอ. และลงนามเสนอรองเลขาธิการฯ ได้ ส่วนรองเลขาฯ ข้ามคิว ผอ. ไม่ได้</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-036-a.jpg" data-cap="ผบช. เห็นปุ่มเสนอ ผอ. ไม่มีปุ่มข้ามไปรองเลขาฯ (ปุ่มสีเขียว ส่งกลับเข้าสายพิจารณาปกติ ด้านบนยังแสดงได้ เพราะแฟ้มนี้ยังไม่มีมติคณะกรรมการ ปุ่มจะหายเมื่อมีมติแล้ว ดู TC-037)" aria-label="ขยายภาพ TC-036-a.png"><img src="img/TC-036-a.jpg" alt="ผบช. เห็นปุ่มเสนอ ผอ. ไม่มีปุ่มข้ามไปรองเลขาฯ (ปุ่มสีเขียว ส่งกลับเข้าสายพิจารณาปกติ ด้านบนยังแสดงได้ เพราะแฟ้มนี้ยังไม่มีมติคณะกรรมการ ปุ่มจะหายเมื่อมีมติแล้ว ดู TC-037)" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-036-a</b> ผบช. เห็นปุ่มเสนอ ผอ. ไม่มีปุ่มข้ามไปรองเลขาฯ (ปุ่มสีเขียว ส่งกลับเข้าสายพิจารณาปกติ ด้านบนยังแสดงได้ เพราะแฟ้มนี้ยังไม่มีมติคณะกรรมการ ปุ่มจะหายเมื่อมีมติแล้ว ดู TC-037)</figcaption></figure><figure><button class="zoom" data-src="img/TC-036-b.jpg" data-cap="ผอ. เข้าแฟ้มและลงนามเสนอรองเลขาธิการฯ ได้" aria-label="ขยายภาพ TC-036-b.png"><img src="img/TC-036-b.jpg" alt="ผอ. เข้าแฟ้มและลงนามเสนอรองเลขาธิการฯ ได้" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-036-b</b> ผอ. เข้าแฟ้มและลงนามเสนอรองเลขาธิการฯ ได้</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev แล้วโหลด Mock State: Case 4.2</li><li>สลับเป็น เจ้าหน้าที่ เปิดแฟ้มอุทธรณ์ WP-2569-000501 กดยืนยันแฟ้มครบถ้วน แล้วบันทึกความเห็นและเสนอต่อ</li><li>สลับเป็น ผบช.ชั้นต้น ตรวจว่ามีปุ่มเสนอ ผอ. เท่านั้น</li><li>กดบันทึกความเห็นและเสนอ ผอ.</li><li>สลับเป็น ผอ.สำนัก/กอง เปิดเมนูอุทธรณ์ (/appeal) แล้วเปิดแฟ้ม กรอกความเห็นและกดลงนามเสนอรองเลขาธิการฯ</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-036 · ลำดับเสนอแฟ้มอุทธรณ์ ผบช. → ผอ. (WIT0916) → รองเลขาธิการฯ ไม่ข้ามชั้น</span> <span class="dur">4.6 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-036" id="card-TC-036"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-039">
+<header class="ihead"><div class="ids"><span class="no">11</span><h3>TC-039</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>09B อุทธรณ์</dd></div><div><dt>บทบาท</dt><dd>ธุรการสำนัก/กอง</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 4.1</dd></div><div><dt>หน้า</dt><dd><code>/appeal</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>ธุรการไม่มีปุ่มรับอุทธรณ์ และถูกปฏิเสธหน้า /appeal</p><p class="should"><b>ผลที่ควรได้:</b> ธุรการรับคำอุทธรณ์เข้าระบบได้ (WIT0912)</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>ธุรการเปิดหน้ารายการคำอุทธรณ์ (/appeal) ได้ และในแฟ้มมีฟอร์มรับอุทธรณ์ช่องทางหนังสือ (เลขรับสารบรรณ วันที่รับ ไฟล์หนังสือ) รับเข้าแฟ้มเดิมโดยไม่สร้างเรื่องใหม่ ส่วนช่องทางวาจาต้องให้เจ้าหน้าที่บันทึกถ้อยคำ หลังรับแล้ว เจ้าหน้าที่เห็นปุ่มตรวจแฟ้มอุทธรณ์ต่อ</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-039-a.jpg" data-cap="ฟอร์มรับคำอุทธรณ์ของธุรการ" aria-label="ขยายภาพ TC-039-a.png"><img src="img/TC-039-a.jpg" alt="ฟอร์มรับคำอุทธรณ์ของธุรการ" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-039-a</b> ฟอร์มรับคำอุทธรณ์ของธุรการ</figcaption></figure><figure><button class="zoom" data-src="img/TC-039-b.jpg" data-cap="หลังรับ เจ้าหน้าที่เห็นปุ่มตรวจแฟ้มต่อ" aria-label="ขยายภาพ TC-039-b.png"><img src="img/TC-039-b.jpg" alt="หลังรับ เจ้าหน้าที่เห็นปุ่มตรวจแฟ้มต่อ" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-039-b</b> หลังรับ เจ้าหน้าที่เห็นปุ่มตรวจแฟ้มต่อ</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev แล้วโหลด Mock State: Case 4.1</li><li>สลับเป็น ธุรการสำนัก/กอง เปิดเมนูอุทธรณ์ (/appeal) ต้องเข้าได้</li><li>เปิดแฟ้ม WP-2569-000501 เลื่อนหาส่วนสิทธิยื่นอุทธรณ์ภายใน 30 วัน</li><li>กรอกเหตุผล เลขรับสารบรรณ วันที่รับ แนบไฟล์หนังสือ แล้วกดรับอุทธรณ์และยืนยัน</li><li>สลับเป็น เจ้าหน้าที่ เปิดแฟ้มอุทธรณ์ ต้องเห็นปุ่มตรวจแฟ้ม</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-039 · ธุรการสำนัก/กองรับคำอุทธรณ์ (WIT0912) เข้าแฟ้มเดิม แล้วเรื่องเดินต่อที่เจ้าหน้าที่</span> <span class="dur">2.2 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-039" id="card-TC-039"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-045">
+<header class="ihead"><div class="ids"><span class="no">12</span><h3>TC-045</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>11A ทบทวน</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท. / ผบช.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.14</dd></div><div><dt>หน้า</dt><dd><code>/protection-review/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>ไม่มีปุ่มไปแท็บ 11B ต้องไปทางเมนู</p><p class="should"><b>ผลที่ควรได้:</b> มีปุ่มไปแท็บ 11B จัดทำ คบ.14</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>หลังดำเนินการตามแนวทาง WIT1109 ขยายเวลา มีปุ่มไปแท็บ 11B จัดทำ คบ.14 ขยายระยะเวลา กดแล้วเข้าหน้า 11B ได้ทันที หลังดำเนินการตามแนวทาง WIT1111 เข้าสู่การยุติ มีปุ่มไปแท็บ 11C ยุติการคุ้มครอง กดแล้วเข้าหน้ายุติของสำนวนได้ทันที</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-045-a.jpg" data-cap="มีปุ่มไปแท็บ 11B จัดทำ คบ.14 แล้ว" aria-label="ขยายภาพ TC-045-a.png"><img src="img/TC-045-a.jpg" alt="มีปุ่มไปแท็บ 11B จัดทำ คบ.14 แล้ว" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-045-a</b> มีปุ่มไปแท็บ 11B จัดทำ คบ.14 แล้ว</figcaption></figure><figure><button class="zoom" data-src="img/TC-045-b.jpg" data-cap="มีปุ่มไปแท็บ 11C แล้ว" aria-label="ขยายภาพ TC-045-b.png"><img src="img/TC-045-b.jpg" alt="มีปุ่มไปแท็บ 11C แล้ว" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-045-b</b> มีปุ่มไปแท็บ 11C แล้ว</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev</li><li>โหลด Mock State Case 1.14 บทบาท เจ้าหน้าที่ ป.ป.ท.</li><li>เปิดหน้าทบทวน 11A เลือก WIT1109 ขยายเวลา กรอกข้อมูล กดเสนอ</li><li>สลับเป็น ผบช. กดเห็นชอบ สลับกลับเป็นเจ้าหน้าที่ กดดำเนินการตามแนวทางที่เห็นชอบ</li><li>ตรวจว่ามีปุ่มไปแท็บ 11B แล้วกดเข้าหน้าขยายเวลา</li><li>เปิดหน้าทบทวน 11A เลือก WIT1111 เข้าสู่กระบวนการยุติ กรอกข้อมูล กดเสนอ</li><li>ตรวจว่ามีปุ่มไปแท็บ 11C แล้วกดเข้าหน้ายุติ</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-045 · WIT1109 ขยายเวลา — หลังดำเนินการมีปุ่มไปแท็บ 11B จัดทำ คบ.14</span> <span class="dur">1.9 วินาที</span></li><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-045 · WIT1111 ยุติ — หลังดำเนินการมีปุ่มไปแท็บ 11C</span> <span class="dur">2.2 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-045" id="card-TC-045"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-050">
+<header class="ihead"><div class="ids"><span class="no">13</span><h3>TC-050</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>11D ยุติ</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท. (จัดทำ) / ผอ.สำนัก/กอง หรือ เลขาธิการ ป.ป.ท. (ลงนาม)</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.16</dd></div><div><dt>หน้า</dt><dd><code>/termination/WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>หลังลงนามแสดง คำสั่งที่ — / มีผลวันที่ undefined</p><p class="should"><b>ผลที่ควรได้:</b> แสดงเลขคำสั่งและวันที่มีผลตามที่กรอก</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>หลังลงนาม คบ.16 หน้าจอแสดงเลขคำสั่ง คส.QA-001/2569 พร้อมวันที่ออกและวันที่มีผลตามที่กรอกไว้ ไม่ขึ้นขีด (—) หรือคำว่า undefined อีก</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-050-a.jpg" data-cap="หลังลงนามแสดงเลขคำสั่ง คส.QA-001/2569 และวันที่ตามที่กรอก" aria-label="ขยายภาพ TC-050-a.png"><img src="img/TC-050-a.jpg" alt="หลังลงนามแสดงเลขคำสั่ง คส.QA-001/2569 และวันที่ตามที่กรอก" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-050-a</b> หลังลงนามแสดงเลขคำสั่ง คส.QA-001/2569 และวันที่ตามที่กรอก</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev</li><li>โหลด Mock State Case 1.16 อนุมัติให้ยุติ (11D) แล้วสลับเป็นเจ้าหน้าที่</li><li>กรอกคำสั่งที่ วันที่ออก/วันที่มีผล เปิดแฟ้มคดี กรอกเลขคำสั่ง คส.QA-001 ปี 2569 ในแบบ คบ.16 แล้วส่งให้อนุมัติ</li><li>สลับเป็นผู้มีอำนาจลงนาม เปิด /termination/WP-2569-000501 กดลงนามคำสั่ง คบ.16</li><li>ตรวจว่าแสดง คำสั่งที่ คส.QA-001/2569 พร้อมวันที่ออก/วันที่มีผล</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-050 · คบ.16 หลังลงนามแสดงเลขคำสั่งและวันที่มีผลตามที่กรอก</span> <span class="dur">2.8 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-050" id="card-TC-050"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-052">
+<header class="ihead"><div class="ids"><span class="no">14</span><h3>TC-052</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>10 รายงาน คบ.13</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.14</dd></div><div><dt>หน้า</dt><dd><code>/protection-monitor</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>เมนูเปิดหน้าภาพรวมก่อน</p><p class="should"><b>ผลที่ควรได้:</b> เปิดหน้ารายงาน คบ.13</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>กดเมนู รายงานผลการคุ้มครอง (คบ.13) แล้วเข้าหน้ารายงาน คบ.13 ทันที เห็นรายการสำนวน ไม่เด้งไปหน้าภาพรวม และกดเลือกสำนวนเพื่อดูรายงานได้</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-052-a.jpg" data-cap="กดเมนู คบ.13 แล้วเปิดหน้ารายงานพร้อมรายการสำนวน ไม่เด้งไปภาพรวม" aria-label="ขยายภาพ TC-052-a.png"><img src="img/TC-052-a.jpg" alt="กดเมนู คบ.13 แล้วเปิดหน้ารายงานพร้อมรายการสำนวน ไม่เด้งไปภาพรวม" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-052-a</b> กดเมนู คบ.13 แล้วเปิดหน้ารายงานพร้อมรายการสำนวน ไม่เด้งไปภาพรวม</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev</li><li>โหลด Mock State Case 1.14 บทบาท เจ้าหน้าที่ ป.ป.ท. เปิดหน้าทะเบียน</li><li>กางกลุ่มเมนู คุ้มครองและติดตาม แล้วกด รายงานผลการคุ้มครอง (คบ.13)</li><li>ตรวจว่าเข้าหน้ารายงาน คบ.13 และเห็นสำนวน WP-2569-000501 ในรายการ</li><li>กดสำนวนเพื่อเปิดรายงานของสำนวนนั้น</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-052 · เมนูรายงานผลการคุ้มครอง (คบ.13) เปิดหน้ารายงาน คบ.13 พร้อมรายการสำนวน ไม่เด้งไปภาพรวม</span> <span class="dur">0.8 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-052" id="card-TC-052"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-053">
+<header class="ihead"><div class="ids"><span class="no">15</span><h3>TC-053</h3><span class="kind k-block">ติดขัด</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>เมนู / การนำทาง</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.3 (ใช้ได้ทุกสถานะ)</dd></div><div><dt>หน้า</dt><dd><code>/forms</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>ปุ่มชื่อ กลับทะเบียน พาไปหน้าทะเบียน ไม่มีปุ่มกลับหน้ารายการแบบฟอร์ม</p><p class="should"><b>ผลที่ควรได้:</b> กลับหน้ารายการแบบฟอร์ม</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>แบบฟอร์มที่เปิดจากเมนู แบบฟอร์ม คบ. มีปุ่ม กลับรายการแบบฟอร์ม และกดแล้วกลับหน้ารายการแบบฟอร์ม ส่วนแบบฟอร์มที่เปิดจากแฟ้มยังมีปุ่ม กลับแฟ้มคำร้อง ตามเดิม</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-053-a.jpg" data-cap="มีปุ่ม กลับรายการแบบฟอร์ม แทน กลับทะเบียน" aria-label="ขยายภาพ TC-053-a.png"><img src="img/TC-053-a.jpg" alt="มีปุ่ม กลับรายการแบบฟอร์ม แทน กลับทะเบียน" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-053-a</b> มีปุ่ม กลับรายการแบบฟอร์ม แทน กลับทะเบียน</figcaption></figure><figure><button class="zoom" data-src="img/TC-053-b.jpg" data-cap="เปิดจากแฟ้ม ยังมีปุ่ม กลับแฟ้มคำร้อง ตามเดิม" aria-label="ขยายภาพ TC-053-b.png"><img src="img/TC-053-b.jpg" alt="เปิดจากแฟ้ม ยังมีปุ่ม กลับแฟ้มคำร้อง ตามเดิม" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-053-b</b> เปิดจากแฟ้ม ยังมีปุ่ม กลับแฟ้มคำร้อง ตามเดิม</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev สลับเป็นเจ้าหน้าที่ ป.ป.ท. แล้วโหลด Mock State ใดก็ได้</li><li>กดเมนู แบบฟอร์ม คบ.(1-17) แล้วกด เปิดแบบฟอร์ม ที่ฟอร์มใดก็ได้</li><li>ตรวจว่ามีปุ่ม กลับรายการแบบฟอร์ม และไม่มีปุ่ม กลับทะเบียน</li><li>กด กลับรายการแบบฟอร์ม ต้องกลับหน้า /forms</li><li>ทดสอบเพิ่ม: เปิดแบบ คบ.6 จากแฟ้ม WP-2569-000501 ต้องเห็นปุ่ม กลับแฟ้มคำร้อง</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-053 · แบบฟอร์มที่เปิดจากเมนู แบบฟอร์ม คบ. ต้องมีปุ่มกลับรายการแบบฟอร์ม (/forms)</span> <span class="dur">1.4 วินาที</span></li><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-053 · เปิดจากแฟ้มยังกลับแฟ้มคำร้องเหมือนเดิม</span> <span class="dur">1.4 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-053" id="card-TC-053"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="TC-051">
+<header class="ihead"><div class="ids"><span class="no">16</span><h3>TC-051</h3><span class="kind k-note">ผ่าน (มีหมายเหตุ)</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>เมนู / การนำทาง</dd></div><div><dt>บทบาท</dt><dd>เจ้าหน้าที่ ป.ป.ท.</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 1.14</dd></div><div><dt>หน้า</dt><dd><code>/protection-monitor</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ผลที่ผู้ทดสอบเจอ (28/09/2026)</h4><p>เมนูทุกเมนูเปิดตรงหน้า ยกเว้น คบ.13</p><p class="should"><b>ผลที่ควรได้:</b> เปิดหน้าตรงชื่อเมนู</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>เมนูรายงานผลการคุ้มครอง (คบ.13) เปิดหน้ารายงาน คบ.13 ตรงชื่อ และเมนูนั้นถูกไฮไลต์เป็นเมนูที่เลือกอยู่</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/TC-051-a.jpg" data-cap="เมนู คบ.13 ถูกเลือก และเปิดหน้ารายงาน คบ.13 ตรงชื่อเมนู" aria-label="ขยายภาพ TC-051-a.png"><img src="img/TC-051-a.jpg" alt="เมนู คบ.13 ถูกเลือก และเปิดหน้ารายงาน คบ.13 ตรงชื่อเมนู" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>TC-051-a</b> เมนู คบ.13 ถูกเลือก และเปิดหน้ารายงาน คบ.13 ตรงชื่อเมนู</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev</li><li>โหลด Mock State Case 1.14 บทบาท เจ้าหน้าที่ ป.ป.ท.</li><li>กางกลุ่มเมนู คุ้มครองและติดตาม</li><li>กดเมนู รายงานผลการคุ้มครอง (คบ.13)</li><li>ตรวจว่าเมนูถูกไฮไลต์ และหัวข้อหน้าคือ ติดตามและรายงานผลการคุ้มครอง (คบ.13)</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">TC-051 · เมนูด้านข้างทุกเมนูเปิดตรงหน้า รวม คบ.13</span> <span class="dur">0.8 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="TC-051" id="card-TC-051"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article><article class="item" id="GAP-010">
+<header class="ihead"><div class="ids"><span class="no">17</span><h3>GAP-010</h3><span class="kind k-gap">พบเพิ่ม</span></div>
+<dl class="meta"><div><dt>แท็บ</dt><dd>04–06 แบบฟอร์ม คบ.3–คบ.6</dd></div><div><dt>บทบาท</dt><dd>ผู้บังคับบัญชาชั้นต้น (ผบช.)</dd></div><div><dt>ข้อมูลตั้งต้น</dt><dd>Mock State Case 2 (ต้องมีอย่างน้อย 2 แฟ้ม)</dd></div><div><dt>หน้า</dt><dd><code>/form/6?caseNo=WP-2569-000501</code></dd></div></dl></header>
+<div class="compare"><section class="was"><h4>ที่มา</h4><p>ไม่ได้อยู่ในผลทดสอบ — พบจากการตรวจเทียบผังงาน</p><p class="should"><b>ผลที่ควรได้:</b> ร่างแบบ คบ.3–คบ.6 แยกตามแฟ้ม ข้อมูลพยานไม่ปรากฏข้ามแฟ้ม และแต่ละแฟ้มผ่านด่านตรวจได้ด้วยข้อมูลของตัวเองเท่านั้น</p></section>
+<section class="now"><h4>หลังแก้ไข</h4><p>ข้อมูลที่กรอกใน คบ.6 ของแฟ้มหนึ่งจะไม่โผล่ในอีกแฟ้ม แฟ้มใหม่เริ่มจากช่องว่าง และปุ่มส่งต่อของอีกแฟ้มยังถูกล็อกถ้าแฟ้มนั้นยังไม่มีความเห็นข้อ 10 ของตัวเอง กลับมาแฟ้มเดิมข้อมูลยังอยู่ครบ</p></section></div>
+<div class="shots"><figure><button class="zoom" data-src="img/GAP-010-a.jpg" data-cap="แฟ้ม B เริ่มว่าง ไม่มีข้อมูลของแฟ้ม A ปนมา" aria-label="ขยายภาพ GAP-010-a.png"><img src="img/GAP-010-a.jpg" alt="แฟ้ม B เริ่มว่าง ไม่มีข้อมูลของแฟ้ม A ปนมา" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>GAP-010-a</b> แฟ้ม B เริ่มว่าง ไม่มีข้อมูลของแฟ้ม A ปนมา</figcaption></figure><figure><button class="zoom" data-src="img/GAP-010-b.jpg" data-cap="แฟ้ม B ส่งต่อไม่ได้ ไม่ใช้ความเห็นของแฟ้ม A ข้ามด่านตรวจ" aria-label="ขยายภาพ GAP-010-b.png"><img src="img/GAP-010-b.jpg" alt="แฟ้ม B ส่งต่อไม่ได้ ไม่ใช้ความเห็นของแฟ้ม A ข้ามด่านตรวจ" loading="lazy" width="1280" height="720"></button>
+<figcaption><b>GAP-010-b</b> แฟ้ม B ส่งต่อไม่ได้ ไม่ใช้ความเห็นของแฟ้ม A ข้ามด่านตรวจ</figcaption></figure></div>
+<div class="bottom"><section class="steps"><h4>ขั้นตอนทดสอบซ้ำ</h4><ol><li>เปิด https://pacc-a6.teerut-s.workers.dev โหลด Mock State Case 2 สลับเป็น ผบช.</li><li>เปิดแฟ้ม WP-2569-000501 เข้า คบ.6 กรอกความเห็นข้อ 10 และช่อง 1.1 (ไม่ต้องลงนาม)</li><li>เปิดแฟ้มอื่นที่มีในทะเบียน แล้วเข้า คบ.6 ของแฟ้มนั้น ช่อง 10 และ 1.1 ต้องว่าง ไม่มีข้อมูลของแฟ้มแรก</li><li>เปิดแฟ้มนั้นแล้วดูปุ่มส่งต่อ ต้องกดไม่ได้จนกว่าจะกรอกความเห็นข้อ 10 ของแฟ้มตัวเอง</li><li>กลับไปแฟ้มแรก ข้อมูลที่กรอกไว้ต้องยังอยู่ครบ</li></ol></section>
+<section class="auto"><h4>ผลทดสอบอัตโนมัติ (Playwright)</h4><ul><li><span class="pill pass">ผ่าน</span> <span class="tt">GAP-010 · ข้อมูล คบ.6 ของแฟ้ม A ไม่ปรากฏในแฟ้ม B และด่านตรวจของแฟ้ม B ไม่ถูกข้ามด้วยความเห็นของแฟ้ม A</span> <span class="dur">4.8 วินาที</span></li></ul>
+<label class="chk big"><input type="checkbox" data-tc="GAP-010" id="card-GAP-010"> <span>ผู้ทดสอบยืนยันว่าแก้แล้ว</span></label></section></div>
+</article>
+<footer>
+<span>เคสติดขัด 8 ข้อแก้ตามข้อเสนอในไฟล์ “สิ่งที่ Prototype ขาด - จากผลทดสอบ 28 Sep.xlsx” ซึ่งยังรอผู้ออกแบบยืนยัน ถ้าผู้ออกแบบเห็นต่างจะปรับในรอบถัดไป</span>
+<span>ภาพหลักฐานมาจากการรัน Playwright บนเครื่องพัฒนา (Chrome 1280×720) กับรุ่นโค้ดเดียวกับที่ระบุด้านบน รายการช่องว่างอื่นที่พบเพิ่มยังไม่ได้แก้ในรอบนี้</span>
+</footer>
+</div>
+<dialog id="lb"><button type="button" id="lbx">ปิด</button><img id="lbi" alt=""><p id="lbc"></p></dialog>
+<script>
+(function(){
+  const KEY='fix-report-28sep-confirmed';
+  let done={};
+  try { done=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; } catch(e) { done={}; }
+  const boxes=[...document.querySelectorAll('input[data-tc]')];
+  function paint(){
+    boxes.forEach(b=>{ b.checked=!!done[b.dataset.tc]; });
+    document.querySelectorAll('.item').forEach(a=>a.classList.toggle('done',!!done[a.id]));
+    apply();
+  }
+  boxes.forEach(b=>b.addEventListener('change',()=>{
+    if(b.checked) done[b.dataset.tc]=true; else delete done[b.dataset.tc];
+    try { localStorage.setItem(KEY,JSON.stringify(done)); } catch(e) {}
+    paint();
+  }));
+  let f='all';
+  const btns=[...document.querySelectorAll('.filters button')];
+  function apply(){
+    let n=0;
+    document.querySelectorAll('.item').forEach(a=>{
+      const k=a.querySelector('.ids .kind').textContent;
+      const show = f==='all' || (f==='todo' ? !done[a.id] : f==='other' ? (k!=='ไม่ผ่าน'&&k!=='ติดขัด') : k===f);
+      a.hidden=!show; if(show) n++;
+    });
+    document.getElementById('count').textContent='แสดง '+n+' ข้อ · ยืนยันแล้ว '+Object.keys(done).length+'/'+document.querySelectorAll('.item').length;
+  }
+  btns.forEach(b=>b.addEventListener('click',()=>{ f=b.dataset.f; btns.forEach(x=>x.setAttribute('aria-pressed',String(x===b))); apply(); }));
+  const lb=document.getElementById('lb');
+  document.querySelectorAll('.zoom').forEach(z=>z.addEventListener('click',()=>{
+    document.getElementById('lbi').src=z.dataset.src; document.getElementById('lbi').alt=z.dataset.cap;
+    document.getElementById('lbc').textContent=z.dataset.cap;
+    if(lb.showModal) lb.showModal();
+  }));
+  document.getElementById('lbx').addEventListener('click',()=>lb.close());
+  lb.addEventListener('click',e=>{ if(e.target===lb) lb.close(); });
+  paint();
+})();
+</script>

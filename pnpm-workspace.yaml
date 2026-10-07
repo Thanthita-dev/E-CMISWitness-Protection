@@ -1,0 +1,8 @@
+packages:
+  - "."
+
+allowBuilds:
+  esbuild: true
+
+patchedDependencies:
+  playwright-core@1.63.0: patches/playwright-core@1.63.0.patch

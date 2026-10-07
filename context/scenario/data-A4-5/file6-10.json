@@ -1,0 +1,227 @@
+{
+    "sources": {
+        "activeIds": "intake-investigation/assets/activity4-seed-policy.js:4",
+        "a4CaseData": "intake-investigation/assets/activity4-workspace.js:184 (A4_SCENARIO_CASES)",
+        "a4Progress": "intake-investigation/assets/activity4-workspace.js:185 (A4_SCENARIO_PROGRESS)",
+        "a5Baseline": "intake-investigation/assets/backoffice-three-case-baseline.json (.a5)",
+        "crossActivity": "shared-assets/demo-scenarios.json"
+    },
+    "sharedOfficers": {
+        "caseClerk": "สมชาย ใจดี (ธุรการ ศรร.)",
+        "intakeOfficer": "ดวงใจ ชอบกินผัก",
+        "srrDirector": "นายเจษฎา ร้อนเงิน (ผอ.ศรร.)",
+        "caseAdminDirector": "กรรชัย กำเนิดทอง (ผอ.กบค.)",
+        "a5Investigator": "investig-001 / หน่วย ปราบ 1"
+    },
+    "cases": [
+        {
+            "scenarioKey": "A",
+            "a4Id": "ECMIS-690005",
+            "a5Id": "0001/2569",
+            "tracking": {
+                "trackingYear": "690005",
+                "trackingCode": "891097"
+            },
+            "numbers": {
+                "complaintNo": "0005/2569",
+                "srrNo": "0021/2569",
+                "caseNumber": "0001/2569",
+                "outgoingSrr": "ปป 0004.2/0022",
+                "dispatchLetterNo": "ปป 0004/0031"
+            },
+            "complainant": {
+                "name": "ตรีรุด หล่อจัง",
+                "citizenId": "1-1009-00321-54-8",
+                "phone": "0891234567",
+                "address": "89/12 ถนนเจริญกรุง แขวงบางรัก เขตบางรัก กรุงเทพมหานคร 10500"
+            },
+            "accused": [
+                {
+                    "name": "ณัฐกานต์ แพนดอร่า",
+                    "position": "นักจัดการงานทั่วไปชำนาญการ",
+                    "agency": "สำนักงานเขตบางรัก กรุงเทพมหานคร"
+                }
+            ],
+            "subject": "สูบบุหรี่ในที่ทำงาน",
+            "type": "ปฏิบัติหรือละเว้นการปฏิบัติหน้าที่โดยมิชอบ หรือโดยทุจริต",
+            "agency": "สำนักงานเขตบางรัก กรุงเทพมหานคร",
+            "detail": "ผู้ถูกร้องสูบบุหรี่ภายในอาคารสำนักงานระหว่างเวลาราชการเป็นประจำ ทั้งที่เป็นเขตปลอดบุหรี่ตามกฎหมาย และไม่ปฏิบัติตามคำตักเตือนของผู้บังคับบัญชา",
+            "request": "ขอให้ตรวจสอบและดำเนินการตามอำนาจหน้าที่",
+            "channel": "Walk-In",
+            "province": "กรุงเทพมหานคร",
+            "region": "ส่วนกลาง",
+            "receivedAt": "2026-09-01T09:15:00+07:00",
+            "attachments": [],
+            "a4": {
+                "decision": "18/1ก",
+                "officerOpinion": "เห็นควรรับไว้ดำเนินการตามมาตรา 18/1 (ก) และมอบหมายสำนักผู้รับผิดชอบ",
+                "signatures": [
+                    "เจ้าหน้าที่ 14:00",
+                    "ผอ.ศรร. 15:00",
+                    "ผอ.กบค. 16:00 (2026-09-01)"
+                ],
+                "approvalStatus": "approved",
+                "workflow": {
+                    "stage": "activity5-dispatch",
+                    "status": "ส่งต่อกระบวนการไต่สวนแล้ว",
+                    "complete": true
+                }
+            },
+            "a5": {
+                "workflow": {
+                    "stage": "a5-intake",
+                    "a5Status": "PENDING_INTAKE_CHECK",
+                    "status": "INTAKE_SUBMITTED"
+                },
+                "planLifecycle": "PENDING_INTAKE_CHECK (version 0)",
+                "publicStatus": "TCSP_10 อยู่ระหว่างการไต่สวนเบื้องต้น"
+            },
+            "activities": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                12,
+                13
+            ]
+        },
+        {
+            "scenarioKey": "B",
+            "a4Id": "ECMIS-690007",
+            "a5Id": "A5-690007",
+            "tracking": {
+                "trackingYear": "690007",
+                "trackingCode": "654783"
+            },
+            "numbers": {
+                "complaintNo": "0007/2569",
+                "srrNo": "0023/2569",
+                "caseNumber": "",
+                "outgoingSrr": "ปป 0004.2/0023",
+                "dispatchLetterNo": "ปป 0004/0032"
+            },
+            "complainant": {
+                "name": "ตรีรุด หล่อจัง",
+                "citizenId": "1-1009-00321-54-8",
+                "phone": "0891234567",
+                "address": "89/12 ถนนเจริญกรุง แขวงบางรัก เขตบางรัก กรุงเทพมหานคร 10500"
+            },
+            "accused": [],
+            "subject": "น้ำป่าไหลหลากในหมู่บ้าน A",
+            "type": "ทำให้เกิดความเดือดร้อนแก่ผู้ใช้บริการหรือประชาชน",
+            "agency": "องค์การบริหารส่วนตำบลบ้านเอ",
+            "detail": "เกิดน้ำป่าไหลหลากเข้าหมู่บ้าน A ทุกปีในฤดูฝน บ้านเรือนและพื้นที่เกษตรเสียหาย ขอให้หน่วยงานที่เกี่ยวข้องเร่งแก้ไขปัญหาทางระบายน้ำ",
+            "request": "ขอให้ตรวจสอบและดำเนินการตามอำนาจหน้าที่",
+            "channel": "Walk-In",
+            "province": "กรุงเทพมหานคร",
+            "region": "ส่วนกลาง",
+            "receivedAt": "2026-09-03T10:30:00+07:00",
+            "attachments": [],
+            "a4": {
+                "decision": "58/2",
+                "officerOpinion": "เห็นควรดำเนินการตามมาตรา 58/2 ส่งหน่วยงานที่เกี่ยวข้องแก้ไขปัญหา",
+                "reliefOperationKind": "central",
+                "signatures": [
+                    "เจ้าหน้าที่ 14:00",
+                    "ผอ.ศรร. 15:00",
+                    "ผอ.กบค. 16:00 (2026-09-03)"
+                ],
+                "approvalStatus": "approved",
+                "note": "ไม่ออกเลขสำนวน",
+                "workflow": {
+                    "stage": "relief-dispatched",
+                    "status": "จัดส่งตามมาตรา 58/2 แล้ว",
+                    "complete": true
+                }
+            },
+            "a5": {
+                "workflow": {
+                    "stage": "a5-special",
+                    "owner": "clerk",
+                    "status": "รอตรวจรับเรื่องตามมาตรา 58/2"
+                },
+                "publicStatus": "TCSP_10 อยู่ระหว่างการไต่สวนเบื้องต้น"
+            },
+            "activities": [
+                4,
+                5,
+                12,
+                13
+            ]
+        },
+        {
+            "scenarioKey": "C",
+            "a4Id": "ECMIS-690010",
+            "a5Id": "0005/2569",
+            "tracking": {
+                "trackingYear": "690010",
+                "trackingCode": "041812"
+            },
+            "numbers": {
+                "complaintNo": "0010/2569",
+                "srrNo": "0026/2569",
+                "caseNumber": "0005/2569",
+                "outgoingSrr": "ปป 0004.2/0026",
+                "dispatchLetterNo": "ปป 0004/0035"
+            },
+            "complainant": {
+                "name": "นายสมชาย รักความยุติธรรม",
+                "citizenId": "3-1012-00456-78-2",
+                "phone": "0817654321",
+                "address": "45/7 ถนนพหลโยธิน แขวงสามเสนใน เขตพญาไท กรุงเทพมหานคร 10400"
+            },
+            "accused": [
+                {
+                    "name": "นายสมศักดิ์ หาผลประโยชน์",
+                    "position": "ผู้อำนวยการโรงเรียน",
+                    "agency": "โรงเรียนตัวอย่างวิทยา สำนักงานเขตพื้นที่การศึกษามัธยมศึกษากรุงเทพมหานคร เขต 1"
+                }
+            ],
+            "subject": "เรียกรับเงิน “แป๊ะเจี๊ยะ” จากผู้ปกครองโดยไม่ออกใบเสร็จ และนำเงินเข้ากองทุนส่วนตัว เพื่อแลกกับสิทธิ์ในการรับนักเรียนเข้าศึกษาต่อ",
+            "type": "เจ้าพนักงานเรียกรับสินบน",
+            "agency": "โรงเรียนตัวอย่างวิทยา สำนักงานเขตพื้นที่การศึกษามัธยมศึกษากรุงเทพมหานคร เขต 1",
+            "detail": "ผู้ถูกร้องเรียกรับเงิน “แป๊ะเจี๊ยะ” จากผู้ปกครองโดยไม่ออกใบเสร็จรับเงิน และนำเงินเข้ากองทุนส่วนตัว เพื่อแลกกับสิทธิ์ในการรับนักเรียนเข้าศึกษาต่อ",
+            "request": "ขอให้ตรวจสอบและดำเนินการตามอำนาจหน้าที่",
+            "channel": "Walk-In",
+            "province": "กรุงเทพมหานคร",
+            "region": "ส่วนกลาง",
+            "receivedAt": "2026-09-08T13:45:00+07:00",
+            "attachments": [],
+            "a4": {
+                "decision": "18/1ก",
+                "officerOpinion": "เห็นควรรับไว้ดำเนินการตามมาตรา 18/1 (ก) และมอบหมายสำนักผู้รับผิดชอบ",
+                "signatures": [
+                    "เจ้าหน้าที่ 14:00",
+                    "ผอ.ศรร. 15:00",
+                    "ผอ.กบค. 16:00 (2026-09-08)"
+                ],
+                "approvalStatus": "approved",
+                "workflow": {
+                    "stage": "activity5-dispatch",
+                    "status": "ส่งต่อกระบวนการไต่สวนแล้ว",
+                    "complete": true
+                }
+            },
+            "a5": {
+                "workflow": {
+                    "stage": "a5-prelim",
+                    "a5Status": "A5_PRELIM",
+                    "status": "อยู่ระหว่างดำเนินการ"
+                },
+                "publicStatus": "TCSP_10 อยู่ระหว่างการไต่สวนเบื้องต้น"
+            },
+            "activities": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                12,
+                13
+            ]
+        }
+    ]
+}

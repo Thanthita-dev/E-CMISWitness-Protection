@@ -1,0 +1,7 @@
+services:
+  app:
+    image: ghcr.io/mercil-pacc/a6-e-cmiswitness-protection:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    ports:
+      - "80"

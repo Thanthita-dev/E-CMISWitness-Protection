@@ -1,0 +1,2734 @@
+{
+ "format": "ecmis-data-export",
+ "kind": "case",
+ "version": 1,
+ "exportedAt": "2026-10-06T03:14:44.946Z",
+ "case": {
+  "tracking": "690017",
+  "caseNumbers": [
+   "0010/2569"
+  ],
+  "title": ""
+ },
+ "records": [
+  {
+   "key": "ecmis-a4-workspace-v3",
+   "id": "ECMIS-2569-000017",
+   "state": {
+    "caseData": {
+     "id": "ECMIS-2569-000017",
+     "trackingYear": "690017",
+     "trackingCode": "875166",
+     "pendingReference": "",
+     "allocationStatus": "allocated",
+     "anonymousDetected": false,
+     "confidentialityRequested": false,
+     "complainant": "ตรีรุด หล่อจัง",
+     "additionalComplainants": "",
+     "citizenId": "",
+     "id4": "",
+     "phone": "0812345678",
+     "email": "chanavita@mercil.co.th",
+     "address": "Mercil Solution, 1371 Capital mansion\nPhahonyothin Road, Phayathai, Phayathai, Bangkok 1",
+     "subject": "",
+     "allegationIssue": "",
+     "allegationIssueNote": "",
+     "agency": "ณัฐกานต์ แพนดอร่า",
+     "complaintType": "GENERAL",
+     "channel": "Website",
+     "province": "กรุงเทพมหานคร",
+     "district": "",
+     "subdistrict": "",
+     "postcode": "",
+     "region": "ส่วนกลาง",
+     "received": "6 ตุลาคม 2569 09:30 น.",
+     "receivedAt": "2026-10-06T02:30:51.922Z",
+     "type": "รอจำแนกประเภท",
+     "incidentDate": "2026-10-06",
+     "incidentTime": "",
+     "place": "กรุงเทพ กรุงเทพมหานคร",
+     "placeDescription": "",
+     "detail": "สูบบุหรี่ในที่ทำงาน",
+     "damage": "",
+     "request": "ตรวจสอบพฤติกรรม",
+     "attachments": [],
+     "accused": [
+      {
+       "name": "ณัฐกานต์ แพนดอร่า",
+       "position": "",
+       "agency": "",
+       "relation": ""
+      }
+     ],
+     "registry": {
+      "srr": "0033/2569",
+      "srrAt": "2026-10-06T02:31:41.216Z"
+     },
+     "assignedOfficer": "ดวงใจ ชอบกินผัก",
+     "caseNumber": "0010/2569",
+     "sourceSystem": "Activity4HTMLPrototype",
+     "publicStatus": "อยู่ระหว่างการไต่สวนเบื้องต้น"
+    },
+    "documentData": {
+     "decision": "18/1ก",
+     "reasons": [],
+     "naccOtherChecked": false,
+     "naccOtherReason": "",
+     "anonymous": false,
+     "documentSubject": "",
+     "officerOpinion": "ควรพิจารณา",
+     "proposedRegion": "ส่วนกลาง",
+     "reviewRoute": "center",
+     "centerDecision": "",
+     "centerOpinion": "ควรพิจารณา",
+     "centerAdditionalDetail": "",
+     "documentPack": {
+      "caseType": "18/1ก",
+      "sourceVersion": "official-forms-1-01-to-1-14-v3",
+      "pages": {
+       "complainant": 10,
+       "1-03": 2,
+       "unit-transmittal": 1
+      },
+      "steps": {}
+     },
+     "officerSignature": {
+      "signed": true,
+      "signerName": "ดวงใจ ชอบกินผัก",
+      "signerRole": "เจ้าหน้าที่รับเรื่อง",
+      "signedAt": "2026-10-06T02:32:13.390Z",
+      "signatureId": "SIG-20261006023213-5E7D04D4",
+      "renderVersion": "official-forms-1-01-to-1-14-v3"
+     },
+     "centerSignature": {
+      "signed": true,
+      "signerName": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+      "signerRole": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+      "signedAt": "2026-10-06T02:32:32.021Z",
+      "signatureId": "SIG-20261006023232-E4A98EF7",
+      "renderVersion": "official-forms-1-01-to-1-14-v3"
+     },
+     "divisionOpinion": "ควรพิจารณา",
+     "divisionAdditionalDetail": "",
+     "divisionSignature": {
+      "signed": true,
+      "signerName": "ผู้อำนวยการกองบริหารคดี",
+      "signerRole": "ผู้อำนวยการกองบริหารคดี",
+      "signedAt": "2026-10-06T02:32:42.941Z",
+      "signatureId": "SIG-20261006023242-DC3943F5",
+      "renderVersion": "official-forms-1-01-to-1-14-v3"
+     },
+     "internalLetterNo": "",
+     "internalLetterDate": "",
+     "caseNumber": "0010/2569",
+     "caseNumberIssuedAt": "2026-10-06T02:32:42.975Z",
+     "caseNumberIssuedBy": "ผู้อำนวยการกองบริหารคดี",
+     "publicStatus": "สำนักงานได้รับเรื่องของท่านไว้แล้ว และจะดำเนินการเรื่องของท่านต่อไป",
+     "approvedAt": "2026-10-06T02:32:42.941Z",
+     "approvedBy": "ผู้อำนวยการกองบริหารคดี",
+     "actingOfficer": "",
+     "actingOrder": "",
+     "assignedOfficer": "ดวงใจ ชอบกินผัก",
+     "backupOfficer": "",
+     "previousOfficer": "",
+     "previousBackupOfficer": "",
+     "adminNote": "ควรพิจารณา",
+     "absenceReasonType": "",
+     "absenceNote": "",
+     "notAcceptReason": "",
+     "notAcceptOtherChecked": false,
+     "notAcceptOtherReason": "",
+     "dispatchLetterNo": "ปป 0004/0039",
+     "dispatchLetterDate": "2026-10-06",
+     "dispatchSendMethod": "EMS",
+     "dispatchEms": "ED1234567890",
+     "dispatchSentDate": "2026-10-06",
+     "dispatchProofName": "",
+     "dispatchDestinationUnit": "ส่วนกลาง",
+     "dispatchNote": "",
+     "dispatchConfirmedAt": "2026-10-06T02:33:39.085Z",
+     "naccLetterNo": "",
+     "naccLetterDate": "",
+     "naccSendMethod": "EMS",
+     "naccEms": "",
+     "naccSentDate": "",
+     "naccBoardNo": "",
+     "naccBoardDate": "",
+     "naccBoardNote": "",
+     "naccProofName": "",
+     "naccNotified": true,
+     "needsReasonReview": false,
+     "duplicatePackagePreparedAt": "",
+     "duplicatePackagePreparedBy": "",
+     "outgoingRegisters": {
+      "srr": {
+       "number": "",
+       "date": ""
+      },
+      "caseAdmin": {
+       "number": "",
+       "date": ""
+      }
+     },
+     "naccIncomingLetterNo": "",
+     "naccIncomingLetterDate": "",
+     "naccBlackTrackingNo": "",
+     "naccRecipientName": "",
+     "naccProvince": "",
+     "naccBoardAgenda": "",
+     "naccBoardAttachmentPages": "",
+     "naccDossierAttachmentPages": "",
+     "naccReportYear": "",
+     "accusedName": "ณัฐกานต์ แพนดอร่า",
+     "accusedPositionAffiliation": "",
+     "complaintLetterDate": "",
+     "recipientName": "",
+     "contactOfficeName": "",
+     "contactOfficeAddress": "",
+     "contactOfficePhone": "",
+     "contactOfficeFax": "",
+     "ownerPosition": "",
+     "screening": {
+      "decision": "new",
+      "officerOpinion": "new",
+      "decidedAt": "2026-10-06T02:31:55.100Z",
+      "decidedBy": "เจ้าหน้าที่รับเรื่อง",
+      "linkedCaseId": "",
+      "linkedTracking": "",
+      "note": "",
+      "additionalInfo": "",
+      "reportedToSupervisor": null
+     },
+     "naccTransferKind": "",
+     "notAcceptDisposition": "",
+     "otherDisposition": "",
+     "otherReason": "",
+     "homeAgencyForwarding": {
+      "destinationAgency": "",
+      "instruction": "",
+      "outgoingLetterNo": "",
+      "letterDate": "",
+      "sentAt": "",
+      "deliveryMethod": "ระบบสารบรรณอิเล็กทรอนิกส์",
+      "dispatchEvidenceName": "",
+      "receivedAt": "",
+      "receiptEvidenceName": "",
+      "note": ""
+     },
+     "reliefOperationKind": "",
+     "centralSendsDossierToRegion": null,
+     "mergedDuplicates": [],
+     "outgoingMigrationVersion": 1,
+     "outgoingIssuances": {
+      "1-03:main": {
+       "issuanceId": "OUT-5f6076ce-ac4a-4e40-96b0-cc9f98d26c2a-20261006023252",
+       "caseId": "ECMIS-2569-000017",
+       "slotId": "1-03:main",
+       "documentId": "1-03",
+       "purpose": "main",
+       "registerId": "srr",
+       "registerLabel": "ทะเบียนเลขหนังสือขาออก ศรร.",
+       "registerPrefix": "ปป 0004.2",
+       "buddhistYear": 2569,
+       "sequence": 29,
+       "number": "ปป 0004.2/0029",
+       "selectionSource": "user",
+       "status": "issued",
+       "idempotencyKey": "ECMIS-2569-000017:1-03:main:2569",
+       "issuedAt": "2026-10-06T02:32:52.285Z",
+       "issuedBy": "ดวงใจ ชอบกินผัก",
+       "voidedAt": null,
+       "voidedBy": null,
+       "voidReason": null
+      },
+      "unit-transmittal:main": {
+       "issuanceId": "OUT-d2adf7c7-4440-4b70-93a3-f65e66393356-20261006023255",
+       "caseId": "ECMIS-2569-000017",
+       "slotId": "unit-transmittal:main",
+       "documentId": "unit-transmittal",
+       "purpose": "main",
+       "registerId": "kbk",
+       "registerLabel": "ทะเบียนเลขหนังสือขาออก กบค.",
+       "registerPrefix": "ปป 0004",
+       "buddhistYear": 2569,
+       "sequence": 39,
+       "number": "ปป 0004/0039",
+       "selectionSource": "fixed",
+       "status": "issued",
+       "idempotencyKey": "ECMIS-2569-000017:unit-transmittal:main:2569",
+       "issuedAt": "2026-10-06T02:32:55.708Z",
+       "issuedBy": "ดวงใจ ชอบกินผัก",
+       "voidedAt": null,
+       "voidedBy": null,
+       "voidReason": null
+      }
+     },
+     "workingCopy": {
+      "complainant": "ตรีรุด หล่อจัง",
+      "citizenId": "",
+      "phone": "0812345678",
+      "email": "chanavita@mercil.co.th",
+      "address": "Mercil Solution, 1371 Capital mansionPhahonyothin Road, Phayathai, Phayathai, Bangkok 1",
+      "agency": "ณัฐกานต์ แพนดอร่า",
+      "subject": "",
+      "type": "รอจำแนกประเภท",
+      "allegationIssue": "ปฏิบัติหรือละเว้นการปฏิบัติหน้าที่โดยมิชอบ หรือโดยทุจริต",
+      "allegationIssueNote": "",
+      "detail": "สูบบุหรี่ในที่ทำงาน",
+      "place": "กรุงเทพ กรุงเทพมหานคร",
+      "province": "กรุงเทพมหานคร",
+      "region": "ส่วนกลาง",
+      "damage": "",
+      "request": "ตรวจสอบพฤติกรรม"
+     },
+     "anonymousCommitteeSet": "",
+     "anonymousScreening": false,
+     "naccReturnReason": "",
+     "naccReturnDuplicateBasis": "",
+     "naccReturnReference": "",
+     "approvedOpinion": "new",
+     "approvedLinkedCaseId": "",
+     "approvedDocumentVersion": 3,
+     "approvalStatus": "officer_action_completed",
+     "outgoingRegisterSelections": {
+      "1-03:main": "srr",
+      "unit-transmittal:main": "kbk"
+     },
+     "dispatchSentTime": "09:33"
+    },
+    "workflow": {
+     "owner": "clerk",
+     "stage": "a5-prelim",
+     "status": "ส่งถึงเขตผู้รับผิดชอบแล้ว — รอธุรการคดีรับสำนวน",
+     "complete": false,
+     "phase": "TERMINAL",
+     "intakeOwner": {
+      "role": "officer",
+      "officer": "ดวงใจ ชอบกินผัก"
+     },
+     "a5Status": "PLAN_APPROVED"
+    },
+    "assignmentHistory": [
+     {
+      "action": "assign",
+      "previousOfficer": "",
+      "newOfficer": "ดวงใจ ชอบกินผัก",
+      "previousBackupOfficer": "",
+      "newBackupOfficer": "",
+      "actor": "ธุรการ ศรร.",
+      "time": "2026-10-06T02:31:41.205Z",
+      "text": "[มอบหมาย] ผู้รับผิดชอบหลัก ดวงใจ ชอบกินผัก · ผู้ปฏิบัติงานแทน ไม่ได้กำหนด · ดำเนินการโดยธุรการ ศรร."
+     },
+     {
+      "action": "assign",
+      "assignmentMethod": "RANKING",
+      "primaryOfficerId": "mock-investigator-1",
+      "assistantOfficerIds": [
+       "mock-investigator-3"
+      ],
+      "queueOfficerIds": [],
+      "version": 1,
+      "by": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+      "at": "2026-10-06T02:53:20.002Z",
+      "reason": "มอบหมายตามอันดับคำแนะนำ เนื่องจากมีภาระงานเหมาะสมและมีประสบการณ์เกี่ยวข้องกับลักษณะคดี"
+     },
+     {
+      "action": "accept",
+      "officer": "ผู้รับผิดชอบสำนวน",
+      "officerId": "mock-role:investigator",
+      "version": 1,
+      "by": "ผู้รับผิดชอบสำนวน",
+      "at": "2026-10-06T02:53:37.175Z"
+     }
+    ],
+    "decisionHistory": [
+     {
+      "text": "[มอบหมาย] ผู้รับผิดชอบหลัก ดวงใจ ชอบกินผัก · ผู้ปฏิบัติงานแทน ไม่ได้กำหนด · ดำเนินการโดยธุรการ ศรร.",
+      "time": "6 ต.ค. 2569 09:31",
+      "by": "ธุรการ ศรร.",
+      "role": "admin"
+     },
+     {
+      "text": "[แก้ไขข้อมูล] ที่อยู่",
+      "time": "6 ต.ค. 2569 09:31",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer",
+      "type": "FIELD_EDIT",
+      "changes": [
+       {
+        "field": "workingCopy.address",
+        "label": "ที่อยู่",
+        "from": "Mercil Solution, 1371 Capital mansion\nPhahonyothin Road, Phayathai, Phayathai, Bangkok 1",
+        "to": "Mercil Solution, 1371 Capital mansionPhahonyothin Road, Phayathai, Phayathai, Bangkok 1"
+       }
+      ]
+     },
+     {
+      "text": "ตัดสินใจกลั่นกรอง: เรื่องใหม่ — ดำเนินการตามขั้นตอนถัดไป",
+      "time": "6 ต.ค. 2569 09:31",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer"
+     },
+     {
+      "text": "[แก้ไขข้อมูล] ประเด็นการกล่าวหา/ร้องเรียน",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer",
+      "type": "FIELD_EDIT",
+      "changes": [
+       {
+        "field": "workingCopy.allegationIssue",
+        "label": "ประเด็นการกล่าวหา/ร้องเรียน",
+        "from": "",
+        "to": "ปฏิบัติหรือละเว้นการปฏิบัติหน้าที่โดยมิชอบ หรือโดยทุจริต"
+       }
+      ]
+     },
+     {
+      "text": "เจ้าหน้าที่รับเรื่อง ดวงใจ ชอบกินผัก ลงนามอิเล็กทรอนิกส์แล้ว",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer"
+     },
+     {
+      "text": "เจ้าหน้าที่รับเรื่องเสนอความเห็นกลั่นกรองและส่ง ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer"
+     },
+     {
+      "text": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน ลงนามอิเล็กทรอนิกส์แล้ว",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+      "role": "center"
+     },
+     {
+      "text": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน เห็นชอบให้มอบหมาย ส่วนกลาง และส่ง ผู้อำนวยการกองบริหารคดี",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+      "role": "center"
+     },
+     {
+      "text": "ผู้อำนวยการกองบริหารคดี ลงนามอิเล็กทรอนิกส์แล้ว",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ผู้อำนวยการกองบริหารคดี",
+      "role": "division"
+     },
+     {
+      "text": "ระบบออกเลขสำนวน 0010/2569 หลัง ผู้อำนวยการกองบริหารคดี ลงนาม",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ผู้อำนวยการกองบริหารคดี",
+      "role": "division"
+     },
+     {
+      "text": "ผู้อำนวยการกองบริหารคดี อนุมัติความเห็นกลั่นกรอง และส่งกลับเจ้าหน้าที่รับเรื่องเพื่อดำเนินการขั้นสุดท้าย",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ผู้อำนวยการกองบริหารคดี",
+      "role": "division"
+     },
+     {
+      "text": "เจ้าหน้าที่รับเรื่องยืนยันดำเนินการต่อในฐานะเรื่องใหม่ตามผลอนุมัติ ผอ.กบค.",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer"
+     },
+     {
+      "text": "[ออกเลขหนังสือขาออก] ปปท. 1-03 แบบบันทึกการตรวจสอบเรื่องร้องเรียน · ทะเบียนเลขหนังสือขาออก ศรร. · ปป 0004.2/0029 · โดย ดวงใจ ชอบกินผัก",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer"
+     },
+     {
+      "text": "[ออกเลขหนังสือขาออก] บันทึกนำส่งเรื่องร้องเรียนให้สำนัก/เขตผู้รับผิดชอบ · ทะเบียนเลขหนังสือขาออก กบค. · ปป 0004/0039 · โดย ดวงใจ ชอบกินผัก",
+      "time": "6 ต.ค. 2569 09:32",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer"
+     },
+     {
+      "text": "เจ้าหน้าที่รับเรื่อง ศรร. ยืนยันจัดส่งไปยัง ส่วนกลาง เลขหนังสือ ปป 0004/0039 · EMS ED1234567890",
+      "time": "6 ต.ค. 2569 09:33",
+      "by": "ดวงใจ ชอบกินผัก",
+      "role": "officer"
+     },
+     {
+      "actionId": "intake-review-submit",
+      "text": "เจ้าหน้าที่ธุรการคดีประจำเขต/กองปราบ ส่งผลตรวจให้ ผอ.เขต",
+      "by": "เจ้าหน้าที่ธุรการคดีประจำเขต/กองปราบ",
+      "time": "2026-10-06T02:35:08.757Z"
+     },
+     {
+      "actionId": "assignment-confirm",
+      "text": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5) ยืนยันมอบหมายสำนวน",
+      "by": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+      "time": "2026-10-06T02:53:20.002Z"
+     },
+     {
+      "actionId": "officer-accept",
+      "text": "ผู้รับผิดชอบสำนวน รับมอบและลงนามรับสำนวน",
+      "by": "ผู้รับผิดชอบสำนวน",
+      "time": "2026-10-06T02:53:37.175Z"
+     },
+     {
+      "actionId": "plan-start",
+      "text": "ผู้รับผิดชอบสำนวน เริ่มจัดทำแผน",
+      "by": "ผู้รับผิดชอบสำนวน",
+      "time": "2026-10-06T02:53:38.443Z"
+     },
+     {
+      "actionId": "plan-submit",
+      "text": "ผู้รับผิดชอบสำนวน เสนอแผนคดี",
+      "by": "ผู้รับผิดชอบสำนวน",
+      "time": "2026-10-06T02:55:20.766Z"
+     },
+     {
+      "actionId": "plan-return",
+      "text": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5) ส่งแผนคดีกลับแก้ไข",
+      "by": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+      "time": "2026-10-06T02:55:33.460Z"
+     },
+     {
+      "actionId": "plan-submit",
+      "text": "ผู้รับผิดชอบสำนวน เสนอแผนคดี",
+      "by": "ผู้รับผิดชอบสำนวน",
+      "time": "2026-10-06T03:14:25.982Z"
+     },
+     {
+      "actionId": "plan-approve",
+      "text": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5) อนุมัติแผนคดี",
+      "by": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+      "time": "2026-10-06T03:14:31.409Z"
+     }
+    ],
+    "anonymousHistory": [],
+    "documentVersions": [
+     {
+      "version": 1,
+      "actor": "ธุรการ ศรร.",
+      "time": "6 ต.ค. 2569 09:31",
+      "status": "legacy-unverified",
+      "active": false,
+      "signedSnapshot": {},
+      "signatures": {}
+     },
+     {
+      "version": 2,
+      "status": "legacy-unverified",
+      "active": false,
+      "legacySignatures": {
+       "officer": {
+        "signed": true,
+        "signerName": "ดวงใจ ชอบกินผัก",
+        "signerRole": "เจ้าหน้าที่รับเรื่อง",
+        "signedAt": "2026-10-06T02:32:13.390Z",
+        "signatureId": "SIG-20261006023213-5E7D04D4"
+       }
+      },
+      "signedSnapshot": {},
+      "signatures": {}
+     },
+     {
+      "version": 3,
+      "status": "signed",
+      "active": true,
+      "createdAt": "2026-10-06T02:32:13.390Z",
+      "createdBy": "ดวงใจ ชอบกินผัก",
+      "renderVersion": "official-forms-1-01-to-1-14-v3",
+      "signedSnapshot": {
+       "officer": {
+        "caseId": "ECMIS-2569-000017",
+        "decision": "18/1ก",
+        "signerType": "officer",
+        "signature": {
+         "signed": true,
+         "signerName": "ดวงใจ ชอบกินผัก",
+         "signerRole": "เจ้าหน้าที่รับเรื่อง",
+         "signedAt": "2026-10-06T02:32:13.390Z",
+         "signatureId": "SIG-20261006023213-5E7D04D4"
+        },
+        "capturedAt": "2026-10-06T02:32:13.390Z",
+        "documents": [
+         {
+          "documentId": "back-cover",
+          "html": "<article class=\"a4-paper template-confidential-cover\" id=\"activePaper\"><div class=\"confidential-cover-frame\"><span class=\"confidential-cover-code\">รปภ.๑๐</span><strong class=\"confidential-cover-label confidential-cover-top\">ลับ</strong><div class=\"confidential-cover-content\"><h2>ใบปกเอกสารลับ</h2><p>เอกสารแนบในปกนี้ เป็นเอกสารลับซึ่งจะต้องระมัดระวังและปฏิบัติ</p><p>ตามระเบียบว่าด้วยการรักษาความปลอดภัยแห่งชาติโดยเคร่งครัด</p></div><strong class=\"confidential-cover-label confidential-cover-bottom\">ลับ</strong></div></article>"
+         },
+         {
+          "documentId": "ecmis-review-record",
+          "html": "<div class=\"document-page-set form3-document-set\" id=\"activePaper\"><article class=\"a4-paper template-form3\" data-auto-paginate>\n      <p class=\"document-confidential confidential-top\">ลับ</p>\n      <header class=\"form3-header\">\n        <img src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\" class=\"form3-pacc-logo\">\n        <div class=\"form3-header-right\">\n          <p class=\"form3-system-name\">ระบบบริหารจัดการเรื่องร้องเรียน สำนักงาน ป.ป.ท.</p>\n          <div class=\"form3-number\">\n            <strong>เลขรับเรื่องที่</strong> 0033/2569<br>\n            <strong>วันที่</strong> 6 <strong>เดือน</strong> ตุลาคม <strong>พ.ศ.</strong> 2569\n          </div>\n        </div>\n      </header>\n      <div class=\"official-subject\">\n        <strong>เรื่อง</strong><span>การพิจารณารับและกลั่นกรองเรื่องร้องเรียน/เบาะแส เลขรับเรื่องที่ 0033/2569</span>\n        <strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span>\n      </div>\n      <p class=\"form3-intro\">ได้พิจารณาแล้ว จึงขอเสนอเพื่ออนุมัติ ดำเนินการตาม พรบ. ป.ป.ท. ดังนี้</p>\n      <div class=\"form3-decision-grid\">\n        <section class=\"form3-decision-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ ส่งสำนักงาน ป.ป.ช.</h3>\n          <p class=\"form3-section-label\">เหตุที่ไม่สามารถรับไว้ดำเนินการ</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐอยู่ในอำนาจหน้าที่ของ คกก.ป.ป.ช.</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนความผิด พ.ร.บ. เสนอราคาฯ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนพฤติการณ์ร่ำรวยผิดปกติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องทรัพยากรธรรมชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องความมั่นคงชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เป็นความผิดข้ามชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> จัดซื้อจัดจ้าง เกิน 2 ล้านบาท</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เกี่ยวกับสัมปทานโดยรัฐ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐผู้ถูกกล่าวหาดำรงตำแหน่งข้าราชการตั้งแต่ระดับอำนวยการสูงขึ้นไป</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> อื่น ๆ .....................................................................</p>\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ</h3>\n          <div class=\"form3-writing-lines compact\"><div></div><div></div></div>\n        </section>\n        <section class=\"form3-decision-column form3-accept-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ก)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\">ส่วนกลาง</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ข)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/4</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 58/2</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p>\n        </section>\n      </div>\n      <div class=\"form3-footer-block\">\n        <p class=\"form3-note\"><strong>หมายเหตุ</strong> ให้สแกนเอกสารที่สำคัญและจำเป็นลงในระบบฯ<br><span>ทั้งนี้ กรณี ส่งเรื่องไปยังระบบไต่สวนให้นำเข้าเอกสารที่สแกนลงในระบบไต่สวนด้วย</span></p>\n        <p class=\"form3-officer-opinion\"><strong>ความเห็นเจ้าหน้าที่รับเรื่อง</strong> ควรพิจารณา</p><p class=\"form3-submit\">จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        <div class=\"form3-operator\"><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/officer-demo.svg\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span></div><p class=\"form3-signature-name\" data-editable=\"assignedOfficer\" contenteditable=\"true\" spellcheck=\"false\">(ดวงใจ ชอบกินผัก)</p><p class=\"form3-signature-position\">เจ้าหน้าที่รับเรื่อง</p></div>\n      </div>\n      <div class=\"form3-opinion-grid\">\n        <section data-flow-section data-opinion-section=\"center\">\n          <h3 data-flow-heading>ความเห็น ผู้บังคับบัญชาชั้นต้น</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"centerOpinion\"></p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-approval-signature\"><p class=\"form3-signature-name\">(ผู้อำนวยการศูนย์รับเรื่องร้องเรียน)</p><p class=\"form3-signature-position\"><span>ตำแหน่ง</span> <span class=\"form3-position-line\"></span></p></div></div>\n        </section>\n        <section data-flow-section data-opinion-section=\"division\">\n          <h3 data-flow-heading>ความเห็น ผู้อำนวยการสำนัก/กอง</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"divisionOpinion\"></p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-approval-signature\"><p class=\"form3-signature-name\">(ผู้อำนวยการกองบริหารคดี)</p><p class=\"form3-signature-position\"><span>ตำแหน่ง</span> <span class=\"form3-position-line\"></span></p></div></div>\n        </section>\n      </div>\n      <p class=\"document-confidential confidential-bottom\">ลับ</p>\n    </article></div>"
+         },
+         {
+          "documentId": "1-01",
+          "html": "<article class=\"a4-paper template-cover official-blue-cover\" id=\"activePaper\">\n      <p class=\"official-page-label\">หน้าที่ ๑</p>\n      <p class=\"cover-reference\">ตัวอย่างปกสำนวนการไต่สวน<br>(ใช้ปกสีฟ้า)</p>\n      <div class=\"cover-head\"><img class=\"memo-garuda\" src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\"><div><h1>สำนวนการไต่สวน</h1><p>สำนักงานคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div></div>\n      <div class=\"cover-body\">\n        <p class=\"cover-subject\"><strong>เรื่องที่</strong> ออกหลัง ผู้อำนวยการกองบริหารคดี ลงนาม</p>\n        <div class=\"cover-parties\">\n          <div class=\"cover-party-line\"><span>ตรีรุด หล่อจัง</span><b>ผู้กล่าวหา</b></div>\n          <p class=\"cover-between\">ระหว่าง</p>\n          <div class=\"cover-party-line\"><span>ณัฐกานต์ แพนดอร่า</span><b>ผู้ถูกกล่าวหา</b></div>\n        </div>\n        <div class=\"cover-ground\">\n          <span>เป็นกรณีกล่าวหาว่ากระทำการ</span>\n          <div class=\"cover-ground-options\">\n            <label><input type=\"checkbox\" checked disabled> ทุจริตต่อหน้าที่</label>\n            <label><input type=\"checkbox\"  disabled> ประพฤติมิชอบ</label>\n            <label><input type=\"checkbox\" disabled> อื่น ๆ ................................</label>\n          </div>\n        </div>\n        <p class=\"cover-field\"><strong>ข้อกล่าวหา</strong> สูบบุหรี่ในที่ทำงาน</p>\n        <p class=\"cover-field\"><strong>เอกสารพยานหลักฐาน รวมจำนวน</strong> ๑๒ แผ่น</p>\n        <p class=\"cover-sublist\">- คำร้องเรียน/กล่าวหา จำนวน ๑๐ แผ่น<br>- เอกสารประกอบ จำนวน ......... แผ่น<br>- อื่น ๆ จำนวน .........</p>\n        <p class=\"cover-field\"><strong>สถานที่เกิดเหตุ</strong> กรุงเทพ กรุงเทพมหานคร<br><strong>วันเวลาที่เกิดเหตุ</strong> ๖ ตุลาคม ๒๕๖๙ ๐๙:๓๐ น.</p>\n        <p class=\"cover-field\"><strong>อายุความ</strong> .......... ปี <span class=\"cover-dim\">ขาดอายุความ (ทุกฐานความผิด)</span> .................................</p>\n        <p class=\"cover-field\"><strong>สำนักที่รับผิดชอบ</strong> ส่วนกลาง</p>\n        <p class=\"cover-field\"><strong>สำนักงาน ป.ป.ท. รับเรื่อง</strong> วันที่ .......... เดือน ................. พ.ศ. ..........</p>\n        <p class=\"cover-field\"><strong>พนักงาน ป.ป.ท. ผู้รับผิดชอบสำนวนไต่สวน</strong> ดวงใจ ชอบกินผัก<br><strong>เจ้าหน้าที่ ป.ป.ท. ผู้ช่วย</strong> .....................................</p>\n      </div>\n      <p class=\"official-form-code\">ปปท. ๑-๐๑</p>\n    </article>"
+         },
+         {
+          "documentId": "1-03",
+          "html": "<div class=\"document-page-set official-n103-set\" id=\"activePaper\">\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๔</p>\n        <p class=\"official-sample-title\">ตัวอย่างบันทึกการตรวจสอบเรื่องร้องเรียน</p>\n        <aside class=\"memo-receipt-box\"><strong>ศูนย์รับเรื่องร้องเรียน</strong><span>เลขรับ ๐๐๓๓/๒๕๖๙</span><span>วันที่ ๖ ตุลาคม ๒๕๖๙</span></aside>\n        <div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,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\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div>\n        <div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี ศูนย์รับเรื่องร้องเรียน <strong>โทร.</strong> ๑๙๐๕</p><p><strong>ที่</strong> ปป ๐๐ ........................................ <strong>วันที่</strong> ๖ ตุลาคม ๒๕๖๙</p></div>\n        <div class=\"official-subject\"><strong>เรื่อง</strong><span>การตรวจสอบเรื่องร้องเรียน เรื่องที่ <span class=\"doc-editable\" data-editable=\"documentSubject\" contenteditable=\"true\" spellcheck=\"false\"></span></span><strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span></div>\n        <div class=\"official-body n103-body\">\n          <p>ตามที่ศูนย์รับเรื่องร้องเรียน กองบริหารคดี ได้รับเรื่องร้องเรียน/เบาะแส ทางช่องทาง Website เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ กรณีกล่าวหา ณัฐกานต์ แพนดอร่า เรื่อง .................... ศูนย์รับเรื่องร้องเรียนได้ตรวจสอบแล้ว ปรากฏข้อเท็จจริงดังนี้</p>\n          <p>๑. ผู้กล่าวหา/ร้องเรียน : ตรีรุด หล่อจัง</p>\n          <p>๒. ผู้ถูกร้องเรียน : ณัฐกานต์ แพนดอร่า</p>\n          <p>๓. สถานที่เกิดเหตุ : กรุงเทพ กรุงเทพมหานคร</p>\n          <p>๔. ข้อพิจารณา/ข้อเสนอ : เห็นควรพิจารณา ดังนี้</p>\n          <p>๔.๑ กรณีกล่าวหาเจ้าหน้าที่ของรัฐว่ากระทำการทุจริตต่อหน้าที่ ซึ่งอยู่ในอำนาจของคณะกรรมการ ป.ป.ท. ตามมาตรา ๑๘/๑ (ก) แห่งพระราชบัญญัติมาตรการของฝ่ายบริหารในการป้องกันและปราบปรามการทุจริต พ.ศ. ๒๕๕๑ และที่แก้ไขเพิ่มเติม</p>\n          \n          <p>ทั้งนี้ ให้ดำเนินการตามที่บัญญัติไว้ตามกฎกระทรวงแบ่งส่วนราชการสำนักงาน ป.ป.ท. พ.ศ. ๒๕๖๐ ข้อ ๑๑, ข้อ ๑๔, ข้อ ๑๖ และข้อ ๑๗ ประกอบกับประกาศสำนักนายกรัฐมนตรี เรื่อง กำหนดเขตพื้นที่ของสำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ๑ - ๙ และประกาศสำนักงาน ป.ป.ท. เรื่อง กำหนดส่วนราชการและหน่วยงานภาครัฐที่อยู่ในอำนาจและความรับผิดชอบของ กปท. ๑ – ๕</p>\n        </div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๕</p>\n        <p class=\"memo-continuation\">- ๒ -</p>\n        <div class=\"official-body n103-body n103-continuation\">\n          <p>ซึ่งเรื่องร้องเรียนที่ ๐๐๓๓/๒๕๖๙ อยู่ในอำนาจหน้าที่ของ ส่วนกลาง จึงเห็นควรมอบหมายให้ ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ต่อไป และแจ้งผู้เกี่ยวข้องทราบ ทั้งนี้ ได้จัดส่งเรื่องร้องเรียนพร้อมเอกสาร จำนวน ๑๒ แผ่น มาพร้อมนี้</p>\n          <p>จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        </div>\n        <div class=\"official-signature n103-signature\"><p>(ดวงใจ ชอบกินผัก)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้บังคับบัญชาชั้นต้น</strong> เห็นควรมอบหมายให้สำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ และแจ้งผู้เกี่ยวข้องทราบ</p><p>(.....................................)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.<br>ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้อำนวยการกอง</strong> เรื่องที่ ............................. เห็นควรดำเนินการตามเสนอ (ส่งสำนักงาน ปปท. เขต .....)</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นเลขาธิการคณะกรรมการ ป.ป.ท.</strong> เรื่องที่ ........................</p><p>- เห็นชอบ/ดำเนินการตามเสนอ</p><p>- ลงนามแล้ว</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี ปฏิบัติราชการแทน<br>เลขาธิการคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n    </div>"
+         },
+         {
+          "documentId": "unit-transmittal",
+          "html": "<article class=\"a4-paper template-memo\" id=\"activePaper\"><div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,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\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div><div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี <strong>โทร.</strong> ๑๙๐๗</p><p><strong>ที่</strong> ปป ๐๐๐๔/ ........................................ <strong>วันที่</strong> ........................................</p></div><div class=\"official-subject\"><strong>เรื่อง</strong><span>ส่งเรื่องร้องเรียนเพื่อดำเนินการตามอำนาจหน้าที่</span><strong>เรียน</strong><span>ผู้อำนวยการส่วนกลาง</span></div><div class=\"official-body\"><p>ด้วยกองบริหารคดี ได้รับเรื่องร้องเรียน เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ เรื่อง ........................................ ผู้ร้องเรียน ตรีรุด หล่อจัง ซึ่งผู้มีอำนาจได้พิจารณาให้รับไว้ดำเนินการตามมาตรา ๑๘/๑ (ก) และมอบหมายให้ส่วนกลาง เป็นผู้รับผิดชอบ</p><p>กองบริหารคดี จึงขอส่งเรื่องร้องเรียนดังกล่าวพร้อมเอกสาร จำนวน ๑๒ แผ่น มาเพื่อดำเนินการตามอำนาจหน้าที่ต่อไป</p><p>จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ</p></div><div class=\"official-signature\"><p>(........................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div><p class=\"official-form-code\">ใบนำส่งสำนัก/เขต (ร่างของระบบ)</p></article>"
+         }
+        ]
+       },
+       "center": {
+        "caseId": "ECMIS-2569-000017",
+        "decision": "18/1ก",
+        "signerType": "center",
+        "signature": {
+         "signed": true,
+         "signerName": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+         "signerRole": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+         "signedAt": "2026-10-06T02:32:32.021Z",
+         "signatureId": "SIG-20261006023232-E4A98EF7"
+        },
+        "capturedAt": "2026-10-06T02:32:32.021Z",
+        "documents": [
+         {
+          "documentId": "back-cover",
+          "html": "<article class=\"a4-paper template-confidential-cover\" id=\"activePaper\"><div class=\"confidential-cover-frame\"><span class=\"confidential-cover-code\">รปภ.๑๐</span><strong class=\"confidential-cover-label confidential-cover-top\">ลับ</strong><div class=\"confidential-cover-content\"><h2>ใบปกเอกสารลับ</h2><p>เอกสารแนบในปกนี้ เป็นเอกสารลับซึ่งจะต้องระมัดระวังและปฏิบัติ</p><p>ตามระเบียบว่าด้วยการรักษาความปลอดภัยแห่งชาติโดยเคร่งครัด</p></div><strong class=\"confidential-cover-label confidential-cover-bottom\">ลับ</strong></div></article>"
+         },
+         {
+          "documentId": "ecmis-review-record",
+          "html": "<div class=\"document-page-set form3-document-set\" id=\"activePaper\"><article class=\"a4-paper template-form3\" data-auto-paginate>\n      <p class=\"document-confidential confidential-top\">ลับ</p>\n      <header class=\"form3-header\">\n        <img src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\" class=\"form3-pacc-logo\">\n        <div class=\"form3-header-right\">\n          <p class=\"form3-system-name\">ระบบบริหารจัดการเรื่องร้องเรียน สำนักงาน ป.ป.ท.</p>\n          <div class=\"form3-number\">\n            <strong>เลขรับเรื่องที่</strong> 0033/2569<br>\n            <strong>วันที่</strong> 6 <strong>เดือน</strong> ตุลาคม <strong>พ.ศ.</strong> 2569\n          </div>\n        </div>\n      </header>\n      <div class=\"official-subject\">\n        <strong>เรื่อง</strong><span>การพิจารณารับและกลั่นกรองเรื่องร้องเรียน/เบาะแส เลขรับเรื่องที่ 0033/2569</span>\n        <strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span>\n      </div>\n      <p class=\"form3-intro\">ได้พิจารณาแล้ว จึงขอเสนอเพื่ออนุมัติ ดำเนินการตาม พรบ. ป.ป.ท. ดังนี้</p>\n      <div class=\"form3-decision-grid\">\n        <section class=\"form3-decision-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ ส่งสำนักงาน ป.ป.ช.</h3>\n          <p class=\"form3-section-label\">เหตุที่ไม่สามารถรับไว้ดำเนินการ</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐอยู่ในอำนาจหน้าที่ของ คกก.ป.ป.ช.</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนความผิด พ.ร.บ. เสนอราคาฯ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนพฤติการณ์ร่ำรวยผิดปกติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องทรัพยากรธรรมชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องความมั่นคงชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เป็นความผิดข้ามชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> จัดซื้อจัดจ้าง เกิน 2 ล้านบาท</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เกี่ยวกับสัมปทานโดยรัฐ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐผู้ถูกกล่าวหาดำรงตำแหน่งข้าราชการตั้งแต่ระดับอำนวยการสูงขึ้นไป</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> อื่น ๆ .....................................................................</p>\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ</h3>\n          <div class=\"form3-writing-lines compact\"><div></div><div></div></div>\n        </section>\n        <section class=\"form3-decision-column form3-accept-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ก)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\">ส่วนกลาง</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ข)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/4</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 58/2</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p>\n        </section>\n      </div>\n      <div class=\"form3-footer-block\">\n        <p class=\"form3-note\"><strong>หมายเหตุ</strong> ให้สแกนเอกสารที่สำคัญและจำเป็นลงในระบบฯ<br><span>ทั้งนี้ กรณี ส่งเรื่องไปยังระบบไต่สวนให้นำเข้าเอกสารที่สแกนลงในระบบไต่สวนด้วย</span></p>\n        <p class=\"form3-officer-opinion\"><strong>ความเห็นเจ้าหน้าที่รับเรื่อง</strong> ควรพิจารณา</p><p class=\"form3-submit\">จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        <div class=\"form3-operator\"><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/officer-demo.svg\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span></div><p class=\"form3-signature-name\" data-editable=\"assignedOfficer\" contenteditable=\"true\" spellcheck=\"false\">(ดวงใจ ชอบกินผัก)</p><p class=\"form3-signature-position\">เจ้าหน้าที่รับเรื่อง</p></div>\n      </div>\n      <div class=\"form3-opinion-grid\">\n        <section data-flow-section data-opinion-section=\"center\">\n          <h3 data-flow-heading>ความเห็น ผู้บังคับบัญชาชั้นต้น</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"centerOpinion\" contenteditable=\"true\" spellcheck=\"false\">ควรพิจารณา</p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/director-center-demo.png\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span><p class=\"form3-signature-name\">(ผู้อำนวยการศูนย์รับเรื่องร้องเรียน)</p><p class=\"form3-signature-position\">ตำแหน่ง ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div></div>\n        </section>\n        <section data-flow-section data-opinion-section=\"division\">\n          <h3 data-flow-heading>ความเห็น ผู้อำนวยการสำนัก/กอง</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"divisionOpinion\"></p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-approval-signature\"><p class=\"form3-signature-name\">(ผู้อำนวยการกองบริหารคดี)</p><p class=\"form3-signature-position\"><span>ตำแหน่ง</span> <span class=\"form3-position-line\"></span></p></div></div>\n        </section>\n      </div>\n      <p class=\"document-confidential confidential-bottom\">ลับ</p>\n    </article></div>"
+         },
+         {
+          "documentId": "1-01",
+          "html": "<article class=\"a4-paper template-cover official-blue-cover\" id=\"activePaper\">\n      <p class=\"official-page-label\">หน้าที่ ๑</p>\n      <p class=\"cover-reference\">ตัวอย่างปกสำนวนการไต่สวน<br>(ใช้ปกสีฟ้า)</p>\n      <div class=\"cover-head\"><img class=\"memo-garuda\" src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\"><div><h1>สำนวนการไต่สวน</h1><p>สำนักงานคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div></div>\n      <div class=\"cover-body\">\n        <p class=\"cover-subject\"><strong>เรื่องที่</strong> ออกหลัง ผู้อำนวยการกองบริหารคดี ลงนาม</p>\n        <div class=\"cover-parties\">\n          <div class=\"cover-party-line\"><span>ตรีรุด หล่อจัง</span><b>ผู้กล่าวหา</b></div>\n          <p class=\"cover-between\">ระหว่าง</p>\n          <div class=\"cover-party-line\"><span>ณัฐกานต์ แพนดอร่า</span><b>ผู้ถูกกล่าวหา</b></div>\n        </div>\n        <div class=\"cover-ground\">\n          <span>เป็นกรณีกล่าวหาว่ากระทำการ</span>\n          <div class=\"cover-ground-options\">\n            <label><input type=\"checkbox\" checked disabled> ทุจริตต่อหน้าที่</label>\n            <label><input type=\"checkbox\"  disabled> ประพฤติมิชอบ</label>\n            <label><input type=\"checkbox\" disabled> อื่น ๆ ................................</label>\n          </div>\n        </div>\n        <p class=\"cover-field\"><strong>ข้อกล่าวหา</strong> สูบบุหรี่ในที่ทำงาน</p>\n        <p class=\"cover-field\"><strong>เอกสารพยานหลักฐาน รวมจำนวน</strong> ๑๒ แผ่น</p>\n        <p class=\"cover-sublist\">- คำร้องเรียน/กล่าวหา จำนวน ๑๐ แผ่น<br>- เอกสารประกอบ จำนวน ......... แผ่น<br>- อื่น ๆ จำนวน .........</p>\n        <p class=\"cover-field\"><strong>สถานที่เกิดเหตุ</strong> กรุงเทพ กรุงเทพมหานคร<br><strong>วันเวลาที่เกิดเหตุ</strong> ๖ ตุลาคม ๒๕๖๙ ๐๙:๓๐ น.</p>\n        <p class=\"cover-field\"><strong>อายุความ</strong> .......... ปี <span class=\"cover-dim\">ขาดอายุความ (ทุกฐานความผิด)</span> .................................</p>\n        <p class=\"cover-field\"><strong>สำนักที่รับผิดชอบ</strong> ส่วนกลาง</p>\n        <p class=\"cover-field\"><strong>สำนักงาน ป.ป.ท. รับเรื่อง</strong> วันที่ .......... เดือน ................. พ.ศ. ..........</p>\n        <p class=\"cover-field\"><strong>พนักงาน ป.ป.ท. ผู้รับผิดชอบสำนวนไต่สวน</strong> ดวงใจ ชอบกินผัก<br><strong>เจ้าหน้าที่ ป.ป.ท. ผู้ช่วย</strong> .....................................</p>\n      </div>\n      <p class=\"official-form-code\">ปปท. ๑-๐๑</p>\n    </article>"
+         },
+         {
+          "documentId": "1-03",
+          "html": "<div class=\"document-page-set official-n103-set\" id=\"activePaper\">\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๔</p>\n        <p class=\"official-sample-title\">ตัวอย่างบันทึกการตรวจสอบเรื่องร้องเรียน</p>\n        <aside class=\"memo-receipt-box\"><strong>ศูนย์รับเรื่องร้องเรียน</strong><span>เลขรับ ๐๐๓๓/๒๕๖๙</span><span>วันที่ ๖ ตุลาคม ๒๕๖๙</span></aside>\n        <div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,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\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div>\n        <div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี ศูนย์รับเรื่องร้องเรียน <strong>โทร.</strong> ๑๙๐๕</p><p><strong>ที่</strong> ปป ๐๐ ........................................ <strong>วันที่</strong> ๖ ตุลาคม ๒๕๖๙</p></div>\n        <div class=\"official-subject\"><strong>เรื่อง</strong><span>การตรวจสอบเรื่องร้องเรียน เรื่องที่ <span class=\"doc-editable\" data-editable=\"documentSubject\" contenteditable=\"true\" spellcheck=\"false\"></span></span><strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span></div>\n        <div class=\"official-body n103-body\">\n          <p>ตามที่ศูนย์รับเรื่องร้องเรียน กองบริหารคดี ได้รับเรื่องร้องเรียน/เบาะแส ทางช่องทาง Website เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ กรณีกล่าวหา ณัฐกานต์ แพนดอร่า เรื่อง .................... ศูนย์รับเรื่องร้องเรียนได้ตรวจสอบแล้ว ปรากฏข้อเท็จจริงดังนี้</p>\n          <p>๑. ผู้กล่าวหา/ร้องเรียน : ตรีรุด หล่อจัง</p>\n          <p>๒. ผู้ถูกร้องเรียน : ณัฐกานต์ แพนดอร่า</p>\n          <p>๓. สถานที่เกิดเหตุ : กรุงเทพ กรุงเทพมหานคร</p>\n          <p>๔. ข้อพิจารณา/ข้อเสนอ : เห็นควรพิจารณา ดังนี้</p>\n          <p>๔.๑ กรณีกล่าวหาเจ้าหน้าที่ของรัฐว่ากระทำการทุจริตต่อหน้าที่ ซึ่งอยู่ในอำนาจของคณะกรรมการ ป.ป.ท. ตามมาตรา ๑๘/๑ (ก) แห่งพระราชบัญญัติมาตรการของฝ่ายบริหารในการป้องกันและปราบปรามการทุจริต พ.ศ. ๒๕๕๑ และที่แก้ไขเพิ่มเติม</p>\n          \n          <p>ทั้งนี้ ให้ดำเนินการตามที่บัญญัติไว้ตามกฎกระทรวงแบ่งส่วนราชการสำนักงาน ป.ป.ท. พ.ศ. ๒๕๖๐ ข้อ ๑๑, ข้อ ๑๔, ข้อ ๑๖ และข้อ ๑๗ ประกอบกับประกาศสำนักนายกรัฐมนตรี เรื่อง กำหนดเขตพื้นที่ของสำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ๑ - ๙ และประกาศสำนักงาน ป.ป.ท. เรื่อง กำหนดส่วนราชการและหน่วยงานภาครัฐที่อยู่ในอำนาจและความรับผิดชอบของ กปท. ๑ – ๕</p>\n        </div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๕</p>\n        <p class=\"memo-continuation\">- ๒ -</p>\n        <div class=\"official-body n103-body n103-continuation\">\n          <p>ซึ่งเรื่องร้องเรียนที่ ๐๐๓๓/๒๕๖๙ อยู่ในอำนาจหน้าที่ของ ส่วนกลาง จึงเห็นควรมอบหมายให้ ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ต่อไป และแจ้งผู้เกี่ยวข้องทราบ ทั้งนี้ ได้จัดส่งเรื่องร้องเรียนพร้อมเอกสาร จำนวน ๑๒ แผ่น มาพร้อมนี้</p>\n          <p>จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        </div>\n        <div class=\"official-signature n103-signature\"><p>(ดวงใจ ชอบกินผัก)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้บังคับบัญชาชั้นต้น</strong> เห็นควรมอบหมายให้สำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ และแจ้งผู้เกี่ยวข้องทราบ</p><p>(.....................................)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.<br>ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้อำนวยการกอง</strong> เรื่องที่ ............................. เห็นควรดำเนินการตามเสนอ (ส่งสำนักงาน ปปท. เขต .....)</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นเลขาธิการคณะกรรมการ ป.ป.ท.</strong> เรื่องที่ ........................</p><p>- เห็นชอบ/ดำเนินการตามเสนอ</p><p>- ลงนามแล้ว</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี ปฏิบัติราชการแทน<br>เลขาธิการคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n    </div>"
+         },
+         {
+          "documentId": "unit-transmittal",
+          "html": "<article class=\"a4-paper template-memo\" id=\"activePaper\"><div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADKBAMAAAAFnIJvAAAABGdBTUEAALGIlZj0pgAAADBQTFRFAAAAgAAAAIAAgIAAAACAgACAAICAgICAwMDA/wAAAP8A//8AAAD//wD/AP//////ex+xxAAAAAlwSFlzAAAOQAAADkUBMpLx3wAADBBJREFUeJzVnAuC5LYKRdkB+98lO+CVBZePLNmuT78klWSmuyzrCIEQYDmkf/2h/yZBiFcE+h1Mal/xI/2Q0IaLn15YXjf+6FPm6f9H+O0kVU1QfPNjAkOIJPxyklQ4Rux/068JJJ1QvvjRh0S4EfjnBKa/JsSiG38J/dJnoN8/J2Ca/ozAWgnHrw8JT42aWFy1RpCnBHljJH9NIMhL47a/kEGkEPggPJrgp4TXDIl2gnxFOI1Phh4mAk1Nln29hnYeydF2vp2PPoPwmjOeCHbTmbEieFu2nkMoKrN0ELT7c6I1YkUYzXyE4e4omjrhtcgFNzA2pDNBNjKwqwLalCFBkYEOGVLAaH4S4SAs1BNCUBDYZiYJ1Ahityx0yusoUax97MWvKWmzNHY4yQ2VDbDq6RBt8b2hCcN+dfiiuWM6E9g0vLT7PcHmqRG0EPiQkEEYsi7MXq339RVTtuN9gU0Edb6a4a6dw54whGDv7lgMQy2dQK6nMf51N07YauK42ayKc1czwhCQQdCtFsj+2QlhNx/qsDUXhPELmyROWM/1bqWnEOjO1FAJY5rsXtb9XN8Sjgn2SVoQzJ2OSV7O9OEHxmfDh/CvBjZVE4EqYa1nwlh2l9VcY/aXBLfQw2AvCAyvsZ4mC4xsb5sI4oT0f7tpGIRh9YsWNr9Dzz7o4pegCDjsxf3kywamsiEoCJGSgGDThG9XhOOi7xpre4IMqYZcWkYYElwQ+ueSYJPUCKYb3LoyRynrYa8HcXOWmSDkg5QtgaoYw4GcCDaFYjMhneAG5mIsdjexFZSERQQ3tq7Xf9Y3UdM0ljQ+SwKNXWvrOsRW/EFwaZotFSNZE9gn8Ypgl4790xXSCB6Q7AmxSfr1k+vCzezGj0EEgaqtnFQ9NmgSiBohY1NDnYJOiF/30xR6jnjz3KTeLCtC18Tp9jbGMMUipbfg7KllivM0zffbsAnjWRAgHdbziuBWblY96+HYs2yVYRhTAw/JzCVZMF8IYAr+QGiVHdjWhXmIyGjWwrgbZqWdwNTnes44dMQYIfK0C9XlSl3KJMg1QbLTh4ReOUn14OqEYOXWSycIdQqXJC0CbrcFieHPhD6CvslBqclfERBsRJbR+3C/E1tVtQTJXjgAC4IbfKqodhJwiT9OIoRBbQmYaenX/GcKQZm0WTN+Dg3LmRDOpllBXxNS97gWlUVfYwBmdhsCuY/n6VbrXy0YEcsNkkApwrgCB3KapQxEqN6j9UdWSwFbkxTB8pDhW3MIFA0x/CqE1J6ijFBcawGYgpxOmcYEIbxvncOU4jUoQep3DDVXQIzVfhxuSUoak7M1+pZJiOhiBK0wlgMGCVpLsoXT1kvIOOJu8si83Wc++wgGop5irpWmCXW/T9MY8QNDFX2aSp/Fo6Xd1klCGOUamQm5VqqCI4iLMCRXVF87pdbSt5eqU3TukXiRIRDsmatJ1kXAypDueQsBu6fklmzbp93POWILHZEUxvgI+xPvCAIhi/gWI6Fm4P2M4o6t8UpQT0J7AlM0MuJBSA+EJ9niK9o+jFo/ZOh+TYXXhMNeJPaAWLWWJ1dvPUI+nxEvIfg6gaktZ8mWSrgs/M1OYM7GrCh1OmEYeYaS4M4E0cgibPVbDcIInn/CWrNrheakBNhaP4XgtfCUt+hyqKOmTnZVpOdGUBktCUiDYbjm3fyJkYXjGQ564UVIM1a25eAiLwm5NZXN7vByuJoWAGsck0VBgC9u8WAjsMVlUgyWQCBB6MypylGnLSucLE3lDcEliMWJ5M0usuS1cAtSAhfQ5+RlJjSVkRnJuD8yLNvtO8H9gRB8yYYQ/rF/cE3TvVrLogJJdzxX6SZCrLbIlDAgWwU+YFNmy0TSjes1Ab4ChLJViIdMKFaO5cEhIzqcH0/OIXT41JQCvljMdXESfFfX9Ftedt0S0qLDm5dAVsh9h2QYN6IcLERzXnPpqf+KsjULKiCNoF4dKwSq1tEUsibgXp5MNm6qQXdJSWERfBZhSWCEwcgvGyHbcvGSsYmcU/HpV/fcfHg8igjjHAZDBnO35DqaE4sFAUsiqoLScrK5KWeE0W6/ILTsBZHwnmB/l5tXj7pO9xXjKZHXmUCRmo/tUWllqguCCsGUYIK5cCcRQhCJWOqkhQWhVGvICy2qZ/1B0OoZT8v5HyPkdumbTcsT0m/5phffo/E9oberyo462SLlO914RdDuJY5Yq3DyxxYaLpfCloBJGYVTBNnnT3ru+OIpoW5dWkus5icaxtvwFNreEco8RYRh0Ax0ULymiKfWgA2hevzpB4w8484qzRuE8GuZHvYJr6rZWNE1QcVTGevymiAfEWBRpdPiFOewag+4IaRaI+c8pcHt8luEMkI+dyEUsYJcC7E3AUL4ZEvgTIgzHjuPdE1wRctwGfN5EbUIIbze3mXsCfBxYiWjUw82Sa3tThUbAgXBApQgYGKIOCNJOg/hjoBq4CudIU/Qsfo0CiyUjfnivN7yazu8Mh7SGsEzPN/W2EXohO10rEWwO8yQvD+sLEy7zaIRWXPSHsoQ7oa84j2nRpyrIN37Y0LdOb3c0J4oTv3h940iloSsGvrpjIigUhT7Psazn6a1DKYGIS8rZZnSFziJEcb+wHZ2aBmObQhWwrBnTjrqGpCBfRdF7G/llvH0/y0ZUNIzixyZp3km7KIczlBaFPqcEHOtFCd2zNWZeVWzkaqbx4R6W4kUzYDGejaopp5xZugpQSmUW+ogueWU7whl+shRnxLGFFF5WD894XAhxomeUS/YHUnaEaxeJGVc4gE2vKpYue/4HinjG7aEXNr9GWbdCOMkndqKCEsq9d4nBE/zwzkwzk1Z6ujpVJTvzSDeIdjjjoiHIZj1J173zIoWix/aeYMQmhOcr4H/lPEQOcjmLoygvbx3S/Bd5aiqeWCN+GkUsjzmZ/Gzh8Po3iCU2lorIpuO4zEB9Q8vJ2mfP1RlI1C1+loU2ymefoxDju/tcdhCzW1ADBslSQByF9H39ulRDBtLjiV6UZU8iRfDxylQ2R0N2xHYqrvFFR2lc4UMdZ+Fs13reRsvoVe4v+qOwkGx5CVaO9YtoUYXReHSCf2zAVzErapRIo4x60SwXXV1BOWWYAHqcQZkHADEUQ4jxLMDcgNeVMYeEFqO6+7Zs2cUuYvFbnu5ImhRqFaC+qxkLn+RY10TomjrNFh8nuy7np8nBOz+7iJQJJE4WXoPeELwNZy9SRTcf0TQXIG+sWaC8j1Bqgjtw/6M6wcEPe8ENmMU178h+NawyB58/X1kS12nVkVdCEGTEETrlXf+roY+VYQTJR7lALCuYp0IsYFxDBC73ayIKIsr8uwV4lSvwH4eKwDr+ixCebrR6ro3hFK79dGxZ6VnQl92kqQrQhmQOSI7jn98OdvT9HygRYjXMrTTR0J4EaBvzgTHlEPjVPsNQdXPUOBGjC9PbzYL0ibHLWFOZEolvZ+FwNTLqvW1DPFOTdSMQaBqPG04IfAjwly6q4R0Ut661BWr1d4RyngxzLmugVJ0HfIbhP5sgKynZqxsWYNGfhHt72dJM5NJUcSPPcVGJHYcNW2Ud739k4R0sObhuATEGudyCDkYFuIT3xqnZzL1MUz6b7bXNKrSJvO4kQG9DJwBSPM4nqc8EUbNvvjJLOV3yKQUbxr6G0dUJG11mqezVAAIIOONBp5EoPoS1TNCZkuCp1W+AHgcyKYQwdrcRlyX18TjU3+5xQmea/t6pN37QfeEEsOgwON1y3hZ2T3IxwR/jOKCeELrsV6+VETbLPQBoYQo5NUkZSovsHqd6fJzTSiPbk3vXhEoRirfyBC1QX9RmZwAV+7b3OeaRvVxJAviZSfliBUow6lPCXYziqz+mmyN/5Ru8tA7gh2QHv+KouzMEZ3Zq27f5nHWvQUZY8rtoYeks/g2fxD2U5SjcOuhsPqbk97gO4Kn/bYn4JVr9lNSi1d2PiB49OonAyNeUt6/tvouQW2DswDZt1V/LPFLgtlPvK3qvvt3BIsr4B4kCU8AzwjxOjI1wrPPo4bYqo2Aze8+WX9OiMcL42yls54K8bSd1eqD8EzJbxE8AmYk0Y8Bzwlo/sboPyK8NfoPCe+K8O8jPP5/tXxBeBfwwR3vfv4HpAT+CEwM+dUAAAAASUVORK5CYII=\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div><div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี <strong>โทร.</strong> ๑๙๐๗</p><p><strong>ที่</strong> ปป ๐๐๐๔/ ........................................ <strong>วันที่</strong> ........................................</p></div><div class=\"official-subject\"><strong>เรื่อง</strong><span>ส่งเรื่องร้องเรียนเพื่อดำเนินการตามอำนาจหน้าที่</span><strong>เรียน</strong><span>ผู้อำนวยการส่วนกลาง</span></div><div class=\"official-body\"><p>ด้วยกองบริหารคดี ได้รับเรื่องร้องเรียน เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ เรื่อง ........................................ ผู้ร้องเรียน ตรีรุด หล่อจัง ซึ่งผู้มีอำนาจได้พิจารณาให้รับไว้ดำเนินการตามมาตรา ๑๘/๑ (ก) และมอบหมายให้ส่วนกลาง เป็นผู้รับผิดชอบ</p><p>กองบริหารคดี จึงขอส่งเรื่องร้องเรียนดังกล่าวพร้อมเอกสาร จำนวน ๑๒ แผ่น มาเพื่อดำเนินการตามอำนาจหน้าที่ต่อไป</p><p>จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ</p></div><div class=\"official-signature\"><p>(........................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div><p class=\"official-form-code\">ใบนำส่งสำนัก/เขต (ร่างของระบบ)</p></article>"
+         }
+        ]
+       },
+       "division": {
+        "caseId": "ECMIS-2569-000017",
+        "decision": "18/1ก",
+        "signerType": "division",
+        "signature": {
+         "signed": true,
+         "signerName": "ผู้อำนวยการกองบริหารคดี",
+         "signerRole": "ผู้อำนวยการกองบริหารคดี",
+         "signedAt": "2026-10-06T02:32:42.941Z",
+         "signatureId": "SIG-20261006023242-DC3943F5"
+        },
+        "capturedAt": "2026-10-06T02:32:42.941Z",
+        "documents": [
+         {
+          "documentId": "back-cover",
+          "html": "<article class=\"a4-paper template-confidential-cover\" id=\"activePaper\"><div class=\"confidential-cover-frame\"><span class=\"confidential-cover-code\">รปภ.๑๐</span><strong class=\"confidential-cover-label confidential-cover-top\">ลับ</strong><div class=\"confidential-cover-content\"><h2>ใบปกเอกสารลับ</h2><p>เอกสารแนบในปกนี้ เป็นเอกสารลับซึ่งจะต้องระมัดระวังและปฏิบัติ</p><p>ตามระเบียบว่าด้วยการรักษาความปลอดภัยแห่งชาติโดยเคร่งครัด</p></div><strong class=\"confidential-cover-label confidential-cover-bottom\">ลับ</strong></div></article>"
+         },
+         {
+          "documentId": "ecmis-review-record",
+          "html": "<div class=\"document-page-set form3-document-set\" id=\"activePaper\"><article class=\"a4-paper template-form3\" data-auto-paginate>\n      <p class=\"document-confidential confidential-top\">ลับ</p>\n      <header class=\"form3-header\">\n        <img src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\" class=\"form3-pacc-logo\">\n        <div class=\"form3-header-right\">\n          <p class=\"form3-system-name\">ระบบบริหารจัดการเรื่องร้องเรียน สำนักงาน ป.ป.ท.</p>\n          <div class=\"form3-number\">\n            <strong>เลขรับเรื่องที่</strong> 0033/2569<br>\n            <strong>วันที่</strong> 6 <strong>เดือน</strong> ตุลาคม <strong>พ.ศ.</strong> 2569\n          </div>\n        </div>\n      </header>\n      <div class=\"official-subject\">\n        <strong>เรื่อง</strong><span>การพิจารณารับและกลั่นกรองเรื่องร้องเรียน/เบาะแส เลขรับเรื่องที่ 0033/2569</span>\n        <strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span>\n      </div>\n      <p class=\"form3-intro\">ได้พิจารณาแล้ว จึงขอเสนอเพื่ออนุมัติ ดำเนินการตาม พรบ. ป.ป.ท. ดังนี้</p>\n      <div class=\"form3-decision-grid\">\n        <section class=\"form3-decision-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ ส่งสำนักงาน ป.ป.ช.</h3>\n          <p class=\"form3-section-label\">เหตุที่ไม่สามารถรับไว้ดำเนินการ</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐอยู่ในอำนาจหน้าที่ของ คกก.ป.ป.ช.</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนความผิด พ.ร.บ. เสนอราคาฯ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนพฤติการณ์ร่ำรวยผิดปกติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องทรัพยากรธรรมชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องความมั่นคงชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เป็นความผิดข้ามชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> จัดซื้อจัดจ้าง เกิน 2 ล้านบาท</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เกี่ยวกับสัมปทานโดยรัฐ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐผู้ถูกกล่าวหาดำรงตำแหน่งข้าราชการตั้งแต่ระดับอำนวยการสูงขึ้นไป</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> อื่น ๆ .....................................................................</p>\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ</h3>\n          <div class=\"form3-writing-lines compact\"><div></div><div></div></div>\n        </section>\n        <section class=\"form3-decision-column form3-accept-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ก)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\">ส่วนกลาง</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ข)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/4</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 58/2</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p>\n        </section>\n      </div>\n      <div class=\"form3-footer-block\">\n        <p class=\"form3-note\"><strong>หมายเหตุ</strong> ให้สแกนเอกสารที่สำคัญและจำเป็นลงในระบบฯ<br><span>ทั้งนี้ กรณี ส่งเรื่องไปยังระบบไต่สวนให้นำเข้าเอกสารที่สแกนลงในระบบไต่สวนด้วย</span></p>\n        <p class=\"form3-officer-opinion\"><strong>ความเห็นเจ้าหน้าที่รับเรื่อง</strong> ควรพิจารณา</p><p class=\"form3-submit\">จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        <div class=\"form3-operator\"><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/officer-demo.svg\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span></div><p class=\"form3-signature-name\" data-editable=\"assignedOfficer\" contenteditable=\"true\" spellcheck=\"false\">(ดวงใจ ชอบกินผัก)</p><p class=\"form3-signature-position\">เจ้าหน้าที่รับเรื่อง</p></div>\n      </div>\n      <div class=\"form3-opinion-grid\">\n        <section data-flow-section data-opinion-section=\"center\">\n          <h3 data-flow-heading>ความเห็น ผู้บังคับบัญชาชั้นต้น</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"centerOpinion\">ควรพิจารณา</p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/director-center-demo.png\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span><p class=\"form3-signature-name\">(ผู้อำนวยการศูนย์รับเรื่องร้องเรียน)</p><p class=\"form3-signature-position\">ตำแหน่ง ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div></div>\n        </section>\n        <section data-flow-section data-opinion-section=\"division\">\n          <h3 data-flow-heading>ความเห็น ผู้อำนวยการสำนัก/กอง</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"divisionOpinion\" contenteditable=\"true\" spellcheck=\"false\">ควรพิจารณา</p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/director-division-demo.png\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span><p class=\"form3-signature-name\">(ผู้อำนวยการกองบริหารคดี)</p><p class=\"form3-signature-position\">ตำแหน่ง ผู้อำนวยการกองบริหารคดี</p></div></div>\n        </section>\n      </div>\n      <p class=\"document-confidential confidential-bottom\">ลับ</p>\n    </article></div>"
+         },
+         {
+          "documentId": "1-01",
+          "html": "<article class=\"a4-paper template-cover official-blue-cover\" id=\"activePaper\">\n      <p class=\"official-page-label\">หน้าที่ ๑</p>\n      <p class=\"cover-reference\">ตัวอย่างปกสำนวนการไต่สวน<br>(ใช้ปกสีฟ้า)</p>\n      <div class=\"cover-head\"><img class=\"memo-garuda\" src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\"><div><h1>สำนวนการไต่สวน</h1><p>สำนักงานคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div></div>\n      <div class=\"cover-body\">\n        <p class=\"cover-subject\"><strong>เรื่องที่</strong> ออกหลัง ผู้อำนวยการกองบริหารคดี ลงนาม</p>\n        <div class=\"cover-parties\">\n          <div class=\"cover-party-line\"><span>ตรีรุด หล่อจัง</span><b>ผู้กล่าวหา</b></div>\n          <p class=\"cover-between\">ระหว่าง</p>\n          <div class=\"cover-party-line\"><span>ณัฐกานต์ แพนดอร่า</span><b>ผู้ถูกกล่าวหา</b></div>\n        </div>\n        <div class=\"cover-ground\">\n          <span>เป็นกรณีกล่าวหาว่ากระทำการ</span>\n          <div class=\"cover-ground-options\">\n            <label><input type=\"checkbox\" checked disabled> ทุจริตต่อหน้าที่</label>\n            <label><input type=\"checkbox\"  disabled> ประพฤติมิชอบ</label>\n            <label><input type=\"checkbox\" disabled> อื่น ๆ ................................</label>\n          </div>\n        </div>\n        <p class=\"cover-field\"><strong>ข้อกล่าวหา</strong> สูบบุหรี่ในที่ทำงาน</p>\n        <p class=\"cover-field\"><strong>เอกสารพยานหลักฐาน รวมจำนวน</strong> ๑๒ แผ่น</p>\n        <p class=\"cover-sublist\">- คำร้องเรียน/กล่าวหา จำนวน ๑๐ แผ่น<br>- เอกสารประกอบ จำนวน ......... แผ่น<br>- อื่น ๆ จำนวน .........</p>\n        <p class=\"cover-field\"><strong>สถานที่เกิดเหตุ</strong> กรุงเทพ กรุงเทพมหานคร<br><strong>วันเวลาที่เกิดเหตุ</strong> ๖ ตุลาคม ๒๕๖๙ ๐๙:๓๐ น.</p>\n        <p class=\"cover-field\"><strong>อายุความ</strong> .......... ปี <span class=\"cover-dim\">ขาดอายุความ (ทุกฐานความผิด)</span> .................................</p>\n        <p class=\"cover-field\"><strong>สำนักที่รับผิดชอบ</strong> ส่วนกลาง</p>\n        <p class=\"cover-field\"><strong>สำนักงาน ป.ป.ท. รับเรื่อง</strong> วันที่ .......... เดือน ................. พ.ศ. ..........</p>\n        <p class=\"cover-field\"><strong>พนักงาน ป.ป.ท. ผู้รับผิดชอบสำนวนไต่สวน</strong> ดวงใจ ชอบกินผัก<br><strong>เจ้าหน้าที่ ป.ป.ท. ผู้ช่วย</strong> .....................................</p>\n      </div>\n      <p class=\"official-form-code\">ปปท. ๑-๐๑</p>\n    </article>"
+         },
+         {
+          "documentId": "1-03",
+          "html": "<div class=\"document-page-set official-n103-set\" id=\"activePaper\">\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๔</p>\n        <p class=\"official-sample-title\">ตัวอย่างบันทึกการตรวจสอบเรื่องร้องเรียน</p>\n        <aside class=\"memo-receipt-box\"><strong>ศูนย์รับเรื่องร้องเรียน</strong><span>เลขรับ ๐๐๓๓/๒๕๖๙</span><span>วันที่ ๖ ตุลาคม ๒๕๖๙</span></aside>\n        <div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADKBAMAAAAFnIJvAAAABGdBTUEAALGIlZj0pgAAADBQTFRFAAAAgAAAAIAAgIAAAACAgACAAICAgICAwMDA/wAAAP8A//8AAAD//wD/AP//////ex+xxAAAAAlwSFlzAAAOQAAADkUBMpLx3wAADBBJREFUeJzVnAuC5LYKRdkB+98lO+CVBZePLNmuT78klWSmuyzrCIEQYDmkf/2h/yZBiFcE+h1Mal/xI/2Q0IaLn15YXjf+6FPm6f9H+O0kVU1QfPNjAkOIJPxyklQ4Rux/068JJJ1QvvjRh0S4EfjnBKa/JsSiG38J/dJnoN8/J2Ca/ozAWgnHrw8JT42aWFy1RpCnBHljJH9NIMhL47a/kEGkEPggPJrgp4TXDIl2gnxFOI1Phh4mAk1Nln29hnYeydF2vp2PPoPwmjOeCHbTmbEieFu2nkMoKrN0ELT7c6I1YkUYzXyE4e4omjrhtcgFNzA2pDNBNjKwqwLalCFBkYEOGVLAaH4S4SAs1BNCUBDYZiYJ1Ahityx0yusoUax97MWvKWmzNHY4yQ2VDbDq6RBt8b2hCcN+dfiiuWM6E9g0vLT7PcHmqRG0EPiQkEEYsi7MXq339RVTtuN9gU0Edb6a4a6dw54whGDv7lgMQy2dQK6nMf51N07YauK42ayKc1czwhCQQdCtFsj+2QlhNx/qsDUXhPELmyROWM/1bqWnEOjO1FAJY5rsXtb9XN8Sjgn2SVoQzJ2OSV7O9OEHxmfDh/CvBjZVE4EqYa1nwlh2l9VcY/aXBLfQw2AvCAyvsZ4mC4xsb5sI4oT0f7tpGIRh9YsWNr9Dzz7o4pegCDjsxf3kywamsiEoCJGSgGDThG9XhOOi7xpre4IMqYZcWkYYElwQ+ueSYJPUCKYb3LoyRynrYa8HcXOWmSDkg5QtgaoYw4GcCDaFYjMhneAG5mIsdjexFZSERQQ3tq7Xf9Y3UdM0ljQ+SwKNXWvrOsRW/EFwaZotFSNZE9gn8Ypgl4790xXSCB6Q7AmxSfr1k+vCzezGj0EEgaqtnFQ9NmgSiBohY1NDnYJOiF/30xR6jnjz3KTeLCtC18Tp9jbGMMUipbfg7KllivM0zffbsAnjWRAgHdbziuBWblY96+HYs2yVYRhTAw/JzCVZMF8IYAr+QGiVHdjWhXmIyGjWwrgbZqWdwNTnes44dMQYIfK0C9XlSl3KJMg1QbLTh4ReOUn14OqEYOXWSycIdQqXJC0CbrcFieHPhD6CvslBqclfERBsRJbR+3C/E1tVtQTJXjgAC4IbfKqodhJwiT9OIoRBbQmYaenX/GcKQZm0WTN+Dg3LmRDOpllBXxNS97gWlUVfYwBmdhsCuY/n6VbrXy0YEcsNkkApwrgCB3KapQxEqN6j9UdWSwFbkxTB8pDhW3MIFA0x/CqE1J6ijFBcawGYgpxOmcYEIbxvncOU4jUoQep3DDVXQIzVfhxuSUoak7M1+pZJiOhiBK0wlgMGCVpLsoXT1kvIOOJu8si83Wc++wgGop5irpWmCXW/T9MY8QNDFX2aSp/Fo6Xd1klCGOUamQm5VqqCI4iLMCRXVF87pdbSt5eqU3TukXiRIRDsmatJ1kXAypDueQsBu6fklmzbp93POWILHZEUxvgI+xPvCAIhi/gWI6Fm4P2M4o6t8UpQT0J7AlM0MuJBSA+EJ9niK9o+jFo/ZOh+TYXXhMNeJPaAWLWWJ1dvPUI+nxEvIfg6gaktZ8mWSrgs/M1OYM7GrCh1OmEYeYaS4M4E0cgibPVbDcIInn/CWrNrheakBNhaP4XgtfCUt+hyqKOmTnZVpOdGUBktCUiDYbjm3fyJkYXjGQ564UVIM1a25eAiLwm5NZXN7vByuJoWAGsck0VBgC9u8WAjsMVlUgyWQCBB6MypylGnLSucLE3lDcEliMWJ5M0usuS1cAtSAhfQ5+RlJjSVkRnJuD8yLNvtO8H9gRB8yYYQ/rF/cE3TvVrLogJJdzxX6SZCrLbIlDAgWwU+YFNmy0TSjes1Ab4ChLJViIdMKFaO5cEhIzqcH0/OIXT41JQCvljMdXESfFfX9Ftedt0S0qLDm5dAVsh9h2QYN6IcLERzXnPpqf+KsjULKiCNoF4dKwSq1tEUsibgXp5MNm6qQXdJSWERfBZhSWCEwcgvGyHbcvGSsYmcU/HpV/fcfHg8igjjHAZDBnO35DqaE4sFAUsiqoLScrK5KWeE0W6/ILTsBZHwnmB/l5tXj7pO9xXjKZHXmUCRmo/tUWllqguCCsGUYIK5cCcRQhCJWOqkhQWhVGvICy2qZ/1B0OoZT8v5HyPkdumbTcsT0m/5phffo/E9oberyo462SLlO914RdDuJY5Yq3DyxxYaLpfCloBJGYVTBNnnT3ru+OIpoW5dWkus5icaxtvwFNreEco8RYRh0Ax0ULymiKfWgA2hevzpB4w8484qzRuE8GuZHvYJr6rZWNE1QcVTGevymiAfEWBRpdPiFOewag+4IaRaI+c8pcHt8luEMkI+dyEUsYJcC7E3AUL4ZEvgTIgzHjuPdE1wRctwGfN5EbUIIbze3mXsCfBxYiWjUw82Sa3tThUbAgXBApQgYGKIOCNJOg/hjoBq4CudIU/Qsfo0CiyUjfnivN7yazu8Mh7SGsEzPN/W2EXohO10rEWwO8yQvD+sLEy7zaIRWXPSHsoQ7oa84j2nRpyrIN37Y0LdOb3c0J4oTv3h940iloSsGvrpjIigUhT7Psazn6a1DKYGIS8rZZnSFziJEcb+wHZ2aBmObQhWwrBnTjrqGpCBfRdF7G/llvH0/y0ZUNIzixyZp3km7KIczlBaFPqcEHOtFCd2zNWZeVWzkaqbx4R6W4kUzYDGejaopp5xZugpQSmUW+ogueWU7whl+shRnxLGFFF5WD894XAhxomeUS/YHUnaEaxeJGVc4gE2vKpYue/4HinjG7aEXNr9GWbdCOMkndqKCEsq9d4nBE/zwzkwzk1Z6ujpVJTvzSDeIdjjjoiHIZj1J173zIoWix/aeYMQmhOcr4H/lPEQOcjmLoygvbx3S/Bd5aiqeWCN+GkUsjzmZ/Gzh8Po3iCU2lorIpuO4zEB9Q8vJ2mfP1RlI1C1+loU2ymefoxDju/tcdhCzW1ADBslSQByF9H39ulRDBtLjiV6UZU8iRfDxylQ2R0N2xHYqrvFFR2lc4UMdZ+Fs13reRsvoVe4v+qOwkGx5CVaO9YtoUYXReHSCf2zAVzErapRIo4x60SwXXV1BOWWYAHqcQZkHADEUQ4jxLMDcgNeVMYeEFqO6+7Zs2cUuYvFbnu5ImhRqFaC+qxkLn+RY10TomjrNFh8nuy7np8nBOz+7iJQJJE4WXoPeELwNZy9SRTcf0TQXIG+sWaC8j1Bqgjtw/6M6wcEPe8ENmMU178h+NawyB58/X1kS12nVkVdCEGTEETrlXf+roY+VYQTJR7lALCuYp0IsYFxDBC73ayIKIsr8uwV4lSvwH4eKwDr+ixCebrR6ro3hFK79dGxZ6VnQl92kqQrQhmQOSI7jn98OdvT9HygRYjXMrTTR0J4EaBvzgTHlEPjVPsNQdXPUOBGjC9PbzYL0ibHLWFOZEolvZ+FwNTLqvW1DPFOTdSMQaBqPG04IfAjwly6q4R0Ut661BWr1d4RyngxzLmugVJ0HfIbhP5sgKynZqxsWYNGfhHt72dJM5NJUcSPPcVGJHYcNW2Ud739k4R0sObhuATEGudyCDkYFuIT3xqnZzL1MUz6b7bXNKrSJvO4kQG9DJwBSPM4nqc8EUbNvvjJLOV3yKQUbxr6G0dUJG11mqezVAAIIOONBp5EoPoS1TNCZkuCp1W+AHgcyKYQwdrcRlyX18TjU3+5xQmea/t6pN37QfeEEsOgwON1y3hZ2T3IxwR/jOKCeELrsV6+VETbLPQBoYQo5NUkZSovsHqd6fJzTSiPbk3vXhEoRirfyBC1QX9RmZwAV+7b3OeaRvVxJAviZSfliBUow6lPCXYziqz+mmyN/5Ru8tA7gh2QHv+KouzMEZ3Zq27f5nHWvQUZY8rtoYeks/g2fxD2U5SjcOuhsPqbk97gO4Kn/bYn4JVr9lNSi1d2PiB49OonAyNeUt6/tvouQW2DswDZt1V/LPFLgtlPvK3qvvt3BIsr4B4kCU8AzwjxOjI1wrPPo4bYqo2Aze8+WX9OiMcL42yls54K8bSd1eqD8EzJbxE8AmYk0Y8Bzwlo/sboPyK8NfoPCe+K8O8jPP5/tXxBeBfwwR3vfv4HpAT+CEwM+dUAAAAASUVORK5CYII=\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div>\n        <div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี ศูนย์รับเรื่องร้องเรียน <strong>โทร.</strong> ๑๙๐๕</p><p><strong>ที่</strong> ปป ๐๐ ........................................ <strong>วันที่</strong> ๖ ตุลาคม ๒๕๖๙</p></div>\n        <div class=\"official-subject\"><strong>เรื่อง</strong><span>การตรวจสอบเรื่องร้องเรียน เรื่องที่ <span class=\"doc-editable\" data-editable=\"documentSubject\" contenteditable=\"true\" spellcheck=\"false\"></span></span><strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span></div>\n        <div class=\"official-body n103-body\">\n          <p>ตามที่ศูนย์รับเรื่องร้องเรียน กองบริหารคดี ได้รับเรื่องร้องเรียน/เบาะแส ทางช่องทาง Website เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ กรณีกล่าวหา ณัฐกานต์ แพนดอร่า เรื่อง .................... ศูนย์รับเรื่องร้องเรียนได้ตรวจสอบแล้ว ปรากฏข้อเท็จจริงดังนี้</p>\n          <p>๑. ผู้กล่าวหา/ร้องเรียน : ตรีรุด หล่อจัง</p>\n          <p>๒. ผู้ถูกร้องเรียน : ณัฐกานต์ แพนดอร่า</p>\n          <p>๓. สถานที่เกิดเหตุ : กรุงเทพ กรุงเทพมหานคร</p>\n          <p>๔. ข้อพิจารณา/ข้อเสนอ : เห็นควรพิจารณา ดังนี้</p>\n          <p>๔.๑ กรณีกล่าวหาเจ้าหน้าที่ของรัฐว่ากระทำการทุจริตต่อหน้าที่ ซึ่งอยู่ในอำนาจของคณะกรรมการ ป.ป.ท. ตามมาตรา ๑๘/๑ (ก) แห่งพระราชบัญญัติมาตรการของฝ่ายบริหารในการป้องกันและปราบปรามการทุจริต พ.ศ. ๒๕๕๑ และที่แก้ไขเพิ่มเติม</p>\n          \n          <p>ทั้งนี้ ให้ดำเนินการตามที่บัญญัติไว้ตามกฎกระทรวงแบ่งส่วนราชการสำนักงาน ป.ป.ท. พ.ศ. ๒๕๖๐ ข้อ ๑๑, ข้อ ๑๔, ข้อ ๑๖ และข้อ ๑๗ ประกอบกับประกาศสำนักนายกรัฐมนตรี เรื่อง กำหนดเขตพื้นที่ของสำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ๑ - ๙ และประกาศสำนักงาน ป.ป.ท. เรื่อง กำหนดส่วนราชการและหน่วยงานภาครัฐที่อยู่ในอำนาจและความรับผิดชอบของ กปท. ๑ – ๕</p>\n        </div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๕</p>\n        <p class=\"memo-continuation\">- ๒ -</p>\n        <div class=\"official-body n103-body n103-continuation\">\n          <p>ซึ่งเรื่องร้องเรียนที่ ๐๐๓๓/๒๕๖๙ อยู่ในอำนาจหน้าที่ของ ส่วนกลาง จึงเห็นควรมอบหมายให้ ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ต่อไป และแจ้งผู้เกี่ยวข้องทราบ ทั้งนี้ ได้จัดส่งเรื่องร้องเรียนพร้อมเอกสาร จำนวน ๑๒ แผ่น มาพร้อมนี้</p>\n          <p>จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        </div>\n        <div class=\"official-signature n103-signature\"><p>(ดวงใจ ชอบกินผัก)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้บังคับบัญชาชั้นต้น</strong> เห็นควรมอบหมายให้สำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ และแจ้งผู้เกี่ยวข้องทราบ</p><p>(.....................................)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.<br>ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้อำนวยการกอง</strong> เรื่องที่ ............................. เห็นควรดำเนินการตามเสนอ (ส่งสำนักงาน ปปท. เขต .....)</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นเลขาธิการคณะกรรมการ ป.ป.ท.</strong> เรื่องที่ ........................</p><p>- เห็นชอบ/ดำเนินการตามเสนอ</p><p>- ลงนามแล้ว</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี ปฏิบัติราชการแทน<br>เลขาธิการคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n    </div>"
+         },
+         {
+          "documentId": "unit-transmittal",
+          "html": "<article class=\"a4-paper template-memo\" id=\"activePaper\"><div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,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\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div><div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี <strong>โทร.</strong> ๑๙๐๗</p><p><strong>ที่</strong> ปป ๐๐๐๔/ ........................................ <strong>วันที่</strong> ........................................</p></div><div class=\"official-subject\"><strong>เรื่อง</strong><span>ส่งเรื่องร้องเรียนเพื่อดำเนินการตามอำนาจหน้าที่</span><strong>เรียน</strong><span>ผู้อำนวยการส่วนกลาง</span></div><div class=\"official-body\"><p>ด้วยกองบริหารคดี ได้รับเรื่องร้องเรียน เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ เรื่อง ........................................ ผู้ร้องเรียน ตรีรุด หล่อจัง ซึ่งผู้มีอำนาจได้พิจารณาให้รับไว้ดำเนินการตามมาตรา ๑๘/๑ (ก) และมอบหมายให้ส่วนกลาง เป็นผู้รับผิดชอบ</p><p>กองบริหารคดี จึงขอส่งเรื่องร้องเรียนดังกล่าวพร้อมเอกสาร จำนวน ๑๒ แผ่น มาเพื่อดำเนินการตามอำนาจหน้าที่ต่อไป</p><p>จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ</p></div><div class=\"official-signature\"><p>(........................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div><p class=\"official-form-code\">ใบนำส่งสำนัก/เขต (ร่างของระบบ)</p></article>"
+         }
+        ]
+       }
+      },
+      "signatures": {
+       "officer": {
+        "signed": true,
+        "signerName": "ดวงใจ ชอบกินผัก",
+        "signerRole": "เจ้าหน้าที่รับเรื่อง",
+        "signedAt": "2026-10-06T02:32:13.390Z",
+        "signatureId": "SIG-20261006023213-5E7D04D4",
+        "renderVersion": "official-forms-1-01-to-1-14-v3"
+       },
+       "center": {
+        "signed": true,
+        "signerName": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+        "signerRole": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+        "signedAt": "2026-10-06T02:32:32.021Z",
+        "signatureId": "SIG-20261006023232-E4A98EF7",
+        "renderVersion": "official-forms-1-01-to-1-14-v3"
+       },
+       "division": {
+        "signed": true,
+        "signerName": "ผู้อำนวยการกองบริหารคดี",
+        "signerRole": "ผู้อำนวยการกองบริหารคดี",
+        "signedAt": "2026-10-06T02:32:42.941Z",
+        "signatureId": "SIG-20261006023242-DC3943F5",
+        "renderVersion": "official-forms-1-01-to-1-14-v3"
+       }
+      },
+      "lastSignedAt": "2026-10-06T02:32:42.941Z",
+      "lastSignedBy": "ผู้อำนวยการกองบริหารคดี"
+     },
+     {
+      "version": 4,
+      "actor": "เจ้าหน้าที่รับเรื่อง",
+      "time": "6 ต.ค. 2569 09:32",
+      "status": "legacy-unverified",
+      "active": false,
+      "signedSnapshot": {},
+      "signatures": {}
+     },
+     {
+      "version": 5,
+      "actor": "ผู้อำนวยการศูนย์รับเรื่องร้องเรียน",
+      "time": "6 ต.ค. 2569 09:32",
+      "status": "legacy-unverified",
+      "active": false,
+      "signedSnapshot": {},
+      "signatures": {}
+     },
+     {
+      "version": 6,
+      "actor": "ผู้อำนวยการกองบริหารคดี",
+      "time": "6 ต.ค. 2569 09:32",
+      "status": "legacy-unverified",
+      "active": false,
+      "signedSnapshot": {},
+      "signatures": {}
+     },
+     {
+      "version": 7,
+      "actor": "เจ้าหน้าที่รับเรื่อง ศรร.",
+      "time": "6 ต.ค. 2569 09:33"
+     }
+    ],
+    "inboundDocumentManifest": {
+     "schemaVersion": 1,
+     "signedVersion": 3,
+     "signedAt": "2026-10-06T02:32:42.941Z",
+     "documents": [
+      {
+       "documentId": "back-cover",
+       "label": "ใบปกเอกสารลับ",
+       "html": "<article class=\"a4-paper template-confidential-cover\" id=\"activePaper\"><div class=\"confidential-cover-frame\"><span class=\"confidential-cover-code\">รปภ.๑๐</span><strong class=\"confidential-cover-label confidential-cover-top\">ลับ</strong><div class=\"confidential-cover-content\"><h2>ใบปกเอกสารลับ</h2><p>เอกสารแนบในปกนี้ เป็นเอกสารลับซึ่งจะต้องระมัดระวังและปฏิบัติ</p><p>ตามระเบียบว่าด้วยการรักษาความปลอดภัยแห่งชาติโดยเคร่งครัด</p></div><strong class=\"confidential-cover-label confidential-cover-bottom\">ลับ</strong></div></article>",
+       "source": "division-signed-snapshot"
+      },
+      {
+       "documentId": "ecmis-review-record",
+       "label": "แบบบันทึกการพิจารณาและกลั่นกรองเรื่องร้องเรียน/เบาะแส",
+       "html": "<div class=\"document-page-set form3-document-set\" id=\"activePaper\"><article class=\"a4-paper template-form3\" data-auto-paginate>\n      <p class=\"document-confidential confidential-top\">ลับ</p>\n      <header class=\"form3-header\">\n        <img src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\" class=\"form3-pacc-logo\">\n        <div class=\"form3-header-right\">\n          <p class=\"form3-system-name\">ระบบบริหารจัดการเรื่องร้องเรียน สำนักงาน ป.ป.ท.</p>\n          <div class=\"form3-number\">\n            <strong>เลขรับเรื่องที่</strong> 0033/2569<br>\n            <strong>วันที่</strong> 6 <strong>เดือน</strong> ตุลาคม <strong>พ.ศ.</strong> 2569\n          </div>\n        </div>\n      </header>\n      <div class=\"official-subject\">\n        <strong>เรื่อง</strong><span>การพิจารณารับและกลั่นกรองเรื่องร้องเรียน/เบาะแส เลขรับเรื่องที่ 0033/2569</span>\n        <strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span>\n      </div>\n      <p class=\"form3-intro\">ได้พิจารณาแล้ว จึงขอเสนอเพื่ออนุมัติ ดำเนินการตาม พรบ. ป.ป.ท. ดังนี้</p>\n      <div class=\"form3-decision-grid\">\n        <section class=\"form3-decision-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ ส่งสำนักงาน ป.ป.ช.</h3>\n          <p class=\"form3-section-label\">เหตุที่ไม่สามารถรับไว้ดำเนินการ</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐอยู่ในอำนาจหน้าที่ของ คกก.ป.ป.ช.</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนความผิด พ.ร.บ. เสนอราคาฯ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนพฤติการณ์ร่ำรวยผิดปกติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องทรัพยากรธรรมชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องความมั่นคงชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เป็นความผิดข้ามชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> จัดซื้อจัดจ้าง เกิน 2 ล้านบาท</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เกี่ยวกับสัมปทานโดยรัฐ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐผู้ถูกกล่าวหาดำรงตำแหน่งข้าราชการตั้งแต่ระดับอำนวยการสูงขึ้นไป</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> อื่น ๆ .....................................................................</p>\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ</h3>\n          <div class=\"form3-writing-lines compact\"><div></div><div></div></div>\n        </section>\n        <section class=\"form3-decision-column form3-accept-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ก)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\">ส่วนกลาง</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ข)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/4</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 58/2</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p>\n        </section>\n      </div>\n      <div class=\"form3-footer-block\">\n        <p class=\"form3-note\"><strong>หมายเหตุ</strong> ให้สแกนเอกสารที่สำคัญและจำเป็นลงในระบบฯ<br><span>ทั้งนี้ กรณี ส่งเรื่องไปยังระบบไต่สวนให้นำเข้าเอกสารที่สแกนลงในระบบไต่สวนด้วย</span></p>\n        <p class=\"form3-officer-opinion\"><strong>ความเห็นเจ้าหน้าที่รับเรื่อง</strong> ควรพิจารณา</p><p class=\"form3-submit\">จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        <div class=\"form3-operator\"><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/officer-demo.svg\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span></div><p class=\"form3-signature-name\" data-editable=\"assignedOfficer\" contenteditable=\"true\" spellcheck=\"false\">(ดวงใจ ชอบกินผัก)</p><p class=\"form3-signature-position\">เจ้าหน้าที่รับเรื่อง</p></div>\n      </div>\n      <div class=\"form3-opinion-grid\">\n        <section data-flow-section data-opinion-section=\"center\">\n          <h3 data-flow-heading>ความเห็น ผู้บังคับบัญชาชั้นต้น</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"centerOpinion\">ควรพิจารณา</p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/director-center-demo.png\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span><p class=\"form3-signature-name\">(ผู้อำนวยการศูนย์รับเรื่องร้องเรียน)</p><p class=\"form3-signature-position\">ตำแหน่ง ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div></div>\n        </section>\n        <section data-flow-section data-opinion-section=\"division\">\n          <h3 data-flow-heading>ความเห็น ผู้อำนวยการสำนัก/กอง</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"divisionOpinion\" contenteditable=\"true\" spellcheck=\"false\">ควรพิจารณา</p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/director-division-demo.png\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span><p class=\"form3-signature-name\">(ผู้อำนวยการกองบริหารคดี)</p><p class=\"form3-signature-position\">ตำแหน่ง ผู้อำนวยการกองบริหารคดี</p></div></div>\n        </section>\n      </div>\n      <p class=\"document-confidential confidential-bottom\">ลับ</p>\n    </article></div>",
+       "source": "division-signed-snapshot"
+      },
+      {
+       "documentId": "1-01",
+       "label": "แบบปกสำนวนการไต่สวน (สีฟ้า)",
+       "html": "<article class=\"a4-paper template-cover official-blue-cover\" id=\"activePaper\">\n      <p class=\"official-page-label\">หน้าที่ ๑</p>\n      <p class=\"cover-reference\">ตัวอย่างปกสำนวนการไต่สวน<br>(ใช้ปกสีฟ้า)</p>\n      <div class=\"cover-head\"><img class=\"memo-garuda\" src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\"><div><h1>สำนวนการไต่สวน</h1><p>สำนักงานคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div></div>\n      <div class=\"cover-body\">\n        <p class=\"cover-subject\"><strong>เรื่องที่</strong> ออกหลัง ผู้อำนวยการกองบริหารคดี ลงนาม</p>\n        <div class=\"cover-parties\">\n          <div class=\"cover-party-line\"><span>ตรีรุด หล่อจัง</span><b>ผู้กล่าวหา</b></div>\n          <p class=\"cover-between\">ระหว่าง</p>\n          <div class=\"cover-party-line\"><span>ณัฐกานต์ แพนดอร่า</span><b>ผู้ถูกกล่าวหา</b></div>\n        </div>\n        <div class=\"cover-ground\">\n          <span>เป็นกรณีกล่าวหาว่ากระทำการ</span>\n          <div class=\"cover-ground-options\">\n            <label><input type=\"checkbox\" checked disabled> ทุจริตต่อหน้าที่</label>\n            <label><input type=\"checkbox\"  disabled> ประพฤติมิชอบ</label>\n            <label><input type=\"checkbox\" disabled> อื่น ๆ ................................</label>\n          </div>\n        </div>\n        <p class=\"cover-field\"><strong>ข้อกล่าวหา</strong> สูบบุหรี่ในที่ทำงาน</p>\n        <p class=\"cover-field\"><strong>เอกสารพยานหลักฐาน รวมจำนวน</strong> ๑๒ แผ่น</p>\n        <p class=\"cover-sublist\">- คำร้องเรียน/กล่าวหา จำนวน ๑๐ แผ่น<br>- เอกสารประกอบ จำนวน ......... แผ่น<br>- อื่น ๆ จำนวน .........</p>\n        <p class=\"cover-field\"><strong>สถานที่เกิดเหตุ</strong> กรุงเทพ กรุงเทพมหานคร<br><strong>วันเวลาที่เกิดเหตุ</strong> ๖ ตุลาคม ๒๕๖๙ ๐๙:๓๐ น.</p>\n        <p class=\"cover-field\"><strong>อายุความ</strong> .......... ปี <span class=\"cover-dim\">ขาดอายุความ (ทุกฐานความผิด)</span> .................................</p>\n        <p class=\"cover-field\"><strong>สำนักที่รับผิดชอบ</strong> ส่วนกลาง</p>\n        <p class=\"cover-field\"><strong>สำนักงาน ป.ป.ท. รับเรื่อง</strong> วันที่ .......... เดือน ................. พ.ศ. ..........</p>\n        <p class=\"cover-field\"><strong>พนักงาน ป.ป.ท. ผู้รับผิดชอบสำนวนไต่สวน</strong> ดวงใจ ชอบกินผัก<br><strong>เจ้าหน้าที่ ป.ป.ท. ผู้ช่วย</strong> .....................................</p>\n      </div>\n      <p class=\"official-form-code\">ปปท. ๑-๐๑</p>\n    </article>",
+       "source": "division-signed-snapshot"
+      },
+      {
+       "documentId": "1-03",
+       "label": "แบบบันทึกการตรวจสอบเรื่องร้องเรียน",
+       "html": "<div class=\"document-page-set official-n103-set\" id=\"activePaper\">\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๔</p>\n        <p class=\"official-sample-title\">ตัวอย่างบันทึกการตรวจสอบเรื่องร้องเรียน</p>\n        <aside class=\"memo-receipt-box\"><strong>ศูนย์รับเรื่องร้องเรียน</strong><span>เลขรับ ๐๐๓๓/๒๕๖๙</span><span>วันที่ ๖ ตุลาคม ๒๕๖๙</span></aside>\n        <div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,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\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div>\n        <div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี ศูนย์รับเรื่องร้องเรียน <strong>โทร.</strong> ๑๙๐๕</p><p><strong>ที่</strong> ปป ๐๐ ........................................ <strong>วันที่</strong> ๖ ตุลาคม ๒๕๖๙</p></div>\n        <div class=\"official-subject\"><strong>เรื่อง</strong><span>การตรวจสอบเรื่องร้องเรียน เรื่องที่ <span class=\"doc-editable\" data-editable=\"documentSubject\" contenteditable=\"true\" spellcheck=\"false\"></span></span><strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span></div>\n        <div class=\"official-body n103-body\">\n          <p>ตามที่ศูนย์รับเรื่องร้องเรียน กองบริหารคดี ได้รับเรื่องร้องเรียน/เบาะแส ทางช่องทาง Website เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ กรณีกล่าวหา ณัฐกานต์ แพนดอร่า เรื่อง .................... ศูนย์รับเรื่องร้องเรียนได้ตรวจสอบแล้ว ปรากฏข้อเท็จจริงดังนี้</p>\n          <p>๑. ผู้กล่าวหา/ร้องเรียน : ตรีรุด หล่อจัง</p>\n          <p>๒. ผู้ถูกร้องเรียน : ณัฐกานต์ แพนดอร่า</p>\n          <p>๓. สถานที่เกิดเหตุ : กรุงเทพ กรุงเทพมหานคร</p>\n          <p>๔. ข้อพิจารณา/ข้อเสนอ : เห็นควรพิจารณา ดังนี้</p>\n          <p>๔.๑ กรณีกล่าวหาเจ้าหน้าที่ของรัฐว่ากระทำการทุจริตต่อหน้าที่ ซึ่งอยู่ในอำนาจของคณะกรรมการ ป.ป.ท. ตามมาตรา ๑๘/๑ (ก) แห่งพระราชบัญญัติมาตรการของฝ่ายบริหารในการป้องกันและปราบปรามการทุจริต พ.ศ. ๒๕๕๑ และที่แก้ไขเพิ่มเติม</p>\n          \n          <p>ทั้งนี้ ให้ดำเนินการตามที่บัญญัติไว้ตามกฎกระทรวงแบ่งส่วนราชการสำนักงาน ป.ป.ท. พ.ศ. ๒๕๖๐ ข้อ ๑๑, ข้อ ๑๔, ข้อ ๑๖ และข้อ ๑๗ ประกอบกับประกาศสำนักนายกรัฐมนตรี เรื่อง กำหนดเขตพื้นที่ของสำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ๑ - ๙ และประกาศสำนักงาน ป.ป.ท. เรื่อง กำหนดส่วนราชการและหน่วยงานภาครัฐที่อยู่ในอำนาจและความรับผิดชอบของ กปท. ๑ – ๕</p>\n        </div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๕</p>\n        <p class=\"memo-continuation\">- ๒ -</p>\n        <div class=\"official-body n103-body n103-continuation\">\n          <p>ซึ่งเรื่องร้องเรียนที่ ๐๐๓๓/๒๕๖๙ อยู่ในอำนาจหน้าที่ของ ส่วนกลาง จึงเห็นควรมอบหมายให้ ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ต่อไป และแจ้งผู้เกี่ยวข้องทราบ ทั้งนี้ ได้จัดส่งเรื่องร้องเรียนพร้อมเอกสาร จำนวน ๑๒ แผ่น มาพร้อมนี้</p>\n          <p>จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        </div>\n        <div class=\"official-signature n103-signature\"><p>(ดวงใจ ชอบกินผัก)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้บังคับบัญชาชั้นต้น</strong> เห็นควรมอบหมายให้สำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ และแจ้งผู้เกี่ยวข้องทราบ</p><p>(.....................................)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.<br>ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้อำนวยการกอง</strong> เรื่องที่ ............................. เห็นควรดำเนินการตามเสนอ (ส่งสำนักงาน ปปท. เขต .....)</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นเลขาธิการคณะกรรมการ ป.ป.ท.</strong> เรื่องที่ ........................</p><p>- เห็นชอบ/ดำเนินการตามเสนอ</p><p>- ลงนามแล้ว</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี ปฏิบัติราชการแทน<br>เลขาธิการคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n    </div>",
+       "source": "division-signed-snapshot"
+      },
+      {
+       "documentId": "unit-transmittal",
+       "label": "บันทึกนำส่งเรื่องร้องเรียนให้สำนัก/เขตผู้รับผิดชอบ",
+       "html": "<article class=\"a4-paper template-memo\" id=\"activePaper\"><div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADKBAMAAAAFnIJvAAAABGdBTUEAALGIlZj0pgAAADBQTFRFAAAAgAAAAIAAgIAAAACAgACAAICAgICAwMDA/wAAAP8A//8AAAD//wD/AP//////ex+xxAAAAAlwSFlzAAAOQAAADkUBMpLx3wAADBBJREFUeJzVnAuC5LYKRdkB+98lO+CVBZePLNmuT78klWSmuyzrCIEQYDmkf/2h/yZBiFcE+h1Mal/xI/2Q0IaLn15YXjf+6FPm6f9H+O0kVU1QfPNjAkOIJPxyklQ4Rux/068JJJ1QvvjRh0S4EfjnBKa/JsSiG38J/dJnoN8/J2Ca/ozAWgnHrw8JT42aWFy1RpCnBHljJH9NIMhL47a/kEGkEPggPJrgp4TXDIl2gnxFOI1Phh4mAk1Nln29hnYeydF2vp2PPoPwmjOeCHbTmbEieFu2nkMoKrN0ELT7c6I1YkUYzXyE4e4omjrhtcgFNzA2pDNBNjKwqwLalCFBkYEOGVLAaH4S4SAs1BNCUBDYZiYJ1Ahityx0yusoUax97MWvKWmzNHY4yQ2VDbDq6RBt8b2hCcN+dfiiuWM6E9g0vLT7PcHmqRG0EPiQkEEYsi7MXq339RVTtuN9gU0Edb6a4a6dw54whGDv7lgMQy2dQK6nMf51N07YauK42ayKc1czwhCQQdCtFsj+2QlhNx/qsDUXhPELmyROWM/1bqWnEOjO1FAJY5rsXtb9XN8Sjgn2SVoQzJ2OSV7O9OEHxmfDh/CvBjZVE4EqYa1nwlh2l9VcY/aXBLfQw2AvCAyvsZ4mC4xsb5sI4oT0f7tpGIRh9YsWNr9Dzz7o4pegCDjsxf3kywamsiEoCJGSgGDThG9XhOOi7xpre4IMqYZcWkYYElwQ+ueSYJPUCKYb3LoyRynrYa8HcXOWmSDkg5QtgaoYw4GcCDaFYjMhneAG5mIsdjexFZSERQQ3tq7Xf9Y3UdM0ljQ+SwKNXWvrOsRW/EFwaZotFSNZE9gn8Ypgl4790xXSCB6Q7AmxSfr1k+vCzezGj0EEgaqtnFQ9NmgSiBohY1NDnYJOiF/30xR6jnjz3KTeLCtC18Tp9jbGMMUipbfg7KllivM0zffbsAnjWRAgHdbziuBWblY96+HYs2yVYRhTAw/JzCVZMF8IYAr+QGiVHdjWhXmIyGjWwrgbZqWdwNTnes44dMQYIfK0C9XlSl3KJMg1QbLTh4ReOUn14OqEYOXWSycIdQqXJC0CbrcFieHPhD6CvslBqclfERBsRJbR+3C/E1tVtQTJXjgAC4IbfKqodhJwiT9OIoRBbQmYaenX/GcKQZm0WTN+Dg3LmRDOpllBXxNS97gWlUVfYwBmdhsCuY/n6VbrXy0YEcsNkkApwrgCB3KapQxEqN6j9UdWSwFbkxTB8pDhW3MIFA0x/CqE1J6ijFBcawGYgpxOmcYEIbxvncOU4jUoQep3DDVXQIzVfhxuSUoak7M1+pZJiOhiBK0wlgMGCVpLsoXT1kvIOOJu8si83Wc++wgGop5irpWmCXW/T9MY8QNDFX2aSp/Fo6Xd1klCGOUamQm5VqqCI4iLMCRXVF87pdbSt5eqU3TukXiRIRDsmatJ1kXAypDueQsBu6fklmzbp93POWILHZEUxvgI+xPvCAIhi/gWI6Fm4P2M4o6t8UpQT0J7AlM0MuJBSA+EJ9niK9o+jFo/ZOh+TYXXhMNeJPaAWLWWJ1dvPUI+nxEvIfg6gaktZ8mWSrgs/M1OYM7GrCh1OmEYeYaS4M4E0cgibPVbDcIInn/CWrNrheakBNhaP4XgtfCUt+hyqKOmTnZVpOdGUBktCUiDYbjm3fyJkYXjGQ564UVIM1a25eAiLwm5NZXN7vByuJoWAGsck0VBgC9u8WAjsMVlUgyWQCBB6MypylGnLSucLE3lDcEliMWJ5M0usuS1cAtSAhfQ5+RlJjSVkRnJuD8yLNvtO8H9gRB8yYYQ/rF/cE3TvVrLogJJdzxX6SZCrLbIlDAgWwU+YFNmy0TSjes1Ab4ChLJViIdMKFaO5cEhIzqcH0/OIXT41JQCvljMdXESfFfX9Ftedt0S0qLDm5dAVsh9h2QYN6IcLERzXnPpqf+KsjULKiCNoF4dKwSq1tEUsibgXp5MNm6qQXdJSWERfBZhSWCEwcgvGyHbcvGSsYmcU/HpV/fcfHg8igjjHAZDBnO35DqaE4sFAUsiqoLScrK5KWeE0W6/ILTsBZHwnmB/l5tXj7pO9xXjKZHXmUCRmo/tUWllqguCCsGUYIK5cCcRQhCJWOqkhQWhVGvICy2qZ/1B0OoZT8v5HyPkdumbTcsT0m/5phffo/E9oberyo462SLlO914RdDuJY5Yq3DyxxYaLpfCloBJGYVTBNnnT3ru+OIpoW5dWkus5icaxtvwFNreEco8RYRh0Ax0ULymiKfWgA2hevzpB4w8484qzRuE8GuZHvYJr6rZWNE1QcVTGevymiAfEWBRpdPiFOewag+4IaRaI+c8pcHt8luEMkI+dyEUsYJcC7E3AUL4ZEvgTIgzHjuPdE1wRctwGfN5EbUIIbze3mXsCfBxYiWjUw82Sa3tThUbAgXBApQgYGKIOCNJOg/hjoBq4CudIU/Qsfo0CiyUjfnivN7yazu8Mh7SGsEzPN/W2EXohO10rEWwO8yQvD+sLEy7zaIRWXPSHsoQ7oa84j2nRpyrIN37Y0LdOb3c0J4oTv3h940iloSsGvrpjIigUhT7Psazn6a1DKYGIS8rZZnSFziJEcb+wHZ2aBmObQhWwrBnTjrqGpCBfRdF7G/llvH0/y0ZUNIzixyZp3km7KIczlBaFPqcEHOtFCd2zNWZeVWzkaqbx4R6W4kUzYDGejaopp5xZugpQSmUW+ogueWU7whl+shRnxLGFFF5WD894XAhxomeUS/YHUnaEaxeJGVc4gE2vKpYue/4HinjG7aEXNr9GWbdCOMkndqKCEsq9d4nBE/zwzkwzk1Z6ujpVJTvzSDeIdjjjoiHIZj1J173zIoWix/aeYMQmhOcr4H/lPEQOcjmLoygvbx3S/Bd5aiqeWCN+GkUsjzmZ/Gzh8Po3iCU2lorIpuO4zEB9Q8vJ2mfP1RlI1C1+loU2ymefoxDju/tcdhCzW1ADBslSQByF9H39ulRDBtLjiV6UZU8iRfDxylQ2R0N2xHYqrvFFR2lc4UMdZ+Fs13reRsvoVe4v+qOwkGx5CVaO9YtoUYXReHSCf2zAVzErapRIo4x60SwXXV1BOWWYAHqcQZkHADEUQ4jxLMDcgNeVMYeEFqO6+7Zs2cUuYvFbnu5ImhRqFaC+qxkLn+RY10TomjrNFh8nuy7np8nBOz+7iJQJJE4WXoPeELwNZy9SRTcf0TQXIG+sWaC8j1Bqgjtw/6M6wcEPe8ENmMU178h+NawyB58/X1kS12nVkVdCEGTEETrlXf+roY+VYQTJR7lALCuYp0IsYFxDBC73ayIKIsr8uwV4lSvwH4eKwDr+ixCebrR6ro3hFK79dGxZ6VnQl92kqQrQhmQOSI7jn98OdvT9HygRYjXMrTTR0J4EaBvzgTHlEPjVPsNQdXPUOBGjC9PbzYL0ibHLWFOZEolvZ+FwNTLqvW1DPFOTdSMQaBqPG04IfAjwly6q4R0Ut661BWr1d4RyngxzLmugVJ0HfIbhP5sgKynZqxsWYNGfhHt72dJM5NJUcSPPcVGJHYcNW2Ud739k4R0sObhuATEGudyCDkYFuIT3xqnZzL1MUz6b7bXNKrSJvO4kQG9DJwBSPM4nqc8EUbNvvjJLOV3yKQUbxr6G0dUJG11mqezVAAIIOONBp5EoPoS1TNCZkuCp1W+AHgcyKYQwdrcRlyX18TjU3+5xQmea/t6pN37QfeEEsOgwON1y3hZ2T3IxwR/jOKCeELrsV6+VETbLPQBoYQo5NUkZSovsHqd6fJzTSiPbk3vXhEoRirfyBC1QX9RmZwAV+7b3OeaRvVxJAviZSfliBUow6lPCXYziqz+mmyN/5Ru8tA7gh2QHv+KouzMEZ3Zq27f5nHWvQUZY8rtoYeks/g2fxD2U5SjcOuhsPqbk97gO4Kn/bYn4JVr9lNSi1d2PiB49OonAyNeUt6/tvouQW2DswDZt1V/LPFLgtlPvK3qvvt3BIsr4B4kCU8AzwjxOjI1wrPPo4bYqo2Aze8+WX9OiMcL42yls54K8bSd1eqD8EzJbxE8AmYk0Y8Bzwlo/sboPyK8NfoPCe+K8O8jPP5/tXxBeBfwwR3vfv4HpAT+CEwM+dUAAAAASUVORK5CYII=\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div><div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี <strong>โทร.</strong> ๑๙๐๗</p><p><strong>ที่</strong> ปป ๐๐๐๔/ ........................................ <strong>วันที่</strong> ........................................</p></div><div class=\"official-subject\"><strong>เรื่อง</strong><span>ส่งเรื่องร้องเรียนเพื่อดำเนินการตามอำนาจหน้าที่</span><strong>เรียน</strong><span>ผู้อำนวยการส่วนกลาง</span></div><div class=\"official-body\"><p>ด้วยกองบริหารคดี ได้รับเรื่องร้องเรียน เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ เรื่อง ........................................ ผู้ร้องเรียน ตรีรุด หล่อจัง ซึ่งผู้มีอำนาจได้พิจารณาให้รับไว้ดำเนินการตามมาตรา ๑๘/๑ (ก) และมอบหมายให้ส่วนกลาง เป็นผู้รับผิดชอบ</p><p>กองบริหารคดี จึงขอส่งเรื่องร้องเรียนดังกล่าวพร้อมเอกสาร จำนวน ๑๒ แผ่น มาเพื่อดำเนินการตามอำนาจหน้าที่ต่อไป</p><p>จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ</p></div><div class=\"official-signature\"><p>(........................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div><p class=\"official-form-code\">ใบนำส่งสำนัก/เขต (ร่างของระบบ)</p></article>",
+       "source": "division-signed-snapshot"
+      }
+     ],
+     "expectedDocuments": [
+      {
+       "documentId": "back-cover",
+       "label": "ใบปกเอกสารลับ"
+      },
+      {
+       "documentId": "ecmis-review-record",
+       "label": "แบบบันทึกการพิจารณาและกลั่นกรองเรื่องร้องเรียน/เบาะแส"
+      },
+      {
+       "documentId": "1-01",
+       "label": "แบบปกสำนวนการไต่สวน (สีฟ้า)"
+      },
+      {
+       "documentId": "1-03",
+       "label": "แบบบันทึกการตรวจสอบเรื่องร้องเรียน"
+      },
+      {
+       "documentId": "unit-transmittal",
+       "label": "บันทึกนำส่งเรื่องร้องเรียนให้สำนัก/เขตผู้รับผิดชอบ"
+      }
+     ],
+     "attachments": [],
+     "dispatchProof": {
+      "name": "",
+      "method": "EMS",
+      "trackingNo": "ED1234567890",
+      "sentDate": "2026-10-06"
+     }
+    },
+    "inquiry": {
+     "status": "intake",
+     "extensionProgress": {
+      "version": 1,
+      "assignmentVersion": 1,
+      "obligations": [],
+      "policyStatus": "CONFIRMED",
+      "policy": {
+       "intervalDays": 15,
+       "anchor": "EXTENSION_PERIOD_START",
+       "status": "CONFIRMED"
+      }
+     },
+     "extensionLateReports": [],
+     "intake": {
+      "unit": "ส่วนกลาง",
+      "director": "",
+      "investigator": "mock-investigator-1",
+      "team": [
+       "mock-investigator-3"
+      ],
+      "orderNo": "",
+      "orderDate": "",
+      "assignedAt": "",
+      "acceptedAt": "",
+      "handoffRef": "ECMIS-2569-000017",
+      "receivedFirstAt": "2026-10-06",
+      "transfer": {
+       "status": "",
+       "target": "",
+       "note": "",
+       "by": "",
+       "at": ""
+      },
+      "transferPost": {
+       "status": "",
+       "target": "",
+       "letterSource": "",
+       "letterTarget": "",
+       "by": "",
+       "approvedBy": "",
+       "at": ""
+      },
+      "m62": {
+       "flag": false,
+       "sourceLetter": "",
+       "sourceMtiDate": "",
+       "ageCheck": "",
+       "report65Letter": "",
+       "report65Date": "",
+       "recalled": false
+      }
+     },
+     "prelim": {
+      "plan": "แผนงานคดี",
+      "planStatus": "approved",
+      "planApprovedBy": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+      "planApprovedAt": "2026-10-06T03:14:31.409Z",
+      "workLog": "",
+      "evidence": "",
+      "searchWarrant": "",
+      "issues": {
+       "status": "",
+       "authority": "",
+       "action": "",
+       "damage": ""
+      },
+      "startedAt": "2026-10-06",
+      "deadlineAt": "2026-12-05",
+      "submittedAt": "",
+      "report": "",
+      "status": "รอจัดทำแผนคดี",
+      "extensionHistory": [],
+      "progressReports": [],
+      "reviewChain": [],
+      "supportOpinion": "",
+      "supportBy": "",
+      "supportPending": false,
+      "fastTrack": false,
+      "additionalDeadlineAt": "",
+      "additionalExtendedOnce": false,
+      "additionalExtensionPending": null,
+      "lateReport": "",
+      "planSubmittedBy": "ผู้รับผิดชอบสำนวน",
+      "planSubmittedAt": "2026-10-06T03:14:25.982Z",
+      "planReturnedBy": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+      "planReturnedAt": "2026-10-06T02:55:33.460Z",
+      "planReturnReason": "ข้อมูลจำลอง: เรื่องร้องเรียนสำหรับสาธิต"
+     },
+     "committee213": {
+      "result": "",
+      "mtiNo": "",
+      "mtiDate": "",
+      "orderType": "",
+      "orderNo": "",
+      "orderDate": "",
+      "decidedAt": "",
+      "decidedBy": "",
+      "note": "",
+      "investigator644": "",
+      "handoverDoc": {
+       "flag": false,
+       "letterNo": "",
+       "date": ""
+      }
+     },
+     "inquiry644": {
+      "investigator": "",
+      "team": [],
+      "plan": "",
+      "planStatus": "รอคำสั่งแต่งตั้ง",
+      "planApprovedBy": "",
+      "planApprovedAt": "",
+      "accused": [],
+      "witnesses": [],
+      "noticeSentAt": "",
+      "statements": "",
+      "allegations": "",
+      "witnessProtection": "",
+      "searchWarrant": "",
+      "startedAt": "",
+      "deadlineAt": "",
+      "submittedAt": "",
+      "report": "",
+      "status": "รอคำสั่งแต่งตั้ง",
+      "extensionHistory": [],
+      "progressReports": [],
+      "reviewChain": [],
+      "supportOpinion": "",
+      "supportBy": "",
+      "supportPending": false,
+      "fastTrack": false,
+      "additionalDeadlineAt": "",
+      "additionalExtendedOnce": false,
+      "additionalExtensionPending": null,
+      "lateReport": "",
+      "orders": []
+     },
+     "committee644": {
+      "result": "",
+      "mtiNo": "",
+      "mtiDate": "",
+      "decidedAt": "",
+      "decidedBy": "",
+      "note": ""
+     },
+     "prosecutor": {
+      "orderType": "",
+      "orderDetail": "",
+      "orderedAt": "",
+      "executedAt": "",
+      "returnedAt": "",
+      "letters": "",
+      "reportA7": false
+     },
+     "outcome": {
+      "type": "",
+      "letters": "",
+      "prosecutor": "",
+      "disciplineAgency": "",
+      "disciplineSentAt": "",
+      "followup": "",
+      "closedAt": "",
+      "closedBy": ""
+     },
+     "special": {
+      "type": "",
+      "agency": "",
+      "assignee": "",
+      "reportedAt": "",
+      "result": "",
+      "secretaryAt": "",
+      "publicNotice": false,
+      "switched": false,
+      "note": ""
+     },
+     "publicUpdates": []
+    },
+    "intake": {
+     "status": "PLAN_APPROVED",
+     "receivedDate": {
+      "channel": "Website",
+      "recordedAt": "2026-10-06",
+      "effectiveDate": "2026-10-06"
+     },
+     "checkedBy": "เจ้าหน้าที่ธุรการคดีประจำเขต/กองปราบ",
+     "checkedAt": "2026-10-06T02:35:08.757Z",
+     "checkNote": "ควรพิจารณา"
+    },
+    "assignment": {
+     "primaryOfficerId": "mock-investigator-1",
+     "assistantOfficerIds": [
+      "mock-investigator-3"
+     ],
+     "assignmentVersion": 1,
+     "acceptedBy": "ผู้รับผิดชอบสำนวน",
+     "acceptedAt": "2026-10-06T02:53:37.175Z",
+     "acceptedAssignmentVersion": 1,
+     "teamMembers": [
+      "mock-investigator-3"
+     ],
+     "approvedOfficer": "mock-investigator-1",
+     "legalOwner": "mock-investigator-1",
+     "leadOfficer": "mock-investigator-1",
+     "primaryOfficerName": "พนักงาน ป.ป.ท. สมชาย",
+     "approvedOfficerName": "พนักงาน ป.ป.ท. สมชาย",
+     "primaryOfficerPosition": "พนักงาน ป.ป.ท.",
+     "assignedBy": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+     "assignedAt": "2026-10-06T02:53:20.002Z",
+     "approvedBy": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+     "approvedAt": "2026-10-06T02:53:20.002Z",
+     "assignmentSignature": {
+      "signed": true,
+      "signatureId": "ASSIGN-SIG-1791255202145",
+      "signerName": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+      "signedAt": "2026-10-06T02:53:22.145Z"
+     },
+     "decisionNote": "มอบหมายตามอันดับคำแนะนำ เนื่องจากมีภาระงานเหมาะสมและมีประสบการณ์เกี่ยวข้องกับลักษณะคดี",
+     "assignmentMethod": "RANKING",
+     "queueOfficerIds": [],
+     "recommendationSnapshotId": "a5-rec-dda6a440",
+     "recommendationSnapshot": {
+      "id": "a5-rec-dda6a440",
+      "generatedAt": "2026-10-06T02:35:08.757Z",
+      "modelVersion": "deterministic-v2",
+      "caseProfile": {
+       "difficulty": 3,
+       "requiredExperienceTags": [
+        "จัดซื้อจัดจ้าง",
+        "การเงิน"
+       ],
+       "completeness": 60,
+       "unit": "ส่วนกลาง"
+      },
+      "candidates": [
+       {
+        "officerId": "mock-investigator-1",
+        "officerName": "พนักงาน ป.ป.ท. สมชาย",
+        "eligible": true,
+        "totalScore": 94,
+        "breakdown": {
+         "workload": 90,
+         "relevantExperience": 100,
+         "urgentCaseCount": 1,
+         "extensionRequestCount": 0
+        },
+        "reasons": [
+         "ภาระงาน 90/100",
+         "ประสบการณ์ที่เกี่ยวข้อง 100/100",
+         "เรื่องเร่งด่วนที่ถืออยู่ 1 เรื่อง",
+         "การขอขยายเวลาในสำนวนที่ถืออยู่ 0 ครั้ง"
+        ],
+        "missingFields": []
+       },
+       {
+        "officerId": "mock-investigator-3",
+        "officerName": "พนักงาน ป.ป.ท. ธเนศ",
+        "eligible": true,
+        "totalScore": 82,
+        "breakdown": {
+         "workload": 70,
+         "relevantExperience": 100,
+         "urgentCaseCount": 2,
+         "extensionRequestCount": 2
+        },
+        "reasons": [
+         "ภาระงาน 70/100",
+         "ประสบการณ์ที่เกี่ยวข้อง 100/100",
+         "เรื่องเร่งด่วนที่ถืออยู่ 2 เรื่อง",
+         "การขอขยายเวลาในสำนวนที่ถืออยู่ 2 ครั้ง"
+        ],
+        "missingFields": []
+       },
+       {
+        "officerId": "mock-investigator-2",
+        "officerName": "พนักงาน ป.ป.ท. วิภา",
+        "eligible": true,
+        "totalScore": 68,
+        "breakdown": {
+         "workload": 80,
+         "relevantExperience": 50,
+         "urgentCaseCount": 0,
+         "extensionRequestCount": 1
+        },
+        "reasons": [
+         "ภาระงาน 80/100",
+         "ประสบการณ์ที่เกี่ยวข้อง 50/100",
+         "เรื่องเร่งด่วนที่ถืออยู่ 0 เรื่อง",
+         "การขอขยายเวลาในสำนวนที่ถืออยู่ 1 ครั้ง"
+        ],
+        "missingFields": []
+       },
+       {
+        "officerId": "mock-investigator-4",
+        "officerName": "เจ้าหน้าที่ ป.ป.ท. จินตนา",
+        "eligible": true,
+        "totalScore": 56,
+        "breakdown": {
+         "workload": 60,
+         "relevantExperience": 50,
+         "urgentCaseCount": 3,
+         "extensionRequestCount": 1
+        },
+        "reasons": [
+         "ภาระงาน 60/100",
+         "ประสบการณ์ที่เกี่ยวข้อง 50/100",
+         "เรื่องเร่งด่วนที่ถืออยู่ 3 เรื่อง",
+         "การขอขยายเวลาในสำนวนที่ถืออยู่ 1 ครั้ง"
+        ],
+        "missingFields": []
+       },
+       {
+        "officerId": "mock-investigator-6",
+        "officerName": "นางสาวอรุณี ใจมั่น",
+        "eligible": true,
+        "totalScore": 44,
+        "breakdown": {
+         "workload": 40,
+         "relevantExperience": 50,
+         "urgentCaseCount": 0,
+         "extensionRequestCount": 0
+        },
+        "reasons": [
+         "ภาระงาน 40/100",
+         "ประสบการณ์ที่เกี่ยวข้อง 50/100",
+         "เรื่องเร่งด่วนที่ถืออยู่ 0 เรื่อง",
+         "การขอขยายเวลาในสำนวนที่ถืออยู่ 0 ครั้ง"
+        ],
+        "missingFields": []
+       }
+      ]
+     },
+     "acceptanceSignature": "SIGNED"
+    },
+    "planLifecycle": {
+     "history": [
+      {
+       "actionId": "plan-start",
+       "text": "ผู้รับผิดชอบสำนวน เริ่มจัดทำแผน",
+       "by": "ผู้รับผิดชอบสำนวน",
+       "time": "2026-10-06T02:53:38.443Z"
+      },
+      {
+       "actionId": "plan-submit",
+       "text": "ผู้รับผิดชอบสำนวน เสนอแผนคดี",
+       "by": "ผู้รับผิดชอบสำนวน",
+       "time": "2026-10-06T02:55:20.766Z"
+      },
+      {
+       "actionId": "plan-return",
+       "text": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5) ส่งแผนคดีกลับแก้ไข",
+       "by": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+       "time": "2026-10-06T02:55:33.460Z"
+      },
+      {
+       "actionId": "plan-submit",
+       "text": "ผู้รับผิดชอบสำนวน เสนอแผนคดี",
+       "by": "ผู้รับผิดชอบสำนวน",
+       "time": "2026-10-06T03:14:25.982Z"
+      },
+      {
+       "actionId": "plan-approve",
+       "text": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5) อนุมัติแผนคดี",
+       "by": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+       "time": "2026-10-06T03:14:31.409Z"
+      }
+     ],
+     "status": "PLAN_APPROVED",
+     "version": 1,
+     "amendment": {},
+     "dueAt": "2026-10-08",
+     "dueRuleId": "plan-deadline-day-kind",
+     "startedBy": "ผู้รับผิดชอบสำนวน",
+     "startedAt": "2026-10-06T02:53:38.443Z",
+     "plan": "แผนงานคดี",
+     "submittedBy": "ผู้รับผิดชอบสำนวน",
+     "submittedAt": "2026-10-06T03:14:25.982Z",
+     "returnedBy": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+     "returnedAt": "2026-10-06T02:55:33.460Z",
+     "returnReason": "ข้อมูลจำลอง: เรื่องร้องเรียนสำหรับสาธิต",
+     "approvedBy": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+     "approvedAt": "2026-10-06T03:14:31.409Z"
+    },
+    "custody": {
+     "hasOriginal": false,
+     "status": "NOT_APPLICABLE",
+     "history": []
+    },
+    "publicStatusProjection": {
+     "key": "TCSP_10",
+     "text": "อยู่ระหว่างการไต่สวนเบื้องต้น",
+     "sourceRows": [],
+     "revision": "2026-09-22"
+    },
+    "publicStatusEvents": [
+     {
+      "code": "PUBLIC_STATUS_UPDATED",
+      "publicKey": "TCSP_9",
+      "sourceRows": [],
+      "queuedAt": "2026-10-06T02:35:08.762Z",
+      "status": "PUBLISHED",
+      "sourceRevision": "2026-09-22"
+     },
+     {
+      "code": "PUBLIC_STATUS_UPDATED",
+      "publicKey": "TCSP_10",
+      "sourceRows": [],
+      "queuedAt": "2026-10-06T02:53:22.159Z",
+      "status": "PUBLISHED",
+      "sourceRevision": "2026-09-22"
+     }
+    ],
+    "returnRoute": {
+     "status": "",
+     "history": []
+    },
+    "staffDirectory": [
+     {
+      "officerId": "mock-investigator-1",
+      "officerName": "พนักงาน ป.ป.ท. สมชาย",
+      "positionName": "พนักงาน ป.ป.ท.",
+      "unitName": "ส่วนกลาง",
+      "personnelType": "PACC_EMPLOYEE",
+      "status": "ACTIVE"
+     },
+     {
+      "officerId": "mock-investigator-2",
+      "officerName": "พนักงาน ป.ป.ท. วิภา",
+      "positionName": "พนักงาน ป.ป.ท.",
+      "unitName": "ส่วนกลาง",
+      "personnelType": "PACC_EMPLOYEE",
+      "status": "ACTIVE"
+     },
+     {
+      "officerId": "mock-investigator-3",
+      "officerName": "พนักงาน ป.ป.ท. ธเนศ",
+      "positionName": "พนักงาน ป.ป.ท.",
+      "unitName": "ส่วนกลาง",
+      "personnelType": "PACC_EMPLOYEE",
+      "status": "ACTIVE"
+     },
+     {
+      "officerId": "mock-investigator-4",
+      "officerName": "เจ้าหน้าที่ ป.ป.ท. จินตนา",
+      "positionName": "เจ้าหน้าที่ ป.ป.ท.",
+      "unitName": "ส่วนกลาง",
+      "personnelType": "PACC_OFFICIAL",
+      "status": "ACTIVE"
+     },
+     {
+      "officerId": "mock-investigator-5",
+      "officerName": "เจ้าหน้าที่ ป.ป.ท. อนุชา",
+      "positionName": "เจ้าหน้าที่ ป.ป.ท.",
+      "unitName": "นอกขอบเขต",
+      "personnelType": "PACC_OFFICIAL",
+      "status": "ACTIVE"
+     },
+     {
+      "officerId": "mock-investigator-6",
+      "officerName": "นางสาวอรุณี ใจมั่น",
+      "positionName": "พนักงาน ป.ป.ท.",
+      "unitName": "ส่วนกลาง",
+      "personnelType": "PACC_EMPLOYEE",
+      "status": "ACTIVE"
+     }
+    ],
+    "migrationAudit": [],
+    "migrationBlocked": false,
+    "reassignmentHistory": [],
+    "pendingReassignment": {
+     "status": ""
+    },
+    "panelChangeRequests": [],
+    "appointmentOrders": {
+     "primary": {},
+     "supplements": []
+    },
+    "caseAdministration": {
+     "caseSize": "UNDETERMINED",
+     "caseSizeComponents": {},
+     "caseValueAmount": 0,
+     "caseSizeChangeRequest": {
+      "status": ""
+     },
+     "caseSizeChangeHistory": [],
+     "xlRequest": {
+      "status": "",
+      "approvals": []
+     },
+     "primaryCaseId": "",
+     "mergedCaseIds": [],
+     "splitCases": [],
+     "mergeRequests": [],
+     "splitRequests": [],
+     "postAssignmentTransfers": [],
+     "witnessConversionRequests": [],
+     "additionalWitnesses": [],
+     "additionalEvidence": [],
+     "resolutionReviewRequests": [],
+     "caseRelations": [],
+     "parentCaseId": "",
+     "sourceCaseId": "",
+     "lockedByMerge": false
+    },
+    "downstreamTasks": [],
+    "externalExchanges": [],
+    "prosecutorProcess": {
+     "timeline": []
+    },
+    "naccReportCycles": [],
+    "naccReferral": {},
+    "searchWarrantRequests": [],
+    "a5EvidenceRepository": [],
+    "requiredMilestones": [],
+    "witnessProtectionRequests": [],
+    "a5DocumentStore": {
+     "schemaVersion": 1,
+     "caseId": "ECMIS-2569-000017",
+     "version": 11,
+     "records": [
+      {
+       "documentId": "FORM_1_CASE_PLAN",
+       "caseId": "ECMIS-2569-000017",
+       "revisionNo": 1,
+       "baseRevisionNo": null,
+       "status": "RETURNED",
+       "schemaVersion": 1,
+       "payload": {
+        "schemaVersion": 1,
+        "caseMetadata": {
+         "caseId": "ECMIS-2569-000017",
+         "caseNumber": "0010/2569",
+         "subject": "",
+         "complainant": "ตรีรุด หล่อจัง",
+         "allegation": "สูบบุหรี่ในที่ทำงาน",
+         "complaintChannel": "Website",
+         "receivedAt": "2026-10-06",
+         "sourceTypes": {
+          "fromNacc": false,
+          "misconduct": true,
+          "origin": "ACTIVITY_4",
+          "status": "CONFIRMED",
+          "basis": "มาตรา 18/1 (ก)"
+         }
+        },
+        "eventContext": {
+         "occurredAtPlace": "2026-10-06 · กรุงเทพ กรุงเทพมหานคร",
+         "incidentRows": [
+          {
+           "rowId": "incident-1",
+           "order": 1,
+           "occurredDate": "2026-10-06",
+           "actualTime": "",
+           "periodType": "",
+           "place": "กรุงเทพ กรุงเทพมหานคร"
+          }
+         ]
+        },
+        "limitationDates": {
+         "preliminaryDeadlineAt": "2026-12-05",
+         "twoYearDeadlineAt": "2028-10-06",
+         "limitationRows": [
+          {
+           "section": "",
+           "years": "",
+           "expiresAt": ""
+          },
+          {
+           "section": "",
+           "years": "",
+           "expiresAt": ""
+          }
+         ]
+        },
+        "accusedRows": [
+         {
+          "rowId": "demo-accused-1",
+          "name": "[object Object]",
+          "nationalityCode": "TH",
+          "preferredLanguage": "ไทย",
+          "requiredEvidenceActions": [
+           {
+            "requiredEvidence": "เอกสารประกอบเรื่อง (จำลอง)",
+            "action": "รวบรวมข้อมูลเพื่อสาธิต"
+           }
+          ]
+         }
+        ],
+        "fourIssues": [
+         {
+          "issue": "สถานะ",
+          "details": ""
+         },
+         {
+          "issue": "อำนาจหน้าที่",
+          "details": ""
+         },
+         {
+          "issue": "การกระทำความผิด",
+          "details": ""
+         },
+         {
+          "issue": "ความเสียหาย",
+          "details": ""
+         }
+        ],
+        "requiredEvidenceActions": [
+         {
+          "issue": "สถานะ",
+          "requiredEvidence": "",
+          "action": ""
+         },
+         {
+          "issue": "อำนาจหน้าที่",
+          "requiredEvidence": "",
+          "action": ""
+         },
+         {
+          "issue": "การกระทำความผิด",
+          "requiredEvidence": "",
+          "action": ""
+         },
+         {
+          "issue": "ความเสียหาย",
+          "requiredEvidence": "",
+          "action": ""
+         }
+        ],
+        "witnesses": [],
+        "requestedDocuments": [],
+        "otherOperations": [],
+        "scheduleRows": [
+         {
+          "rowId": "demo-schedule-1",
+          "date": "2026-10-06",
+          "action": "ตรวจสอบ เรื่องร้องเรียนสำหรับสาธิต (จำลอง)"
+         }
+        ],
+        "otherOperationsFixed": [
+         {
+          "item": "ตรวจสอบสถานที่เกิดเหตุ",
+          "detail": ""
+         },
+         {
+          "item": "จัดทำแผนที่เกิดเหตุ",
+          "detail": ""
+         }
+        ],
+        "legacyNotes": [],
+        "signatures": {
+         "owner": {
+          "officerId": "",
+          "officerName": "เอกสารไม่ระบุ",
+          "signedAt": "2026-10-06T02:55:20.766Z",
+          "method": "DEMO_ACKNOWLEDGEMENT",
+          "mock": true
+         },
+         "assistant": {
+          "officerId": "",
+          "officerName": "เอกสารไม่ระบุ",
+          "signedAt": ""
+         },
+         "head": {
+          "status": "CONFIRMED",
+          "roleCode": "director",
+          "authorityLabel": "ผู้อำนวยการสำนักงาน ป.ป.ท. เขต",
+          "officerId": "",
+          "officerName": "เอกสารไม่ระบุ",
+          "signedAt": ""
+         }
+        }
+       },
+       "source": {
+        "fileName": "1. แบบแผนงานคดี.pdf",
+        "pages": [
+         1,
+         2
+        ]
+       },
+       "submittedSnapshot": {
+        "documentId": "FORM_1_CASE_PLAN",
+        "caseId": "ECMIS-2569-000017",
+        "revisionNo": 1,
+        "schemaVersion": 1,
+        "payload": {
+         "schemaVersion": 1,
+         "caseMetadata": {
+          "caseId": "ECMIS-2569-000017",
+          "caseNumber": "0010/2569",
+          "subject": "",
+          "complainant": "ตรีรุด หล่อจัง",
+          "allegation": "สูบบุหรี่ในที่ทำงาน",
+          "complaintChannel": "Website",
+          "receivedAt": "2026-10-06",
+          "sourceTypes": {
+           "fromNacc": false,
+           "misconduct": true,
+           "origin": "ACTIVITY_4",
+           "status": "CONFIRMED",
+           "basis": "มาตรา 18/1 (ก)"
+          }
+         },
+         "eventContext": {
+          "occurredAtPlace": "2026-10-06 · กรุงเทพ กรุงเทพมหานคร",
+          "incidentRows": [
+           {
+            "rowId": "incident-1",
+            "order": 1,
+            "occurredDate": "2026-10-06",
+            "actualTime": "",
+            "periodType": "",
+            "place": "กรุงเทพ กรุงเทพมหานคร"
+           }
+          ]
+         },
+         "limitationDates": {
+          "preliminaryDeadlineAt": "2026-12-05",
+          "twoYearDeadlineAt": "2028-10-06",
+          "limitationRows": [
+           {
+            "section": "",
+            "years": "",
+            "expiresAt": ""
+           },
+           {
+            "section": "",
+            "years": "",
+            "expiresAt": ""
+           }
+          ]
+         },
+         "accusedRows": [
+          {
+           "rowId": "demo-accused-1",
+           "name": "[object Object]",
+           "nationalityCode": "TH",
+           "preferredLanguage": "ไทย",
+           "requiredEvidenceActions": [
+            {
+             "requiredEvidence": "เอกสารประกอบเรื่อง (จำลอง)",
+             "action": "รวบรวมข้อมูลเพื่อสาธิต"
+            }
+           ]
+          }
+         ],
+         "fourIssues": [
+          {
+           "issue": "สถานะ",
+           "details": ""
+          },
+          {
+           "issue": "อำนาจหน้าที่",
+           "details": ""
+          },
+          {
+           "issue": "การกระทำความผิด",
+           "details": ""
+          },
+          {
+           "issue": "ความเสียหาย",
+           "details": ""
+          }
+         ],
+         "requiredEvidenceActions": [
+          {
+           "issue": "สถานะ",
+           "requiredEvidence": "",
+           "action": ""
+          },
+          {
+           "issue": "อำนาจหน้าที่",
+           "requiredEvidence": "",
+           "action": ""
+          },
+          {
+           "issue": "การกระทำความผิด",
+           "requiredEvidence": "",
+           "action": ""
+          },
+          {
+           "issue": "ความเสียหาย",
+           "requiredEvidence": "",
+           "action": ""
+          }
+         ],
+         "witnesses": [],
+         "requestedDocuments": [],
+         "otherOperations": [],
+         "scheduleRows": [
+          {
+           "rowId": "demo-schedule-1",
+           "date": "2026-10-06",
+           "action": "ตรวจสอบ เรื่องร้องเรียนสำหรับสาธิต (จำลอง)"
+          }
+         ],
+         "otherOperationsFixed": [
+          {
+           "item": "ตรวจสอบสถานที่เกิดเหตุ",
+           "detail": ""
+          },
+          {
+           "item": "จัดทำแผนที่เกิดเหตุ",
+           "detail": ""
+          }
+         ],
+         "legacyNotes": [],
+         "signatures": {
+          "owner": {
+           "officerId": "",
+           "officerName": "เอกสารไม่ระบุ",
+           "signedAt": "2026-10-06T02:55:20.766Z",
+           "method": "DEMO_ACKNOWLEDGEMENT",
+           "mock": true
+          },
+          "assistant": {
+           "officerId": "",
+           "officerName": "เอกสารไม่ระบุ",
+           "signedAt": ""
+          },
+          "head": {
+           "status": "CONFIRMED",
+           "roleCode": "director",
+           "authorityLabel": "ผู้อำนวยการสำนักงาน ป.ป.ท. เขต",
+           "officerId": "",
+           "officerName": "เอกสารไม่ระบุ",
+           "signedAt": ""
+          }
+         }
+        },
+        "source": {
+         "fileName": "1. แบบแผนงานคดี.pdf",
+         "pages": [
+          1,
+          2
+         ]
+        },
+        "submissionContext": {
+         "worklogDocumentId": "ACTIVITY5_DAILY_WORKLOG",
+         "worklogRevisionNo": 1
+        },
+        "submittedBy": "mock-role:investigator",
+        "submittedAt": "2026-10-06T02:55:20.766Z",
+        "idempotencyKey": "plan-submit:ECMIS-2569-000017:1791255322037",
+        "snapshotFingerprint": "h1:ba524e8c-bd098a7c-9bb"
+       },
+       "reviewHistory": [
+        {
+         "action": "RETURNED",
+         "actorId": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+         "at": "2026-10-06T02:55:33.460Z",
+         "reason": "ข้อมูลจำลอง: เรื่องร้องเรียนสำหรับสาธิต",
+         "affectedFields": [],
+         "affectedDocumentVersionIds": []
+        }
+       ],
+       "createdBy": "เอกสารไม่ระบุ",
+       "createdAt": "",
+       "updatedBy": "mock-role:investigator",
+       "updatedAt": "2026-10-06T02:55:20.766Z"
+      },
+      {
+       "documentId": "ACTIVITY5_DAILY_WORKLOG",
+       "caseId": "ECMIS-2569-000017",
+       "revisionNo": 1,
+       "baseRevisionNo": null,
+       "status": "DRAFT",
+       "schemaVersion": 1,
+       "payload": {
+        "schemaVersion": 1,
+        "entries": []
+       },
+       "source": {
+        "fileName": "1. แบบแผนงานคดี.pdf",
+        "pages": [
+         1,
+         2
+        ]
+       },
+       "submittedSnapshot": null,
+       "reviewHistory": [],
+       "createdBy": "เอกสารไม่ระบุ",
+       "createdAt": "",
+       "updatedBy": "เอกสารไม่ระบุ",
+       "updatedAt": ""
+      },
+      {
+       "documentId": "FORM_1_CASE_PLAN",
+       "caseId": "ECMIS-2569-000017",
+       "revisionNo": 2,
+       "baseRevisionNo": 1,
+       "status": "APPROVED",
+       "schemaVersion": 1,
+       "payload": {
+        "schemaVersion": 1,
+        "caseMetadata": {
+         "caseId": "ECMIS-2569-000017",
+         "caseNumber": "0010/2569",
+         "subject": "",
+         "complainant": "ตรีรุด หล่อจัง",
+         "allegation": "สูบบุหรี่ในที่ทำงาน",
+         "complaintChannel": "Website",
+         "receivedAt": "2026-10-06",
+         "sourceTypes": {
+          "fromNacc": false,
+          "misconduct": true,
+          "origin": "ACTIVITY_4",
+          "status": "CONFIRMED",
+          "basis": "มาตรา 18/1 (ก)"
+         }
+        },
+        "eventContext": {
+         "occurredAtPlace": "2026-10-06 · กรุงเทพ กรุงเทพมหานคร",
+         "incidentRows": [
+          {
+           "rowId": "incident-1",
+           "order": 1,
+           "occurredDate": "2026-10-06",
+           "actualTime": "",
+           "periodType": "",
+           "place": "กรุงเทพ กรุงเทพมหานคร"
+          }
+         ]
+        },
+        "limitationDates": {
+         "preliminaryDeadlineAt": "2026-12-05",
+         "twoYearDeadlineAt": "2028-10-06",
+         "limitationRows": [
+          {
+           "section": "",
+           "years": "",
+           "expiresAt": ""
+          },
+          {
+           "section": "",
+           "years": "",
+           "expiresAt": ""
+          }
+         ]
+        },
+        "accusedRows": [
+         {
+          "rowId": "demo-accused-1",
+          "name": "ณัฐกานต์ แพนดอร่า",
+          "nationalityCode": "TH",
+          "preferredLanguage": "ไทย",
+          "requiredEvidenceActions": [
+           {
+            "requiredEvidence": "เอกสารประกอบเรื่อง (จำลอง)",
+            "action": "รวบรวมข้อมูลเพื่อสาธิต"
+           },
+           {
+            "requiredEvidence": "",
+            "action": ""
+           },
+           {
+            "requiredEvidence": "",
+            "action": ""
+           },
+           {
+            "requiredEvidence": "",
+            "action": ""
+           }
+          ],
+          "offenceRole": "PRINCIPAL",
+          "isForeign": false,
+          "nationalityName": "ไทย",
+          "interpreterRequired": false,
+          "interpreterName": "",
+          "isDisabled": false,
+          "disabilityDescription": "",
+          "fourIssues": [
+           {
+            "details": ""
+           },
+           {
+            "details": ""
+           },
+           {
+            "details": "ประพฤติมิชอบ และรับสินบน"
+           },
+           {
+            "details": "2 ล้านบาท"
+           }
+          ],
+          "tableRows": {
+           "status": {
+            "checks": [
+             false,
+             false,
+             true,
+             false
+            ]
+           },
+           "authority": {
+            "checks": [
+             false,
+             false,
+             false
+            ]
+           },
+           "act": {
+            "checks": [
+             false,
+             false
+            ]
+           }
+          }
+         }
+        ],
+        "fourIssues": [
+         {
+          "issue": "สถานะ",
+          "details": ""
+         },
+         {
+          "issue": "อำนาจหน้าที่",
+          "details": ""
+         },
+         {
+          "issue": "การกระทำความผิด",
+          "details": ""
+         },
+         {
+          "issue": "ความเสียหาย",
+          "details": ""
+         }
+        ],
+        "requiredEvidenceActions": [
+         {
+          "issue": "สถานะ",
+          "requiredEvidence": "",
+          "action": ""
+         },
+         {
+          "issue": "อำนาจหน้าที่",
+          "requiredEvidence": "",
+          "action": ""
+         },
+         {
+          "issue": "การกระทำความผิด",
+          "requiredEvidence": "",
+          "action": ""
+         },
+         {
+          "issue": "ความเสียหาย",
+          "requiredEvidence": "",
+          "action": ""
+         }
+        ],
+        "witnesses": [
+         {
+          "name": "ตรีรุด หล่อจัง",
+          "relevance": "ผู้เสียหาย และผู้เห็นเหตุการณ์",
+          "issues": "การสูบบุหรี่ และการติดสินบน",
+          "isForeign": false,
+          "nationalityCode": "TH",
+          "nationalityName": "ไทย",
+          "preferredLanguage": "ไทย",
+          "interpreterRequired": false,
+          "interpreterName": "",
+          "isDisabled": false,
+          "disabilityDescription": ""
+         }
+        ],
+        "requestedDocuments": [],
+        "otherOperations": [],
+        "scheduleRows": [
+         {
+          "rowId": "demo-schedule-1",
+          "date": "2026-10-06",
+          "action": "ตรวจสอบ เรื่องร้องเรียนสำหรับสาธิต (จำลอง)"
+         }
+        ],
+        "otherOperationsFixed": [
+         {
+          "item": "ตรวจสอบสถานที่เกิดเหตุ",
+          "detail": "ตรวจสอบพฤติการ ณ สถานที่ทำงาน"
+         },
+         {
+          "item": "จัดทำแผนที่เกิดเหตุ",
+          "detail": ""
+         }
+        ],
+        "legacyNotes": [],
+        "signatures": {
+         "owner": {
+          "officerId": "mock-investigator-1",
+          "officerName": "พนักงาน ป.ป.ท. สมชาย",
+          "signedAt": "2026-10-06T03:14:25.982Z",
+          "method": "DEMO_ACKNOWLEDGEMENT",
+          "mock": true
+         },
+         "assistant": {
+          "officerId": "mock-investigator-3",
+          "officerName": "เอกสารไม่ระบุ",
+          "signedAt": "2026-10-06T03:14:25.982Z",
+          "method": "DEMO_ACKNOWLEDGEMENT",
+          "mock": true
+         },
+         "head": {
+          "status": "CONFIRMED",
+          "roleCode": "director",
+          "authorityLabel": "ผู้อำนวยการสำนักงาน ป.ป.ท. เขต",
+          "officerId": "",
+          "officerName": "เอกสารไม่ระบุ",
+          "signedAt": ""
+         }
+        }
+       },
+       "source": {
+        "fileName": "1. แบบแผนงานคดี.pdf",
+        "pages": [
+         1,
+         2
+        ]
+       },
+       "submittedSnapshot": {
+        "documentId": "FORM_1_CASE_PLAN",
+        "caseId": "ECMIS-2569-000017",
+        "revisionNo": 2,
+        "schemaVersion": 1,
+        "payload": {
+         "schemaVersion": 1,
+         "caseMetadata": {
+          "caseId": "ECMIS-2569-000017",
+          "caseNumber": "0010/2569",
+          "subject": "",
+          "complainant": "ตรีรุด หล่อจัง",
+          "allegation": "สูบบุหรี่ในที่ทำงาน",
+          "complaintChannel": "Website",
+          "receivedAt": "2026-10-06",
+          "sourceTypes": {
+           "fromNacc": false,
+           "misconduct": true,
+           "origin": "ACTIVITY_4",
+           "status": "CONFIRMED",
+           "basis": "มาตรา 18/1 (ก)"
+          }
+         },
+         "eventContext": {
+          "occurredAtPlace": "2026-10-06 · กรุงเทพ กรุงเทพมหานคร",
+          "incidentRows": [
+           {
+            "rowId": "incident-1",
+            "order": 1,
+            "occurredDate": "2026-10-06",
+            "actualTime": "",
+            "periodType": "",
+            "place": "กรุงเทพ กรุงเทพมหานคร"
+           }
+          ]
+         },
+         "limitationDates": {
+          "preliminaryDeadlineAt": "2026-12-05",
+          "twoYearDeadlineAt": "2028-10-06",
+          "limitationRows": [
+           {
+            "section": "",
+            "years": "",
+            "expiresAt": ""
+           },
+           {
+            "section": "",
+            "years": "",
+            "expiresAt": ""
+           }
+          ]
+         },
+         "accusedRows": [
+          {
+           "rowId": "demo-accused-1",
+           "name": "ณัฐกานต์ แพนดอร่า",
+           "nationalityCode": "TH",
+           "preferredLanguage": "ไทย",
+           "requiredEvidenceActions": [
+            {
+             "requiredEvidence": "เอกสารประกอบเรื่อง (จำลอง)",
+             "action": "รวบรวมข้อมูลเพื่อสาธิต"
+            },
+            {
+             "requiredEvidence": "",
+             "action": ""
+            },
+            {
+             "requiredEvidence": "",
+             "action": ""
+            },
+            {
+             "requiredEvidence": "",
+             "action": ""
+            }
+           ],
+           "offenceRole": "PRINCIPAL",
+           "isForeign": false,
+           "nationalityName": "ไทย",
+           "interpreterRequired": false,
+           "interpreterName": "",
+           "isDisabled": false,
+           "disabilityDescription": "",
+           "fourIssues": [
+            {
+             "details": ""
+            },
+            {
+             "details": ""
+            },
+            {
+             "details": "ประพฤติมิชอบ และรับสินบน"
+            },
+            {
+             "details": "2 ล้านบาท"
+            }
+           ],
+           "tableRows": {
+            "status": {
+             "checks": [
+              false,
+              false,
+              true,
+              false
+             ]
+            },
+            "authority": {
+             "checks": [
+              false,
+              false,
+              false
+             ]
+            },
+            "act": {
+             "checks": [
+              false,
+              false
+             ]
+            }
+           }
+          }
+         ],
+         "fourIssues": [
+          {
+           "issue": "สถานะ",
+           "details": ""
+          },
+          {
+           "issue": "อำนาจหน้าที่",
+           "details": ""
+          },
+          {
+           "issue": "การกระทำความผิด",
+           "details": ""
+          },
+          {
+           "issue": "ความเสียหาย",
+           "details": ""
+          }
+         ],
+         "requiredEvidenceActions": [
+          {
+           "issue": "สถานะ",
+           "requiredEvidence": "",
+           "action": ""
+          },
+          {
+           "issue": "อำนาจหน้าที่",
+           "requiredEvidence": "",
+           "action": ""
+          },
+          {
+           "issue": "การกระทำความผิด",
+           "requiredEvidence": "",
+           "action": ""
+          },
+          {
+           "issue": "ความเสียหาย",
+           "requiredEvidence": "",
+           "action": ""
+          }
+         ],
+         "witnesses": [
+          {
+           "name": "ตรีรุด หล่อจัง",
+           "relevance": "ผู้เสียหาย และผู้เห็นเหตุการณ์",
+           "issues": "การสูบบุหรี่ และการติดสินบน",
+           "isForeign": false,
+           "nationalityCode": "TH",
+           "nationalityName": "ไทย",
+           "preferredLanguage": "ไทย",
+           "interpreterRequired": false,
+           "interpreterName": "",
+           "isDisabled": false,
+           "disabilityDescription": ""
+          }
+         ],
+         "requestedDocuments": [],
+         "otherOperations": [],
+         "scheduleRows": [
+          {
+           "rowId": "demo-schedule-1",
+           "date": "2026-10-06",
+           "action": "ตรวจสอบ เรื่องร้องเรียนสำหรับสาธิต (จำลอง)"
+          }
+         ],
+         "otherOperationsFixed": [
+          {
+           "item": "ตรวจสอบสถานที่เกิดเหตุ",
+           "detail": "ตรวจสอบพฤติการ ณ สถานที่ทำงาน"
+          },
+          {
+           "item": "จัดทำแผนที่เกิดเหตุ",
+           "detail": ""
+          }
+         ],
+         "legacyNotes": [],
+         "signatures": {
+          "owner": {
+           "officerId": "mock-investigator-1",
+           "officerName": "พนักงาน ป.ป.ท. สมชาย",
+           "signedAt": "2026-10-06T03:14:25.982Z",
+           "method": "DEMO_ACKNOWLEDGEMENT",
+           "mock": true
+          },
+          "assistant": {
+           "officerId": "mock-investigator-3",
+           "officerName": "เอกสารไม่ระบุ",
+           "signedAt": "2026-10-06T03:14:25.982Z",
+           "method": "DEMO_ACKNOWLEDGEMENT",
+           "mock": true
+          },
+          "head": {
+           "status": "CONFIRMED",
+           "roleCode": "director",
+           "authorityLabel": "ผู้อำนวยการสำนักงาน ป.ป.ท. เขต",
+           "officerId": "",
+           "officerName": "เอกสารไม่ระบุ",
+           "signedAt": ""
+          }
+         }
+        },
+        "source": {
+         "fileName": "1. แบบแผนงานคดี.pdf",
+         "pages": [
+          1,
+          2
+         ]
+        },
+        "submissionContext": {
+         "worklogDocumentId": "ACTIVITY5_DAILY_WORKLOG",
+         "worklogRevisionNo": 1
+        },
+        "submittedBy": "mock-role:investigator",
+        "submittedAt": "2026-10-06T03:14:25.982Z",
+        "idempotencyKey": "plan-submit:ECMIS-2569-000017:1791256466805",
+        "snapshotFingerprint": "h1:9e43725-f409bc39-d72"
+       },
+       "reviewHistory": [
+        {
+         "action": "PLAN_APPROVED",
+         "documentId": "FORM_1_CASE_PLAN",
+         "revisionNo": 2,
+         "actorId": "mock-role:unit-director",
+         "actorName": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+         "positionName": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+         "signedAt": "2026-10-06T03:14:31.409Z",
+         "signatureMethod": "ELECTRONIC_SIGNATURE"
+        }
+       ],
+       "createdBy": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+       "createdAt": "2026-10-06T02:55:33.460Z",
+       "updatedBy": "mock-role:unit-director",
+       "updatedAt": "2026-10-06T03:14:31.409Z"
+      }
+     ],
+     "commandReceipts": [
+      {
+       "idempotencyKey": "plan-save:ECMIS-2569-000017:1791255320766",
+       "operation": "saveA5DocumentDraft",
+       "fingerprint": "h1:46080464-3e2a81d6-7cb",
+       "code": "DOCUMENT_DRAFT_SAVED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 1,
+       "storeVersion": 3
+      },
+      {
+       "idempotencyKey": "plan-submit:ECMIS-2569-000017:1791255322037",
+       "operation": "submitA5DocumentRevision",
+       "fingerprint": "h1:1cd8197-106c41ab-170",
+       "code": "DOCUMENT_REVISION_SUBMITTED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 1,
+       "storeVersion": 4
+      },
+      {
+       "idempotencyKey": "plan-return:ECMIS-2569-000017:1",
+       "operation": "returnA5DocumentRevision",
+       "fingerprint": "h1:848efdb-20fc1055-154",
+       "code": "DOCUMENT_REVISION_RETURNED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 2,
+       "storeVersion": 5
+      },
+      {
+       "idempotencyKey": "plan-accused:ECMIS-2569-000017:1791256321247",
+       "operation": "saveA5DocumentDraft",
+       "fingerprint": "h1:40425275-68d3fe47-c10",
+       "code": "DOCUMENT_DRAFT_SAVED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 2,
+       "storeVersion": 6
+      },
+      {
+       "idempotencyKey": "plan-accused:ECMIS-2569-000017:1791256329442",
+       "operation": "saveA5DocumentDraft",
+       "fingerprint": "h1:88f4ebe2-192b954-9d9",
+       "code": "DOCUMENT_DRAFT_SAVED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 2,
+       "storeVersion": 7
+      },
+      {
+       "idempotencyKey": "plan-witnesses:ECMIS-2569-000017:1791256380349",
+       "operation": "saveA5DocumentDraft",
+       "fingerprint": "h1:4dc063dd-3173e16f-b5e",
+       "code": "DOCUMENT_DRAFT_SAVED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 2,
+       "storeVersion": 8
+      },
+      {
+       "idempotencyKey": "plan-save:ECMIS-2569-000017:1791256465982",
+       "operation": "saveA5DocumentDraft",
+       "fingerprint": "h1:50b1c373-30e79289-c77",
+       "code": "DOCUMENT_DRAFT_SAVED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 2,
+       "storeVersion": 9
+      },
+      {
+       "idempotencyKey": "plan-submit:ECMIS-2569-000017:1791256466805",
+       "operation": "submitA5DocumentRevision",
+       "fingerprint": "h1:b221e596-899d5c60-170",
+       "code": "DOCUMENT_REVISION_SUBMITTED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 2,
+       "storeVersion": 10
+      },
+      {
+       "idempotencyKey": "plan-approve:ECMIS-2569-000017:1791256473115",
+       "operation": "approveCasePlanA5",
+       "code": "CASE_PLAN_APPROVED",
+       "documentId": "FORM_1_CASE_PLAN",
+       "revisionNo": 2,
+       "storeVersion": 11
+      }
+     ]
+    },
+    "a5CasePlan": {
+     "schemaVersion": 1,
+     "caseMetadata": {
+      "caseId": "ECMIS-2569-000017",
+      "caseNumber": "0010/2569",
+      "subject": "",
+      "complainant": "ตรีรุด หล่อจัง",
+      "allegation": "สูบบุหรี่ในที่ทำงาน",
+      "complaintChannel": "Website",
+      "receivedAt": "2026-10-06",
+      "sourceTypes": {
+       "fromNacc": false,
+       "misconduct": true,
+       "origin": "ACTIVITY_4",
+       "status": "CONFIRMED",
+       "basis": "มาตรา 18/1 (ก)"
+      }
+     },
+     "eventContext": {
+      "occurredAtPlace": "2026-10-06 · กรุงเทพ กรุงเทพมหานคร",
+      "incidentRows": [
+       {
+        "rowId": "incident-1",
+        "order": 1,
+        "occurredDate": "2026-10-06",
+        "actualTime": "",
+        "periodType": "",
+        "place": "กรุงเทพ กรุงเทพมหานคร"
+       }
+      ]
+     },
+     "limitationDates": {
+      "preliminaryDeadlineAt": "2026-12-05",
+      "twoYearDeadlineAt": "2028-10-06",
+      "limitationRows": [
+       {
+        "section": "",
+        "years": "",
+        "expiresAt": ""
+       },
+       {
+        "section": "",
+        "years": "",
+        "expiresAt": ""
+       }
+      ]
+     },
+     "accusedRows": [
+      {
+       "rowId": "demo-accused-1",
+       "name": "ณัฐกานต์ แพนดอร่า",
+       "nationalityCode": "TH",
+       "preferredLanguage": "ไทย",
+       "requiredEvidenceActions": [
+        {
+         "requiredEvidence": "เอกสารประกอบเรื่อง (จำลอง)",
+         "action": "รวบรวมข้อมูลเพื่อสาธิต"
+        },
+        {
+         "requiredEvidence": "",
+         "action": ""
+        },
+        {
+         "requiredEvidence": "",
+         "action": ""
+        },
+        {
+         "requiredEvidence": "",
+         "action": ""
+        }
+       ],
+       "offenceRole": "PRINCIPAL",
+       "isForeign": false,
+       "nationalityName": "ไทย",
+       "interpreterRequired": false,
+       "interpreterName": "",
+       "isDisabled": false,
+       "disabilityDescription": "",
+       "fourIssues": [
+        {
+         "details": ""
+        },
+        {
+         "details": ""
+        },
+        {
+         "details": "ประพฤติมิชอบ และรับสินบน"
+        },
+        {
+         "details": "2 ล้านบาท"
+        }
+       ],
+       "tableRows": {
+        "status": {
+         "checks": [
+          false,
+          false,
+          true,
+          false
+         ]
+        },
+        "authority": {
+         "checks": [
+          false,
+          false,
+          false
+         ]
+        },
+        "act": {
+         "checks": [
+          false,
+          false
+         ]
+        }
+       }
+      }
+     ],
+     "fourIssues": [
+      {
+       "issue": "สถานะ",
+       "details": ""
+      },
+      {
+       "issue": "อำนาจหน้าที่",
+       "details": ""
+      },
+      {
+       "issue": "การกระทำความผิด",
+       "details": ""
+      },
+      {
+       "issue": "ความเสียหาย",
+       "details": ""
+      }
+     ],
+     "requiredEvidenceActions": [
+      {
+       "issue": "สถานะ",
+       "requiredEvidence": "",
+       "action": ""
+      },
+      {
+       "issue": "อำนาจหน้าที่",
+       "requiredEvidence": "",
+       "action": ""
+      },
+      {
+       "issue": "การกระทำความผิด",
+       "requiredEvidence": "",
+       "action": ""
+      },
+      {
+       "issue": "ความเสียหาย",
+       "requiredEvidence": "",
+       "action": ""
+      }
+     ],
+     "witnesses": [
+      {
+       "name": "ตรีรุด หล่อจัง",
+       "relevance": "ผู้เสียหาย และผู้เห็นเหตุการณ์",
+       "issues": "การสูบบุหรี่ และการติดสินบน",
+       "isForeign": false,
+       "nationalityCode": "TH",
+       "nationalityName": "ไทย",
+       "preferredLanguage": "ไทย",
+       "interpreterRequired": false,
+       "interpreterName": "",
+       "isDisabled": false,
+       "disabilityDescription": ""
+      }
+     ],
+     "requestedDocuments": [],
+     "otherOperations": [],
+     "scheduleRows": [
+      {
+       "rowId": "demo-schedule-1",
+       "date": "2026-10-06",
+       "action": "ตรวจสอบ เรื่องร้องเรียนสำหรับสาธิต (จำลอง)"
+      }
+     ],
+     "otherOperationsFixed": [
+      {
+       "item": "ตรวจสอบสถานที่เกิดเหตุ",
+       "detail": "ตรวจสอบพฤติการ ณ สถานที่ทำงาน"
+      },
+      {
+       "item": "จัดทำแผนที่เกิดเหตุ",
+       "detail": ""
+      }
+     ],
+     "legacyNotes": [],
+     "signatures": {
+      "owner": {
+       "officerId": "mock-investigator-1",
+       "officerName": "พนักงาน ป.ป.ท. สมชาย",
+       "signedAt": "2026-10-06T03:14:25.982Z",
+       "method": "DEMO_ACKNOWLEDGEMENT",
+       "mock": true
+      },
+      "assistant": {
+       "officerId": "mock-investigator-3",
+       "officerName": "เอกสารไม่ระบุ",
+       "signedAt": "2026-10-06T03:14:25.982Z",
+       "method": "DEMO_ACKNOWLEDGEMENT",
+       "mock": true
+      },
+      "head": {
+       "status": "CONFIRMED",
+       "roleCode": "director",
+       "authorityLabel": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+       "officerId": "mock-role:unit-director",
+       "officerName": "ผอ.หน่วยงานเจ้าของสำนวน (เขต 1–9/กองปราบ 1–5)",
+       "signedAt": "2026-10-06T03:14:31.409Z",
+       "signatureMethod": "ELECTRONIC_SIGNATURE"
+      }
+     }
+    },
+    "a5Worklog": {
+     "schemaVersion": 1,
+     "entries": []
+    },
+    "naccFms": {
+     "caseDetail": {
+      "trackingNumber": "690017",
+      "criminalOrSpecialCaseNumber": "0010/2569",
+      "receivedDate": "2026-10-06",
+      "operatingUnit": "ส่วนกลาง",
+      "naccLetterReference": "",
+      "responsibleOfficer": "พนักงาน ป.ป.ท. สมชาย",
+      "allegation": "",
+      "misconductFacts": "",
+      "damageAmount": 0,
+      "note": "",
+      "courtJurisdiction": ""
+     },
+     "responsibleHistory": [
+      {
+       "historyId": "RESP-1VH0ZR8",
+       "action": "assign",
+       "officerId": "",
+       "officerName": "ดวงใจ ชอบกินผัก",
+       "unit": "",
+       "at": "2026-10-06T02:31:41.205Z"
+      },
+      {
+       "historyId": "RESP-12J9BA4",
+       "action": "assign",
+       "officerId": "mock-investigator-1",
+       "officerName": "",
+       "unit": "",
+       "at": "2026-10-06T02:53:20.002Z"
+      },
+      {
+       "historyId": "RESP-1F88PM5",
+       "action": "accept",
+       "officerId": "mock-role:investigator",
+       "officerName": "ผู้รับผิดชอบสำนวน",
+       "unit": "",
+       "at": "2026-10-06T02:53:37.175Z"
+      }
+     ],
+     "accusedPersons": [],
+     "interimReports": [],
+     "completionReport": null,
+     "committeeOpinions": [],
+     "exchanges": []
+    },
+    "intakeReview": {
+     "documentResults": [
+      {
+       "id": "a4-signed-0",
+       "result": "REVIEWED"
+      },
+      {
+       "id": "a4-signed-1",
+       "result": "REVIEWED"
+      },
+      {
+       "id": "a4-signed-2",
+       "result": "REVIEWED"
+      },
+      {
+       "id": "a4-signed-3",
+       "result": "REVIEWED"
+      },
+      {
+       "id": "a4-signed-4",
+       "result": "REVIEWED"
+      },
+      {
+       "id": "a4-dispatch-proof",
+       "result": "REVIEWED"
+      }
+     ],
+     "clerkOpinion": "ควรพิจารณา",
+     "reviewedBy": "เจ้าหน้าที่ธุรการคดีประจำเขต/กองปราบ",
+     "reviewedAt": "2026-10-06T02:35:08.757Z"
+    },
+    "demoData": {
+     "source": "DEMO_ONLY",
+     "caseId": "ECMIS-2569-000017",
+     "lastAction": "plan-submit",
+     "changes": [
+      {
+       "field": "signatures.owner.signedAt",
+       "label": "ยืนยันลายมือชื่อจำลอง (เจ้าของสำนวน)",
+       "value": "2026-10-06T03:14:25.982Z"
+      },
+      {
+       "field": "signatures.assistant.signedAt",
+       "label": "ยืนยันลายมือชื่อจำลอง (ผู้ช่วย)",
+       "value": "2026-10-06T03:14:25.982Z"
+      }
+     ]
+    },
+    "adminOverrideHistory": [
+     {
+      "at": "2026-10-06T03:08:56.006Z",
+      "actor": "data-admin-local",
+      "action": "edit",
+      "note": "แก้ผ่านหน้าดูแลข้อมูล",
+      "paths": [
+       "a5CasePlan.accusedRows[0].name"
+      ]
+     }
+    ],
+    "a5PersistenceRevision": 13
+   }
+  }
+ ],
+ "related": {
+  "handoffs": {
+   "ecmis-a4-a5-handoffs-v1": {
+    "ECMIS-2569-000017": {
+     "handoffId": "activity4:ECMIS-2569-000017:activity5",
+     "activity5CaseId": "A5-ECMIS-2569-000017",
+     "sourceReference": "ECMIS-2569-000017",
+     "caseNumber": "0010/2569",
+     "sourceDecision": "18/1ก",
+     "sourceChannel": "Website",
+     "sourceAgency": "",
+     "isFromNacc": false,
+     "referralLegalBasis": "",
+     "receivedDate": "6 ตุลาคม 2569 09:30 น.",
+     "title": "",
+     "complainant": "ตรีรุด หล่อจัง",
+     "agency": "ณัฐกานต์ แพนดอร่า",
+     "unit": "ส่วนกลาง",
+     "signedDocumentVersion": 7,
+     "approvedAt": "2026-10-06T02:32:42.941Z",
+     "approvedBy": "ผู้อำนวยการกองบริหารคดี",
+     "appointmentOrder": "",
+     "outgoingLetterNo": "ปป 0004/0039",
+     "outgoingLetterDate": "2026-10-06",
+     "dispatchMethod": "EMS",
+     "emsTrackingNo": "ED1234567890",
+     "dispatchProofName": "",
+     "destinationUnit": "ส่วนกลาง",
+     "dispatchNote": "",
+     "inboundDocumentManifest": {
+      "schemaVersion": 1,
+      "signedVersion": 3,
+      "signedAt": "2026-10-06T02:32:42.941Z",
+      "documents": [
+       {
+        "documentId": "back-cover",
+        "label": "ใบปกเอกสารลับ",
+        "html": "<article class=\"a4-paper template-confidential-cover\" id=\"activePaper\"><div class=\"confidential-cover-frame\"><span class=\"confidential-cover-code\">รปภ.๑๐</span><strong class=\"confidential-cover-label confidential-cover-top\">ลับ</strong><div class=\"confidential-cover-content\"><h2>ใบปกเอกสารลับ</h2><p>เอกสารแนบในปกนี้ เป็นเอกสารลับซึ่งจะต้องระมัดระวังและปฏิบัติ</p><p>ตามระเบียบว่าด้วยการรักษาความปลอดภัยแห่งชาติโดยเคร่งครัด</p></div><strong class=\"confidential-cover-label confidential-cover-bottom\">ลับ</strong></div></article>",
+        "source": "division-signed-snapshot"
+       },
+       {
+        "documentId": "ecmis-review-record",
+        "label": "แบบบันทึกการพิจารณาและกลั่นกรองเรื่องร้องเรียน/เบาะแส",
+        "html": "<div class=\"document-page-set form3-document-set\" id=\"activePaper\"><article class=\"a4-paper template-form3\" data-auto-paginate>\n      <p class=\"document-confidential confidential-top\">ลับ</p>\n      <header class=\"form3-header\">\n        <img src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\" class=\"form3-pacc-logo\">\n        <div class=\"form3-header-right\">\n          <p class=\"form3-system-name\">ระบบบริหารจัดการเรื่องร้องเรียน สำนักงาน ป.ป.ท.</p>\n          <div class=\"form3-number\">\n            <strong>เลขรับเรื่องที่</strong> 0033/2569<br>\n            <strong>วันที่</strong> 6 <strong>เดือน</strong> ตุลาคม <strong>พ.ศ.</strong> 2569\n          </div>\n        </div>\n      </header>\n      <div class=\"official-subject\">\n        <strong>เรื่อง</strong><span>การพิจารณารับและกลั่นกรองเรื่องร้องเรียน/เบาะแส เลขรับเรื่องที่ 0033/2569</span>\n        <strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span>\n      </div>\n      <p class=\"form3-intro\">ได้พิจารณาแล้ว จึงขอเสนอเพื่ออนุมัติ ดำเนินการตาม พรบ. ป.ป.ท. ดังนี้</p>\n      <div class=\"form3-decision-grid\">\n        <section class=\"form3-decision-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ ส่งสำนักงาน ป.ป.ช.</h3>\n          <p class=\"form3-section-label\">เหตุที่ไม่สามารถรับไว้ดำเนินการ</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐอยู่ในอำนาจหน้าที่ของ คกก.ป.ป.ช.</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนความผิด พ.ร.บ. เสนอราคาฯ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ร้องเรียนพฤติการณ์ร่ำรวยผิดปกติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องทรัพยากรธรรมชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เรื่องความมั่นคงชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เป็นความผิดข้ามชาติ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> จัดซื้อจัดจ้าง เกิน 2 ล้านบาท</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> กรณีที่เกี่ยวกับสัมปทานโดยรัฐ</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> เจ้าหน้าที่รัฐผู้ถูกกล่าวหาดำรงตำแหน่งข้าราชการตั้งแต่ระดับอำนวยการสูงขึ้นไป</p>\n          <p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> อื่น ๆ .....................................................................</p>\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> ไม่รับไว้ดำเนินการ</h3>\n          <div class=\"form3-writing-lines compact\"><div></div><div></div></div>\n        </section>\n        <section class=\"form3-decision-column form3-accept-column\">\n          <h3><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ก)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\">✓</span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\">ส่วนกลาง</p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/1(ข)</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 18/4</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p><h3><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> รับไว้ตรวจสอบ กรณี มาตรา 58/2</h3><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย สำนัก/กอง (สำหรับ ศรร. กบค.)</p><p class=\"form3-line\"></p><p><span class=\"doc-checkbox\" aria-hidden=\"true\"></span> มอบหมาย ผู้รับผิดชอบ (สำหรับ สำนัก/กอง)</p><p class=\"form3-line\"></p>\n        </section>\n      </div>\n      <div class=\"form3-footer-block\">\n        <p class=\"form3-note\"><strong>หมายเหตุ</strong> ให้สแกนเอกสารที่สำคัญและจำเป็นลงในระบบฯ<br><span>ทั้งนี้ กรณี ส่งเรื่องไปยังระบบไต่สวนให้นำเข้าเอกสารที่สแกนลงในระบบไต่สวนด้วย</span></p>\n        <p class=\"form3-officer-opinion\"><strong>ความเห็นเจ้าหน้าที่รับเรื่อง</strong> ควรพิจารณา</p><p class=\"form3-submit\">จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        <div class=\"form3-operator\"><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/officer-demo.svg\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span></div><p class=\"form3-signature-name\" data-editable=\"assignedOfficer\" contenteditable=\"true\" spellcheck=\"false\">(ดวงใจ ชอบกินผัก)</p><p class=\"form3-signature-position\">เจ้าหน้าที่รับเรื่อง</p></div>\n      </div>\n      <div class=\"form3-opinion-grid\">\n        <section data-flow-section data-opinion-section=\"center\">\n          <h3 data-flow-heading>ความเห็น ผู้บังคับบัญชาชั้นต้น</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"centerOpinion\">ควรพิจารณา</p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/director-center-demo.png\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span><p class=\"form3-signature-name\">(ผู้อำนวยการศูนย์รับเรื่องร้องเรียน)</p><p class=\"form3-signature-position\">ตำแหน่ง ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div></div>\n        </section>\n        <section data-flow-section data-opinion-section=\"division\">\n          <h3 data-flow-heading>ความเห็น ผู้อำนวยการสำนัก/กอง</h3>\n          <div class=\"form3-opinion-lines-container\">\n            <p class=\"form3-opinion-line\" data-flow-text data-editable=\"divisionOpinion\" contenteditable=\"true\" spellcheck=\"false\">ควรพิจารณา</p>\n            <div class=\"form3-opinion-line-extra\"></div>\n          </div>\n          <div data-keep-together><div class=\"form3-signed-block\"><span class=\"signature-image-wrap document\"><img class=\"signature-image\" src=\"assets/signatures/director-division-demo.png\" alt=\"ลายมือชื่ออิเล็กทรอนิกส์ตัวอย่าง\"><em>ลายมือชื่อตัวอย่าง</em></span><p class=\"form3-signature-name\">(ผู้อำนวยการกองบริหารคดี)</p><p class=\"form3-signature-position\">ตำแหน่ง ผู้อำนวยการกองบริหารคดี</p></div></div>\n        </section>\n      </div>\n      <p class=\"document-confidential confidential-bottom\">ลับ</p>\n    </article></div>",
+        "source": "division-signed-snapshot"
+       },
+       {
+        "documentId": "1-01",
+        "label": "แบบปกสำนวนการไต่สวน (สีฟ้า)",
+        "html": "<article class=\"a4-paper template-cover official-blue-cover\" id=\"activePaper\">\n      <p class=\"official-page-label\">หน้าที่ ๑</p>\n      <p class=\"cover-reference\">ตัวอย่างปกสำนวนการไต่สวน<br>(ใช้ปกสีฟ้า)</p>\n      <div class=\"cover-head\"><img class=\"memo-garuda\" src=\"https://www.pacc.go.th/images/pacc_logo.png\" alt=\"ตราสำนักงาน ป.ป.ท.\"><div><h1>สำนวนการไต่สวน</h1><p>สำนักงานคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div></div>\n      <div class=\"cover-body\">\n        <p class=\"cover-subject\"><strong>เรื่องที่</strong> ออกหลัง ผู้อำนวยการกองบริหารคดี ลงนาม</p>\n        <div class=\"cover-parties\">\n          <div class=\"cover-party-line\"><span>ตรีรุด หล่อจัง</span><b>ผู้กล่าวหา</b></div>\n          <p class=\"cover-between\">ระหว่าง</p>\n          <div class=\"cover-party-line\"><span>ณัฐกานต์ แพนดอร่า</span><b>ผู้ถูกกล่าวหา</b></div>\n        </div>\n        <div class=\"cover-ground\">\n          <span>เป็นกรณีกล่าวหาว่ากระทำการ</span>\n          <div class=\"cover-ground-options\">\n            <label><input type=\"checkbox\" checked disabled> ทุจริตต่อหน้าที่</label>\n            <label><input type=\"checkbox\"  disabled> ประพฤติมิชอบ</label>\n            <label><input type=\"checkbox\" disabled> อื่น ๆ ................................</label>\n          </div>\n        </div>\n        <p class=\"cover-field\"><strong>ข้อกล่าวหา</strong> สูบบุหรี่ในที่ทำงาน</p>\n        <p class=\"cover-field\"><strong>เอกสารพยานหลักฐาน รวมจำนวน</strong> ๑๒ แผ่น</p>\n        <p class=\"cover-sublist\">- คำร้องเรียน/กล่าวหา จำนวน ๑๐ แผ่น<br>- เอกสารประกอบ จำนวน ......... แผ่น<br>- อื่น ๆ จำนวน .........</p>\n        <p class=\"cover-field\"><strong>สถานที่เกิดเหตุ</strong> กรุงเทพ กรุงเทพมหานคร<br><strong>วันเวลาที่เกิดเหตุ</strong> ๖ ตุลาคม ๒๕๖๙ ๐๙:๓๐ น.</p>\n        <p class=\"cover-field\"><strong>อายุความ</strong> .......... ปี <span class=\"cover-dim\">ขาดอายุความ (ทุกฐานความผิด)</span> .................................</p>\n        <p class=\"cover-field\"><strong>สำนักที่รับผิดชอบ</strong> ส่วนกลาง</p>\n        <p class=\"cover-field\"><strong>สำนักงาน ป.ป.ท. รับเรื่อง</strong> วันที่ .......... เดือน ................. พ.ศ. ..........</p>\n        <p class=\"cover-field\"><strong>พนักงาน ป.ป.ท. ผู้รับผิดชอบสำนวนไต่สวน</strong> ดวงใจ ชอบกินผัก<br><strong>เจ้าหน้าที่ ป.ป.ท. ผู้ช่วย</strong> .....................................</p>\n      </div>\n      <p class=\"official-form-code\">ปปท. ๑-๐๑</p>\n    </article>",
+        "source": "division-signed-snapshot"
+       },
+       {
+        "documentId": "1-03",
+        "label": "แบบบันทึกการตรวจสอบเรื่องร้องเรียน",
+        "html": "<div class=\"document-page-set official-n103-set\" id=\"activePaper\">\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๔</p>\n        <p class=\"official-sample-title\">ตัวอย่างบันทึกการตรวจสอบเรื่องร้องเรียน</p>\n        <aside class=\"memo-receipt-box\"><strong>ศูนย์รับเรื่องร้องเรียน</strong><span>เลขรับ ๐๐๓๓/๒๕๖๙</span><span>วันที่ ๖ ตุลาคม ๒๕๖๙</span></aside>\n        <div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADKBAMAAAAFnIJvAAAABGdBTUEAALGIlZj0pgAAADBQTFRFAAAAgAAAAIAAgIAAAACAgACAAICAgICAwMDA/wAAAP8A//8AAAD//wD/AP//////ex+xxAAAAAlwSFlzAAAOQAAADkUBMpLx3wAADBBJREFUeJzVnAuC5LYKRdkB+98lO+CVBZePLNmuT78klWSmuyzrCIEQYDmkf/2h/yZBiFcE+h1Mal/xI/2Q0IaLn15YXjf+6FPm6f9H+O0kVU1QfPNjAkOIJPxyklQ4Rux/068JJJ1QvvjRh0S4EfjnBKa/JsSiG38J/dJnoN8/J2Ca/ozAWgnHrw8JT42aWFy1RpCnBHljJH9NIMhL47a/kEGkEPggPJrgp4TXDIl2gnxFOI1Phh4mAk1Nln29hnYeydF2vp2PPoPwmjOeCHbTmbEieFu2nkMoKrN0ELT7c6I1YkUYzXyE4e4omjrhtcgFNzA2pDNBNjKwqwLalCFBkYEOGVLAaH4S4SAs1BNCUBDYZiYJ1Ahityx0yusoUax97MWvKWmzNHY4yQ2VDbDq6RBt8b2hCcN+dfiiuWM6E9g0vLT7PcHmqRG0EPiQkEEYsi7MXq339RVTtuN9gU0Edb6a4a6dw54whGDv7lgMQy2dQK6nMf51N07YauK42ayKc1czwhCQQdCtFsj+2QlhNx/qsDUXhPELmyROWM/1bqWnEOjO1FAJY5rsXtb9XN8Sjgn2SVoQzJ2OSV7O9OEHxmfDh/CvBjZVE4EqYa1nwlh2l9VcY/aXBLfQw2AvCAyvsZ4mC4xsb5sI4oT0f7tpGIRh9YsWNr9Dzz7o4pegCDjsxf3kywamsiEoCJGSgGDThG9XhOOi7xpre4IMqYZcWkYYElwQ+ueSYJPUCKYb3LoyRynrYa8HcXOWmSDkg5QtgaoYw4GcCDaFYjMhneAG5mIsdjexFZSERQQ3tq7Xf9Y3UdM0ljQ+SwKNXWvrOsRW/EFwaZotFSNZE9gn8Ypgl4790xXSCB6Q7AmxSfr1k+vCzezGj0EEgaqtnFQ9NmgSiBohY1NDnYJOiF/30xR6jnjz3KTeLCtC18Tp9jbGMMUipbfg7KllivM0zffbsAnjWRAgHdbziuBWblY96+HYs2yVYRhTAw/JzCVZMF8IYAr+QGiVHdjWhXmIyGjWwrgbZqWdwNTnes44dMQYIfK0C9XlSl3KJMg1QbLTh4ReOUn14OqEYOXWSycIdQqXJC0CbrcFieHPhD6CvslBqclfERBsRJbR+3C/E1tVtQTJXjgAC4IbfKqodhJwiT9OIoRBbQmYaenX/GcKQZm0WTN+Dg3LmRDOpllBXxNS97gWlUVfYwBmdhsCuY/n6VbrXy0YEcsNkkApwrgCB3KapQxEqN6j9UdWSwFbkxTB8pDhW3MIFA0x/CqE1J6ijFBcawGYgpxOmcYEIbxvncOU4jUoQep3DDVXQIzVfhxuSUoak7M1+pZJiOhiBK0wlgMGCVpLsoXT1kvIOOJu8si83Wc++wgGop5irpWmCXW/T9MY8QNDFX2aSp/Fo6Xd1klCGOUamQm5VqqCI4iLMCRXVF87pdbSt5eqU3TukXiRIRDsmatJ1kXAypDueQsBu6fklmzbp93POWILHZEUxvgI+xPvCAIhi/gWI6Fm4P2M4o6t8UpQT0J7AlM0MuJBSA+EJ9niK9o+jFo/ZOh+TYXXhMNeJPaAWLWWJ1dvPUI+nxEvIfg6gaktZ8mWSrgs/M1OYM7GrCh1OmEYeYaS4M4E0cgibPVbDcIInn/CWrNrheakBNhaP4XgtfCUt+hyqKOmTnZVpOdGUBktCUiDYbjm3fyJkYXjGQ564UVIM1a25eAiLwm5NZXN7vByuJoWAGsck0VBgC9u8WAjsMVlUgyWQCBB6MypylGnLSucLE3lDcEliMWJ5M0usuS1cAtSAhfQ5+RlJjSVkRnJuD8yLNvtO8H9gRB8yYYQ/rF/cE3TvVrLogJJdzxX6SZCrLbIlDAgWwU+YFNmy0TSjes1Ab4ChLJViIdMKFaO5cEhIzqcH0/OIXT41JQCvljMdXESfFfX9Ftedt0S0qLDm5dAVsh9h2QYN6IcLERzXnPpqf+KsjULKiCNoF4dKwSq1tEUsibgXp5MNm6qQXdJSWERfBZhSWCEwcgvGyHbcvGSsYmcU/HpV/fcfHg8igjjHAZDBnO35DqaE4sFAUsiqoLScrK5KWeE0W6/ILTsBZHwnmB/l5tXj7pO9xXjKZHXmUCRmo/tUWllqguCCsGUYIK5cCcRQhCJWOqkhQWhVGvICy2qZ/1B0OoZT8v5HyPkdumbTcsT0m/5phffo/E9oberyo462SLlO914RdDuJY5Yq3DyxxYaLpfCloBJGYVTBNnnT3ru+OIpoW5dWkus5icaxtvwFNreEco8RYRh0Ax0ULymiKfWgA2hevzpB4w8484qzRuE8GuZHvYJr6rZWNE1QcVTGevymiAfEWBRpdPiFOewag+4IaRaI+c8pcHt8luEMkI+dyEUsYJcC7E3AUL4ZEvgTIgzHjuPdE1wRctwGfN5EbUIIbze3mXsCfBxYiWjUw82Sa3tThUbAgXBApQgYGKIOCNJOg/hjoBq4CudIU/Qsfo0CiyUjfnivN7yazu8Mh7SGsEzPN/W2EXohO10rEWwO8yQvD+sLEy7zaIRWXPSHsoQ7oa84j2nRpyrIN37Y0LdOb3c0J4oTv3h940iloSsGvrpjIigUhT7Psazn6a1DKYGIS8rZZnSFziJEcb+wHZ2aBmObQhWwrBnTjrqGpCBfRdF7G/llvH0/y0ZUNIzixyZp3km7KIczlBaFPqcEHOtFCd2zNWZeVWzkaqbx4R6W4kUzYDGejaopp5xZugpQSmUW+ogueWU7whl+shRnxLGFFF5WD894XAhxomeUS/YHUnaEaxeJGVc4gE2vKpYue/4HinjG7aEXNr9GWbdCOMkndqKCEsq9d4nBE/zwzkwzk1Z6ujpVJTvzSDeIdjjjoiHIZj1J173zIoWix/aeYMQmhOcr4H/lPEQOcjmLoygvbx3S/Bd5aiqeWCN+GkUsjzmZ/Gzh8Po3iCU2lorIpuO4zEB9Q8vJ2mfP1RlI1C1+loU2ymefoxDju/tcdhCzW1ADBslSQByF9H39ulRDBtLjiV6UZU8iRfDxylQ2R0N2xHYqrvFFR2lc4UMdZ+Fs13reRsvoVe4v+qOwkGx5CVaO9YtoUYXReHSCf2zAVzErapRIo4x60SwXXV1BOWWYAHqcQZkHADEUQ4jxLMDcgNeVMYeEFqO6+7Zs2cUuYvFbnu5ImhRqFaC+qxkLn+RY10TomjrNFh8nuy7np8nBOz+7iJQJJE4WXoPeELwNZy9SRTcf0TQXIG+sWaC8j1Bqgjtw/6M6wcEPe8ENmMU178h+NawyB58/X1kS12nVkVdCEGTEETrlXf+roY+VYQTJR7lALCuYp0IsYFxDBC73ayIKIsr8uwV4lSvwH4eKwDr+ixCebrR6ro3hFK79dGxZ6VnQl92kqQrQhmQOSI7jn98OdvT9HygRYjXMrTTR0J4EaBvzgTHlEPjVPsNQdXPUOBGjC9PbzYL0ibHLWFOZEolvZ+FwNTLqvW1DPFOTdSMQaBqPG04IfAjwly6q4R0Ut661BWr1d4RyngxzLmugVJ0HfIbhP5sgKynZqxsWYNGfhHt72dJM5NJUcSPPcVGJHYcNW2Ud739k4R0sObhuATEGudyCDkYFuIT3xqnZzL1MUz6b7bXNKrSJvO4kQG9DJwBSPM4nqc8EUbNvvjJLOV3yKQUbxr6G0dUJG11mqezVAAIIOONBp5EoPoS1TNCZkuCp1W+AHgcyKYQwdrcRlyX18TjU3+5xQmea/t6pN37QfeEEsOgwON1y3hZ2T3IxwR/jOKCeELrsV6+VETbLPQBoYQo5NUkZSovsHqd6fJzTSiPbk3vXhEoRirfyBC1QX9RmZwAV+7b3OeaRvVxJAviZSfliBUow6lPCXYziqz+mmyN/5Ru8tA7gh2QHv+KouzMEZ3Zq27f5nHWvQUZY8rtoYeks/g2fxD2U5SjcOuhsPqbk97gO4Kn/bYn4JVr9lNSi1d2PiB49OonAyNeUt6/tvouQW2DswDZt1V/LPFLgtlPvK3qvvt3BIsr4B4kCU8AzwjxOjI1wrPPo4bYqo2Aze8+WX9OiMcL42yls54K8bSd1eqD8EzJbxE8AmYk0Y8Bzwlo/sboPyK8NfoPCe+K8O8jPP5/tXxBeBfwwR3vfv4HpAT+CEwM+dUAAAAASUVORK5CYII=\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div>\n        <div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี ศูนย์รับเรื่องร้องเรียน <strong>โทร.</strong> ๑๙๐๕</p><p><strong>ที่</strong> ปป ๐๐ ........................................ <strong>วันที่</strong> ๖ ตุลาคม ๒๕๖๙</p></div>\n        <div class=\"official-subject\"><strong>เรื่อง</strong><span>การตรวจสอบเรื่องร้องเรียน เรื่องที่ <span class=\"doc-editable\" data-editable=\"documentSubject\" contenteditable=\"true\" spellcheck=\"false\"></span></span><strong>เรียน</strong><span>เลขาธิการคณะกรรมการ ป.ป.ท.</span></div>\n        <div class=\"official-body n103-body\">\n          <p>ตามที่ศูนย์รับเรื่องร้องเรียน กองบริหารคดี ได้รับเรื่องร้องเรียน/เบาะแส ทางช่องทาง Website เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ กรณีกล่าวหา ณัฐกานต์ แพนดอร่า เรื่อง .................... ศูนย์รับเรื่องร้องเรียนได้ตรวจสอบแล้ว ปรากฏข้อเท็จจริงดังนี้</p>\n          <p>๑. ผู้กล่าวหา/ร้องเรียน : ตรีรุด หล่อจัง</p>\n          <p>๒. ผู้ถูกร้องเรียน : ณัฐกานต์ แพนดอร่า</p>\n          <p>๓. สถานที่เกิดเหตุ : กรุงเทพ กรุงเทพมหานคร</p>\n          <p>๔. ข้อพิจารณา/ข้อเสนอ : เห็นควรพิจารณา ดังนี้</p>\n          <p>๔.๑ กรณีกล่าวหาเจ้าหน้าที่ของรัฐว่ากระทำการทุจริตต่อหน้าที่ ซึ่งอยู่ในอำนาจของคณะกรรมการ ป.ป.ท. ตามมาตรา ๑๘/๑ (ก) แห่งพระราชบัญญัติมาตรการของฝ่ายบริหารในการป้องกันและปราบปรามการทุจริต พ.ศ. ๒๕๕๑ และที่แก้ไขเพิ่มเติม</p>\n          \n          <p>ทั้งนี้ ให้ดำเนินการตามที่บัญญัติไว้ตามกฎกระทรวงแบ่งส่วนราชการสำนักงาน ป.ป.ท. พ.ศ. ๒๕๖๐ ข้อ ๑๑, ข้อ ๑๔, ข้อ ๑๖ และข้อ ๑๗ ประกอบกับประกาศสำนักนายกรัฐมนตรี เรื่อง กำหนดเขตพื้นที่ของสำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ๑ - ๙ และประกาศสำนักงาน ป.ป.ท. เรื่อง กำหนดส่วนราชการและหน่วยงานภาครัฐที่อยู่ในอำนาจและความรับผิดชอบของ กปท. ๑ – ๕</p>\n        </div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n      <article class=\"a4-paper template-memo official-n103-page\">\n        <p class=\"official-page-label\">หน้าที่ ๕</p>\n        <p class=\"memo-continuation\">- ๒ -</p>\n        <div class=\"official-body n103-body n103-continuation\">\n          <p>ซึ่งเรื่องร้องเรียนที่ ๐๐๓๓/๒๕๖๙ อยู่ในอำนาจหน้าที่ของ ส่วนกลาง จึงเห็นควรมอบหมายให้ ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ต่อไป และแจ้งผู้เกี่ยวข้องทราบ ทั้งนี้ ได้จัดส่งเรื่องร้องเรียนพร้อมเอกสาร จำนวน ๑๒ แผ่น มาพร้อมนี้</p>\n          <p>จึงเรียนมาเพื่อโปรดพิจารณา</p>\n        </div>\n        <div class=\"official-signature n103-signature\"><p>(ดวงใจ ชอบกินผัก)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้บังคับบัญชาชั้นต้น</strong> เห็นควรมอบหมายให้สำนักงานป้องกันและปราบปรามการทุจริตในภาครัฐ เขต ส่วนกลาง ดำเนินการตามอำนาจหน้าที่ และแจ้งผู้เกี่ยวข้องทราบ</p><p>(.....................................)</p><p>เจ้าหน้าที่ ป.ป.ท./พนักงาน ป.ป.ท.<br>ผู้อำนวยการศูนย์รับเรื่องร้องเรียน</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นผู้อำนวยการกอง</strong> เรื่องที่ ............................. เห็นควรดำเนินการตามเสนอ (ส่งสำนักงาน ปปท. เขต .....)</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div>\n        <div class=\"memo-opinion\"><p><strong>ความเห็นเลขาธิการคณะกรรมการ ป.ป.ท.</strong> เรื่องที่ ........................</p><p>- เห็นชอบ/ดำเนินการตามเสนอ</p><p>- ลงนามแล้ว</p><p>(.....................................)</p><p>ผู้อำนวยการกองบริหารคดี ปฏิบัติราชการแทน<br>เลขาธิการคณะกรรมการป้องกันและปราบปรามการทุจริตในภาครัฐ</p></div>\n        <p class=\"official-form-code\">ปปท. ๑-๐๓</p>\n      </article>\n    </div>",
+        "source": "division-signed-snapshot"
+       },
+       {
+        "documentId": "unit-transmittal",
+        "label": "บันทึกนำส่งเรื่องร้องเรียนให้สำนัก/เขตผู้รับผิดชอบ",
+        "html": "<article class=\"a4-paper template-memo\" id=\"activePaper\"><div class=\"memo-heading\"><img class=\"memo-garuda\" src=\"data:image/png;base64,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\" alt=\"ตราครุฑ\"><h2>บันทึกข้อความ</h2></div><div class=\"memo-metadata\"><p><strong>ส่วนราชการ</strong> กองบริหารคดี <strong>โทร.</strong> ๑๙๐๗</p><p><strong>ที่</strong> ปป ๐๐๐๔/ ........................................ <strong>วันที่</strong> ........................................</p></div><div class=\"official-subject\"><strong>เรื่อง</strong><span>ส่งเรื่องร้องเรียนเพื่อดำเนินการตามอำนาจหน้าที่</span><strong>เรียน</strong><span>ผู้อำนวยการส่วนกลาง</span></div><div class=\"official-body\"><p>ด้วยกองบริหารคดี ได้รับเรื่องร้องเรียน เลขรับที่ ๐๐๓๓/๒๕๖๙ ลงวันที่ ๖ ตุลาคม ๒๕๖๙ เรื่อง ........................................ ผู้ร้องเรียน ตรีรุด หล่อจัง ซึ่งผู้มีอำนาจได้พิจารณาให้รับไว้ดำเนินการตามมาตรา ๑๘/๑ (ก) และมอบหมายให้ส่วนกลาง เป็นผู้รับผิดชอบ</p><p>กองบริหารคดี จึงขอส่งเรื่องร้องเรียนดังกล่าวพร้อมเอกสาร จำนวน ๑๒ แผ่น มาเพื่อดำเนินการตามอำนาจหน้าที่ต่อไป</p><p>จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ</p></div><div class=\"official-signature\"><p>(........................................)</p><p>ผู้อำนวยการกองบริหารคดี</p></div><p class=\"official-form-code\">ใบนำส่งสำนัก/เขต (ร่างของระบบ)</p></article>",
+        "source": "division-signed-snapshot"
+       }
+      ],
+      "expectedDocuments": [
+       {
+        "documentId": "back-cover",
+        "label": "ใบปกเอกสารลับ"
+       },
+       {
+        "documentId": "ecmis-review-record",
+        "label": "แบบบันทึกการพิจารณาและกลั่นกรองเรื่องร้องเรียน/เบาะแส"
+       },
+       {
+        "documentId": "1-01",
+        "label": "แบบปกสำนวนการไต่สวน (สีฟ้า)"
+       },
+       {
+        "documentId": "1-03",
+        "label": "แบบบันทึกการตรวจสอบเรื่องร้องเรียน"
+       },
+       {
+        "documentId": "unit-transmittal",
+        "label": "บันทึกนำส่งเรื่องร้องเรียนให้สำนัก/เขตผู้รับผิดชอบ"
+       }
+      ],
+      "attachments": [],
+      "dispatchProof": {
+       "name": "",
+       "method": "EMS",
+       "trackingNo": "ED1234567890",
+       "sentDate": "2026-10-06"
+      }
+     },
+     "dispatchedBy": "เจ้าหน้าที่รับเรื่อง ศรร.",
+     "dispatchedAt": "2026-10-06T02:33:39.085Z",
+     "sourceSystem": "Activity4HTMLPrototype",
+     "producerSystem": "Activity4HTMLPrototype"
+    }
+   }
+  },
+  "ledger": {
+   "issuancesByIdempotencyKey": {
+    "ECMIS-2569-000017:1-03:main:2569": {
+     "issuanceId": "OUT-5f6076ce-ac4a-4e40-96b0-cc9f98d26c2a-20261006023252",
+     "caseId": "ECMIS-2569-000017",
+     "slotId": "1-03:main",
+     "documentId": "1-03",
+     "purpose": "main",
+     "registerId": "srr",
+     "registerLabel": "ทะเบียนเลขหนังสือขาออก ศรร.",
+     "registerPrefix": "ปป 0004.2",
+     "buddhistYear": 2569,
+     "sequence": 29,
+     "number": "ปป 0004.2/0029",
+     "selectionSource": "user",
+     "status": "issued",
+     "idempotencyKey": "ECMIS-2569-000017:1-03:main:2569",
+     "issuedAt": "2026-10-06T02:32:52.285Z",
+     "issuedBy": "ดวงใจ ชอบกินผัก",
+     "voidedAt": null,
+     "voidedBy": null,
+     "voidReason": null
+    },
+    "ECMIS-2569-000017:unit-transmittal:main:2569": {
+     "issuanceId": "OUT-d2adf7c7-4440-4b70-93a3-f65e66393356-20261006023255",
+     "caseId": "ECMIS-2569-000017",
+     "slotId": "unit-transmittal:main",
+     "documentId": "unit-transmittal",
+     "purpose": "main",
+     "registerId": "kbk",
+     "registerLabel": "ทะเบียนเลขหนังสือขาออก กบค.",
+     "registerPrefix": "ปป 0004",
+     "buddhistYear": 2569,
+     "sequence": 39,
+     "number": "ปป 0004/0039",
+     "selectionSource": "fixed",
+     "status": "issued",
+     "idempotencyKey": "ECMIS-2569-000017:unit-transmittal:main:2569",
+     "issuedAt": "2026-10-06T02:32:55.708Z",
+     "issuedBy": "ดวงใจ ชอบกินผัก",
+     "voidedAt": null,
+     "voidedBy": null,
+     "voidReason": null
+    }
+   },
+   "activeSlotIndex": {
+    "ECMIS-2569-000017:1-03:main": "ECMIS-2569-000017:1-03:main:2569",
+    "ECMIS-2569-000017:unit-transmittal:main": "ECMIS-2569-000017:unit-transmittal:main:2569"
+   }
+  },
+  "hubCases": [],
+  "hubEvents": [],
+  "publicCases": [
+   {
+    "yearSequence": "690017",
+    "pin": "875166",
+    "identityLast4": "5678",
+    "id4": "",
+    "phone": "0812345678",
+    "pendingReference": "",
+    "allocationStatus": "allocated",
+    "trackingNumber": "690017",
+    "subject": "-",
+    "attachmentCount": 0,
+    "anonymousDetected": false,
+    "confidentialityRequested": false,
+    "identityFieldsProvided": 5,
+    "channel": "Website",
+    "submittedAt": "2026-10-06T02:30:51.927Z",
+    "internalStatus": "รอตรวจสอบความซ้ำซ้อน",
+    "publicStatus": "รับข้อมูลแล้ว"
+   }
+  ]
+ },
+ "files": []
+}

@@ -1,0 +1,7751 @@
+{
+ "source": "context/user-flow/User_Flow_Activity_6_Redesign_v5_A4_Tab_02.drawio",
+ "tabs": {
+  "02": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ผู้ขอรับการคุ้มครอง / พยาน",
+     "x": 20.0,
+     "y": 10.0,
+     "w": 42.0,
+     "h": 170.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "ธุรการ / เจ้าหน้าที่ ป.ป.ท. ผู้รับเรื่อง",
+     "x": 20.0,
+     "y": 180.0,
+     "w": 42.0,
+     "h": 240.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ระบบ E-CMIS / เจ้าหน้าที่ผู้ตรวจสอบเลขสำนวน",
+     "x": 20.0,
+     "y": 420.0,
+     "w": 42.0,
+     "h": 205.0,
+     "fill": "#E9E0EE"
+    },
+    {
+     "label": "ผลลัพธ์ / ไปขั้นตอนมอบหมายผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 625.0,
+     "w": 42.0,
+     "h": 180.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "start",
+     "code": null,
+     "kind": "terminal",
+     "text": "",
+     "x": 70.0,
+     "y": 86.0,
+     "w": 18.0,
+     "h": 18.0
+    },
+    {
+     "id": "WIT0201",
+     "code": "WIT0201",
+     "kind": "step",
+     "text": "ต้องการขอรับ การคุ้มครองพยาน",
+     "x": 105.0,
+     "y": 60.0,
+     "w": 145.0,
+     "h": 58.0
+    },
+    {
+     "id": "WIT0202",
+     "code": "WIT0202",
+     "kind": "decision",
+     "text": "แจ้งคำขอผ่าน ช่องทางใด?",
+     "x": 280.0,
+     "y": 50.0,
+     "w": 110.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0203",
+     "code": "WIT0203",
+     "kind": "step",
+     "text": "ธุรการบันทึกรับเข้า E-CMIS",
+     "x": 425.0,
+     "y": 110.0,
+     "w": 165.0,
+     "h": 60.0
+    },
+    {
+     "id": "WIT0204",
+     "code": "WIT0204",
+     "kind": "step",
+     "text": "เข้าพบเจ้าหน้าที่ ป.ป.ท. ด้วยตนเอง",
+     "x": 640.0,
+     "y": 50.0,
+     "w": 165.0,
+     "h": 60.0
+    },
+    {
+     "id": "WIT0205",
+     "code": "WIT0205",
+     "kind": "step",
+     "text": "พยานโทรศัพท์แจ้ง ขอรับการคุ้มครอง",
+     "x": 855.0,
+     "y": 50.0,
+     "w": 165.0,
+     "h": 60.0
+    },
+    {
+     "id": "WIT0206",
+     "code": "WIT0206",
+     "kind": "step",
+     "text": "ธุรการสแกนหนังสือต้นทาง",
+     "x": 420.0,
+     "y": 205.0,
+     "w": 175.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0207",
+     "code": "WIT0207",
+     "kind": "step",
+     "text": "เจ้าหน้าที่กลั่นกรองความเร่งด่วน ก่อนจัดทำแบบ คบ.",
+     "x": 610.0,
+     "y": 205.0,
+     "w": 185.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0208",
+     "code": "WIT0208",
+     "kind": "step",
+     "text": "บันทึกผลการกลั่นกรองเป็น “เร่งด่วน” หรือ “ไม่เร่งด่วน”",
+     "x": 940.0,
+     "y": 200.0,
+     "w": 185.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0209",
+     "code": "WIT0209",
+     "kind": "decision",
+     "text": "ต้องจัดทำแบบใด ตามช่องทางรับคำขอ?",
+     "x": 810.0,
+     "y": 272.0,
+     "w": 130.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0210",
+     "code": "WIT0210",
+     "kind": "step",
+     "text": "เอกสาร: คบ.2 → คบ.1 รับโทรศัพท์ด้วย คบ.2 แล้วเปิดงานจัดทำ คบ.1 ต่อ",
+     "x": 970.0,
+     "y": 340.0,
+     "w": 170.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0211",
+     "code": "WIT0211",
+     "kind": "step",
+     "text": "เอกสาร: คบ.1 + หลักฐานประกอบ ผู้ขอเข้าพบ เจ้าหน้าที่สัมภาษณ์และจัดทำแบบ",
+     "x": 560.0,
+     "y": 340.0,
+     "w": 180.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0212",
+     "code": "WIT0212",
+     "kind": "step",
+     "text": "เชื่อมโยงเลขสำนวนหลักกับคำขอใน E-CMIS",
+     "x": 870.0,
+     "y": 461.0,
+     "w": 180.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT0213",
+     "code": "WIT0213",
+     "kind": "decision",
+     "text": "เชื่อมโยงเลขสำนวนหลัก ได้หรือไม่?",
+     "x": 662.5,
+     "y": 451.0,
+     "w": 120.0,
+     "h": 86.0
+    },
+    {
+     "id": "WIT0214",
+     "code": "WIT0214",
+     "kind": "step",
+     "text": "ยืนยันการเชื่อมโยงเลขสำนวนหลัก กับคำขอคุ้มครอง",
+     "x": 245.0,
+     "y": 460.0,
+     "w": 175.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0215",
+     "code": "WIT0215",
+     "kind": "step",
+     "text": "ข้อมูลระบบ: Case Link = not_found/unlinked บันทึกเหตุผลและรับเรื่องต่อ ห้ามปัดตก",
+     "x": 750.0,
+     "y": 559.0,
+     "w": 200.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT0216",
+     "code": "WIT0216",
+     "kind": "terminal",
+     "text": "ส่งคำขอให้ ผอ. มอบหมาย ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 515.0,
+     "y": 664.0,
+     "w": 115.0,
+     "h": 108.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E01",
+     "source": "start",
+     "target": "WIT0201",
+     "label": null,
+     "points": [
+      [
+       150.0,
+       95.0
+      ],
+      [
+       150.0,
+       95.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": [
+      110.0,
+      89.0
+     ],
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E02",
+     "source": "WIT0201",
+     "target": "WIT0202",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E03",
+     "source": "WIT0202",
+     "target": "WIT0203",
+     "label": "ธุรการ",
+     "points": [
+      [
+       335.0,
+       140.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E04",
+     "source": "WIT0202",
+     "target": "WIT0204",
+     "label": "เข้าพบเจ้าหน้าที่",
+     "points": [
+      [
+       390.0,
+       90.0
+      ],
+      [
+       640.0,
+       90.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": [
+      640.0,
+      90.0
+     ],
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E05",
+     "source": "WIT0202",
+     "target": "WIT0205",
+     "label": "โทรศัพท์",
+     "points": [
+      [
+       335.0,
+       30.0
+      ],
+      [
+       938.0,
+       30.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E06",
+     "source": "WIT0203",
+     "target": "WIT0206",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E07",
+     "source": null,
+     "target": "WIT0207",
+     "label": null,
+     "points": [
+      [
+       703.0,
+       110.0
+      ],
+      [
+       703.0,
+       157.0
+      ],
+      [
+       703.0,
+       157.0
+      ]
+     ],
+     "sourcePoint": [
+      703.0,
+      110.0
+     ],
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E08",
+     "source": "WIT0205",
+     "target": "WIT0207",
+     "label": null,
+     "points": [
+      [
+       938.0,
+       140.0
+      ],
+      [
+       703.0,
+       140.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E09",
+     "source": null,
+     "target": "WIT0212",
+     "label": "ธุรการไม่ต้องกลั่นกรองความเร่งด่วน",
+     "points": [
+      [
+       508.0,
+       435.0
+      ],
+      [
+       960.0,
+       435.0
+      ]
+     ],
+     "sourcePoint": [
+      507.52631578947376,
+      272.0000000000002
+     ],
+     "targetPoint": [
+      960.0,
+      457.0
+     ],
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E10",
+     "source": "WIT0207",
+     "target": "WIT0208",
+     "label": "กลั่นกรองก่อนจัดทำแบบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E11",
+     "source": "WIT0208",
+     "target": "WIT0209",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E12",
+     "source": "WIT0209",
+     "target": "WIT0210",
+     "label": "โทรศัพท์",
+     "points": [
+      [
+       1055.0,
+       317.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E13",
+     "source": "WIT0209",
+     "target": "WIT0211",
+     "label": "เข้าพบเจ้าหน้าที่",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E14",
+     "source": "WIT0210",
+     "target": "WIT0212",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E15",
+     "source": "WIT0211",
+     "target": "WIT0212",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E16",
+     "source": "WIT0212",
+     "target": "WIT0213",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E17",
+     "source": "WIT0213",
+     "target": "WIT0214",
+     "label": "เชื่อมโยงได้",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E18",
+     "source": "WIT0213",
+     "target": "WIT0215",
+     "label": "เชื่อมโยงไม่ได้",
+     "points": [
+      [
+       850.0,
+       537.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": [
+      840.0,
+      560.0
+     ],
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E19",
+     "source": "WIT0214",
+     "target": "WIT0216",
+     "label": null,
+     "points": [
+      [
+       338.0,
+       590.0
+      ],
+      [
+       572.0,
+       590.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E20",
+     "source": "WIT0215",
+     "target": "WIT0216",
+     "label": null,
+     "points": [
+      [
+       572.0,
+       590.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "03": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "เจ้าหน้าที่รับเรื่อง / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 110.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "ผู้อำนวยการหน่วยงาน / ผอ. ปปท.เขต",
+     "x": 20.0,
+     "y": 160.0,
+     "w": 42.0,
+     "h": 170.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 330.0,
+     "w": 42.0,
+     "h": 150.0,
+     "fill": "#E9E0EE"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 480.0,
+     "w": 42.0,
+     "h": 190.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผลลัพธ์ / ไปจัดทำ คบ.1 และ คบ.3",
+     "x": 20.0,
+     "y": 670.0,
+     "w": 42.0,
+     "h": 135.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0301",
+     "code": "WIT0301",
+     "kind": "terminal",
+     "text": "รับคำขอจาก แท็บ 02",
+     "x": 85.0,
+     "y": 64.0,
+     "w": 82.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0302",
+     "code": "WIT0302",
+     "kind": "step",
+     "text": "เอกสาร: หนังสือต้นทาง/คบ.1/คบ.2 + หลักฐาน แสดง Case Link และผลกลั่นกรองความเร่งด่วน",
+     "x": 220.0,
+     "y": 71.0,
+     "w": 250.0,
+     "h": 68.0
+    },
+    {
+     "id": "NOTE03_CASE",
+     "code": null,
+     "kind": "note",
+     "text": "ไม่พบหรือยังไม่เชื่อมโยงเลขสำนวนหลัก ก็ต้องเสนอ ผอ. มอบหมายต่อ ห้ามปัดตก",
+     "x": 520.0,
+     "y": 70.0,
+     "w": 260.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0303",
+     "code": "WIT0303",
+     "kind": "step",
+     "text": "ผอ. ตรวจคำขอ เอกสารตั้งต้น สถานะเลขสำนวน และสถานะกลั่นกรองก่อนมอบหมาย",
+     "x": 220.0,
+     "y": 205.0,
+     "w": 250.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0304",
+     "code": "WIT0304",
+     "kind": "step",
+     "text": "ผอ. เลือกผู้รับผิดชอบงานคุ้มครองพยาน เป็นเจ้าของสำนวนเดิมหรือเจ้าหน้าที่คนอื่นก็ได้",
+     "x": 510.0,
+     "y": 202.0,
+     "w": 230.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0305",
+     "code": "WIT0305",
+     "kind": "step",
+     "text": "บันทึกผู้รับผิดชอบ หน่วยงานตามเขต ผู้มอบหมาย และวันเวลามอบหมาย",
+     "x": 507.0,
+     "y": 365.0,
+     "w": 240.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0306",
+     "code": "WIT0306",
+     "kind": "step",
+     "text": "แจ้งงานให้เจ้าหน้าที่ ที่ ผอ. มอบหมาย",
+     "x": 812.5,
+     "y": 367.0,
+     "w": 210.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0307",
+     "code": "WIT0307",
+     "kind": "step",
+     "text": "เจ้าหน้าที่ผู้รับผิดชอบรับงาน เปิดคำขอ และตรวจสถานะกลั่นกรอง",
+     "x": 812.5,
+     "y": 498.0,
+     "w": 210.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0308",
+     "code": "WIT0308",
+     "kind": "step",
+     "text": "ตรวจเอกสารตั้งต้นและ ผลประเมินความเร่งด่วน",
+     "x": 605.0,
+     "y": 500.0,
+     "w": 175.0,
+     "h": 64.0
+    },
+    {
+     "id": "WIT0309",
+     "code": "WIT0309",
+     "kind": "decision",
+     "text": "มีผลประเมิน ความเร่งด่วนแล้ว?",
+     "x": 390.0,
+     "y": 505.0,
+     "w": 120.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT0310",
+     "code": "WIT0310",
+     "kind": "step",
+     "text": "เจ้าหน้าที่ประเมินความเร่งด่วน ข้อมูลระบบ: Urgency Assessment (ไม่มีเลข คบ.)",
+     "x": 65.0,
+     "y": 513.0,
+     "w": 200.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0311",
+     "code": "WIT0311",
+     "kind": "decision",
+     "text": "เอกสารตั้งต้น เป็นแบบใด?",
+     "x": 610.0,
+     "y": 585.0,
+     "w": 120.0,
+     "h": 80.0
+    },
+    {
+     "id": "WIT0312",
+     "code": "WIT0312",
+     "kind": "terminal",
+     "text": "คำร้องหรือ คบ.2 ไปแท็บ 04 จัดทำ คบ.1",
+     "x": 230.0,
+     "y": 700.0,
+     "w": 160.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0313",
+     "code": "WIT0313",
+     "kind": "terminal",
+     "text": "มี คบ.1 แล้ว ไปแท็บ 04 ตรวจ คบ.1/คบ.3",
+     "x": 700.0,
+     "y": 700.0,
+     "w": 160.0,
+     "h": 78.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0301",
+     "source": "WIT0301",
+     "target": "WIT0302",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0302",
+     "source": "WIT0302",
+     "target": "WIT0303",
+     "label": "เสนอ ผอ.",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0303",
+     "source": "WIT0303",
+     "target": "WIT0304",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0304",
+     "source": "WIT0304",
+     "target": "WIT0305",
+     "label": "บันทึกการมอบหมาย",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0305",
+     "source": "WIT0305",
+     "target": "WIT0306",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0306",
+     "source": "WIT0306",
+     "target": "WIT0307",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0307",
+     "source": "WIT0307",
+     "target": "WIT0308",
+     "label": null,
+     "points": [
+      [
+       800.0,
+       532.0
+      ],
+      [
+       800.0,
+       532.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0308",
+     "source": "WIT0308",
+     "target": "WIT0309",
+     "label": null,
+     "points": [
+      [
+       698.0,
+       490.0
+      ],
+      [
+       450.0,
+       490.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      0.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0309",
+     "source": "WIT0309",
+     "target": "WIT0310",
+     "label": "ยังไม่มี",
+     "points": [
+      [
+       390.0,
+       550.0
+      ],
+      [
+       270.0,
+       550.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.0,
+      0.5
+     ],
+     "entry": [
+      1.0,
+      0.5
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0310",
+     "source": "WIT0309",
+     "target": "WIT0311",
+     "label": "มีผลแล้ว",
+     "points": [
+      [
+       570.0,
+       549.0
+      ],
+      [
+       570.0,
+       570.0
+      ],
+      [
+       670.0,
+       570.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0311",
+     "source": "WIT0310",
+     "target": "WIT0311",
+     "label": "บันทึกผลแล้ว",
+     "points": [
+      [
+       169.0,
+       623.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.521,
+      0.992
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0312",
+     "source": "WIT0311",
+     "target": "WIT0312",
+     "label": "คำร้อง / คบ.2",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.454,
+      0.942
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0313",
+     "source": "WIT0311",
+     "target": "WIT0313",
+     "label": "คบ.1",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "04": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "รับงาน / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 100.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 150.0,
+     "w": 42.0,
+     "h": 405.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้ยื่น / พยาน / ผู้เกี่ยวข้อง",
+     "x": 20.0,
+     "y": 555.0,
+     "w": 42.0,
+     "h": 105.0,
+     "fill": "#E9E0EE"
+    },
+    {
+     "label": "แยกเอกสารตามผลประเมินความเร่งด่วน",
+     "x": 20.0,
+     "y": 660.0,
+     "w": 42.0,
+     "h": 145.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0401",
+     "code": "WIT0401",
+     "kind": "terminal",
+     "text": "รับงานจาก แท็บ 03",
+     "x": 85.0,
+     "y": 62.0,
+     "w": 76.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0402",
+     "code": "WIT0402",
+     "kind": "step",
+     "text": "เอกสาร: หนังสือต้นทาง/คบ.2/คบ.1 + หลักฐาน แสดง Case Link และ Urgency Assessment จากแท็บ 03",
+     "x": 210.0,
+     "y": 66.0,
+     "w": 265.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0403",
+     "code": "WIT0403",
+     "kind": "decision",
+     "text": "มี คบ.1 แล้ว?",
+     "x": 505.0,
+     "y": 190.0,
+     "w": 120.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0404",
+     "code": "WIT0404",
+     "kind": "step",
+     "text": "สัมภาษณ์และจัดทำ คบ.1 กรณีมี คบ.2 ให้นำข้อมูลมาใช้ต่อ",
+     "x": 780.0,
+     "y": 199.0,
+     "w": 220.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0405",
+     "code": "WIT0405",
+     "kind": "step",
+     "text": "ตรวจและยืนยันข้อมูล คบ.1 พร้อมหลักฐานประกอบ",
+     "x": 735.0,
+     "y": 330.0,
+     "w": 210.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0406",
+     "code": "WIT0406",
+     "kind": "step",
+     "text": "ผู้ยื่น/พยานและผู้เกี่ยวข้อง ลงนามยินยอมใน คบ.1",
+     "x": 790.0,
+     "y": 574.5,
+     "w": 240.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT0407",
+     "code": "WIT0407",
+     "kind": "decision",
+     "text": "เข้าเงื่อนไข ข้าม คบ.3?",
+     "x": 340.0,
+     "y": 433.0,
+     "w": 120.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0408",
+     "code": "WIT0408",
+     "kind": "step",
+     "text": "จัดทำ คบ.3 บันทึกข้อเท็จจริงประกอบคำร้อง",
+     "x": 85.0,
+     "y": 444.0,
+     "w": 190.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0409",
+     "code": "WIT0409",
+     "kind": "step",
+     "text": "ข้าม คบ.3 ได้เมื่อ คบ.1 ครบถ้วน ข้อมูลระบบ: Skip Record + เหตุผล",
+     "x": 510.0,
+     "y": 444.0,
+     "w": 210.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0410",
+     "code": "WIT0410",
+     "kind": "decision",
+     "text": "ผลประเมิน ความเร่งด่วน?",
+     "x": 505.0,
+     "y": 695.0,
+     "w": 120.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0411",
+     "code": "WIT0411",
+     "kind": "step",
+     "text": "กรณีไม่เร่งด่วน: จัดทำ คบ.6 บันทึกเสนอความเห็น แล้วไปแท็บ 05 เส้นทางปกติ",
+     "x": 185.0,
+     "y": 702.0,
+     "w": 230.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0412",
+     "code": "WIT0412",
+     "kind": "step",
+     "text": "กรณีเร่งด่วน: ไปแท็บ 06 เพื่อจัดทำ คบ.4 และร่าง คบ.5 ตามเส้นทาง Fast Track",
+     "x": 720.0,
+     "y": 702.0,
+     "w": 240.0,
+     "h": 76.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0401",
+     "source": "WIT0401",
+     "target": "WIT0402",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0402",
+     "source": "WIT0402",
+     "target": "WIT0403",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0403",
+     "source": "WIT0403",
+     "target": "WIT0404",
+     "label": "ยังไม่มี คบ.1",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0404",
+     "source": "WIT0403",
+     "target": "WIT0405",
+     "label": "มี คบ.1",
+     "points": [
+      [
+       565.0,
+       305.0
+      ],
+      [
+       840.0,
+       305.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0405",
+     "source": "WIT0404",
+     "target": "WIT0405",
+     "label": "จัดทำแล้ว",
+     "points": [
+      [
+       1020.0,
+       235.0
+      ],
+      [
+       1020.0,
+       300.0
+      ],
+      [
+       840.0,
+       300.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0406",
+     "source": "WIT0405",
+     "target": "WIT0406",
+     "label": null,
+     "points": [
+      [
+       1100.0,
+       387.0
+      ],
+      [
+       1100.0,
+       608.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0407",
+     "source": "WIT0406",
+     "target": "WIT0407",
+     "label": null,
+     "points": [
+      [
+       910.0,
+       413.0
+      ],
+      [
+       400.0,
+       413.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0408",
+     "source": "WIT0407",
+     "target": "WIT0408",
+     "label": "ไม่ข้าม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0409",
+     "source": "WIT0407",
+     "target": "WIT0409",
+     "label": "ข้ามได้",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0410",
+     "source": "WIT0408",
+     "target": "WIT0410",
+     "label": null,
+     "points": [
+      [
+       220.0,
+       665.0
+      ],
+      [
+       565.0,
+       665.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0411",
+     "source": "WIT0409",
+     "target": "WIT0410",
+     "label": null,
+     "points": [
+      [
+       760.0,
+       478.0
+      ],
+      [
+       760.0,
+       665.0
+      ],
+      [
+       565.0,
+       665.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0412",
+     "source": "WIT0410",
+     "target": "WIT0411",
+     "label": "ไม่เร่งด่วน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0413",
+     "source": "WIT0410",
+     "target": "WIT0412",
+     "label": "เร่งด่วน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "05": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "รับงาน / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 100.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 150.0,
+     "w": 42.0,
+     "h": 150.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้บังคับบัญชาชั้นต้น",
+     "x": 20.0,
+     "y": 300.0,
+     "w": 42.0,
+     "h": 190.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ผู้อำนวยการหน่วยงาน / ผอ. ปปท.เขต",
+     "x": 20.0,
+     "y": 490.0,
+     "w": 42.0,
+     "h": 185.0,
+     "fill": "#E9E0EE"
+    },
+    {
+     "label": "ระบบ / ส่งต่อรองเลขาธิการฯ",
+     "x": 20.0,
+     "y": 675.0,
+     "w": 42.0,
+     "h": 130.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0501",
+     "code": "WIT0501",
+     "kind": "terminal",
+     "text": "รับเส้นทางปกติ จากแท็บ 04",
+     "x": 85.0,
+     "y": 61.0,
+     "w": 78.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0502",
+     "code": "WIT0502",
+     "kind": "step",
+     "text": "ชุดเสนอ คบ.1 / คบ.3 / คบ.6 + ร่าง คบ.9 / คบ.10 + หลักฐาน",
+     "x": 90.0,
+     "y": 188.0,
+     "w": 220.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0503",
+     "code": "WIT0503",
+     "kind": "step",
+     "text": "ตรวจ คบ.1 / คบ.3 / คบ.6 และหลักฐานประกอบ",
+     "x": 210.0,
+     "y": 355.0,
+     "w": 220.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0504",
+     "code": "WIT0504",
+     "kind": "decision",
+     "text": "เอกสารครบถ้วน?",
+     "x": 480.0,
+     "y": 346.0,
+     "w": 120.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0505",
+     "code": "WIT0505",
+     "kind": "step",
+     "text": "บันทึกเหตุผลและส่งกลับ เจ้าหน้าที่ผู้รับผิดชอบแก้ไข",
+     "x": 680.0,
+     "y": 315.0,
+     "w": 220.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0506",
+     "code": "WIT0506",
+     "kind": "step",
+     "text": "แก้ไขตามเหตุผลตีกลับ คบ.3/คบ.6 ต้องสร้าง Version ใหม่และเก็บฉบับเดิม",
+     "x": 473.0,
+     "y": 189.0,
+     "w": 260.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0507",
+     "code": "WIT0507",
+     "kind": "step",
+     "text": "บันทึกความเห็นและลงนามรับรอง ระบบส่งงานและแจ้ง ผอ.",
+     "x": 680.0,
+     "y": 405.0,
+     "w": 220.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0508",
+     "code": "WIT0508",
+     "kind": "step",
+     "text": "ผอ. ตรวจ คบ.1 / คบ.3 / คบ.6 หลักฐานและความเห็นผู้บังคับบัญชา",
+     "x": 840.0,
+     "y": 538.0,
+     "w": 220.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0509",
+     "code": "WIT0509",
+     "kind": "decision",
+     "text": "เห็นชอบและ เอกสารครบถ้วน?",
+     "x": 640.0,
+     "y": 529.0,
+     "w": 120.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0510",
+     "code": "WIT0510",
+     "kind": "step",
+     "text": "ผอ. บันทึกเหตุผลและส่งกลับตรง เจ้าหน้าที่ผู้รับผิดชอบ",
+     "x": 310.0,
+     "y": 540.0,
+     "w": 220.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0511",
+     "code": "WIT0511",
+     "kind": "step",
+     "text": "แก้ไขตามคำสั่ง ผอ. คบ.3/คบ.6 ต้องสร้าง Version ใหม่ แล้วส่งกลับ ผอ.",
+     "x": 790.0,
+     "y": 189.0,
+     "w": 260.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0512",
+     "code": "WIT0512",
+     "kind": "step",
+     "text": "ผอ. ลงนาม คบ.6 และส่งรองเลขาธิการฯ",
+     "x": 90.0,
+     "y": 542.0,
+     "w": 210.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0513",
+     "code": "WIT0513",
+     "kind": "step",
+     "text": "ล็อกเอกสารที่ลงนาม ห้ามแก้ทับ เก็บ Audit Log สร้างงานและแจ้งเตือนรองเลขาธิการฯ",
+     "x": 350.0,
+     "y": 705.0,
+     "w": 270.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0514",
+     "code": "WIT0514",
+     "kind": "terminal",
+     "text": "ชุดเสนอพร้อมร่าง คบ.9/10 ไปแท็บ 07 รอลงนามตามผล",
+     "x": 692.0,
+     "y": 702.0,
+     "w": 170.0,
+     "h": 78.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0501",
+     "source": "WIT0501",
+     "target": "WIT0502",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0502",
+     "source": "WIT0502",
+     "target": "WIT0503",
+     "label": "ระบบสร้างงานและแจ้งเตือน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0503",
+     "source": "WIT0503",
+     "target": "WIT0504",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0504",
+     "source": "WIT0504",
+     "target": "WIT0505",
+     "label": "ไม่ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0505",
+     "source": "WIT0505",
+     "target": "WIT0506",
+     "label": "ส่งกลับแก้ไข",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.75,
+      1.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0506",
+     "source": "WIT0506",
+     "target": "WIT0503",
+     "label": "ส่งตรวจใหม่",
+     "points": [
+      [
+       538.0,
+       285.0
+      ],
+      [
+       370.0,
+       285.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.25,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0507",
+     "source": "WIT0504",
+     "target": "WIT0507",
+     "label": "ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0508",
+     "source": "WIT0507",
+     "target": "WIT0508",
+     "label": "ระบบส่งงานและแจ้ง ผอ.",
+     "points": [
+      [
+       960.0,
+       439.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0509",
+     "source": "WIT0508",
+     "target": "WIT0509",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0510",
+     "source": "WIT0509",
+     "target": "WIT0510",
+     "label": "ไม่เห็นชอบ / ไม่ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0511",
+     "source": "WIT0510",
+     "target": "WIT0511",
+     "label": "ส่งกลับตรง",
+     "points": [
+      [
+       480.0,
+       630.0
+      ],
+      [
+       1100.0,
+       630.0
+      ],
+      [
+       1100.0,
+       225.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0512",
+     "source": "WIT0511",
+     "target": "WIT0508",
+     "label": "ส่ง ผอ. ตรวจใหม่",
+     "points": [
+      [
+       1030.0,
+       480.0
+      ],
+      [
+       970.0,
+       480.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0513",
+     "source": "WIT0509",
+     "target": "WIT0512",
+     "label": "เห็นชอบ / ครบ",
+     "points": [
+      [
+       700.0,
+       640.0
+      ],
+      [
+       215.0,
+       640.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0514",
+     "source": "WIT0512",
+     "target": "WIT0513",
+     "label": null,
+     "points": [
+      [
+       142.0,
+       740.0
+      ],
+      [
+       150.0,
+       740.0
+      ],
+      [
+       150.0,
+       741.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.25,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0515",
+     "source": "WIT0513",
+     "target": "WIT0514",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "06": {
+   "width": 1164.0,
+   "height": 847.0,
+   "lanes": [
+    {
+     "label": "รับงาน / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 90.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 140.0,
+     "w": 42.0,
+     "h": 170.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้อำนวยการหน่วยงาน / ผอ. ปปท.เขต",
+     "x": 20.0,
+     "y": 310.0,
+     "w": 42.0,
+     "h": 205.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "พยาน / ผู้ได้รับการคุ้มครอง",
+     "x": 20.0,
+     "y": 515.0,
+     "w": 42.0,
+     "h": 185.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "ผลลัพธ์ / ส่งต่อกระบวนการ",
+     "x": 20.0,
+     "y": 700.0,
+     "w": 42.0,
+     "h": 127.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0601",
+     "code": "WIT0601",
+     "kind": "terminal",
+     "text": "รับเส้นทางเร่งด่วน จากแท็บ 04",
+     "x": 85.0,
+     "y": 57.0,
+     "w": 76.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0602",
+     "code": "WIT0602",
+     "kind": "step",
+     "text": "แสดงคำร้อง ผลประเมินความเร่งด่วน และหลักฐานจากแท็บ 04",
+     "x": 210.0,
+     "y": 62.0,
+     "w": 300.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT0603",
+     "code": "WIT0603",
+     "kind": "step",
+     "text": "จัดทำ คบ.4 และร่าง คบ.5 เลือกวิธีคุ้มครองตามข้อ 15 (1)–(4) ได้มากกว่า 1 วิธี",
+     "x": 115.0,
+     "y": 185.0,
+     "w": 260.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0604",
+     "code": "WIT0604",
+     "kind": "step",
+     "text": "ส่งตรงให้ ผอ. พิจารณา ระบบแจ้งเตือนงานเร่งด่วน โดยไม่ผ่านผู้บังคับบัญชาชั้นต้น",
+     "x": 440.0,
+     "y": 185.0,
+     "w": 250.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0605",
+     "code": "WIT0605",
+     "kind": "step",
+     "text": "ผอ. ตรวจ คบ.4 ร่าง คบ.5 หลักฐาน ระดับภัยและมาตรการคุ้มครองชั่วคราว",
+     "x": 440.0,
+     "y": 340.0,
+     "w": 245.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0606",
+     "code": "WIT0606",
+     "kind": "decision",
+     "text": "ข้อมูลครบและพร้อม พิจารณา?",
+     "x": 755.0,
+     "y": 330.0,
+     "w": 120.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0607",
+     "code": "WIT0607",
+     "kind": "step",
+     "text": "บันทึกเหตุผลและประเด็นแก้ไข ส่งกลับเจ้าหน้าที่ผู้รับผิดชอบ",
+     "x": 920.0,
+     "y": 340.0,
+     "w": 210.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0608",
+     "code": "WIT0608",
+     "kind": "step",
+     "text": "แก้ไข คบ.4 / ร่าง คบ.5 ตามเหตุผล แล้วส่ง ผอ. ตรวจใหม่",
+     "x": 820.0,
+     "y": 185.0,
+     "w": 250.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0609",
+     "code": "WIT0609",
+     "kind": "decision",
+     "text": "อนุมัติคุ้มครอง ชั่วคราว?",
+     "x": 605.0,
+     "y": 420.0,
+     "w": 120.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0610",
+     "code": "WIT0610",
+     "kind": "step",
+     "text": "บันทึกผลไม่อนุมัติชั่วคราวและเหตุผล ไม่ปิดคำร้องหลัก ข้อมูลระบบ: ไม่ออก คบ.10 ในขั้นนี้",
+     "x": 250.0,
+     "y": 430.0,
+     "w": 240.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0611",
+     "code": "WIT0611",
+     "kind": "step",
+     "text": "ผอ. บันทึกความเห็นใน คบ.4 และลงนาม คบ.5 ระบบล็อกฉบับลงนาม ห้ามแก้ทับ",
+     "x": 870.0,
+     "y": 430.0,
+     "w": 260.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0612",
+     "code": "WIT0612",
+     "kind": "step",
+     "text": "พยานรับทราบคำสั่ง คบ.5 และลงนามยินยอมรับการคุ้มครองชั่วคราว",
+     "x": 790.0,
+     "y": 634.0,
+     "w": 250.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT0613",
+     "code": "WIT0613",
+     "kind": "terminal",
+     "text": "คำสั่ง คบ.5 พร้อมดำเนินการ ส่งวิธีที่อนุมัติไปแท็บ 08",
+     "x": 772.5,
+     "y": 740.0,
+     "w": 285.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0614",
+     "code": "WIT0614",
+     "kind": "terminal",
+     "text": "คำร้องหลักยังเดินต่อ จัดทำ/เสนอ คบ.6 ไปแท็บ 05 แล้วผ่านแท็บ 07",
+     "x": 245.0,
+     "y": 711.0,
+     "w": 250.0,
+     "h": 78.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0601",
+     "source": "WIT0601",
+     "target": "WIT0602",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0602",
+     "source": "WIT0602",
+     "target": "WIT0603",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0603",
+     "source": "WIT0603",
+     "target": "WIT0604",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0604",
+     "source": "WIT0604",
+     "target": "WIT0605",
+     "label": "ส่งตรง ผอ.",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.25,
+      1.0
+     ],
+     "entry": [
+      0.25,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0605",
+     "source": "WIT0605",
+     "target": "WIT0606",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0606",
+     "source": "WIT0606",
+     "target": "WIT0607",
+     "label": "ไม่ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0607",
+     "source": "WIT0607",
+     "target": "WIT0608",
+     "label": "ส่งกลับแก้ไข",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0608",
+     "source": "WIT0608",
+     "target": null,
+     "label": "ส่งตรวจใหม่",
+     "points": [
+      [
+       760.0,
+       221.0
+      ],
+      [
+       760.0,
+       290.0
+      ],
+      [
+       588.0,
+       290.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": [
+      588.0,
+      340.0
+     ],
+     "exit": [
+      0.0,
+      0.5
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0609",
+     "source": "WIT0606",
+     "target": "WIT0609",
+     "label": null,
+     "points": [
+      [
+       815.0,
+       440.0
+      ],
+      [
+       735.0,
+       440.0
+      ],
+      [
+       735.0,
+       420.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0610",
+     "source": "WIT0609",
+     "target": "WIT0610",
+     "label": "ไม่อนุมัติ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0611",
+     "source": "WIT0609",
+     "target": "WIT0611",
+     "label": "อนุมัติ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0612",
+     "source": "WIT0611",
+     "target": "WIT0612",
+     "label": "คำสั่งลงนามแล้ว",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0613",
+     "source": "WIT0612",
+     "target": "WIT0613",
+     "label": "คำสั่งพร้อมดำเนินการ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0614",
+     "source": "WIT0610",
+     "target": "WIT0614",
+     "label": "เดินคำร้องหลักต่อ",
+     "points": [
+      [
+       370.0,
+       498.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0615",
+     "source": "WIT0612",
+     "target": "WIT0614",
+     "label": "เดินคำร้องหลักต่อควบคู่กัน",
+     "points": [
+      [
+       790.0,
+       655.0
+      ],
+      [
+       720.0,
+       655.0
+      ],
+      [
+       720.0,
+       750.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.0,
+      0.5
+     ],
+     "entry": [
+      1.0,
+      0.5
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "07": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ระบบ E-CMIS / รับผลพิจารณา",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 115.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 165.0,
+     "w": 42.0,
+     "h": 135.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "จำแนกผล / สร้างงานต่อเนื่อง",
+     "x": 20.0,
+     "y": 300.0,
+     "w": 42.0,
+     "h": 275.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "เจ้าหน้าที่ / ผู้บังคับบัญชาตามลำดับ",
+     "x": 20.0,
+     "y": 575.0,
+     "w": 42.0,
+     "h": 150.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "ผลลัพธ์ / ไปแท็บถัดไป",
+     "x": 20.0,
+     "y": 725.0,
+     "w": 42.0,
+     "h": 80.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0701",
+     "code": "WIT0701",
+     "kind": "terminal",
+     "text": "รับผลพิจารณา ของคำร้องหลัก",
+     "x": 82.0,
+     "y": 68.0,
+     "w": 105.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0702",
+     "code": "WIT0702",
+     "kind": "step",
+     "text": "เลือกผลเบื้องต้น เปิดหน้าแบบฟอร์ม คบ.9 หรือ คบ.10 แยก ยังไม่ลงนามหรือส่งงาน",
+     "x": 235.0,
+     "y": 68.0,
+     "w": 360.0,
+     "h": 78.0
+    },
+    {
+     "id": "note0701",
+     "code": null,
+     "kind": "note",
+     "text": "ฉบับลงนามต้องล็อกและเก็บ Version วันที่ วิธี ผู้ปฏิบัติ พื้นที่ และช่วงเวลาตามคำสั่งเป็นข้อมูลต้นทาง ห้ามกิจกรรมที่ 6 กำหนดใหม่",
+     "x": 650.0,
+     "y": 68.0,
+     "w": 440.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0703",
+     "code": "WIT0703",
+     "kind": "step",
+     "text": "ตรวจหนังสือ A4 และยืนยันผลจริงพร้อมลงนามจากท้ายแบบฟอร์ม",
+     "x": 155.0,
+     "y": 194.0,
+     "w": 390.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0704",
+     "code": "WIT0704",
+     "kind": "decision",
+     "text": "ผลพิจารณา เป็นกรณีใด?",
+     "x": 680.0,
+     "y": 182.0,
+     "w": 145.0,
+     "h": 100.0
+    },
+    {
+     "id": "WIT0705",
+     "code": "WIT0705",
+     "kind": "step",
+     "text": "อนุมัติและลงนาม คบ.9 เลือกเจ้าของสำนวนเดิม หรือ กอท. ก่อนยืนยันส่งงาน",
+     "x": 845.0,
+     "y": 335.0,
+     "w": 275.0,
+     "h": 122.0
+    },
+    {
+     "id": "WIT0706",
+     "code": "WIT0706",
+     "kind": "step",
+     "text": "ไม่อนุมัติและลงนาม คบ.10 จากร่างในชุดเสนอ เก็บเหตุผลและสิทธิอุทธรณ์",
+     "x": 625.0,
+     "y": 461.5,
+     "w": 250.0,
+     "h": 95.0
+    },
+    {
+     "id": "WIT0707",
+     "code": "WIT0707",
+     "kind": "step",
+     "text": "ส่งกลับ / ขอข้อมูลเพิ่ม ข้อมูลระบบ: Return Instruction ระบุประเด็น เอกสารที่กระทบ ผู้รับผิดชอบ และกำหนดเวลา",
+     "x": 100.0,
+     "y": 340.0,
+     "w": 280.0,
+     "h": 95.0
+    },
+    {
+     "id": "WIT0708",
+     "code": "WIT0708",
+     "kind": "step",
+     "text": "เจ้าหน้าที่แก้ คบ.3 และ/หรือ คบ.6 เป็น Revision ใหม่ แนบเอกสารเพิ่มเติม โดยไม่แก้ทับฉบับลงนาม",
+     "x": 100.0,
+     "y": 465.0,
+     "w": 280.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT0709",
+     "code": "WIT0709",
+     "kind": "step",
+     "text": "ส่ง Revision ผ่านผู้บังคับบัญชาชั้นต้นและ ผอ. ตามลำดับเดิม ห้ามส่งข้ามลำดับชั้น",
+     "x": 300.0,
+     "y": 610.0,
+     "w": 360.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0710",
+     "code": "WIT0710",
+     "kind": "terminal",
+     "text": "ผลอนุมัติ: เจ้าของสำนวนเดิม → แท็บ 08A หรือ กอท. → แท็บ 07G",
+     "x": 821.0,
+     "y": 731.0,
+     "w": 315.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0711",
+     "code": "WIT0711",
+     "kind": "terminal",
+     "text": "ไม่อนุมัติ → แท็บ 09A เติม คบ.10 ตรวจพร้อมส่ง แจ้งสิทธิอุทธรณ์",
+     "x": 550.0,
+     "y": 731.0,
+     "w": 240.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0712",
+     "code": "WIT0712",
+     "kind": "terminal",
+     "text": "ส่งกลับ กลับแท็บ 05 เพื่อตรวจ Revision และส่งพิจารณาใหม่",
+     "x": 295.0,
+     "y": 731.0,
+     "w": 240.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0713",
+     "code": "WIT0713",
+     "kind": "terminal",
+     "text": "ข้อ 14 เมื่อมีผล/มติเห็นชอบ ไปแท็บ 08C ส่งกรมคุ้มครองสิทธิและเสรีภาพ",
+     "x": 70.0,
+     "y": 731.0,
+     "w": 210.0,
+     "h": 68.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0701",
+     "source": "WIT0701",
+     "target": "WIT0702",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0702",
+     "source": "WIT0702",
+     "target": "WIT0703",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0703",
+     "source": "WIT0703",
+     "target": "WIT0704",
+     "label": null,
+     "points": [
+      [
+       612.0,
+       220.0
+      ],
+      [
+       612.0,
+       162.0
+      ],
+      [
+       752.0,
+       162.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0704",
+     "source": "WIT0704",
+     "target": "WIT0705",
+     "label": "อนุมัติ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0705",
+     "source": "WIT0704",
+     "target": "WIT0706",
+     "label": "ไม่อนุมัติ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0706",
+     "source": "WIT0704",
+     "target": "WIT0707",
+     "label": "ส่งกลับ / ขอข้อมูลเพิ่ม",
+     "points": [
+      [
+       750.0,
+       315.0
+      ],
+      [
+       240.0,
+       315.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0707",
+     "source": "WIT0707",
+     "target": "WIT0708",
+     "label": "มอบหมายแก้ไข",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0708",
+     "source": "WIT0708",
+     "target": "WIT0709",
+     "label": "แก้ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0709",
+     "source": "WIT0709",
+     "target": "WIT0712",
+     "label": "ส่งตามลำดับเดิม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0710",
+     "source": "WIT0705",
+     "target": "WIT0710",
+     "label": "บันทึกวิธีที่อนุมัติครบ",
+     "points": [
+      [
+       982.0,
+       650.0
+      ],
+      [
+       982.0,
+       650.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0711",
+     "source": "WIT0706",
+     "target": "WIT0711",
+     "label": "ส่ง คบ.10 ลงนามแล้ว",
+     "points": [
+      [
+       735.0,
+       575.0
+      ],
+      [
+       710.0,
+       575.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0712",
+     "source": "WIT0704",
+     "target": "WIT0713",
+     "label": "เห็นควรตามข้อ 14",
+     "points": [
+      [
+       570.0,
+       232.0
+      ],
+      [
+       570.0,
+       290.0
+      ],
+      [
+       80.0,
+       290.0
+      ],
+      [
+       80.0,
+       705.0
+      ],
+      [
+       175.0,
+       705.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.0,
+      0.5
+     ],
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "08A": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "รับคำสั่ง / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 90.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 140.0,
+     "w": 42.0,
+     "h": 355.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้ได้รับความคุ้มครอง / ผู้ให้การคุ้มครอง / พยานรับรอง",
+     "x": 20.0,
+     "y": 495.0,
+     "w": 42.0,
+     "h": 105.0,
+     "fill": "#E9E0EE"
+    },
+    {
+     "label": "ระบบ E-CMIS / เจ้าหน้าที่ผู้รับผิดชอบ",
+     "x": 20.0,
+     "y": 600.0,
+     "w": 42.0,
+     "h": 125.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "เส้นทางวิธีที่อนุมัติ",
+     "x": 20.0,
+     "y": 725.0,
+     "w": 42.0,
+     "h": 80.0,
+     "fill": "#D8E4F5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0801",
+     "code": "WIT0801",
+     "kind": "terminal",
+     "text": "รับเอกสารอนุมัติ การคุ้มครอง",
+     "x": 85.0,
+     "y": 57.0,
+     "w": 90.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0802",
+     "code": "WIT0802",
+     "kind": "decision",
+     "text": "เอกสารต้นทาง เป็นกรณีใด?",
+     "x": 225.0,
+     "y": 50.0,
+     "w": 145.0,
+     "h": 90.0
+    },
+    {
+     "id": "note0801",
+     "code": null,
+     "kind": "note",
+     "text": "คำร้องหลักต้องมี คบ.9 และ คบ.11 ลงนามครบก่อนเริ่มคุ้มครอง กรณีเร่งด่วนใช้ความยินยอมใน คบ.5; หากอนุมัติหลายวิธีให้เปิดหลายเส้นทางพร้อมกัน",
+     "x": 720.0,
+     "y": 67.0,
+     "w": 240.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT0803",
+     "code": "WIT0803",
+     "kind": "step",
+     "text": "กรณีเร่งด่วน รับ คบ.5 ลงนามและหลักฐานพยานรับทราบ/ยินยอมจากแท็บ 06 บันทึกวิธี เงื่อนไข และช่วงเวลาตามต้นฉบับ",
+     "x": 540.0,
+     "y": 150.0,
+     "w": 300.0,
+     "h": 60.0
+    },
+    {
+     "id": "WIT0804",
+     "code": "WIT0804",
+     "kind": "step",
+     "text": "กรณีคำร้องหลัก รับผลอนุมัติจากแท็บ 07 ตรวจเลข วันที่ ผู้ลงนาม วิธี เงื่อนไข และช่วงเวลาตามผลอนุมัติ",
+     "x": 130.0,
+     "y": 170.0,
+     "w": 330.0,
+     "h": 60.0
+    },
+    {
+     "id": "WIT0805",
+     "code": "WIT0805",
+     "kind": "step",
+     "text": "เติม คบ.9 หลังลงนามเฉพาะช่องที่อนุญาต เก็บรุ่นใหม่และ Audit ตรวจพร้อมส่ง",
+     "x": 135.0,
+     "y": 305.0,
+     "w": 320.0,
+     "h": 62.0
+    },
+    {
+     "id": "WIT0806",
+     "code": "WIT0806",
+     "kind": "step",
+     "text": "นำส่ง คบ.9 รุ่นพร้อมส่ง เก็บฉบับส่งจริงและหลักฐานส่ง/รับ",
+     "x": 650.0,
+     "y": 305.0,
+     "w": 360.0,
+     "h": 62.0
+    },
+    {
+     "id": "WIT0807",
+     "code": "WIT0807",
+     "kind": "step",
+     "text": "จัดทำ คบ.11 ใส่วิธีที่อนุมัติ ระยะเวลา เงื่อนไข ค่าใช้จ่าย ข้อปฏิบัติและเหตุยุติ โดยห้ามเพิ่มวิธีใหม่",
+     "x": 150.0,
+     "y": 410.0,
+     "w": 350.0,
+     "h": 62.0
+    },
+    {
+     "id": "WIT0808",
+     "code": "WIT0808",
+     "kind": "step",
+     "text": "ชี้แจงข้อตกลง อธิบายวิธี ระยะเวลา สิทธิ/ค่าใช้จ่าย ข้อปฏิบัติ เหตุยุติ และเปิดโอกาสให้พยานซักถาม",
+     "x": 650.0,
+     "y": 407.0,
+     "w": 370.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0809",
+     "code": "WIT0809",
+     "kind": "decision",
+     "text": "พยานยินยอม ตาม คบ.11?",
+     "x": 205.0,
+     "y": 502.0,
+     "w": 150.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT0810",
+     "code": "WIT0810",
+     "kind": "step",
+     "text": "ลงนาม คบ.11 พยาน/ผู้ได้รับความคุ้มครองและผู้ให้การคุ้มครองลงนาม พร้อมพยานรับรอง",
+     "x": 480.0,
+     "y": 510.0,
+     "w": 350.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0811",
+     "code": "WIT0811",
+     "kind": "step",
+     "text": "เก็บฉบับลงนาม อัปโหลด คบ.11 ฉบับครบลายมือชื่อ ล็อก Version/Hash บันทึกผู้ลงนาม บทบาท และวันเวลาลงนาม",
+     "x": 480.0,
+     "y": 624.0,
+     "w": 350.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0812",
+     "code": "WIT0812",
+     "kind": "step",
+     "text": "ไม่ยินยอม บันทึกเหตุและหลักฐาน ห้ามเริ่มวิธีนั้น เสนอทบทวน เปลี่ยนวิธี หรือยุติผ่านลำดับผู้บังคับบัญชา",
+     "x": 100.0,
+     "y": 628.5,
+     "w": 350.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0813",
+     "code": "WIT0813",
+     "kind": "decision",
+     "text": "อนุมัติ วิธีใด?",
+     "x": 900.0,
+     "y": 610.0,
+     "w": 150.0,
+     "h": 96.0
+    },
+    {
+     "id": "route0801",
+     "code": null,
+     "kind": "terminal",
+     "text": "วิธีที่ 1 ไปหน้า 08A-1",
+     "x": 80.0,
+     "y": 740.0,
+     "w": 210.0,
+     "h": 52.0
+    },
+    {
+     "id": "route0802",
+     "code": null,
+     "kind": "terminal",
+     "text": "วิธีที่ 2 ไปหน้า 08A-2",
+     "x": 350.0,
+     "y": 740.0,
+     "w": 210.0,
+     "h": 52.0
+    },
+    {
+     "id": "route0803",
+     "code": null,
+     "kind": "terminal",
+     "text": "วิธีที่ 3 ไปหน้า 08A-3",
+     "x": 620.0,
+     "y": 740.0,
+     "w": 210.0,
+     "h": 52.0
+    },
+    {
+     "id": "route0804",
+     "code": null,
+     "kind": "terminal",
+     "text": "วิธีที่ 4 ไปหน้า 08B",
+     "x": 890.0,
+     "y": 740.0,
+     "w": 210.0,
+     "h": 52.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0801",
+     "source": "WIT0801",
+     "target": "WIT0802",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0802",
+     "source": "WIT0802",
+     "target": "WIT0803",
+     "label": "เร่งด่วน: คบ.5",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0802B",
+     "source": "WIT0802",
+     "target": "WIT0804",
+     "label": "คำร้องหลัก: ผลอนุมัติ",
+     "points": [
+      [
+       298.0,
+       160.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0803",
+     "source": "WIT0803",
+     "target": "WIT0813",
+     "label": "คบ.5 มีความยินยอมแล้ว",
+     "points": [
+      [
+       1090.0,
+       180.0
+      ],
+      [
+       1090.0,
+       658.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": [
+      1.0,
+      0.5
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0803B",
+     "source": "WIT0804",
+     "target": "WIT0805",
+     "label": "ผลอนุมัติครบ",
+     "points": [
+      [
+       310.0,
+       260.0
+      ],
+      [
+       310.0,
+       260.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0804",
+     "source": "WIT0805",
+     "target": "WIT0806",
+     "label": "แจ้งผล",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0805",
+     "source": "WIT0806",
+     "target": "WIT0807",
+     "label": "รับทราบแล้ว",
+     "points": [
+      [
+       830.0,
+       385.0
+      ],
+      [
+       325.0,
+       385.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0806",
+     "source": "WIT0807",
+     "target": "WIT0808",
+     "label": "นำไปชี้แจง",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0807",
+     "source": "WIT0808",
+     "target": "WIT0809",
+     "label": "ชี้แจงครบ",
+     "points": [
+      [
+       835.0,
+       488.0
+      ],
+      [
+       280.0,
+       488.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0808",
+     "source": "WIT0809",
+     "target": "WIT0810",
+     "label": "ยินยอม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0809",
+     "source": "WIT0809",
+     "target": "WIT0812",
+     "label": "ไม่ยินยอม",
+     "points": [
+      [
+       275.0,
+       590.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0810",
+     "source": "WIT0810",
+     "target": "WIT0811",
+     "label": "ลายมือชื่อครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0812",
+     "source": "WIT0811",
+     "target": "WIT0813",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0813",
+     "source": "WIT0813",
+     "target": "route0801",
+     "label": "วิธีที่ 1",
+     "points": [
+      [
+       185.0,
+       700.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0814",
+     "source": "WIT0813",
+     "target": "route0802",
+     "label": "วิธีที่ 2",
+     "points": [
+      [
+       975.0,
+       710.0
+      ],
+      [
+       455.0,
+       710.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0815",
+     "source": "WIT0813",
+     "target": "route0803",
+     "label": "วิธีที่ 3",
+     "points": [
+      [
+       975.0,
+       720.0
+      ],
+      [
+       725.0,
+       720.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0816",
+     "source": "WIT0813",
+     "target": "route0804",
+     "label": "วิธีที่ 4",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "08A-1": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบ",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 195.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "ผู้มีอำนาจ / ผู้บังคับบัญชา",
+     "x": 20.0,
+     "y": 245.0,
+     "w": 42.0,
+     "h": 155.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "หัวหน้าและชุดปฏิบัติการ",
+     "x": 20.0,
+     "y": 400.0,
+     "w": 42.0,
+     "h": 200.0,
+     "fill": "#E6F2E5"
+    },
+    {
+     "label": "ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 600.0,
+     "w": 42.0,
+     "h": 205.0,
+     "fill": "#D8E4F5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0814",
+     "code": "WIT0814",
+     "kind": "terminal",
+     "text": "รับงานวิธีที่ 1 จากหน้า 08A",
+     "x": 90.0,
+     "y": 92.0,
+     "w": 115.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0815",
+     "code": "WIT0815",
+     "kind": "decision",
+     "text": "คำสั่งชั่วคราว หรือคำร้องหลัก?",
+     "x": 265.0,
+     "y": 78.0,
+     "w": 165.0,
+     "h": 105.0
+    },
+    {
+     "id": "WIT0816",
+     "code": "WIT0816",
+     "kind": "step",
+     "text": "เริ่มคุ้มครองชั่วคราว (คบ.5) บันทึกวันเริ่มจริงและช่วงเวลาตาม คบ.5 คุ้มครองทันทีพร้อมเดินคำร้องหลักต่อ",
+     "x": 500.0,
+     "y": 94.0,
+     "w": 310.0,
+     "h": 72.0
+    },
+    {
+     "id": "notea1",
+     "code": null,
+     "kind": "note",
+     "text": "Business rule: TEMPORARY + MAIN อยู่ใน Episode เดียว นับวันสะสมต่อเนื่องรวมไม่เกิน 180 วัน; ไม่อนุมัติให้ไป 09A และยุติช่วงชั่วคราว",
+     "x": 850.0,
+     "y": 65.0,
+     "w": 265.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0817",
+     "code": "WIT0817",
+     "kind": "step",
+     "text": "คำร้องหลัก จัดทำร่าง คบ.8 มอบหมายหัวหน้าและเจ้าพนักงาน อ้างอิงวิธี เงื่อนไขและช่วงเวลาที่อนุมัติ",
+     "x": 152.5,
+     "y": 285.0,
+     "w": 390.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0818",
+     "code": "WIT0818",
+     "kind": "step",
+     "text": "ตรวจและลงนาม คบ.8; หากส่งกลับแก้ให้ทำ Revision ใหม่ เมื่อลงนามแล้วล็อกเอกสาร",
+     "x": 680.0,
+     "y": 285.0,
+     "w": 390.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0819",
+     "code": "WIT0819",
+     "kind": "step",
+     "text": "จัดแผนปฏิบัติ: สมาชิก/เวร รถ อุปกรณ์ พื้นที่ จุดรับ–ส่ง ช่องทางฉุกเฉิน และผู้ใกล้ชิดที่อนุมัติ",
+     "x": 170.0,
+     "y": 455.0,
+     "w": 390.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0820",
+     "code": "WIT0820",
+     "kind": "step",
+     "text": "ชี้แจงภารกิจแบบ Need-to-Know ให้ชุดปฏิบัติ บันทึกการรับงาน เวลาเข้าเวร และผู้รับผิดชอบ",
+     "x": 680.0,
+     "y": 455.0,
+     "w": 390.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0821",
+     "code": "WIT0821",
+     "kind": "decision",
+     "text": "คำร้องหลักพร้อม มีผลอนุมัติแล้วหรือยัง?",
+     "x": 542.5,
+     "y": 600.0,
+     "w": 170.0,
+     "h": 95.0
+    },
+    {
+     "id": "a1status_temp",
+     "code": null,
+     "kind": "terminal",
+     "text": "ยังรอผลหลัก — TEMPORARY_ACTIVE คุ้มครองต่อและเดินเอกสารหลักพร้อมกัน; ไปแท็บ 10 เมื่อผลออก กลับ WIT0814 ทางคำร้องหลัก",
+     "x": 85.0,
+     "y": 720.0,
+     "w": 350.0,
+     "h": 70.0
+    },
+    {
+     "id": "a1status_main",
+     "code": null,
+     "kind": "terminal",
+     "text": "ผลหลักอนุมัติ — MAIN_ACTIVE ถ้ามีช่วงชั่วคราวให้เปลี่ยน Phase ต่อเนื่องใน Episode เดิม ไม่รีเซ็ตวันสะสม; ไปแท็บ 10",
+     "x": 720.0,
+     "y": 720.0,
+     "w": 390.0,
+     "h": 70.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "a1e1",
+     "source": "WIT0814",
+     "target": "WIT0815",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a1e2",
+     "source": "WIT0815",
+     "target": "WIT0816",
+     "label": "คบ.5 ชั่วคราว",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a1e3",
+     "source": "WIT0815",
+     "target": "WIT0817",
+     "label": "คำร้องหลัก",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a1e4",
+     "source": "WIT0817",
+     "target": "WIT0818",
+     "label": "เสนอ คบ.8",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a1e5",
+     "source": "WIT0818",
+     "target": "WIT0819",
+     "label": "ลงนามแล้ว",
+     "points": [
+      [
+       875.0,
+       380.0
+      ],
+      [
+       365.0,
+       380.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "a1e6",
+     "source": "WIT0816",
+     "target": "WIT0819",
+     "label": "เริ่มจัดแผนทันที",
+     "points": [
+      [
+       655.0,
+       210.0
+      ],
+      [
+       100.0,
+       210.0
+      ],
+      [
+       100.0,
+       494.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.0,
+      0.5
+     ],
+     "dashed": false
+    },
+    {
+     "id": "a1e7",
+     "source": "WIT0819",
+     "target": "WIT0820",
+     "label": "แผนพร้อม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a1e8",
+     "source": "WIT0820",
+     "target": "WIT0821",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a1e9",
+     "source": "WIT0821",
+     "target": "a1status_temp",
+     "label": "ยังรอผลหลัก",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a1e10",
+     "source": "WIT0821",
+     "target": "a1status_main",
+     "label": "อนุมัติแล้ว",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "08A-2": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบ",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 280.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้ดูแลสถานที่ / พยาน",
+     "x": 20.0,
+     "y": 330.0,
+     "w": 42.0,
+     "h": 250.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 580.0,
+     "w": 42.0,
+     "h": 225.0,
+     "fill": "#D8E4F5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0822",
+     "code": "WIT0822",
+     "kind": "terminal",
+     "text": "รับงานวิธีที่ 2 จากหน้า 08A",
+     "x": 90.0,
+     "y": 80.0,
+     "w": 115.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0823",
+     "code": "WIT0823",
+     "kind": "step",
+     "text": "ตรวจขอบเขตที่อนุมัติและความจำเป็นของพยาน บุคคลร่วมคุ้มครอง ระยะเวลา และข้อจำกัด",
+     "x": 270.0,
+     "y": 82.0,
+     "w": 330.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0824",
+     "code": "WIT0824",
+     "kind": "step",
+     "text": "เสนอสถานที่ปลอดภัย: ที่อยู่พยาน บุคคลที่ไว้ใจ หรือสถานที่ที่ ป.ป.ท. กำหนดตามผลอนุมัติ",
+     "x": 700.0,
+     "y": 82.0,
+     "w": 360.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0825",
+     "code": "WIT0825",
+     "kind": "step",
+     "text": "ประเมินความปลอดภัย ความลับ ทางเข้า–ออก ผู้ดูแล การเดินทาง ทรัพยากรและงบประมาณ",
+     "x": 180.0,
+     "y": 220.0,
+     "w": 360.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0826",
+     "code": "WIT0826",
+     "kind": "decision",
+     "text": "สถานที่ เหมาะสม?",
+     "x": 805.0,
+     "y": 207.5,
+     "w": 150.0,
+     "h": 95.0
+    },
+    {
+     "id": "notea2",
+     "code": null,
+     "kind": "note",
+     "text": "ถ้าต้องส่งให้หน่วยงานภายนอกดำเนินการ ให้เปลี่ยน/เพิ่มวิธีที่ 4 และไปหน้า 08B",
+     "x": 960.0,
+     "y": 220.0,
+     "w": 165.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0827",
+     "code": "WIT0827",
+     "kind": "step",
+     "text": "จัดแผนย้าย/รับ–ส่ง ผู้ดูแล เส้นทางสำรอง การติดต่อฉุกเฉินและขอบเขตข้อมูลที่เปิดเผย",
+     "x": 180.0,
+     "y": 400.0,
+     "w": 390.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0828",
+     "code": "WIT0828",
+     "kind": "step",
+     "text": "อธิบายแผน ยืนยันความพร้อม แล้วพาพยานย้าย/เข้าพัก บันทึกผู้ส่งมอบ ผู้รับมอบ และเหตุผิดแผน",
+     "x": 650.0,
+     "y": 400.0,
+     "w": 430.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0829",
+     "code": "WIT0829",
+     "kind": "terminal",
+     "text": "บันทึกถึงสถานที่ ผู้ดูแล วันเริ่มจริง และสถานะวิธี = ACTIVE Episode Phase ตามเอกสารต้นทาง; ไปแท็บ 10",
+     "x": 615.0,
+     "y": 653.5,
+     "w": 500.0,
+     "h": 78.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "a2e1",
+     "source": "WIT0822",
+     "target": "WIT0823",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a2e2",
+     "source": "WIT0823",
+     "target": "WIT0824",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a2e3",
+     "source": "WIT0824",
+     "target": "WIT0825",
+     "label": "ตรวจพื้นที่",
+     "points": [
+      [
+       880.0,
+       190.0
+      ],
+      [
+       110.0,
+       190.0
+      ],
+      [
+       110.0,
+       256.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.0,
+      0.5
+     ],
+     "dashed": false
+    },
+    {
+     "id": "a2e4",
+     "source": "WIT0825",
+     "target": "WIT0826",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a2e5",
+     "source": "WIT0826",
+     "target": "WIT0824",
+     "label": "ไม่เหมาะสม: เลือกใหม่",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      0.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a2e6",
+     "source": "WIT0826",
+     "target": "WIT0827",
+     "label": "เหมาะสม",
+     "points": [
+      [
+       765.0,
+       302.0
+      ],
+      [
+       765.0,
+       320.0
+      ],
+      [
+       100.0,
+       320.0
+      ],
+      [
+       100.0,
+       439.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.0,
+      0.5
+     ],
+     "dashed": false
+    },
+    {
+     "id": "a2e7",
+     "source": "WIT0827",
+     "target": "WIT0828",
+     "label": "แผนพร้อม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a2e8",
+     "source": "WIT0828",
+     "target": "WIT0829",
+     "label": "เข้าพัก/ย้ายแล้ว",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "08A-3": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบ",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 280.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้ดูแลสิทธิ / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 330.0,
+     "w": 42.0,
+     "h": 250.0,
+     "fill": "#E9E0EE"
+    },
+    {
+     "label": "ผลการบังคับใช้",
+     "x": 20.0,
+     "y": 580.0,
+     "w": 42.0,
+     "h": 225.0,
+     "fill": "#D8E4F5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0830",
+     "code": "WIT0830",
+     "kind": "terminal",
+     "text": "รับงานวิธีที่ 3 จากหน้า 08A",
+     "x": 90.0,
+     "y": 80.0,
+     "w": 115.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0831",
+     "code": "WIT0831",
+     "kind": "step",
+     "text": "ระบุข้อมูล/ตัวระบุและช่องทางที่ต้องปกปิด ผู้มีสิทธิ์ตามหน้าที่ และช่วงเวลาที่อนุมัติ",
+     "x": 270.0,
+     "y": 82.0,
+     "w": 350.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0832",
+     "code": "WIT0832",
+     "kind": "step",
+     "text": "จัดแผนปกปิด/เข้ารหัส/แสดงข้อมูลบางส่วน กำหนด Role, Need-to-Know และผู้อนุมัติสิทธิ",
+     "x": 710.0,
+     "y": 82.0,
+     "w": 370.0,
+     "h": 72.0
+    },
+    {
+     "id": "notea3",
+     "code": null,
+     "kind": "note",
+     "text": "ห้ามซ่อนจนเจ้าหน้าที่ตามสิทธิ์ทำงานไม่ได้ ทุกการเปิดดู/ส่งออกต้องมี Audit Log",
+     "x": 440.0,
+     "y": 220.0,
+     "w": 300.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0833",
+     "code": "WIT0833",
+     "kind": "step",
+     "text": "ตั้งค่าสิทธิ์ เข้ารหัสข้อมูล และ Mask หน้าจอ/เอกสาร จำกัดการค้นหา ดาวน์โหลด พิมพ์ และส่งต่อ",
+     "x": 170.0,
+     "y": 400.0,
+     "w": 400.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0834",
+     "code": "WIT0834",
+     "kind": "decision",
+     "text": "ทดสอบสิทธิ์และ การรั่วไหลผ่าน?",
+     "x": 690.0,
+     "y": 385.0,
+     "w": 170.0,
+     "h": 105.0
+    },
+    {
+     "id": "WIT0835",
+     "code": "WIT0835",
+     "kind": "step",
+     "text": "ไม่ผ่าน แก้ Role/Policy/Masking แล้วทดสอบซ้ำ เก็บผลทดสอบและผู้แก้ไข",
+     "x": 890.0,
+     "y": 400.0,
+     "w": 245.0,
+     "h": 75.0
+    },
+    {
+     "id": "WIT0836",
+     "code": "WIT0836",
+     "kind": "step",
+     "text": "ผ่าน บันทึกผู้มีสิทธิ์ เหตุผลสิทธิ์ วันเวลามีผล Policy Version และค่า Audit Baseline",
+     "x": 170.0,
+     "y": 650.0,
+     "w": 400.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0837",
+     "code": "WIT0837",
+     "kind": "terminal",
+     "text": "เปิดใช้มาตรการ ติดตาม Access/Audit Log; สถานะวิธี = ACTIVE Episode Phase ตามเอกสารต้นทาง; ไปแท็บ 10",
+     "x": 650.0,
+     "y": 650.0,
+     "w": 430.0,
+     "h": 78.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "a3e1",
+     "source": "WIT0830",
+     "target": "WIT0831",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a3e2",
+     "source": "WIT0831",
+     "target": "WIT0832",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a3e3",
+     "source": "WIT0832",
+     "target": "WIT0833",
+     "label": "แผนพร้อม",
+     "points": [
+      [
+       895.0,
+       310.0
+      ],
+      [
+       120.0,
+       310.0
+      ],
+      [
+       120.0,
+       439.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.0,
+      0.5
+     ],
+     "dashed": false
+    },
+    {
+     "id": "a3e4",
+     "source": "WIT0833",
+     "target": "WIT0834",
+     "label": "ทดสอบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a3e5",
+     "source": "WIT0834",
+     "target": "WIT0835",
+     "label": "ไม่ผ่าน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a3e6",
+     "source": "WIT0835",
+     "target": "WIT0833",
+     "label": "แก้แล้วทดสอบใหม่",
+     "points": [
+      [
+       1010.0,
+       530.0
+      ],
+      [
+       370.0,
+       530.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a3e7",
+     "source": "WIT0834",
+     "target": "WIT0836",
+     "label": "ผ่าน",
+     "points": [
+      [
+       775.0,
+       580.0
+      ],
+      [
+       370.0,
+       580.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "a3e8",
+     "source": "WIT0836",
+     "target": "WIT0837",
+     "label": "เปิดใช้",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "08B": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบ / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 110.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "หน่วยงานผู้ประสาน / งานสารบรรณเดิม",
+     "x": 20.0,
+     "y": 160.0,
+     "w": 42.0,
+     "h": 135.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "หน่วยงานที่ได้รับการประสาน",
+     "x": 20.0,
+     "y": 295.0,
+     "w": 42.0,
+     "h": 160.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "ป.ป.ท. / หน่วยงานผู้รับ / พยาน",
+     "x": 20.0,
+     "y": 455.0,
+     "w": 42.0,
+     "h": 130.0,
+     "fill": "#E6F2E5"
+    },
+    {
+     "label": "หน่วยงานผู้คุ้มครอง / ผู้ประสาน ป.ป.ท.",
+     "x": 20.0,
+     "y": 585.0,
+     "w": 42.0,
+     "h": 115.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ระบบ E-CMIS / เจ้าของเรื่อง",
+     "x": 20.0,
+     "y": 700.0,
+     "w": 42.0,
+     "h": 105.0,
+     "fill": "#D8E4F5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0841",
+     "code": "WIT0841",
+     "kind": "terminal",
+     "text": "รับงานวิธีที่ 4 จากหน้า 08A",
+     "x": 80.0,
+     "y": 65.0,
+     "w": 100.0,
+     "h": 80.0
+    },
+    {
+     "id": "WIT0842",
+     "code": "WIT0842",
+     "kind": "step",
+     "text": "ตรวจผลอนุมัติ + คบ.11 ลงนาม (คำร้องหลัก) หรือ คบ.5 ลงนาม (ชั่วคราว): วิธี เงื่อนไข งบและเวลา",
+     "x": 235.0,
+     "y": 69.0,
+     "w": 420.0,
+     "h": 72.0
+    },
+    {
+     "id": "note08b01",
+     "code": null,
+     "kind": "note",
+     "text": "ช่องทางส่งหนังสือไม่ใช่การส่งมอบพยาน ไปรษณีย์ใช้ส่งเอกสาร; การส่งมอบจริงต้องนัดหลังหน่วยงานตอบรับ",
+     "x": 790.0,
+     "y": 69.0,
+     "w": 300.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0843",
+     "code": "WIT0843",
+     "kind": "step",
+     "text": "ส่งหนังสือประสานขาออก จัดทำหนังสือประสาน ช่องทาง: นำส่งโดยตรง / ไปรษณีย์ / ช่องทางราชการอื่น; บันทึกเลขหนังสือ วันส่ง ผู้รับ เลขติดตามและหลักฐาน",
+     "x": 90.0,
+     "y": 181.0,
+     "w": 520.0,
+     "h": 92.0
+    },
+    {
+     "id": "WIT0844",
+     "code": "WIT0844",
+     "kind": "decision",
+     "text": "ผลหนังสือ ตอบกลับ?",
+     "x": 720.0,
+     "y": 329.0,
+     "w": 130.0,
+     "h": 90.0
+    },
+    {
+     "id": "WIT0845",
+     "code": "WIT0845",
+     "kind": "terminal",
+     "text": "ปฏิเสธ บันทึกหนังสือและเหตุผล เสนอผู้มีอำนาจพิจารณา หน่วยงานหรือแนวทางใหม่",
+     "x": 900.0,
+     "y": 333.0,
+     "w": 220.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0846",
+     "code": "WIT0846",
+     "kind": "step",
+     "text": "รับหนังสือตอบกลับขาเข้า หนังสือตอบรับ/ยืนยันรับดำเนินการ หรือหนังสือปฏิเสธพร้อมเหตุผล รับผ่านสารบรรณและอัปโหลดเข้าแฟ้ม; บันทึกเลขที่ วันที่ หน่วยงาน ผู้ติดต่อ ระยะเวลา เจ้าหน้าที่และวิธี",
+     "x": 145.0,
+     "y": 330.0,
+     "w": 500.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT0847",
+     "code": "WIT0847",
+     "kind": "step",
+     "text": "เตรียมการส่งมอบ ตรวจ คบ.11 ลงนาม/ความยินยอมใน คบ.5; จัดเตรียมร่าง คบ.12 กำหนดผู้ส่ง–รับ นัดวัน เวลา สถานที่ และข้อมูลที่เปิดเผยได้; ยังไม่ลงนาม",
+     "x": 90.0,
+     "y": 480.0,
+     "w": 440.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0848",
+     "code": "WIT0848",
+     "kind": "step",
+     "text": "ส่งมอบจริงและลงนาม คบ.12 ชี้แจงแผน แล้วผู้ส่งมอบ ผู้รับมอบ และผู้เกี่ยวข้องตามแบบ คบ.12 ลงนาม บันทึกวันส่งมอบ/วันเริ่มจริงแยกจากวันอัปโหลด พร้อมหลักฐาน",
+     "x": 655.0,
+     "y": 480.0,
+     "w": 440.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0849",
+     "code": "WIT0849",
+     "kind": "step",
+     "text": "หน่วยงานผู้รับดำเนินการคุ้มครอง ตามวิธีและช่วงเวลาที่รับดำเนินการ",
+     "x": 135.0,
+     "y": 607.0,
+     "w": 390.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0850",
+     "code": "WIT0850",
+     "kind": "step",
+     "text": "รับรายงานประจำเดือน เอกสาร: คบ.13 รายงานการปฏิบัติงานคุ้มครองพยาน รับและบันทึกตามรอบเดือน; หากมีเหตุสำคัญให้แจ้งทันทีแยกจากรอบรายงาน",
+     "x": 655.0,
+     "y": 607.0,
+     "w": 390.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0851",
+     "code": "WIT0851",
+     "kind": "terminal",
+     "text": "อัปเดตสถานะวิธี หลักฐานตอบรับ–ส่งมอบ วันเริ่มจริง และ คบ.13 ตามรอบเดือน Episode Phase ตามเอกสารต้นทาง; ไปแท็บ 10",
+     "x": 330.0,
+     "y": 720.0,
+     "w": 500.0,
+     "h": 66.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0821",
+     "source": "WIT0841",
+     "target": "WIT0842",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0822",
+     "source": "WIT0842",
+     "target": "WIT0843",
+     "label": "จัดทำเรื่องประสาน",
+     "points": [
+      [
+       445.0,
+       170.0
+      ],
+      [
+       350.0,
+       170.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0823",
+     "source": "WIT0843",
+     "target": "WIT0846",
+     "label": "รอและรับหนังสือตอบกลับ",
+     "points": [
+      [
+       350.0,
+       310.0
+      ],
+      [
+       395.0,
+       310.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0824",
+     "source": "WIT0844",
+     "target": "WIT0845",
+     "label": "ไม่รับ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0825",
+     "source": "WIT0846",
+     "target": "WIT0844",
+     "label": "บันทึกผลตอบกลับ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0826",
+     "source": "WIT0844",
+     "target": "WIT0847",
+     "label": "ตอบรับ: เตรียมส่งมอบ",
+     "points": [
+      [
+       785.0,
+       440.0
+      ],
+      [
+       310.0,
+       440.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0827",
+     "source": "WIT0847",
+     "target": "WIT0848",
+     "label": "ถึงวันนัดส่งมอบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0828",
+     "source": "WIT0848",
+     "target": "WIT0849",
+     "label": "เริ่มปฏิบัติจริง",
+     "points": [
+      [
+       870.0,
+       558.0
+      ],
+      [
+       870.0,
+       575.0
+      ],
+      [
+       330.0,
+       575.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0829",
+     "source": "WIT0849",
+     "target": "WIT0850",
+     "label": "ครบรอบรายงานประจำเดือน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0830",
+     "source": "WIT0850",
+     "target": "WIT0851",
+     "label": "บันทึกรายงาน",
+     "points": [
+      [
+       815.0,
+       695.0
+      ],
+      [
+       580.0,
+       695.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "08C": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ระบบ E-CMIS / เจ้าของเรื่อง",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 110.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ / ผู้บังคับบัญชาตามลำดับชั้น",
+     "x": 20.0,
+     "y": 160.0,
+     "w": 42.0,
+     "h": 140.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "เลขาธิการ / คณะกรรมการ ป.ป.ท.",
+     "x": 20.0,
+     "y": 300.0,
+     "w": 42.0,
+     "h": 135.0,
+     "fill": "#E9E1F5"
+    },
+    {
+     "label": "งานสารบรรณเดิม / หนังสือราชการ",
+     "x": 20.0,
+     "y": 435.0,
+     "w": 42.0,
+     "h": 140.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ป.ป.ท. / สำนักงานคุ้มครองพยาน กรมคุ้มครองสิทธิและเสรีภาพ",
+     "x": 20.0,
+     "y": 575.0,
+     "w": 42.0,
+     "h": 130.0,
+     "fill": "#E6F2E5"
+    },
+    {
+     "label": "ระบบ E-CMIS / ผลลัพธ์",
+     "x": 20.0,
+     "y": 705.0,
+     "w": 42.0,
+     "h": 100.0,
+     "fill": "#D8E4F5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0852",
+     "code": "WIT0852",
+     "kind": "terminal",
+     "text": "รับกรณีข้อ 14 จากแท็บ 07/11A",
+     "x": 80.0,
+     "y": 67.0,
+     "w": 110.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT0853",
+     "code": "WIT0853",
+     "kind": "decision",
+     "text": "มีมติเห็นชอบ ตามข้อ 14 แล้ว?",
+     "x": 335.0,
+     "y": 60.0,
+     "w": 150.0,
+     "h": 88.0
+    },
+    {
+     "id": "note08c01",
+     "code": null,
+     "kind": "note",
+     "text": "เริ่มดำเนินการก่อนครบเพดานเพื่อไม่ให้การคุ้มครองขาดช่วง ห้ามต่อ คบ.14 เกินเพดาน ห้ามย้อนหลังวัน และไม่ถือเป็นวิธีที่ 4 ตามข้อ 15(4)",
+     "x": 750.0,
+     "y": 69.0,
+     "w": 350.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0854",
+     "code": "WIT0854",
+     "kind": "step",
+     "text": "จัดทำเรื่องเสนอข้อ 14 ตรวจเหตุความไม่ปลอดภัย คำสั่งเดิม คบ.13 และระยะสะสม จัดทำรายงานผล/ประเมินความเสี่ยง พร้อมความเห็นว่าควรใช้มาตรการทั่วไปหรือมาตรการพิเศษ",
+     "x": 100.0,
+     "y": 188.0,
+     "w": 450.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0855",
+     "code": "WIT0855",
+     "kind": "step",
+     "text": "ตรวจเอกสาร เหตุภัย ระยะสะสม และข้อเสนอ ส่งคืนแก้ไขได้โดยบันทึกเหตุผลและสร้าง Revision ใหม่",
+     "x": 650.0,
+     "y": 188.0,
+     "w": 420.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0856",
+     "code": "WIT0856",
+     "kind": "step",
+     "text": "เลขาธิการเสนอเรื่องพร้อมความเห็น ต่อคณะกรรมการ ป.ป.ท. เพื่อพิจารณาตามข้อ 14",
+     "x": 110.0,
+     "y": 330.0,
+     "w": 390.0,
+     "h": 74.0
+    },
+    {
+     "id": "WIT0857",
+     "code": "WIT0857",
+     "kind": "decision",
+     "text": "เห็นชอบส่งกรม?",
+     "x": 575.0,
+     "y": 321.0,
+     "w": 145.0,
+     "h": 92.0
+    },
+    {
+     "id": "WIT0858",
+     "code": "WIT0858",
+     "kind": "terminal",
+     "text": "ไม่เห็นชอบ บันทึกมติและเหตุผล ดำเนินการตามคำสั่ง; เมื่อมาตรการเดิมสิ้นสุดไปแท็บ 11C",
+     "x": 815.0,
+     "y": 327.0,
+     "w": 280.0,
+     "h": 80.0
+    },
+    {
+     "id": "WIT0859",
+     "code": "WIT0859",
+     "kind": "step",
+     "text": "หนังสือขาออก จัดทำหนังสือแจ้ง/ประสานสำนักงานคุ้มครองพยาน กรมคุ้มครองสิทธิและเสรีภาพ แนบมติและเอกสารจำเป็นตามสิทธิ์; ออกเลขผ่านสารบรรณเดิมและเก็บหลักฐานส่ง",
+     "x": 90.0,
+     "y": 465.0,
+     "w": 480.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0860",
+     "code": "WIT0860",
+     "kind": "step",
+     "text": "หนังสือขาเข้า รับหนังสือตอบรับและผลประสานผ่านสารบรรณ แล้วอัปโหลดเข้าแฟ้ม บันทึกผู้ติดต่อ วิธีคุ้มครอง วันนัด และเงื่อนไข; หากดำเนินการไม่ได้ให้เสนอผู้มีอำนาจทันที",
+     "x": 630.0,
+     "y": 465.0,
+     "w": 480.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0861",
+     "code": "WIT0861",
+     "kind": "step",
+     "text": "เตรียมและส่งมอบ นัดวัน เวลา สถานที่ ผู้ส่งและผู้รับ ชี้แจงพยาน จัดทำเอกสารส่งมอบ/เอกสารตามแบบของหน่วยงาน และเก็บหลักฐานการส่งมอบจริง",
+     "x": 100.0,
+     "y": 600.0,
+     "w": 450.0,
+     "h": 80.0
+    },
+    {
+     "id": "WIT0862",
+     "code": "WIT0862",
+     "kind": "step",
+     "text": "เริ่มมาตรการภายใต้หน่วยงานใหม่ กรม/สำนักงานคุ้มครองพยานเริ่มคุ้มครองตามมาตรการทั่วไปหรือมาตรการพิเศษ บันทึกวันเริ่มจริง หน่วยงานผู้รับ และฐานกฎหมายแยกจากมาตรการเบื้องต้นของ ป.ป.ท.",
+     "x": 650.0,
+     "y": 600.0,
+     "w": 450.0,
+     "h": 80.0
+    },
+    {
+     "id": "WIT0863",
+     "code": "WIT0863",
+     "kind": "terminal",
+     "text": "สิ้นสุด Episode มาตรการเบื้องต้นตามวันที่มีผล และเชื่อม Episode การคุ้มครองของกรม คงประวัติการส่งมอบและติดตามสถานะ; ไปแท็บ 10",
+     "x": 315.0,
+     "y": 722.0,
+     "w": 540.0,
+     "h": 66.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0852",
+     "source": "WIT0852",
+     "target": "WIT0853",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0853",
+     "source": "WIT0853",
+     "target": "WIT0854",
+     "label": "ยังไม่มีมติ: จัดทำข้อเสนอ",
+     "points": [
+      [
+       460.0,
+       175.0
+      ],
+      [
+       325.0,
+       175.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0854",
+     "source": "WIT0854",
+     "target": "WIT0855",
+     "label": "เสนอ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0855",
+     "source": "WIT0855",
+     "target": "WIT0856",
+     "label": "ตรวจครบ",
+     "points": [
+      [
+       860.0,
+       290.0
+      ],
+      [
+       305.0,
+       290.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0856",
+     "source": "WIT0856",
+     "target": "WIT0857",
+     "label": "เสนอพิจารณา",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0857",
+     "source": "WIT0857",
+     "target": "WIT0858",
+     "label": "ไม่เห็นชอบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0858",
+     "source": "WIT0857",
+     "target": "WIT0859",
+     "label": "เห็นชอบ",
+     "points": [
+      [
+       648.0,
+       425.0
+      ],
+      [
+       330.0,
+       425.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0859",
+     "source": "WIT0859",
+     "target": "WIT0860",
+     "label": "ส่งหนังสือ/รับผลประสาน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0860",
+     "source": "WIT0860",
+     "target": "WIT0861",
+     "label": "ตอบรับ/นัดส่งมอบ",
+     "points": [
+      [
+       870.0,
+       565.0
+      ],
+      [
+       325.0,
+       565.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0861",
+     "source": "WIT0861",
+     "target": "WIT0862",
+     "label": "ส่งมอบจริง",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0862",
+     "source": "WIT0862",
+     "target": "WIT0863",
+     "label": "เริ่มคุ้มครองภายใต้กรม",
+     "points": [
+      [
+       875.0,
+       700.0
+      ],
+      [
+       585.0,
+       700.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0863",
+     "source": "WIT0853",
+     "target": "WIT0859",
+     "label": "มีมติเห็นชอบแล้ว",
+     "points": [
+      [
+       1120.0,
+       104.0
+      ],
+      [
+       1120.0,
+       450.0
+      ],
+      [
+       330.0,
+       450.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "09A": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ระบบ E-CMIS / รับผลพิจารณา",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 95.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 145.0,
+     "w": 42.0,
+     "h": 125.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้รับผิดชอบ / ตรวจพร้อมส่งและนำส่ง",
+     "x": 20.0,
+     "y": 270.0,
+     "w": 42.0,
+     "h": 145.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ผู้ยื่นคำร้อง / พยาน",
+     "x": 20.0,
+     "y": 415.0,
+     "w": 42.0,
+     "h": 175.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "ระบบ E-CMIS / จุดเชื่อมหน้า 09B",
+     "x": 20.0,
+     "y": 590.0,
+     "w": 42.0,
+     "h": 215.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0901",
+     "code": "WIT0901",
+     "kind": "terminal",
+     "text": "รับผลไม่อนุมัติ + คบ.10 ลงนาม จากแท็บ 07",
+     "x": 85.0,
+     "y": 59.0,
+     "w": 90.0,
+     "h": 75.0
+    },
+    {
+     "id": "WIT0902",
+     "code": "WIT0902",
+     "kind": "step",
+     "text": "แสดงคำสั่ง/ผลพิจารณา เหตุผล คำร้องและเอกสารประกอบที่เกี่ยวข้อง",
+     "x": 220.0,
+     "y": 64.0,
+     "w": 360.0,
+     "h": 65.0
+    },
+    {
+     "id": "note0901",
+     "code": null,
+     "kind": "note",
+     "text": "แจ้งผลตามช่องทางที่หน่วยงานกำหนด และใช้วันที่ผู้รับได้รับจริงเป็นหลักฐาน",
+     "x": 790.0,
+     "y": 64.0,
+     "w": 290.0,
+     "h": 65.0
+    },
+    {
+     "id": "WIT0903",
+     "code": "WIT0903",
+     "kind": "step",
+     "text": "เติม คบ.10 หลังลงนามเฉพาะช่องที่อนุญาต ห้ามแก้ผล ผู้ลงนาม หรือเวลาลงนาม",
+     "x": 120.0,
+     "y": 173.0,
+     "w": 360.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0904",
+     "code": "WIT0904",
+     "kind": "step",
+     "text": "ตรวจต้นฉบับ รุ่นเติมรายละเอียด และ Audit ค่าก่อน–หลัง",
+     "x": 690.0,
+     "y": 173.0,
+     "w": 360.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0905",
+     "code": "WIT0905",
+     "kind": "step",
+     "text": "ตรวจข้อมูลรุ่นที่จะส่งครบ ยืนยันพร้อมส่ง ไม่เสนอให้ลงนามซ้ำ",
+     "x": 120.0,
+     "y": 310.0,
+     "w": 360.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0906",
+     "code": "WIT0906",
+     "kind": "step",
+     "text": "นำส่ง คบ.10 รุ่นพร้อมส่ง เก็บฉบับส่งจริงและหลักฐานแยก",
+     "x": 690.0,
+     "y": 310.0,
+     "w": 360.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0907",
+     "code": "WIT0907",
+     "kind": "step",
+     "text": "ผู้ยื่นคำร้อง/พยานได้รับแจ้งผลและ คบ.10 บันทึกวันที่รับจริงและการรับทราบสิทธิอุทธรณ์",
+     "x": 95.0,
+     "y": 450.0,
+     "w": 350.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0908",
+     "code": "WIT0908",
+     "kind": "decision",
+     "text": "ประสงค์ อุทธรณ์?",
+     "x": 500.0,
+     "y": 438.0,
+     "w": 130.0,
+     "h": 95.0
+    },
+    {
+     "id": "WIT0909",
+     "code": "WIT0909",
+     "kind": "terminal",
+     "text": "ไม่อุทธรณ์ สิ้นสุดกระบวนการไม่อนุมัติ",
+     "x": 770.0,
+     "y": 432.0,
+     "w": 300.0,
+     "h": 65.0
+    },
+    {
+     "id": "WIT0910",
+     "code": "WIT0910",
+     "kind": "terminal",
+     "text": "ประสงค์อุทธรณ์ ไปหน้า 09B เพื่อรับและเสนออุทธรณ์",
+     "x": 770.0,
+     "y": 515.0,
+     "w": 300.0,
+     "h": 65.0
+    },
+    {
+     "id": "note0902",
+     "code": null,
+     "kind": "note",
+     "text": "คำอุทธรณ์เป็นรายการใหม่ในแฟ้มเดิม ไม่สร้าง คบ.1 ใหม่ และไม่เปลี่ยนเจ้าของเรื่องอัตโนมัติ",
+     "x": 320.0,
+     "y": 665.0,
+     "w": 560.0,
+     "h": 82.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0901",
+     "source": "WIT0901",
+     "target": "WIT0902",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0902",
+     "source": "WIT0902",
+     "target": "WIT0903",
+     "label": "ผลไม่อนุมัติ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0903",
+     "source": "WIT0903",
+     "target": "WIT0904",
+     "label": "เติมรายละเอียดเป็นรุ่นใหม่",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0904",
+     "source": "WIT0904",
+     "target": "WIT0905",
+     "label": "ตรวจพร้อมส่ง",
+     "points": [
+      [
+       870.0,
+       285.0
+      ],
+      [
+       300.0,
+       285.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0905",
+     "source": "WIT0905",
+     "target": "WIT0906",
+     "label": "ข้อมูลครบ พร้อมส่ง",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0906",
+     "source": "WIT0906",
+     "target": "WIT0907",
+     "label": "แจ้งผล",
+     "points": [
+      [
+       870.0,
+       405.0
+      ],
+      [
+       270.0,
+       405.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0907",
+     "source": "WIT0907",
+     "target": "WIT0908",
+     "label": "รับทราบผล",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0908",
+     "source": "WIT0908",
+     "target": "WIT0909",
+     "label": "ไม่อุทธรณ์",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0909",
+     "source": "WIT0908",
+     "target": "WIT0910",
+     "label": "ยื่นอุทธรณ์",
+     "points": [
+      [
+       565.0,
+       545.0
+      ],
+      [
+       745.0,
+       545.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.0,
+      0.5
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "09B": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ผู้ยื่น / ธุรการหน่วย / เจ้าหน้าที่รับเรื่อง",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 130.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 180.0,
+     "w": 42.0,
+     "h": 150.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้บังคับบัญชาชั้นต้น",
+     "x": 20.0,
+     "y": 330.0,
+     "w": 42.0,
+     "h": 105.0,
+     "fill": "#E9E1F3"
+    },
+    {
+     "label": "ผอ.สำนัก/กอง",
+     "x": 20.0,
+     "y": 435.0,
+     "w": 42.0,
+     "h": 105.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "รองเลขาธิการฯ / เลขาธิการฯ",
+     "x": 20.0,
+     "y": 540.0,
+     "w": 42.0,
+     "h": 120.0,
+     "fill": "#FFE5B3"
+    },
+    {
+     "label": "ฝ่ายเลขานุการ / ประธาน / คณะกรรมการ ป.ป.ท.",
+     "x": 20.0,
+     "y": 660.0,
+     "w": 42.0,
+     "h": 145.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT0911",
+     "code": "WIT0911",
+     "kind": "terminal",
+     "text": "รับความประสงค์อุทธรณ์ จากหน้า 09A",
+     "x": 78.0,
+     "y": 73.0,
+     "w": 105.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0912",
+     "code": "WIT0912",
+     "kind": "step",
+     "text": "เอกสาร: คำอุทธรณ์ (ไม่มีเลข คบ.) รับด้วยวาจาให้บันทึกและลงชื่อ; หนังสือรับผ่านสารบรรณเดิม",
+     "x": 235.0,
+     "y": 75.0,
+     "w": 410.0,
+     "h": 78.0
+    },
+    {
+     "id": "note09b01",
+     "code": null,
+     "kind": "note",
+     "text": "กรณีหนังสือจากภายนอก ต้องผ่านสารบรรณกลางในระบบเดิมก่อน E-CMIS เก็บเลขรับ หลักฐาน และวันที่รับครั้งแรก",
+     "x": 790.0,
+     "y": 70.0,
+     "w": 310.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT0913",
+     "code": "WIT0913",
+     "kind": "step",
+     "text": "ผูกคำอุทธรณ์ + คบ.1 + คบ.10/คบ.17 + คำสั่งเดิม กับแฟ้มเดิมและหลักฐานวันที่รับแจ้งผลจริง",
+     "x": 92.0,
+     "y": 215.0,
+     "w": 410.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0914",
+     "code": "WIT0914",
+     "kind": "step",
+     "text": "ตรวจความครบถ้วนและคำนวณกรอบ 30 วัน หากล่าช้าให้บันทึกเหตุผลและจัดทำแฟ้มเสนอ ไม่ปัดตกอัตโนมัติ",
+     "x": 650.0,
+     "y": 215.0,
+     "w": 410.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT0915",
+     "code": "WIT0915",
+     "kind": "step",
+     "text": "ตรวจข้อเท็จจริงและเอกสาร พร้อมบันทึกความเห็นของตน โดยไม่แก้ไขข้อความคำอุทธรณ์ของผู้ยื่น",
+     "x": 360.0,
+     "y": 347.0,
+     "w": 440.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0916",
+     "code": "WIT0916",
+     "kind": "step",
+     "text": "ตรวจความครบถ้วน ให้ความเห็น และลงนามเสนอแฟ้มอุทธรณ์ตามลำดับชั้น",
+     "x": 360.0,
+     "y": 452.0,
+     "w": 440.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT0917",
+     "code": "WIT0917",
+     "kind": "step",
+     "text": "รองเลขาธิการฯ กลั่นกรองแฟ้มอุทธรณ์ และให้ความเห็นประกอบ",
+     "x": 105.0,
+     "y": 565.0,
+     "w": 390.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0918",
+     "code": "WIT0918",
+     "kind": "step",
+     "text": "เลขาธิการฯ รับทราบ/ให้ความเห็นประกอบและส่งเสนอคณะกรรมการ ไม่ใช่ผู้วินิจฉัยอุทธรณ์",
+     "x": 650.0,
+     "y": 565.0,
+     "w": 390.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0919",
+     "code": "WIT0919",
+     "kind": "step",
+     "text": "เอกสาร: ชุดแฟ้มอุทธรณ์ + ใบนำ/ระเบียบวาระ ฝ่ายเลขานุการเสนอประธานเพื่อบรรจุวาระ",
+     "x": 75.0,
+     "y": 684.0,
+     "w": 240.0,
+     "h": 70.0
+    },
+    {
+     "id": "WIT0920",
+     "code": "WIT0920",
+     "kind": "decision",
+     "text": "คณะกรรมการวินิจฉัย ผล: มติ/คำวินิจฉัย",
+     "x": 390.0,
+     "y": 672.0,
+     "w": 130.0,
+     "h": 92.0
+    },
+    {
+     "id": "WIT0921",
+     "code": "WIT0921",
+     "kind": "terminal",
+     "text": "ยืนคำสั่งเดิม ทำหนังสือแจ้งผลอุทธรณ์ (ไม่มีเลข คบ.) ผ่านสารบรรณ เก็บหลักฐานรับ และปิดขั้นอุทธรณ์",
+     "x": 595.0,
+     "y": 684.0,
+     "w": 220.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT0922",
+     "code": "WIT0922",
+     "kind": "terminal",
+     "text": "เปลี่ยนคำสั่ง หนังสือแจ้งผลอุทธรณ์ + มติ/คำสั่งใหม่ ถ้าให้คุ้มครองกลับ 08A ไม่สร้าง คบ.1 ใหม่",
+     "x": 875.0,
+     "y": 684.0,
+     "w": 220.0,
+     "h": 68.0
+    },
+    {
+     "id": "note09b02",
+     "code": null,
+     "kind": "note",
+     "text": "คำวินิจฉัยอุทธรณ์ของคณะกรรมการ ป.ป.ท. เป็นที่สุด หากเปลี่ยนเป็นอนุมัติ ให้ไปหน้า 08A เพื่อตรวจฐานคำสั่งและแยกแนวทาง",
+     "x": 665.0,
+     "y": 756.0,
+     "w": 405.0,
+     "h": 42.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E0910",
+     "source": "WIT0911",
+     "target": "WIT0912",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0911",
+     "source": "WIT0912",
+     "target": "WIT0913",
+     "label": "รับอุทธรณ์",
+     "points": [
+      [
+       440.0,
+       175.0
+      ],
+      [
+       297.0,
+       175.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0912",
+     "source": "WIT0913",
+     "target": "WIT0914",
+     "label": "เชื่อมเอกสารเดิม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0913",
+     "source": "WIT0914",
+     "target": "WIT0915",
+     "label": "เสนอความเห็น",
+     "points": [
+      [
+       855.0,
+       315.0
+      ],
+      [
+       580.0,
+       315.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0914",
+     "source": "WIT0915",
+     "target": "WIT0916",
+     "label": "ผ่านชั้นต้น",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0915",
+     "source": "WIT0916",
+     "target": "WIT0917",
+     "label": "เสนอรองเลขาธิการฯ",
+     "points": [
+      [
+       580.0,
+       545.0
+      ],
+      [
+       300.0,
+       545.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0916",
+     "source": "WIT0917",
+     "target": "WIT0918",
+     "label": "ผ่านการกลั่นกรอง",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0917",
+     "source": "WIT0918",
+     "target": "WIT0919",
+     "label": "ส่งเสนอคณะกรรมการ",
+     "points": [
+      [
+       845.0,
+       650.0
+      ],
+      [
+       195.0,
+       650.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E0918",
+     "source": "WIT0919",
+     "target": "WIT0920",
+     "label": "บรรจุวาระ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0919",
+     "source": "WIT0920",
+     "target": "WIT0921",
+     "label": "ยืนคำสั่งเดิม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E0920",
+     "source": "WIT0920",
+     "target": "WIT0922",
+     "label": "เปลี่ยนแปลงคำสั่ง",
+     "points": [
+      [
+       550.0,
+       718.0
+      ],
+      [
+       550.0,
+       668.0
+      ],
+      [
+       985.0,
+       668.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "10": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 110.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้ปฏิบัติ / ผู้ประสานหน่วยงานภายนอก",
+     "x": 20.0,
+     "y": 160.0,
+     "w": 42.0,
+     "h": 190.0,
+     "fill": "#E6F2E5"
+    },
+    {
+     "label": "พยาน / ผู้ได้รับการคุ้มครอง",
+     "x": 20.0,
+     "y": 350.0,
+     "w": 42.0,
+     "h": 105.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 455.0,
+     "w": 42.0,
+     "h": 165.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ระบบ E-CMIS / ผลลัพธ์",
+     "x": 20.0,
+     "y": 620.0,
+     "w": 42.0,
+     "h": 185.0,
+     "fill": "#FFF0D4"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT1001",
+     "code": "WIT1001",
+     "kind": "terminal",
+     "text": "รับ Episode เดียว Phase: TEMPORARY / MAIN",
+     "x": 75.0,
+     "y": 64.0,
+     "w": 125.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT1002",
+     "code": "WIT1002",
+     "kind": "step",
+     "text": "แสดง Phase ปัจจุบัน วันเริ่มจริง วันเปลี่ยน Phase/วันสิ้นสุด และยอดวันสะสมต่อเนื่องโดยไม่รีเซ็ต",
+     "x": 225.0,
+     "y": 72.0,
+     "w": 320.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT1003",
+     "code": "WIT1003",
+     "kind": "step",
+     "text": "แจ้งรอบ คบ.13/ก่อนครบกำหนด ตรวจ TEMPORARY + MAIN รวมไม่เกิน 180 วัน",
+     "x": 720.0,
+     "y": 72.0,
+     "w": 350.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT1004",
+     "code": "WIT1004",
+     "kind": "step",
+     "text": "เอกสาร: บันทึกปฏิบัติ + หลักฐาน + รายงานภายนอก รวบรวมผลทุกวิธีเมื่อถึงรอบหรือมีเหตุสำคัญ",
+     "x": 120.0,
+     "y": 220.0,
+     "w": 320.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1005",
+     "code": "WIT1005",
+     "kind": "step",
+     "text": "จัดทำ คบ.13 ระบุช่วงรายงาน คำสั่ง/จำนวนวัน ผู้ปฏิบัติ และสรุปผลการดำเนินการ",
+     "x": 520.0,
+     "y": 220.0,
+     "w": 360.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1006",
+     "code": "WIT1006",
+     "kind": "step",
+     "text": "เจ้าหน้าที่ผู้ปฏิบัติ ตรวจและลงนาม คบ.13",
+     "x": 940.0,
+     "y": 220.0,
+     "w": 190.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1007",
+     "code": "WIT1007",
+     "kind": "step",
+     "text": "พยานตรวจข้อมูลผลการคุ้มครอง และลงนามรับรอง คบ.13",
+     "x": 790.0,
+     "y": 368.0,
+     "w": 300.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT1008",
+     "code": "WIT1008",
+     "kind": "step",
+     "text": "รับ คบ.13 ที่ลงนามแล้วและหลักฐานประกอบ ตรวจผลปฏิบัติเทียบวิธีที่ได้รับอนุมัติ",
+     "x": 720.0,
+     "y": 480.0,
+     "w": 340.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1009",
+     "code": "WIT1009",
+     "kind": "step",
+     "text": "บันทึกสถานะล่าสุด ระดับความเสี่ยง ปัญหา เหตุสำคัญ และข้อเสนอสำหรับรอบถัดไป",
+     "x": 300.0,
+     "y": 480.0,
+     "w": 340.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1010",
+     "code": "WIT1010",
+     "kind": "step",
+     "text": "เก็บ คบ.13 เป็นรอบรายงานใหม่ ล็อกฉบับลงนาม และปรับกำหนดรายงาน/ข้อมูลคุ้มครองล่าสุด",
+     "x": 250.0,
+     "y": 645.0,
+     "w": 360.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1011",
+     "code": "WIT1011",
+     "kind": "decision",
+     "text": "ใกล้ครบกำหนด หรือจำเป็นต้องทบทวน?",
+     "x": 720.0,
+     "y": 632.0,
+     "w": 140.0,
+     "h": 96.0
+    },
+    {
+     "id": "WIT1012",
+     "code": "WIT1012",
+     "kind": "terminal",
+     "text": "ยังคุ้มครองต่อ กำหนดรอบ คบ.13 ถัดไป",
+     "x": 170.0,
+     "y": 738.0,
+     "w": 270.0,
+     "h": 66.0
+    },
+    {
+     "id": "WIT1013",
+     "code": "WIT1013",
+     "kind": "terminal",
+     "text": "ส่ง คบ.13 ล่าสุด + ผลประเมินความเสี่ยง คำสั่งปัจจุบัน และยอดวันสะสม ไปแท็บ 11A",
+     "x": 800.0,
+     "y": 738.0,
+     "w": 300.0,
+     "h": 66.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E1001",
+     "source": "WIT1001",
+     "target": "WIT1002",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1002",
+     "source": "WIT1002",
+     "target": "WIT1003",
+     "label": "เริ่มติดตาม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1003",
+     "source": "WIT1003",
+     "target": "WIT1004",
+     "label": "ถึงรอบรายงาน",
+     "points": [
+      [
+       895.0,
+       185.0
+      ],
+      [
+       280.0,
+       185.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1004",
+     "source": "WIT1004",
+     "target": "WIT1005",
+     "label": "ข้อมูลผลปฏิบัติ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1005",
+     "source": "WIT1005",
+     "target": "WIT1006",
+     "label": "จัดทำครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1006",
+     "source": "WIT1006",
+     "target": "WIT1007",
+     "label": "ให้พยานรับรอง",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1007",
+     "source": "WIT1007",
+     "target": "WIT1008",
+     "label": "คบ.13 ลงนามครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1008",
+     "source": "WIT1008",
+     "target": "WIT1009",
+     "label": "ติดตามผล",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1009",
+     "source": "WIT1009",
+     "target": "WIT1010",
+     "label": "บันทึกผลล่าสุด",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1010",
+     "source": "WIT1010",
+     "target": "WIT1011",
+     "label": "ประเมินงานถัดไป",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1011",
+     "source": "WIT1011",
+     "target": "WIT1012",
+     "label": "ยังไม่ต้องทบทวน",
+     "points": [
+      [
+       755.0,
+       730.0
+      ],
+      [
+       372.0,
+       730.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.25,
+      1.0
+     ],
+     "entry": [
+      0.75,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1012",
+     "source": "WIT1011",
+     "target": "WIT1013",
+     "label": "ต้องทบทวน",
+     "points": [
+      [
+       825.0,
+       730.0
+      ],
+      [
+       950.0,
+       730.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.75,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "11A": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 125.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 175.0,
+     "w": 42.0,
+     "h": 260.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้บังคับบัญชาตามลำดับชั้น",
+     "x": 20.0,
+     "y": 435.0,
+     "w": 42.0,
+     "h": 160.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ผลการทบทวน / เส้นทางถัดไป",
+     "x": 20.0,
+     "y": 595.0,
+     "w": 42.0,
+     "h": 210.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT1101",
+     "code": "WIT1101",
+     "kind": "terminal",
+     "text": "รับงานจากแท็บ 10",
+     "x": 85.0,
+     "y": 74.0,
+     "w": 100.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1102",
+     "code": "WIT1102",
+     "kind": "step",
+     "text": "แสดง คบ.13 ล่าสุด ผลประเมินความเสี่ยง คำสั่งปัจจุบัน วิธีคุ้มครอง และวันสิ้นสุด",
+     "x": 235.0,
+     "y": 78.0,
+     "w": 350.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT1103",
+     "code": "WIT1103",
+     "kind": "step",
+     "text": "คำนวณระยะคุ้มครองสะสมและวันคงเหลือ เทียบเพดานรวม 6 เดือน/180 วัน โดยไม่ใช้วันอัปโหลด",
+     "x": 720.0,
+     "y": 78.0,
+     "w": 360.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT1104",
+     "code": "WIT1104",
+     "kind": "step",
+     "text": "ประเมินความเสี่ยง ความจำเป็น ผลการปฏิบัติ ปัญหา และความเหมาะสมของวิธีที่ใช้อยู่",
+     "x": 145.0,
+     "y": 220.0,
+     "w": 360.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1105",
+     "code": "WIT1105",
+     "kind": "step",
+     "text": "จัดทำข้อเสนอผลทบทวนพร้อมเหตุผลและหลักฐาน อ้างอิง คบ.13 คำสั่งเดิม และกรณีครบเพดานแต่ยังมีภัย",
+     "x": 645.0,
+     "y": 220.0,
+     "w": 360.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1106",
+     "code": "WIT1106",
+     "kind": "step",
+     "text": "ตรวจข้อเสนอ เอกสารประกอบ ระยะเวลาคงเหลือ และส่งคืนให้แก้ไขได้โดยบันทึกเหตุผล",
+     "x": 250.0,
+     "y": 475.0,
+     "w": 380.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1107",
+     "code": "WIT1107",
+     "kind": "decision",
+     "text": "แนวทางที่ต้อง ดำเนินการ?",
+     "x": 780.0,
+     "y": 458.0,
+     "w": 150.0,
+     "h": 100.0
+    },
+    {
+     "id": "WIT1108",
+     "code": "WIT1108",
+     "kind": "terminal",
+     "text": "คุ้มครองต่อภายใต้คำสั่งเดิม กลับแท็บ 10 เพื่อกำหนด คบ.13 รอบถัดไป",
+     "x": 78.0,
+     "y": 675.0,
+     "w": 230.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT1109",
+     "code": "WIT1109",
+     "kind": "terminal",
+     "text": "ยังไม่ครบเพดาน 6 เดือน: ขยายเวลา ไปแท็บ 11B จัดทำ คบ.14",
+     "x": 330.0,
+     "y": 675.0,
+     "w": 220.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT1110",
+     "code": "WIT1110",
+     "kind": "terminal",
+     "text": "เปลี่ยนวิธี/เงื่อนไข: เสนออนุมัติและปรับ คบ.11 ถ้าเปลี่ยนเป็นวิธี 1 จึงจัดทำ/แก้ คบ.8 แล้วไป 08A/08B",
+     "x": 550.0,
+     "y": 675.0,
+     "w": 260.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT1111",
+     "code": "WIT1111",
+     "kind": "terminal",
+     "text": "เข้าสู่กระบวนการยุติ ไปแท็บ 11C",
+     "x": 840.0,
+     "y": 690.0,
+     "w": 220.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT1149",
+     "code": "WIT1149",
+     "kind": "terminal",
+     "text": "ครบ 6 เดือนแต่ยังมีภัย ห้ามขยาย คบ.14 และห้ามย้อนหลังวัน ไปแท็บ 08C จัดทำเรื่องตามข้อ 14 และส่งกรมคุ้มครองสิทธิและเสรีภาพ",
+     "x": 899.0,
+     "y": 602.0,
+     "w": 245.0,
+     "h": 66.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E1101",
+     "source": "WIT1101",
+     "target": "WIT1102",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1102",
+     "source": "WIT1102",
+     "target": "WIT1103",
+     "label": "ข้อมูลครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1103",
+     "source": "WIT1103",
+     "target": "WIT1104",
+     "label": "เริ่มทบทวน",
+     "points": [
+      [
+       900.0,
+       195.0
+      ],
+      [
+       325.0,
+       195.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1104",
+     "source": "WIT1104",
+     "target": "WIT1105",
+     "label": "ผลประเมิน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1105",
+     "source": "WIT1105",
+     "target": "WIT1106",
+     "label": "เสนอ",
+     "points": [
+      [
+       825.0,
+       390.0
+      ],
+      [
+       440.0,
+       390.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1106",
+     "source": "WIT1106",
+     "target": "WIT1107",
+     "label": "ตรวจครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1107",
+     "source": "WIT1107",
+     "target": "WIT1108",
+     "label": "ต่อคำสั่งเดิม",
+     "points": [
+      [
+       855.0,
+       625.0
+      ],
+      [
+       193.0,
+       625.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1108",
+     "source": "WIT1107",
+     "target": "WIT1109",
+     "label": "ขยายเวลา",
+     "points": [
+      [
+       855.0,
+       640.0
+      ],
+      [
+       445.0,
+       640.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1109",
+     "source": "WIT1107",
+     "target": "WIT1110",
+     "label": "เปลี่ยนวิธี",
+     "points": [
+      [
+       855.0,
+       655.0
+      ],
+      [
+       670.0,
+       655.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1110",
+     "source": "WIT1107",
+     "target": "WIT1111",
+     "label": "ยุติ",
+     "points": [
+      [
+       930.0,
+       590.0
+      ],
+      [
+       880.0,
+       590.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1149",
+     "source": "WIT1107",
+     "target": "WIT1149",
+     "label": "ครบ 6 เดือนและยังมีเหตุ",
+     "points": [
+      [
+       1022.0,
+       508.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "11B": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 120.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 170.0,
+     "w": 42.0,
+     "h": 220.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้บังคับบัญชาตามลำดับชั้น",
+     "x": 20.0,
+     "y": 390.0,
+     "w": 42.0,
+     "h": 180.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ผู้มีอำนาจพิจารณา",
+     "x": 20.0,
+     "y": 570.0,
+     "w": 42.0,
+     "h": 120.0,
+     "fill": "#E9E1F5"
+    },
+    {
+     "label": "ระบบ E-CMIS / ผลลัพธ์",
+     "x": 20.0,
+     "y": 690.0,
+     "w": 42.0,
+     "h": 115.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT1112",
+     "code": "WIT1112",
+     "kind": "terminal",
+     "text": "รับผล “ขยายเวลา” จากแท็บ 11A",
+     "x": 85.0,
+     "y": 72.0,
+     "w": 105.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1113",
+     "code": "WIT1113",
+     "kind": "step",
+     "text": "แสดงคำสั่งปัจจุบัน วันเริ่มจริง วันสิ้นสุด จำนวนวันสะสม และวันคงเหลือ",
+     "x": 235.0,
+     "y": 76.0,
+     "w": 350.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT1116",
+     "code": "WIT1116",
+     "kind": "step",
+     "text": "ตรวจช่วงวันที่เสนอขยายและยอดสะสม ต้องไม่เกินเพดานรวม 6 เดือน/180 วัน",
+     "x": 720.0,
+     "y": 76.0,
+     "w": 350.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT1114",
+     "code": "WIT1114",
+     "kind": "step",
+     "text": "จัดทำ คบ.14 ระบุเหตุผล ช่วงเวลาที่ขอขยาย และระยะเวลารวม",
+     "x": 100.0,
+     "y": 242.0,
+     "w": 300.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1115",
+     "code": "WIT1115",
+     "kind": "step",
+     "text": "แนบ คบ.13 ล่าสุด ผลประเมินความเสี่ยง คำสั่งเดิม และหลักฐานประกอบ",
+     "x": 475.0,
+     "y": 242.0,
+     "w": 330.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1119",
+     "code": "WIT1119",
+     "kind": "step",
+     "text": "แก้ไข คบ.14 ตามเหตุผลที่ส่งกลับ เก็บฉบับเดิมและสร้างเวอร์ชันใหม่",
+     "x": 835.0,
+     "y": 305.0,
+     "w": 280.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1150",
+     "code": "WIT1150",
+     "kind": "terminal",
+     "text": "ถึง/เกินเพดาน ห้ามจัดทำ คบ.14 เพิ่ม กลับแท็บ 11A แขนง WIT1149",
+     "x": 820.0,
+     "y": 185.0,
+     "w": 260.0,
+     "h": 64.0
+    },
+    {
+     "id": "WIT1117",
+     "code": "WIT1117",
+     "kind": "step",
+     "text": "ตรวจ คบ.14 เหตุผล หลักฐาน ช่วงวันที่ และเพดานวันสะสม",
+     "x": 145.0,
+     "y": 435.0,
+     "w": 300.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1118",
+     "code": "WIT1118",
+     "kind": "decision",
+     "text": "เอกสารครบถ้วน?",
+     "x": 535.0,
+     "y": 424.0,
+     "w": 145.0,
+     "h": 95.0
+    },
+    {
+     "id": "WIT1120",
+     "code": "WIT1120",
+     "kind": "step",
+     "text": "บันทึกความเห็นและเสนอตามลำดับชั้น พร้อม คบ.14 และเอกสารประกอบ",
+     "x": 760.0,
+     "y": 435.0,
+     "w": 320.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1121",
+     "code": "WIT1121",
+     "kind": "decision",
+     "text": "อนุมัติขยายเวลา?",
+     "x": 510.0,
+     "y": 582.0,
+     "w": 155.0,
+     "h": 96.0
+    },
+    {
+     "id": "WIT1122",
+     "code": "WIT1122",
+     "kind": "terminal",
+     "text": "อนุมัติ: ล็อก คบ.14 ฉบับลงนาม เพิ่มช่วงคุ้มครองใหม่โดยไม่แก้ทับเดิม แล้วกลับแท็บ 10",
+     "x": 155.0,
+     "y": 708.0,
+     "w": 340.0,
+     "h": 88.0
+    },
+    {
+     "id": "WIT1123",
+     "code": "WIT1123",
+     "kind": "terminal",
+     "text": "ไม่อนุมัติ: บันทึกผลและคงคำสั่งเดิมถึงวันสิ้นสุด เมื่อถึงกำหนดให้ไปแท็บ 11C",
+     "x": 720.0,
+     "y": 708.0,
+     "w": 360.0,
+     "h": 88.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E1111",
+     "source": "WIT1112",
+     "target": "WIT1113",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1112",
+     "source": "WIT1113",
+     "target": "WIT1114",
+     "label": "จัดทำคำขอ",
+     "points": [
+      [
+       410.0,
+       170.0
+      ],
+      [
+       180.0,
+       170.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1113",
+     "source": "WIT1114",
+     "target": "WIT1115",
+     "label": "แนบหลักฐาน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1114",
+     "source": "WIT1115",
+     "target": "WIT1116",
+     "label": "ตรวจวัน",
+     "points": [
+      [
+       640.0,
+       220.0
+      ],
+      [
+       808.0,
+       220.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      0.0
+     ],
+     "entry": [
+      0.25,
+      1.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1115",
+     "source": "WIT1116",
+     "target": "WIT1117",
+     "label": "ยังไม่ถึงเพดาน",
+     "points": [
+      [
+       895.0,
+       60.0
+      ],
+      [
+       80.0,
+       60.0
+      ],
+      [
+       80.0,
+       470.0
+      ],
+      [
+       145.0,
+       470.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      0.0
+     ],
+     "entry": [
+      0.0,
+      0.5
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1150",
+     "source": "WIT1116",
+     "target": "WIT1150",
+     "label": "ถึง/เกินเพดาน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.75,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1116",
+     "source": "WIT1117",
+     "target": "WIT1118",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1117",
+     "source": "WIT1118",
+     "target": "WIT1119",
+     "label": "ไม่ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      0.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1118",
+     "source": "WIT1119",
+     "target": "WIT1114",
+     "label": "แก้ร่าง",
+     "points": [
+      [
+       265.0,
+       341.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.0,
+      0.5
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1119",
+     "source": "WIT1118",
+     "target": "WIT1120",
+     "label": "ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1120",
+     "source": "WIT1120",
+     "target": "WIT1121",
+     "label": "เสนอพิจารณา",
+     "points": [
+      [
+       920.0,
+       550.0
+      ],
+      [
+       588.0,
+       550.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1121",
+     "source": "WIT1121",
+     "target": "WIT1122",
+     "label": "อนุมัติ",
+     "points": [
+      [
+       548.0,
+       700.0
+      ],
+      [
+       325.0,
+       700.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1122",
+     "source": "WIT1121",
+     "target": "WIT1123",
+     "label": "ไม่อนุมัติ",
+     "points": [
+      [
+       627.0,
+       700.0
+      ],
+      [
+       900.0,
+       700.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "11C": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "จุดเริ่มต้น / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 140.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "พยาน / แหล่งเหตุเริ่มยุติ",
+     "x": 20.0,
+     "y": 190.0,
+     "w": 42.0,
+     "h": 140.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบงานคุ้มครองพยาน",
+     "x": 20.0,
+     "y": 330.0,
+     "w": 42.0,
+     "h": 200.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผู้บังคับบัญชาตามลำดับชั้น",
+     "x": 20.0,
+     "y": 530.0,
+     "w": 42.0,
+     "h": 170.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ผลลัพธ์",
+     "x": 20.0,
+     "y": 700.0,
+     "w": 42.0,
+     "h": 105.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT1124",
+     "code": "WIT1124",
+     "kind": "terminal",
+     "text": "รับงานยุติจากแท็บ 11A หรือเหตุยุติที่เกิดระหว่างคุ้มครอง",
+     "x": 85.0,
+     "y": 78.0,
+     "w": 170.0,
+     "h": 80.0
+    },
+    {
+     "id": "WIT1125",
+     "code": "WIT1125",
+     "kind": "decision",
+     "text": "เหตุเริ่มยุติ มาจากทางใด?",
+     "x": 420.0,
+     "y": 66.0,
+     "w": 155.0,
+     "h": 105.0
+    },
+    {
+     "id": "WIT1126",
+     "code": "WIT1126",
+     "kind": "step",
+     "text": "พยานยื่น คบ.7 ต่อเจ้าหน้าที่ หรือกรอกคำขอยุติในระบบ",
+     "x": 95.0,
+     "y": 225.0,
+     "w": 270.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1127",
+     "code": "WIT1127",
+     "kind": "step",
+     "text": "หนังสือขอยุติจากภายนอก: อัปโหลดเข้ากับแฟ้มเดิม",
+     "x": 420.0,
+     "y": 225.0,
+     "w": 330.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1128",
+     "code": "WIT1128",
+     "kind": "step",
+     "text": "ครบกำหนด หรือเจ้าหน้าที่เห็นควรยุติ ตามข้อเท็จจริงและผลประเมินล่าสุด",
+     "x": 800.0,
+     "y": 225.0,
+     "w": 300.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1129",
+     "code": "WIT1129",
+     "kind": "step",
+     "text": "จัดทำ คบ.15 รายงานการให้ความคุ้มครองสิ้นสุด อ้างอิง คบ.7 หรือเหตุยุติ พร้อมหลักฐาน",
+     "x": 170.0,
+     "y": 375.0,
+     "w": 390.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1130",
+     "code": "WIT1130",
+     "kind": "step",
+     "text": "ตรวจคำสั่งเดิม วันที่ เหตุผล และหลักฐาน การยุติยังไม่เกิดขึ้นเพียงเพราะรับ คบ.7/จัดทำ คบ.15 ต้องรอคำสั่ง คบ.16 และวันที่มีผล",
+     "x": 650.0,
+     "y": 371.0,
+     "w": 400.0,
+     "h": 84.0
+    },
+    {
+     "id": "WIT1131",
+     "code": "WIT1131",
+     "kind": "step",
+     "text": "ตรวจ คบ.15 เหตุผลและเอกสารประกอบ พร้อมบันทึกความเห็นตามลำดับชั้น",
+     "x": 145.0,
+     "y": 575.0,
+     "w": 340.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1132",
+     "code": "WIT1132",
+     "kind": "decision",
+     "text": "ครบถ้วน?",
+     "x": 550.0,
+     "y": 563.0,
+     "w": 140.0,
+     "h": 95.0
+    },
+    {
+     "id": "WIT1133",
+     "code": "WIT1133",
+     "kind": "step",
+     "text": "ส่งกลับแก้ คบ.15 พร้อมเหตุผล เก็บฉบับเดิมและสร้างเวอร์ชันใหม่",
+     "x": 805.0,
+     "y": 575.0,
+     "w": 290.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1134",
+     "code": "WIT1134",
+     "kind": "terminal",
+     "text": "ครบถ้วน: เสนอผู้มีอำนาจพิจารณายุติ ไปแท็บ 11D",
+     "x": 425.0,
+     "y": 716.0,
+     "w": 330.0,
+     "h": 78.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E1123",
+     "source": "WIT1124",
+     "target": "WIT1125",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1124",
+     "source": "WIT1125",
+     "target": "WIT1126",
+     "label": "พยานยื่นกับเจ้าหน้าที่",
+     "points": [
+      [
+       459.0,
+       205.0
+      ],
+      [
+       230.0,
+       205.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1125",
+     "source": "WIT1125",
+     "target": "WIT1127",
+     "label": "หนังสือจากภายนอก",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1126",
+     "source": "WIT1125",
+     "target": "WIT1128",
+     "label": "ครบกำหนด/เจ้าหน้าที่เสนอ",
+     "points": [
+      [
+       950.0,
+       118.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      1.0,
+      0.5
+     ],
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1127",
+     "source": "WIT1126",
+     "target": "WIT1129",
+     "label": "คบ.7",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.25,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1128",
+     "source": "WIT1127",
+     "target": "WIT1129",
+     "label": "คำขอยุติ",
+     "points": [
+      [
+       585.0,
+       320.0
+      ],
+      [
+       301.0,
+       320.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": [
+      0.335,
+      -0.024
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1129",
+     "source": "WIT1128",
+     "target": "WIT1129",
+     "label": "เหตุยุติ",
+     "points": [
+      [
+       950.0,
+       330.0
+      ],
+      [
+       365.0,
+       330.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1130",
+     "source": "WIT1129",
+     "target": "WIT1130",
+     "label": "ร่างครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1131",
+     "source": "WIT1130",
+     "target": "WIT1131",
+     "label": "เสนอ",
+     "points": [
+      [
+       850.0,
+       510.0
+      ],
+      [
+       315.0,
+       510.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1132",
+     "source": "WIT1131",
+     "target": "WIT1132",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1133",
+     "source": "WIT1132",
+     "target": "WIT1133",
+     "label": "ไม่ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1134",
+     "source": "WIT1133",
+     "target": "WIT1129",
+     "label": "แก้ไข",
+     "points": [
+      [
+       1100.0,
+       611.0
+      ],
+      [
+       1100.0,
+       345.0
+      ],
+      [
+       450.0,
+       345.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1135",
+     "source": "WIT1132",
+     "target": "WIT1134",
+     "label": "ครบ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "11D": {
+   "width": 1164.0,
+   "height": 825.0,
+   "lanes": [
+    {
+     "label": "ผู้มีอำนาจพิจารณา",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 170.0,
+     "fill": "#E9E1F5"
+    },
+    {
+     "label": "เจ้าหน้าที่ผู้รับผิดชอบ / ระบบ E-CMIS",
+     "x": 20.0,
+     "y": 220.0,
+     "w": 42.0,
+     "h": 180.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ระบบสารบรรณเดิมภายนอก E-CMIS",
+     "x": 20.0,
+     "y": 400.0,
+     "w": 42.0,
+     "h": 150.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "พยาน / ผู้ได้รับการคุ้มครอง",
+     "x": 20.0,
+     "y": 550.0,
+     "w": 42.0,
+     "h": 110.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "ระบบ E-CMIS / ผลลัพธ์",
+     "x": 20.0,
+     "y": 660.0,
+     "w": 42.0,
+     "h": 145.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "WIT1135",
+     "code": "WIT1135",
+     "kind": "terminal",
+     "text": "รับ คบ.7/คบ.15 และความเห็น จากแท็บ 11C",
+     "x": 85.0,
+     "y": 88.0,
+     "w": 160.0,
+     "h": 78.0
+    },
+    {
+     "id": "WIT1136",
+     "code": "WIT1136",
+     "kind": "decision",
+     "text": "อนุมัติให้ยุติ?",
+     "x": 355.0,
+     "y": 76.0,
+     "w": 150.0,
+     "h": 100.0
+    },
+    {
+     "id": "WIT1137",
+     "code": "WIT1137",
+     "kind": "terminal",
+     "text": "ไม่อนุมัติ: บันทึกผล คุ้มครองต่อภายใต้คำสั่งเดิมและกลับแท็บ 10",
+     "x": 595.0,
+     "y": 86.0,
+     "w": 270.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT1138",
+     "code": "WIT1138",
+     "kind": "step",
+     "text": "จัดทำร่าง คบ.16 ระบุเหตุยุติ วันที่ออกคำสั่ง และวันที่มีผล",
+     "x": 95.0,
+     "y": 270.0,
+     "w": 300.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1139",
+     "code": "WIT1139",
+     "kind": "step",
+     "text": "ผู้มีอำนาจลงนาม คบ.16 ห้ามเริ่มสถานะยุติก่อนมีคำสั่งที่ลงนาม",
+     "x": 445.0,
+     "y": 270.0,
+     "w": 300.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1140",
+     "code": "WIT1140",
+     "kind": "step",
+     "text": "ล็อก คบ.16 และบันทึกแยก วันที่ออกคำสั่ง วันที่มีผล และวันที่หยุดปฏิบัติจริง",
+     "x": 795.0,
+     "y": 270.0,
+     "w": 310.0,
+     "h": 76.0
+    },
+    {
+     "id": "WIT1141",
+     "code": "WIT1141",
+     "kind": "step",
+     "text": "จัดทำ คบ.17 แจ้งคำสั่งยุติและสิทธิอุทธรณ์",
+     "x": 105.0,
+     "y": 440.0,
+     "w": 280.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1142",
+     "code": "WIT1142",
+     "kind": "step",
+     "text": "นำ คบ.17 ออกเลขและส่งผ่าน ระบบสารบรรณเดิมภายนอก E-CMIS",
+     "x": 435.0,
+     "y": 440.0,
+     "w": 300.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1143",
+     "code": "WIT1143",
+     "kind": "step",
+     "text": "บันทึกเลขที่/วันที่ส่งจากระบบสารบรรณเดิม และอัปโหลด คบ.17 ฉบับส่งเข้ากับแฟ้ม",
+     "x": 785.0,
+     "y": 440.0,
+     "w": 320.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1144",
+     "code": "WIT1144",
+     "kind": "step",
+     "text": "พยานรับ คบ.17 และหลักฐานแจ้งคำสั่งยุติ",
+     "x": 435.0,
+     "y": 572.0,
+     "w": 300.0,
+     "h": 68.0
+    },
+    {
+     "id": "WIT1145",
+     "code": "WIT1145",
+     "kind": "step",
+     "text": "บันทึกวันที่พยานรับจริงและหลักฐานการรับ เริ่มนับกำหนดอุทธรณ์ 30 วันจากวันที่รับจริง",
+     "x": 95.0,
+     "y": 700.0,
+     "w": 350.0,
+     "h": 72.0
+    },
+    {
+     "id": "WIT1146",
+     "code": "WIT1146",
+     "kind": "decision",
+     "text": "มีอุทธรณ์ภายในกำหนด?",
+     "x": 505.0,
+     "y": 686.0,
+     "w": 155.0,
+     "h": 96.0
+    },
+    {
+     "id": "WIT1147",
+     "code": "WIT1147",
+     "kind": "terminal",
+     "text": "มีอุทธรณ์: ไปแท็บ 09B ผูกคำอุทธรณ์กับ คบ.17/หลักฐานรับ ไม่สร้าง คบ.1 ใหม่",
+     "x": 680.0,
+     "y": 694.0,
+     "w": 220.0,
+     "h": 82.0
+    },
+    {
+     "id": "WIT1148",
+     "code": "WIT1148",
+     "kind": "terminal",
+     "text": "ไม่มีอุทธรณ์/พ้นกำหนด: ปิดงานคุ้มครอง หยุดงานค้าง ล็อกเอกสารลงนาม และคง Audit Trail",
+     "x": 920.0,
+     "y": 694.0,
+     "w": 210.0,
+     "h": 82.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "E1136",
+     "source": "WIT1135",
+     "target": "WIT1136",
+     "label": "เสนอพิจารณา",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1137",
+     "source": "WIT1136",
+     "target": "WIT1137",
+     "label": "ไม่อนุมัติ",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1138",
+     "source": "WIT1136",
+     "target": "WIT1138",
+     "label": "อนุมัติ",
+     "points": [
+      [
+       430.0,
+       205.0
+      ],
+      [
+       245.0,
+       205.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1139",
+     "source": "WIT1138",
+     "target": "WIT1139",
+     "label": "ร่างคำสั่ง",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1140",
+     "source": "WIT1139",
+     "target": "WIT1140",
+     "label": "ลงนาม",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1141",
+     "source": "WIT1140",
+     "target": "WIT1141",
+     "label": "จัดทำหนังสือแจ้ง",
+     "points": [
+      [
+       950.0,
+       420.0
+      ],
+      [
+       245.0,
+       420.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1142",
+     "source": "WIT1141",
+     "target": "WIT1142",
+     "label": "คบ.17",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1143",
+     "source": "WIT1142",
+     "target": "WIT1143",
+     "label": "เลข/วันที่ส่ง",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1144",
+     "source": "WIT1143",
+     "target": "WIT1144",
+     "label": "แจ้งพยาน",
+     "points": [
+      [
+       945.0,
+       535.0
+      ],
+      [
+       585.0,
+       535.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1145",
+     "source": "WIT1144",
+     "target": "WIT1145",
+     "label": "รับจริง",
+     "points": [
+      [
+       585.0,
+       675.0
+      ],
+      [
+       270.0,
+       675.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": [
+      0.5,
+      1.0
+     ],
+     "entry": [
+      0.5,
+      0.0
+     ],
+     "dashed": false
+    },
+    {
+     "id": "E1146",
+     "source": "WIT1145",
+     "target": "WIT1146",
+     "label": "เริ่มนับ 30 วัน",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1147",
+     "source": "WIT1146",
+     "target": "WIT1147",
+     "label": "มี",
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "E1148",
+     "source": "WIT1146",
+     "target": "WIT1148",
+     "label": "ไม่มี/พ้นกำหนด",
+     "points": [
+      [
+       582.0,
+       790.0
+      ],
+      [
+       1060.0,
+       790.0
+      ]
+     ],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  },
+  "07G": {
+   "width": 1050.0,
+   "height": 840.0,
+   "lanes": [
+    {
+     "label": "เลขาธิการ ป.ป.ท.",
+     "x": 20.0,
+     "y": 50.0,
+     "w": 42.0,
+     "h": 140.0,
+     "fill": "#D8E4F5"
+    },
+    {
+     "label": "ธุรการคดี กอท.",
+     "x": 20.0,
+     "y": 190.0,
+     "w": 42.0,
+     "h": 230.0,
+     "fill": "#DDEFF7"
+    },
+    {
+     "label": "ผอ. กอท.",
+     "x": 20.0,
+     "y": 420.0,
+     "w": 42.0,
+     "h": 150.0,
+     "fill": "#FFF0D4"
+    },
+    {
+     "label": "ผู้รับผิดชอบ กอท.",
+     "x": 20.0,
+     "y": 570.0,
+     "w": 42.0,
+     "h": 140.0,
+     "fill": "#F4E6EE"
+    },
+    {
+     "label": "โฟลว์คุ้มครองเดิม",
+     "x": 20.0,
+     "y": 710.0,
+     "w": 42.0,
+     "h": 110.0,
+     "fill": "#E6F2E5"
+    }
+   ],
+   "nodes": [
+    {
+     "id": "A6POST01",
+     "code": "A6POST01",
+     "kind": "terminal",
+     "text": "เลขาธิการอนุมัติและมอบหมาย กอท.",
+     "x": 110.0,
+     "y": 80.0,
+     "w": 300.0,
+     "h": 80.0
+    },
+    {
+     "id": "A6POST02",
+     "code": "A6POST02",
+     "kind": "step",
+     "text": "ธุรการคดี กอท. รับเรื่องจากเลขาธิการ",
+     "x": 110.0,
+     "y": 220.0,
+     "w": 300.0,
+     "h": 85.0
+    },
+    {
+     "id": "A6POST03",
+     "code": "A6POST03",
+     "kind": "step",
+     "text": "ธุรการคดีส่งเสนอ ผอ. กอท.",
+     "x": 670.0,
+     "y": 315.0,
+     "w": 310.0,
+     "h": 85.0
+    },
+    {
+     "id": "A6POST04",
+     "code": "A6POST04",
+     "kind": "step",
+     "text": "ผอ. กอท. มอบหมายผู้รับผิดชอบ",
+     "x": 670.0,
+     "y": 450.0,
+     "w": 310.0,
+     "h": 90.0
+    },
+    {
+     "id": "A6POST05",
+     "code": "A6POST05",
+     "kind": "step",
+     "text": "ผู้ได้รับมอบหมายรับงานและตรวจเอกสาร",
+     "x": 360.0,
+     "y": 595.0,
+     "w": 360.0,
+     "h": 85.0
+    },
+    {
+     "id": "A6POST06",
+     "code": "A6POST06",
+     "kind": "terminal",
+     "text": "ผู้รับผิดชอบ กอท. เติม คบ.9 ที่ลงนามแล้ว ตรวจพร้อมส่ง → คบ.11 → คุ้มครองเดิม",
+     "x": 670.0,
+     "y": 730.0,
+     "w": 360.0,
+     "h": 75.0
+    },
+    {
+     "id": "GOT-NOTE",
+     "code": null,
+     "kind": "note",
+     "text": "ผลพิจารณายังคงอนุมัติ ใช้แฟ้มและเอกสารเดิม เจ้าของสำนวนเดิมเป็นข้อมูลอ้างอิง ธุรการไม่มอบหมาย และ ผอ. ไม่อนุมัติคำร้องใหม่",
+     "x": 90.0,
+     "y": 455.0,
+     "w": 470.0,
+     "h": 85.0
+    }
+   ],
+   "edges": [
+    {
+     "id": "GOT-EDGE-0",
+     "source": "A6POST01",
+     "target": "A6POST02",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "GOT-EDGE-1",
+     "source": "A6POST02",
+     "target": "A6POST03",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "GOT-EDGE-2",
+     "source": "A6POST03",
+     "target": "A6POST04",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "GOT-EDGE-3",
+     "source": "A6POST04",
+     "target": "A6POST05",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    },
+    {
+     "id": "GOT-EDGE-4",
+     "source": "A6POST05",
+     "target": "A6POST06",
+     "label": null,
+     "points": [],
+     "sourcePoint": null,
+     "targetPoint": null,
+     "exit": null,
+     "entry": null,
+     "dashed": false
+    }
+   ]
+  }
+ }
+}

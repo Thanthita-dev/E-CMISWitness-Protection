@@ -1,0 +1,9 @@
+{
+  "name": "Case 1.1",
+  "description": "[ธุรการสำนัก/กอง] [รับคำร้อง]",
+  "to": "/dossier/WP-2569-000501",
+  "localStorageData": {
+    "ecmis-auth-storage": "{\"state\":{\"currentRole\":\"receiver\",\"currentOfficerUserId\":\"OFF-001\",\"currentDirectorUserId\":\"DIR-001\",\"currentOrgUnitId\":\"central-gmc\",\"sidebarCollapsed\":false,\"isGlobalSearchOpen\":false,\"globalSearchQuery\":\"\"},\"version\":0}",
+    "ecmis-case-storage-v2": "{\"state\":{\"cases\":[{\"no\":\"WP-2569-000501\",\"form\":\"คำร้อง\",\"person\":\"สมชาย ใจดี\",\"status\":\"ธุรการรับเรื่องเข้าทะเบียนแล้ว\",\"stage\":\"receiver_intake\",\"owner\":\"นายสมบัติ รับสารบรรณ\",\"next\":\"ตรวจเอกสารแล้วส่ง ผอ.สำนัก/กอง มอบหมายเจ้าของสำนวน (เจ้าของสำนวนที่ได้รับมอบหมายเป็นผู้เชื่อมโยงคดีหลัก)\",\"risk\":\"ยังไม่ประเมิน\",\"urgent\":false,\"intakeDocType\":\"petition\",\"intakeChannel\":\"document\",\"intakeByRole\":\"receiver\",\"pendingIntakeForms\":[\"คบ.1\",\"คบ.3\"],\"kb1SignaturePending\":false,\"receivedBy\":\"นายสมบัติ รับสารบรรณ\",\"receivedByUserId\":\"REC-001\",\"intakeUnit\":\"กองบริหารคดี (ส่วนกลาง)\",\"source\":\"เอกสารส่งมาเอง\",\"scanStatus\":\"pending\",\"createdAt\":\"2026-09-08T03:56:34.039Z\",\"assignmentHistory\":[{\"at\":\"08/09/2569 10:56\",\"action\":\"รับคำร้องเข้าสู่ระบบ\",\"actor\":\"นายสมบัติ รับสารบรรณ (ธุรการสำนัก/กอง)\",\"detail\":\"ประเภทเอกสาร: คำร้อง · ช่องทาง: พยานส่งเอกสารคำร้องมา · แหล่งที่มา: หนังสือหรือเอกสารที่พยานเขียนเอง (เอกสารส่งมาเอง) · งานที่เหลือหลังมอบหมาย: คบ.1, คบ.3\"}],\"documents\":[{\"id\":\"DOC-1788839794039-0\",\"category\":\"source\",\"name\":\"หนังสือคำร้องขอคุ้มครองพยาน.pdf\",\"uploadedBy\":\"นายสมบัติ รับสารบรรณ (ธุรการสำนัก/กอง)\",\"uploadedAt\":\"08/09/2569 10:56\"}],\"updatedAt\":\"2026-09-08T04:08:29.749Z\"}],\"activeCaseNo\":\"WP-2569-000501\"},\"version\":0}"
+  }
+}

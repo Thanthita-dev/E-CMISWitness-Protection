@@ -1,0 +1,20 @@
+name: Cleanup Old GHCR Images
+
+on:
+    schedule:
+        - cron: "0 0 * * 0"
+    workflow_dispatch: # manual trigger for the first dry-run inspection
+
+jobs:
+    cleanup:
+        runs-on: ubuntu-latest
+        permissions:
+            packages: write # required to delete package versions
+
+        steps:
+            - name: Delete old images
+              uses: dataaxiom/ghcr-cleanup-action@v1
+              with:
+                  keep-n-tagged: 5
+                  keep-n-untagged: 0
+                  dry-run: true # flip to false once a dry-run log confirms the right images are targeted

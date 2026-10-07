@@ -1,0 +1,18 @@
+{
+  "name": "ecmis-witness-presentation",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  // หน้าเว็บ + คำบรรยาย (สร้างโดย deploy.mjs ลง ./public)
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "none",
+    // ให้ worker จัดการ .mp4 (Range) ก่อน แล้วค่อยส่งต่อไป assets
+    "run_worker_first": true
+  },
+  // วิดีโอเก็บใน R2 key = ชื่อไฟล์
+  "r2_buckets": [
+    { "binding": "VIDEOS", "bucket_name": "ecmis-witness-presentation-videos" }
+  ]
+}

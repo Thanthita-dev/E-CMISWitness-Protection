@@ -1,0 +1,14 @@
+diff --git a/lib/coreBundle.js b/lib/coreBundle.js
+index 8ed8bb5de1b12c7c050191123b22a119298826bb..0180d427f255c419dd7ec60933e46349b2f49c66 100644
+--- a/lib/coreBundle.js
++++ b/lib/coreBundle.js
+@@ -22179,7 +22179,8 @@ var init_screencast = __esm({
+           duration: this._actions?.duration ?? 500,
+           point,
+           box,
+-          actionTitle: actionTitle2,
++          // e-cmis patch: fontSize 0 = show cursor/highlight only, no action title (video.show.actions)
++          actionTitle: this._actions?.fontSize === 0 ? void 0 : actionTitle2,
+           position: this._actions?.position,
+           fontSize: this._actions?.fontSize,
+           cursor: this._actions?.cursor ?? "pointer"

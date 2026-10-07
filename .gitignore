@@ -1,0 +1,60 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diagnostic / Dependency directories
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# TanStack / Vite caches
+.tanstack
+.cache
+
+# Coverage / Testing
+coverage
+
+# Temporary files
+*.tmp
+*.temp
+Thumbs.db
+
+# npm lockfile — this project uses pnpm
+package-lock.json
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
+e2e-evidence/
+
+# Tutorial videos (pnpm video)
+e2e-video/output/
+e2e-video/output-journeys/
+e2e-video/output-presentation/
+e2e-video/output-guide/

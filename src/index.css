@@ -1,0 +1,752 @@
+/* โหลด Sarabun จาก CSS ด้วย เพราะ build ลง app/ แทนที่ index.html ด้วยไฟล์ขั้นต่ำ */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ค่าเทียบ tokens --ws-* ของ ก4/ก5 (intake-investigation/assets/ecmis-workspace.css) */
+  --navy-deep: #0d1b3e;
+  --navy: #082b50;
+  --navy-mid: #1a2f6b;
+  --blue: #0f416f;
+  --blue-dark: #082b50;
+  --blue-soft: #e8eff6;
+  --gold: #caa631;
+  --gold-soft: #f7edcb;
+  --ink: #172434;
+  --muted: #687789;
+  --line: #dce3e9;
+  --soft: #f4f5f6;
+  --paper: #ffffff;
+  --green: #22704a;
+  --green-soft: #dff0e7;
+  --red: #a52c25;
+  --red-soft: #f9e1df;
+  --orange: #654b08;
+  --orange-soft: #f7edcb;
+  --shadow: 0 8px 25px rgba(8, 43, 80, 0.06);
+}
+
+body {
+  margin: 0;
+  background-color: #f4f5f6;
+  color: #172434;
+  font-family: 'Sarabun', 'Noto Sans Thai', Tahoma, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* focus ที่มองเห็นได้ตามมาตรฐาน workspace (ทองโปร่ง) */
+:where(a, button, [role='button'], [tabindex]):focus-visible {
+  outline: 3px solid rgba(202, 166, 49, 0.45);
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* Card — .ws-card (radius 12px, border 1px, shadow ตามมาตรฐาน) */
+  .ws-card {
+    @apply rounded-xl border border-line bg-white shadow-card;
+  }
+
+  /* กลุ่มข้อมูลหนึ่งเรื่อง — .ws-section; หัวข้อ h2/h3 เป็นระดับรองจาก h1 ของหน้า */
+  .ws-section {
+    @apply min-w-0 border-b border-line px-5 py-4 last:border-b-0;
+  }
+  .ws-section > h2,
+  .ws-section-title {
+    @apply mb-3 text-[1.1rem] font-bold leading-snug text-navy;
+  }
+  .ws-section > h3,
+  .ws-subsection-title {
+    @apply mb-2 text-[0.95rem] font-semibold leading-snug text-ink;
+  }
+
+  /* Grid ของ field — minmax(0,1fr) gap .72rem; ลงคอลัมน์เดียวเมื่อแคบ */
+  .ws-grid-2,
+  .ws-grid-3 {
+    display: grid;
+    gap: 0.72rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ws-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  @media (max-width: 900px) {
+    .ws-grid-3 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 720px) {
+    .ws-grid-2,
+    .ws-grid-3 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* Field: label อยู่เหนือ control */
+  .ws-field {
+    @apply flex min-w-0 flex-col gap-1.5;
+  }
+  .ws-field > small,
+  .ws-help {
+    @apply text-[0.8rem] leading-snug text-muted;
+  }
+  .ws-error {
+    @apply text-[0.8rem] font-semibold leading-snug text-danger;
+  }
+
+  /* Field label — .8rem / 600 */
+  .ws-label {
+    @apply mb-1.5 block text-[0.8rem] font-semibold text-ink;
+  }
+  .ws-field > .ws-label,
+  .ws-field > label {
+    @apply mb-0 text-[0.8rem] font-semibold text-ink;
+  }
+
+  /* Input / select — min-height 44px, border #aebdca, radius 7px, ค่าที่กรอก .88rem */
+  .ws-input {
+    @apply block min-h-[44px] w-full rounded-[7px] border border-slate-300 bg-white px-3 py-[0.66rem] text-[0.88rem] font-normal text-ink placeholder:text-slate-400;
+  }
+  .ws-input:focus {
+    @apply border-[#b5901e] outline-none ring-[3px] ring-[rgba(202,166,49,0.18)];
+  }
+  .ws-input:disabled,
+  .ws-input[readonly] {
+    @apply bg-[#f5f7f9] text-slate-600;
+  }
+  /* Dropdown — ลูกศรเดียวกันทั้งระบบ เว้นระยะจากขอบขวา ข้อความยาวไม่ทับลูกศร */
+  select.ws-input {
+    @apply cursor-pointer appearance-none truncate bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23082b50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.85rem center;
+    background-size: 1rem;
+  }
+  select.ws-input:disabled {
+    @apply cursor-not-allowed opacity-80;
+  }
+  select.ws-input::-ms-expand {
+    display: none;
+  }
+  textarea.ws-input {
+    @apply min-h-[104px] resize-y leading-[1.65];
+  }
+
+  /* checkbox/radio ไม่รับ width:100% ของ text input — 18x18px */
+  input[type='checkbox'].ws-input,
+  input[type='radio'].ws-input,
+  .ws-checkbox {
+    @apply inline-block h-[18px] min-h-0 w-[18px] min-w-0 shrink-0 accent-[#082b50];
+  }
+
+  /* Readonly value — .ws-readonly */
+  .ws-readonly {
+    @apply rounded-lg border border-[#dfe6eb] bg-[#f5f7f9] p-[0.8rem];
+  }
+
+  /* Callout — .ws-callout */
+  .ws-callout {
+    @apply rounded-lg border-l-4 border-gold bg-gold-soft px-[0.9rem] py-[0.8rem] text-[#5f5027];
+  }
+
+  /* กลุ่มปุ่มคำสั่ง — .ws-actions (ไหลตามหน้า ไม่ fixed) */
+  .ws-actions {
+    @apply flex flex-wrap items-center gap-2.5;
+  }
+
+  /* Table — .ws-table ภายใน .ws-table-wrap */
+  .ws-table-wrap {
+    @apply max-w-full overflow-x-auto;
+  }
+  .ws-table {
+    @apply w-full border-collapse text-left;
+  }
+  .ws-table th {
+    @apply border-b border-[#e8edf1] bg-[#f6f8fa] px-[0.9rem] py-[0.82rem] align-top text-[0.76rem] font-bold text-[#506276];
+  }
+  .ws-table td {
+    @apply border-b border-[#e8edf1] bg-white px-[0.9rem] py-[0.82rem] align-top text-[0.88rem];
+  }
+
+  /* Status badge — .ws-status (default/pending | success | danger) */
+  .ws-status {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-[#f7edcb] px-[0.58rem] py-[0.28rem] text-[0.74rem] font-semibold leading-tight text-[#654b08];
+  }
+  .ws-status.success {
+    @apply bg-[#dff0e7] text-[#1e6141];
+  }
+  .ws-status.danger {
+    @apply bg-[#f9e1df] text-[#8c261f];
+  }
+}
+
+/* ===== Layout building blocks (ก4/ก5 patterns) — ใช้ผ่าน components/common/* ===== */
+@layer components {
+  /* TopBar: ปุ่มไอคอน 44px (เมนู / แจ้งเตือน) */
+  .ws-topbar-icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold;
+  }
+
+  /* TopBar: กลุ่มปรับขนาดตัวอักษร A−/A/A+ (.ws-font-controls) */
+  .ws-font-controls {
+    @apply flex min-h-[44px] items-center gap-1 rounded-[10px] border border-white/25 bg-[rgba(3,22,42,0.28)] px-[5px];
+  }
+  .ws-font-controls > span {
+    @apply ml-[0.4rem] mr-[0.15rem] whitespace-nowrap text-[0.76rem] text-[#dce7f1];
+  }
+  .ws-font-controls button {
+    @apply h-8 w-[34px] rounded-[7px] border border-transparent bg-transparent p-0 text-[0.8rem] font-semibold text-white transition;
+  }
+  .ws-font-controls button:hover,
+  .ws-font-controls button:focus-visible {
+    @apply border-white/30 bg-white/10 outline-none;
+  }
+  .ws-font-controls button.active {
+    @apply border-[#e0bd4f] bg-[#f3d66d] text-[#172434];
+  }
+  .ws-font-controls output {
+    @apply min-w-[3rem] text-center text-[0.72rem] font-semibold text-[#f3d66d];
+  }
+
+  /* TopBar: กลุ่มบริบทผู้ใช้ (หน่วยงาน / ผู้ปฏิบัติงาน / สิทธิ์) — ป้ายเล็กเหนือค่าที่เลือก */
+  .ws-topbar-context {
+    @apply flex min-w-0 shrink items-stretch justify-end gap-2 xl:justify-start;
+  }
+  .ws-topbar-field {
+    @apply relative min-w-0 max-w-full rounded-[10px] border border-white/25 bg-[rgba(3,22,42,0.28)] transition hover:border-white/45 hover:bg-white/10 focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/40;
+  }
+  /* ป้ายลอยอยู่เหนือค่า ส่วน select กินพื้นที่ทั้งกรอบ จึงคลิกตรงไหนก็เปิดรายการได้ */
+  .ws-topbar-field label {
+    @apply pointer-events-none absolute left-3 top-[0.32rem] whitespace-nowrap text-[0.66rem] font-medium leading-tight text-[#b9cadb];
+  }
+  .ws-topbar-field select {
+    @apply block min-h-[44px] w-full min-w-0 cursor-pointer appearance-none truncate rounded-[10px] border-0 bg-transparent pb-[0.3rem] pl-3 pr-8 pt-[1.15rem] text-[0.8125rem] font-semibold leading-snug text-white outline-none;
+  }
+  .ws-topbar-field select option {
+    @apply bg-white font-normal text-ink;
+  }
+  .ws-topbar-field > i {
+    @apply pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[0.65rem] text-[#b9cadb];
+  }
+  .ws-topbar-search {
+    @apply flex min-h-[44px] min-w-0 items-center gap-2 rounded-full border border-transparent bg-white px-4 text-left text-[0.8125rem] text-muted shadow-sm transition;
+  }
+  .ws-topbar-search:hover {
+    @apply border-gold;
+  }
+
+  /* Page head — .ws-kicker */
+  .ws-kicker {
+    @apply m-0 text-[0.76rem] font-bold uppercase tracking-[0.08em] text-[#8b6a0f];
+  }
+
+  /* StatGrid / StatCard — .ws-dashboard / .ws-dashboard-card */
+  .ws-dashboard {
+    display: grid;
+    grid-template-columns: repeat(var(--ws-dash-cols, 4), minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 1399px) {
+    .ws-dashboard[data-count='5'],
+    .ws-dashboard[data-count='6'] {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 1200px) {
+    .ws-dashboard,
+    .ws-dashboard[data-count='5'],
+    .ws-dashboard[data-count='6'] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 720px) {
+    .ws-dashboard,
+    .ws-dashboard[data-count='5'],
+    .ws-dashboard[data-count='6'] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .ws-dashboard-card {
+    @apply relative flex min-h-[138px] min-w-0 flex-col items-start overflow-hidden rounded-[14px] border border-line bg-white px-[1.1rem] py-4 text-left shadow-[0_8px_24px_rgba(8,43,80,0.07)] transition;
+  }
+  button.ws-dashboard-card {
+    @apply cursor-pointer hover:border-[#b5c4d2] hover:shadow-[0_10px_26px_rgba(8,43,80,0.12)];
+  }
+  .ws-dashboard-card .ws-dc-label {
+    @apply block text-[0.7rem] font-semibold tracking-[0.04em] text-[#6d7c8c];
+  }
+  .ws-dashboard-card .ws-dc-value {
+    @apply my-[0.2rem] block text-[2.35rem] font-bold leading-none text-navy;
+  }
+  .ws-dashboard-card .ws-dc-title {
+    @apply mt-[0.38rem] block text-[0.88rem] font-semibold text-ink;
+  }
+  .ws-dashboard-card .ws-dc-sub {
+    @apply block text-[0.7rem] leading-[1.45] text-muted;
+  }
+  .ws-dashboard-card.active {
+    @apply border-gold bg-[linear-gradient(145deg,#082b50,#154d78)] shadow-[0_10px_26px_rgba(8,43,80,0.18)];
+  }
+  .ws-dashboard-card.active .ws-dc-label,
+  .ws-dashboard-card.active .ws-dc-sub {
+    @apply text-[#cbd9e5];
+  }
+  .ws-dashboard-card.active .ws-dc-value,
+  .ws-dashboard-card.active .ws-dc-title {
+    @apply text-white;
+  }
+
+  /* SegmentedTabs — .admin-queue-tabs */
+  .ws-tabs {
+    @apply my-4 flex max-w-full gap-[0.45rem] overflow-x-auto rounded-xl border border-[#d8e1e8] bg-[#eef3f6] p-[0.35rem];
+    scrollbar-width: thin;
+  }
+  .ws-tab {
+    @apply min-h-[42px] flex-1 basis-0 whitespace-nowrap rounded-[9px] border-0 bg-transparent px-[0.8rem] py-[0.55rem] text-[0.78rem] font-semibold text-[#526779] transition;
+    min-width: 7rem;
+  }
+  .ws-tab:hover:not(:disabled) {
+    @apply bg-white text-[#123f62];
+  }
+  .ws-tab[aria-selected='true'] {
+    @apply bg-navy text-white shadow-[0_5px_14px_rgba(8,43,80,0.18)];
+  }
+  .ws-tab:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  .ws-tab-count {
+    @apply ml-1.5 inline-block rounded-full bg-black/[0.08] px-1.5 text-[0.72rem] font-bold;
+  }
+  .ws-tab[aria-selected='true'] .ws-tab-count {
+    @apply bg-white/20;
+  }
+  @media (max-width: 720px) {
+    .ws-tab {
+      @apply px-[0.4rem] py-[0.48rem] text-[0.72rem];
+      min-width: 6rem;
+    }
+  }
+
+  /* FilterCard — .ws-filters / .ws-filter-grid; ปุ่มอยู่ช่องท้ายกริด ชิดล่างให้ตรงกับ control */
+  .ws-filter-actions {
+    @apply flex min-w-0 flex-wrap items-end gap-2 self-end;
+  }
+  .ws-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.7rem;
+    align-items: end;
+  }
+  @media (max-width: 720px) {
+    .ws-filter-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* CurrentStepCard — .ws-stagebar / .ws-stage-summary / .ws-stage-caption */
+  .ws-stagebar {
+    @apply mb-4 overflow-hidden;
+  }
+  .ws-stage-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(14rem, 0.8fr) auto;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.15rem 1.3rem;
+    border-bottom: 1px solid #ead59a;
+    background: linear-gradient(110deg, #fff8e3, #fffdf8);
+  }
+  .ws-stage-summary > div {
+    min-width: 0;
+  }
+  .ws-stage-summary > div + div {
+    padding-left: 1.5rem;
+    border-left: 1px solid #d8bf7d;
+  }
+  .ws-stage-summary span,
+  .ws-stage-summary .ws-stage-note {
+    display: block;
+    color: #687789;
+    font-size: 0.72rem;
+  }
+  .ws-stage-summary .ws-stage-name {
+    display: block;
+    margin: 0.18rem 0;
+    color: #082b50;
+    font-size: 1.05rem;
+  }
+  .ws-stage-summary > div:first-child > .ws-stage-name {
+    color: #7d5a00;
+    font-size: 1.18rem;
+  }
+  .ws-stage-pill {
+    align-self: start;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #9fc1e7;
+    border-radius: 999px;
+    color: #174e80;
+    background: #e8f2fc;
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .ws-stage-caption {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1.2rem;
+    color: #687789;
+    background: #f8fbfd;
+    font-size: 0.74rem;
+  }
+  .ws-stage-caption strong {
+    color: #36536c;
+  }
+  @media (max-width: 720px) {
+    .ws-stage-summary {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.8rem;
+    }
+    .ws-stage-summary > div + div {
+      padding: 0;
+      border-left: 0;
+    }
+    .ws-stage-pill {
+      justify-self: start;
+    }
+    .ws-stage-caption {
+      display: grid;
+    }
+  }
+
+  /* NumberedStepper — node แบบ A4 (วงกลมมีเลข + เส้นเชื่อม) */
+  .ws-stepper {
+    position: relative;
+    display: flex;
+    margin: 0;
+    padding: 1.5rem 1.25rem 1rem;
+    overflow-x: auto;
+    list-style: none;
+    background: #f8fbfd;
+    scrollbar-width: thin;
+  }
+  .ws-stepper::before {
+    content: '';
+    position: absolute;
+    top: 45px;
+    left: 2.6rem;
+    right: 2.6rem;
+    height: 3px;
+    border-radius: 3px;
+    background: #dbe4ec;
+  }
+  .ws-step {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    min-width: 5.5rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.42rem;
+    min-width: 0;
+    color: #5b6b7a;
+  }
+  .ws-step::after {
+    content: '';
+    position: absolute;
+    top: 21px;
+    left: calc(50% + 23px);
+    width: calc(100% - 46px);
+    height: 3px;
+    background: transparent;
+  }
+  .ws-step.done::after {
+    background: #52769b;
+  }
+  .ws-step:last-child::after {
+    display: none;
+  }
+  .ws-step-dot {
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 2.5px solid #a9bac9;
+    border-radius: 50%;
+    background: #fff;
+    color: #5b6b7a;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .ws-stepper.dense .ws-step {
+    min-width: 4.6rem;
+  }
+  .ws-stepper.dense .ws-step-dot {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+  }
+  .ws-stepper.dense::before {
+    top: 42px;
+  }
+  .ws-stepper.dense .ws-step::after {
+    top: 18px;
+    left: calc(50% + 20px);
+    width: calc(100% - 40px);
+  }
+  .ws-stepper.dense .ws-step-label {
+    padding: 0 0.15rem;
+    font-size: 0.74rem;
+  }
+  .ws-stepper-wrap {
+    position: relative;
+  }
+  .ws-stepper-wrap::after {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 1.5rem;
+    background: linear-gradient(90deg, rgba(248, 251, 253, 0), #f8fbfd);
+    opacity: var(--ws-fade, 0);
+  }
+  .ws-step-text {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .ws-step-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    padding: 0 0.45rem;
+    color: #4a5b6a;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+  }
+  .ws-step-sub {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    color: #687789;
+    font-size: 0.74rem;
+    text-align: center;
+  }
+  .ws-step-state {
+    color: #687789;
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+  .ws-step.done .ws-step-dot {
+    border-color: #123f62;
+    background: #123f62;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(18, 63, 98, 0.25);
+  }
+  .ws-step.done .ws-step-label {
+    color: #123f62;
+  }
+  .ws-step.current .ws-step-dot {
+    border-color: #c9a227;
+    background: #fff8df;
+    color: #604100;
+    box-shadow: 0 0 0 4px #fff0c9;
+  }
+  .ws-step.current .ws-step-label,
+  .ws-step.current .ws-step-state {
+    color: #775300;
+  }
+  @media (max-width: 720px) {
+    .ws-stepper-wrap::after {
+      display: none;
+    }
+    .ws-stepper.dense .ws-step-dot {
+      width: 34px;
+      height: 34px;
+    }
+    .ws-stepper {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1.1rem;
+      padding: 1.1rem 1.1rem 1.1rem 3rem;
+      overflow-x: visible;
+    }
+    .ws-stepper::before {
+      top: calc(1.1rem + 17px);
+      bottom: calc(1.1rem + 17px);
+      left: calc(3rem + 15.5px);
+      right: auto;
+      width: 3px;
+      height: auto;
+    }
+    .ws-step {
+      flex: none;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.7rem;
+    }
+    .ws-step::after {
+      display: none;
+    }
+    .ws-step-dot {
+      flex: none;
+      width: 34px;
+      height: 34px;
+      font-size: 0.8rem;
+    }
+    .ws-step-text {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0 0.5rem;
+      text-align: left;
+    }
+    .ws-step-label,
+    .ws-step-sub {
+      padding: 0;
+      text-align: left;
+    }
+  }
+
+  /* BackLink — ปุ่ม outline "กลับรายการ" */
+  .ws-backlink {
+    @apply mb-3 inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy no-underline transition hover:bg-slate-50;
+  }
+
+  /* DetailHeaderCard — .ws-case-head */
+  .ws-case-head {
+    @apply mb-4 flex min-w-0 flex-wrap items-start justify-between gap-4 px-[1.2rem] py-4;
+  }
+  @media (max-width: 720px) {
+    .ws-case-head {
+      @apply flex-col flex-nowrap items-stretch;
+    }
+    .ws-case-head > div:last-child {
+      @apply items-start text-left;
+    }
+  }
+  .ws-case-meta {
+    @apply flex flex-wrap gap-x-[1.1rem] gap-y-[0.45rem] text-[0.8rem] text-muted;
+  }
+
+  /* Sidebar (ก4/ก5) */
+  .ws-nav-label {
+    @apply px-3 pb-1 pt-2 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-[rgba(184,196,216,0.62)];
+  }
+  .ws-nav-link {
+    @apply my-0.5 flex min-h-[42px] w-full items-center gap-3 rounded-lg border-0 bg-transparent px-3 py-[9px] text-left text-[13.5px] font-medium text-white/75 no-underline transition hover:bg-white/10 hover:text-white;
+  }
+  /* active มีคลาส text-gold เป็นตัวบอกสถานะให้ e2e (TC-051) — สีตัวอักษรจริงยังเป็นน้ำเงินเข้มบนพื้นทอง */
+  .ws-nav-link.active {
+    @apply bg-[linear-gradient(135deg,#c9a84c,#a8852a)] font-bold !text-navy-deep shadow-[0_4px_15px_rgba(201,168,76,0.32)];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-dashboard-card,
+  .ws-tab,
+  .ws-nav-link {
+    transition: none;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Official A4 Government Document Styles */
+.paper-a4 {
+  position: relative;
+  width: 100%;
+  background-color: #ffffff;
+  box-shadow: 0 4px 20px rgba(16, 40, 75, 0.12);
+  font-family: 'TH Sarabun New', 'Sarabun', 'Thonburi', Tahoma, sans-serif;
+  box-sizing: border-box;
+}
+
+/*
+ * สัดส่วน A4 (210:297) เป็นความสูง "ขั้นต่ำ" — ใช้เทคนิค float + padding-top
+ * แทน aspect-ratio เพื่อให้หน้ากระดาษยืดได้เมื่อเนื้อหายาวเกิน แทนที่จะถูกตัดทิ้ง
+ */
+.paper-a4::before {
+  content: '';
+  float: left;
+  width: 0;
+  padding-top: 141.43%;
+}
+.paper-a4::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.official-dotted-fill {
+  border-bottom: 1px dotted #4b5563;
+  color: #173e70;
+  font-weight: 700;
+  padding: 0 4px;
+  display: inline;
+}
+
+.official-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border: 1px solid #334155;
+  margin: 0 3px;
+  vertical-align: -2px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.official-id-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 17px;
+  border: 1px solid #475569;
+  font-size: 10px;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+/* SweetAlert2 — ฟอนต์/สีปุ่มเทียบมาตรฐาน workspace (ข้อความและ flow เดิม) */
+.swal2-popup {
+  font-family: 'Sarabun', 'Noto Sans Thai', Tahoma, sans-serif;
+  max-width: calc(100vw - 2rem);
+}
+/* call site เดิมที่ส่ง confirmButtonColor '#16558f' / cancel '#62738a' ให้ได้โทน navy โดยไม่ต้องแก้ทีละที่ */
+.swal2-confirm.swal2-styled[style*='rgb(22, 85, 143)'] {
+  background-color: #082b50 !important;
+}
+.swal2-cancel.swal2-styled[style*='rgb(98, 115, 138)'] {
+  background-color: #506276 !important;
+}
+.swal2-styled:focus-visible {
+  box-shadow: 0 0 0 3px rgba(202, 166, 49, 0.45) !important;
+}

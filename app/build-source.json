@@ -1,0 +1,22 @@
+{
+  "source": "/Users/teerut/Dev/Work/mercil-pacc/ecmis",
+  "ref": "WORKTREE:witness-protection",
+  "commit": "991f1210bf04417b2af2d70dcd3ed2477a3a434d",
+  "built_at_utc": "2026-10-06T05:26:09+00:00",
+  "patch_scope": "deployment paths, initial fixture data, A6 cross-module storage isolation only",
+  "patched_source_files": [
+    "index.html",
+    "src/components/forms/paper/PaperPrimitives.tsx",
+    "src/components/layout/Sidebar.tsx",
+    "src/index.css",
+    "src/lib/constants.ts",
+    "src/lib/flowGuide.ts",
+    "src/lib/mockState.ts",
+    "src/lib/presentationCases.ts",
+    "src/main.tsx",
+    "src/routes/mock-state.tsx",
+    "src/store/useCaseStore.ts",
+    "vite.config.ts"
+  ],
+  "base_path": "/witness-protection/app/"
+}

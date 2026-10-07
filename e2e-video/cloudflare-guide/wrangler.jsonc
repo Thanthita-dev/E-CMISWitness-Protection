@@ -1,0 +1,11 @@
+{
+  "name": "ecmis-witness-guide",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  // คู่มือภาพหน้าจอ (index.html + <เส้นทาง>/*.jpg + guide.json) — static assets ล้วน ไม่มีสคริปต์ worker
+  // deploy.mjs คัดลอกจาก ../output-guide ลง ./public ก่อน deploy
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "none"
+  }
+}
