@@ -1,5 +1,5 @@
 import React from 'react'
-import { createFileRoute, Link, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link, useParams, useSearch } from '@tanstack/react-router'
 import { BackLink } from '../../components/common/BackLink'
 import { DetailHeaderCard } from '../../components/common/DetailHeaderCard'
 import { CurrentStepCard } from '../../components/common/CurrentStepCard'
@@ -17,6 +17,7 @@ import { CaseLockScope } from '../../components/common/CaseLockScope'
 
 export const Route = createFileRoute('/termination/$caseNo')({
   component: TerminationCasePage,
+  validateSearch: (search: Record<string, unknown>): { source?: 'witness_kb7' } => ({ source: search.source === 'witness_kb7' ? 'witness_kb7' : undefined }),
 })
 
 /**
@@ -25,6 +26,7 @@ export const Route = createFileRoute('/termination/$caseNo')({
  */
 function TerminationCasePage() {
   const { caseNo } = useParams({ from: '/termination/$caseNo' })
+  const { source } = useSearch({ from: '/termination/$caseNo' })
   const { currentRole } = useAuthStore()
   const caseItem = useCaseStore((s) => s.cases.find((c) => c.no === caseNo))
 
@@ -83,7 +85,7 @@ function TerminationCasePage() {
         {formatThaiDate(caseItem.protectionEndAt)}
       </div>
 
-      <Kb15Section caseItem={caseItem} role={currentRole} />
+      <Kb15Section caseItem={caseItem} role={currentRole} initialSource={source} />
       <Kb16Section caseItem={caseItem} role={currentRole} />
       <Kb17Section caseItem={caseItem} role={currentRole} />
 

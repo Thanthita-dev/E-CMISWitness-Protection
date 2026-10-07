@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { useFormDraftStore, selectCaseDraft } from '../../store/useFormDraftStore'
 import { Button } from '../common/Button'
 import { ThaiDateHint } from '../common/ThaiDateHint'
 import { SectionCard } from './SectionCard'
@@ -46,8 +48,11 @@ export const TRIGGER_FIELDS: Record<
  * กฎที่หน้านี้บังคับ (WIT1130): การยุติยังไม่เกิดขึ้นเพียงเพราะรับ คบ.7 หรือจัดทำ คบ.15
  * ต้องรอคำสั่ง คบ.16 ที่ลงนามและถึงวันที่มีผลก่อน
  */
-export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ caseItem, role }) => {
+export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string; initialSource?: 'witness_kb7' }> = ({ caseItem, role, initialSource }) => {
   const { recordTerminationTrigger, addTerminationAdditionalReason, draftKb15 } = useCaseStore()
+  const navigate = useNavigate()
+  const kb7Draft = selectCaseDraft(useFormDraftStore.getState(), 7, caseItem.no)
+  const openKb7 = () => navigate({ to: '/form/$formId', params: { formId: '7' }, search: { caseNo: caseItem.no, from: 'termination' } })
   const kb15 = caseItem.kb15
   const trigger = caseItem.terminationTrigger
 
@@ -55,11 +60,11 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
   const isSupervisor = ['supervisor', 'admin'].includes(role)
 
   const [triggerForm, setTriggerForm] = useState<Omit<TerminationTrigger, 'recordedAt' | 'recordedBy'>>({
-    source: 'due_or_officer',
+    source: initialSource || 'due_or_officer',
     ref: '',
     documentName: '',
     receivedAt: todayIso(),
-    detail: '',
+    detail: initialSource ? String(kb7Draft['เหตุผลการยุติ'] || '') : '',
   })
 
   // TC-144 — แขนงที่ยังไม่ถูกใช้เป็นเหตุหลักหรือเหตุเสริม ใช้เพิ่มเหตุยุติที่เกิดพร้อมกันได้ครบถ้วน
@@ -197,13 +202,22 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
               <div className="grid gap-3 md:grid-cols-3">
                 {TRIGGER_CHOICES.map((choice) => (
                   <label key={choice.value} className={`flex min-h-[88px] cursor-pointer items-start gap-3 rounded-xl border p-4 transition focus-within:ring-2 focus-within:ring-blue focus-within:ring-offset-2 ${triggerForm.source === choice.value ? 'border-blue bg-blue-soft text-navy' : 'border-line text-ink hover:bg-soft'}`}>
-                    <input type="radio" name={`trigger-${caseItem.no}`} checked={triggerForm.source === choice.value} onChange={() => setTriggerForm((p) => ({ ...p, source: choice.value }))} className="mt-1 accent-blue" />
+                    <input type="radio" name={`trigger-${caseItem.no}`} checked={triggerForm.source === choice.value} onChange={() => {
+                    setTriggerForm((p) => ({ ...p, source: choice.value }))
+                    if (choice.value === 'witness_kb7') void openKb7()
+                  }} className="mt-1 accent-blue" />
                     <span className="min-w-0"><span className="block text-[0.9rem] font-semibold">{choice.label}</span><span className="mt-1 block text-[0.8rem] text-muted">{choice.caption}</span></span>
                   </label>
                 ))}
               </div>
             </fieldset>
 
+            {triggerForm.source === 'witness_kb7' && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-soft p-4">
+                <span className="font-semibold text-navy">คบ.7 · คำร้องขอยุติการคุ้มครองพยาน</span>
+                <Button type="button" onClick={() => void openKb7()}>เปิดแบบ คบ.7</Button>
+              </div>
+            )}
             <div className="grid gap-4 border-t border-line pt-4 sm:grid-cols-2">
               <label className="block">
                 <span className="ws-label">{fields.refLabel} *</span>

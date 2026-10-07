@@ -99,6 +99,10 @@ export const buildSeedForCase = (
   kb2Draft?: Record<string, any>
 ): Record<string, any> => {
   if (formId === 9 || formId === 10) return { 'คำร้องลงวันที่': caseItem.createdAt?.slice(0, 10) || '', ...caseItem.resultNotices?.[formId]?.fields }
+  if (formId === 7) {
+    const name = splitName(caseItem.person)
+    return { 'ชื่อผู้ยื่น': name.first, 'นามสกุลผู้ยื่น': name.last, 'ชื่อพยาน': name.first, 'นามสกุลพยาน': name.last, 'ฐานะผู้ยื่น': 'พยาน', 'ยุติให้ใคร': 'พยาน' }
+  }
   if (formId === 11) return buildKb11Seed(caseItem)
   if (formId === 1) return buildKb1Seed(caseItem, kb2Draft)
   return { ...(CASE_NEUTRAL_DEFAULTS[formId] || {}) }

@@ -8,14 +8,16 @@ import { Area, Checks, DocHeaderFields, EditorShell, Field, Grid, Radios, Sectio
 
 interface Kb7FormEditorProps {
   onSaved?: () => void
+  caseNo?: string
+  terminationIntake?: boolean
 }
 
 /** คบ.7 — คำร้องขอยุติการคุ้มครองพยาน (ข้อ 1–8 ตามต้นฉบับ) */
-export const Kb7FormEditor: React.FC<Kb7FormEditorProps> = ({ onSaved }) => {
+export const Kb7FormEditor: React.FC<Kb7FormEditorProps> = ({ onSaved, caseNo, terminationIntake }) => {
   const { getDraft, updateField } = useFormDraftStore()
   const { getCase, requestTermination } = useCaseStore()
   const draft = getDraft(7)
-  const caseItem = getCase()
+  const caseItem = getCase(caseNo)
 
   const reason = draft['เหตุผลการยุติ'] || ''
 
@@ -24,7 +26,7 @@ export const Kb7FormEditor: React.FC<Kb7FormEditorProps> = ({ onSaved }) => {
       code="คบ.7"
       formId={7}
       title="คำร้องขอยุติการคุ้มครองพยาน"
-      hint="เจ้าพนักงาน ป.ป.ท. จัดทำเสนอให้เลขาธิการฯ ลงนามรับรองเพื่อสั่งยุติการปฏิบัติงานคุ้มครองพยาน"
+      hint="บันทึกคำขอของพยาน แล้วจัดทำ คบ.15 เสนอพิจารณา"
       footer={
         <>
           <Button
@@ -39,6 +41,11 @@ export const Kb7FormEditor: React.FC<Kb7FormEditorProps> = ({ onSaved }) => {
             onClick={() => {
               if (!caseItem) return showToast('ไม่พบแฟ้มคำร้องที่เปิดอยู่')
               if (!String(reason).trim()) return showToast('กรุณาระบุเหตุผลในการขอให้ยุติการคุ้มครอง')
+              if (terminationIntake) {
+                showToast('บันทึกแบบ คบ.7 แล้ว กรุณาแนบฉบับที่พยานลงนามเพื่อดำเนินเรื่องยุติต่อ')
+                onSaved?.()
+                return
+              }
               requestTermination(caseItem.no, reason)
               showToast('เสนอ คบ.7 ให้เลขาธิการ ป.ป.ท. ลงนามสั่งยุติแล้ว')
               onSaved?.()
@@ -46,7 +53,7 @@ export const Kb7FormEditor: React.FC<Kb7FormEditorProps> = ({ onSaved }) => {
             className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-navy-mid px-6 py-[0.68rem] text-[0.88rem] font-semibold text-white hover:bg-navy transition"
           >
             <i className="fa-solid fa-circle-stop" />
-            เสนอเลขาธิการฯ ลงนามสั่งยุติ
+            {terminationIntake ? 'บันทึก คบ.7 และกลับเรื่องยุติ' : 'เสนอเลขาธิการฯ ลงนามสั่งยุติ'}
           </Button>
         </>
       }

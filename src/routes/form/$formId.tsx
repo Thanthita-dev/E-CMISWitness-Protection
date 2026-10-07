@@ -42,11 +42,11 @@ export const Route = createFileRoute('/form/$formId')({
      * 'method4'  = ส่งมอบตามวิธีที่ 4 ข้อ 15(4) โดยคำสั่งยังอยู่กับ ป.ป.ท. (WIT0848)
      * ไม่ระบุ    = ส่งต่อหน่วยงานภายนอกเมื่อครบเพดาน 180 วัน (แท็บ 11C) ซึ่งเป็นค่าเดิมของระบบ
      */
-    validateSearch: (search: Record<string, unknown>): { caseNo?: string; context?: 'method4'; from?: 'forms' } => ({
+    validateSearch: (search: Record<string, unknown>): { caseNo?: string; context?: 'method4'; from?: 'forms' | 'termination' } => ({
         caseNo: typeof search.caseNo === 'string' ? search.caseNo : undefined,
         context: search.context === 'method4' ? 'method4' : undefined,
         /** TC-053 — เปิดมาจากเมนู แบบฟอร์ม คบ. (/forms) ปุ่มกลับและหลังบันทึกต้องกลับหน้ารายการแบบฟอร์ม */
-        from: search.from === 'forms' ? 'forms' : undefined,
+        from: search.from === 'forms' || search.from === 'termination' ? search.from : undefined,
     }),
 })
 
@@ -146,12 +146,14 @@ function FormDetailPage() {
     }, [caseNo, getCase, currentRole, currentOfficerUserId])
 
     /** เปิดจากแฟ้ม = กลับแฟ้ม · เปิดจากเมนูแบบฟอร์ม = กลับรายการแบบฟอร์ม · นอกนั้นกลับทะเบียน (TC-053) */
-    const backTo = caseNo
+    const backTo = caseNo && from === 'termination'
+        ? ({ to: '/termination/$caseNo', params: { caseNo }, search: { source: 'witness_kb7' as const } } as const)
+        : caseNo
         ? ({ to: '/dossier/$caseNo', params: { caseNo } } as const)
         : from === 'forms'
           ? ({ to: '/forms' } as const)
           : ({ to: '/registry' } as const)
-    const backLabel = caseNo ? 'กลับแฟ้มคำร้อง' : from === 'forms' ? 'กลับรายการแบบฟอร์ม' : 'กลับทะเบียน'
+    const backLabel = from === 'termination' && caseNo ? 'กลับเรื่องยุติการคุ้มครอง' : caseNo ? 'กลับแฟ้มคำร้อง' : from === 'forms' ? 'กลับรายการแบบฟอร์ม' : 'กลับทะเบียน'
 
     const handleSaved = () => {
         if (formNumber === 14 && caseNo) { navigate({ to: '/protection-extension/$caseNo', params: { caseNo } }); return }
@@ -173,7 +175,7 @@ function FormDetailPage() {
             case 6:
                 return <Kb6FormEditor onSaved={handleSaved} caseNo={caseNo} />
             case 7:
-                return <Kb7FormEditor onSaved={handleSaved} />
+                return <Kb7FormEditor onSaved={handleSaved} caseNo={caseNo} terminationIntake={from === 'termination'} />
             case 11:
                 return <Kb11FormEditor onSaved={handleSaved} />
             case 12:
@@ -208,7 +210,7 @@ function FormDetailPage() {
 
     return (
         <div className="space-y-6">
-            <BackLink to={backTo.to} params={'params' in backTo ? backTo.params : undefined}>{backLabel}</BackLink>
+            <BackLink to={backTo.to} params={'params' in backTo ? backTo.params : undefined} search={'search' in backTo ? backTo.search : undefined}>{backLabel}</BackLink>
 
             <DetailHeaderCard
                 kicker="แบบฟอร์ม คบ. · จำลองกระดาษ A4"
