@@ -12,6 +12,7 @@ import { useAuthStore } from '../../store/useAuthStore'
 import { deriveEpisode, summarizeEpisode } from '../../lib/episode'
 import { getTerminationProgress } from '../../lib/terminationProgress'
 import { formatThaiDate } from '../../lib/utils'
+import { monthLabel } from '../../lib/protectionMonths'
 import { CaseLockScope } from '../../components/common/CaseLockScope'
 
 export const Route = createFileRoute('/termination/$caseNo')({
@@ -77,8 +78,8 @@ function TerminationCasePage() {
 
       {/* WIT1124 — ฐานข้อมูลของสำนวนที่รับเข้ากระบวนการยุติ */}
       <div className="rounded-lg border border-line bg-soft p-3 text-[0.8rem] leading-relaxed text-slate-600">
-        สถานะ {caseItem.status} · สะสม {summary.cumulative}/{summary.cap} วัน
-        {summary.remaining > 0 ? ` · คงเหลือ ${summary.remaining} วัน` : ' · ครบเพดานแล้ว'} · คำสั่งเดิมสิ้นสุด{' '}
+        สถานะ {caseItem.status} · สะสม {monthLabel(summary.atCap ? 6 : Math.min(6, summary.cumulative / summary.cap * 6))} / 6 เดือน
+        {summary.remaining > 0 ? ` · คงเหลือ ${monthLabel(summary.remaining / summary.cap * 6)}` : ' · ครบเพดานแล้ว'} · คำสั่งเดิมสิ้นสุด{' '}
         {formatThaiDate(caseItem.protectionEndAt)}
       </div>
 

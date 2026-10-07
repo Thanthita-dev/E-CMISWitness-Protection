@@ -9,7 +9,12 @@ import { formatThaiDate } from '../../lib/utils'
 import { showToast } from '../../lib/swal'
 import { Kb15ReviewActions } from './Kb15ReviewActions'
 
-const todayIso = () => new Date().toISOString().slice(0, 10)
+const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+const TRIGGER_CHOICES = [
+  { value: 'witness_kb7', label: 'พยานขอยุติ', caption: 'คบ.7', icon: 'fa-user' },
+  { value: 'external_letter', label: 'หนังสือภายนอก', caption: 'รับผ่านสารบรรณ', icon: 'fa-envelope-open-text' },
+  { value: 'due_or_officer', label: 'เจ้าหน้าที่เสนอ / ครบกำหนด', caption: 'ผลประเมินล่าสุด', icon: 'fa-clipboard-check' },
+] as const
 
 /** WIT1126-WIT1128 — สิ่งที่ต้องกรอกต่างกันตามแขนงของเหตุยุติ (ใช้ร่วมกับ ReviewSection ที่แท็บ 11A) */
 export const TRIGGER_FIELDS: Record<
@@ -74,16 +79,9 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
 
   return (
     <SectionCard
-      title="จัดทำเรื่องยุติการคุ้มครอง (คบ.7 / คบ.15)"
-      hint="การยุติยังไม่เกิดขึ้นเพียงเพราะรับ คบ.7 หรือจัดทำ คบ.15 — ต้องรอคำสั่ง คบ.16 และวันที่มีผล"
+      title="เริ่มเรื่องยุติการคุ้มครอง"
+      hint="บันทึกที่มา แล้วจัดทำ คบ.15 เสนอพิจารณา"
     >
-      {/* ---------- WIT1130 — กฎที่ต้องเห็นตลอดเวลา ---------- */}
-      <div className="ws-callout text-[0.85rem] leading-relaxed">
-        <i className="fa-solid fa-triangle-exclamation mr-1.5" />
-        <strong>ข้อควรทราบ:</strong> สถานะ "ยุติ" จะเกิดขึ้นก็ต่อเมื่อมีคำสั่ง คบ.16 ที่ลงนามแล้ว
-        และถึงวันที่คำสั่งมีผลเท่านั้น การรับ คบ.7 หรือจัดทำ คบ.15 ยังไม่ทำให้การคุ้มครองสิ้นสุด
-      </div>
-
       {/* ---------- WIT1125-WIT1128 — เหตุเริ่มยุติมาจากทางใด ---------- */}
       {trigger ? (
         <div className="rounded-lg border border-line bg-soft p-3 text-[0.8rem] text-slate-700 space-y-1">
@@ -193,70 +191,40 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
         </div>
       ) : (
         isOfficer && (
-          <div className="space-y-2 rounded-lg border border-slate-200 p-3">
-            <span className="ws-label">
-              เหตุเริ่มยุติมาจากทางใด
-            </span>
-            <div className="grid gap-1.5">
-              {TERMINATION_TRIGGERS.map((t) => (
-                <label
-                  key={t.value}
-                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-2.5 text-[0.8rem] transition ${
-                    triggerForm.source === t.value
-                      ? 'border-blue bg-blue-50/60 text-navy-deep'
-                      : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={`trigger-${caseItem.no}`}
-                    checked={triggerForm.source === t.value}
-                    onChange={() => setTriggerForm((p) => ({ ...p, source: t.value as TerminationTrigger['source'] }))}
-                    className="mt-0.5 accent-blue"
-                  />
-                  <span>
-                    {t.label}
-                  </span>
-                </label>
-              ))}
-            </div>
+          <div className="space-y-4" data-testid="termination-trigger-form">
+            <fieldset>
+              <legend className="ws-label">ที่มาของเรื่อง</legend>
+              <div className="grid gap-3 md:grid-cols-3">
+                {TRIGGER_CHOICES.map((choice) => (
+                  <label key={choice.value} className={`flex min-h-[88px] cursor-pointer items-start gap-3 rounded-xl border p-4 transition focus-within:ring-2 focus-within:ring-blue focus-within:ring-offset-2 ${triggerForm.source === choice.value ? 'border-blue bg-blue-soft text-navy' : 'border-line text-ink hover:bg-soft'}`}>
+                    <input type="radio" name={`trigger-${caseItem.no}`} checked={triggerForm.source === choice.value} onChange={() => setTriggerForm((p) => ({ ...p, source: choice.value }))} className="mt-1 accent-blue" />
+                    <span className="min-w-0"><span className="block text-[0.9rem] font-semibold">{choice.label}</span><span className="mt-1 block text-[0.8rem] text-muted">{choice.caption}</span></span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
 
-            <div className="grid gap-2 sm:grid-cols-2">
-              <input
-                value={triggerForm.ref}
-                onChange={(e) => setTriggerForm((p) => ({ ...p, ref: e.target.value }))}
-                placeholder={fields.refLabel}
-                className="ws-input"
-              />
+            <div className="grid gap-4 border-t border-line pt-4 sm:grid-cols-2">
               <label className="block">
-                <span className="block text-[0.8rem] text-muted mb-1">วันที่รับเรื่อง / วันครบกำหนด</span>
-                <input
-                  type="date"
-                  value={triggerForm.receivedAt}
-                  onChange={(e) => setTriggerForm((p) => ({ ...p, receivedAt: e.target.value }))}
-                  className="ws-input w-full"
-                />
+                <span className="ws-label">{fields.refLabel} *</span>
+                <input value={triggerForm.ref} onChange={(e) => setTriggerForm((p) => ({ ...p, ref: e.target.value }))} placeholder={fields.refLabel} className="ws-input w-full" />
+              </label>
+              <label className="block">
+                <span className="ws-label">{triggerForm.source === 'due_or_officer' ? 'วันที่เสนอ / วันครบกำหนด' : 'วันที่รับเรื่อง'}</span>
+                <input type="date" value={triggerForm.receivedAt} onChange={(e) => setTriggerForm((p) => ({ ...p, receivedAt: e.target.value }))} className="ws-input w-full" />
                 <ThaiDateHint value={triggerForm.receivedAt} testId="kb15-received-be" />
               </label>
             </div>
-
-            {/* WIT1127 — หนังสือภายนอกต้องเข้ากับ "แฟ้มเดิม" ไม่เปิดแฟ้มใหม่ */}
-            {fields.docLabel && (
-              <input
-                value={triggerForm.documentName}
-                onChange={(e) => setTriggerForm((p) => ({ ...p, documentName: e.target.value }))}
-                placeholder={`${fields.docLabel} (อัปโหลดเข้าแฟ้ม ${caseItem.no})`}
-                className="ws-input w-full"
-              />
-            )}
-
-            <input
-              value={triggerForm.detail}
-              onChange={(e) => setTriggerForm((p) => ({ ...p, detail: e.target.value }))}
-              placeholder={fields.detailLabel}
-              className="ws-input w-full"
-            />
-
+            {fields.docLabel && <label className="block">
+              <span className="ws-label">{fields.docLabel} *</span>
+              <input value={triggerForm.documentName} onChange={(e) => setTriggerForm((p) => ({ ...p, documentName: e.target.value }))} placeholder={`${fields.docLabel} (อัปโหลดเข้าแฟ้ม ${caseItem.no})`} className="ws-input w-full" />
+            </label>}
+            <label className="block">
+              <span className="ws-label">{triggerForm.source === 'external_letter' ? 'หน่วยงานผู้ส่งหนังสือ' : 'เหตุผลและข้อมูลประกอบ'}</span>
+              <textarea rows={3} value={triggerForm.detail} onChange={(e) => setTriggerForm((p) => ({ ...p, detail: e.target.value }))} placeholder={fields.detailLabel} className="ws-input w-full" />
+            </label>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+              <p className="text-[0.8rem] text-muted">มีผลยุติเมื่อ คบ.16 ลงนามและถึงวันที่กำหนด</p>
             <Button
               type="button"
               onClick={() => {
@@ -278,8 +246,9 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
               }}
               className="rounded-lg bg-blue px-5 py-2 text-[0.8rem] font-bold text-white hover:bg-blue-dark transition"
             >
-              บันทึกเหตุเริ่มยุติ
+              บันทึกเรื่องยุติ
             </Button>
+            </div>
           </div>
         )
       )}
