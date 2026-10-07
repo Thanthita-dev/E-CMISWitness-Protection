@@ -8,7 +8,7 @@ import { CaseItem } from '../../types/case'
 import { formatThaiDate, parseAnyDate } from '../../lib/utils'
 import { showToast } from '../../lib/swal'
 
-const todayIso = () => new Date().toISOString().slice(0, 10)
+const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 
 /**
  * ขั้น 11D (ส่วนแรก) — รับเรื่องจาก 11C พิจารณาอนุมัติ แล้วออกคำสั่งยุติ คบ.16
@@ -19,66 +19,27 @@ const todayIso = () => new Date().toISOString().slice(0, 10)
  */
 export const Kb16Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ caseItem, role }) => {
   const navigate = useNavigate()
-  const { decideTerminationApproval, issueKb16, signKb16, recordOperationStopped } = useCaseStore()
+  const { decideTerminationApproval, signKb16, recordOperationStopped } = useCaseStore()
   const kb16 = caseItem.kb16
   const approval = caseItem.terminationApproval
 
-  const [form, setForm] = useState({
-    orderNo: '',
-    reason: caseItem.kb15?.summary || '',
-    issuedAt: todayIso(),
-    effectiveAt: todayIso(),
-    backdatedReason: '',
-  })
   const [stoppedAt, setStoppedAt] = useState(todayIso())
   const [decisionNote, setDecisionNote] = useState('')
 
-  const isOfficer = ['officer', 'case_owner', 'admin'].includes(role)
+  const isOfficer = ['officer', 'case_owner', 'got_officer', 'admin'].includes(role)
   const isAuthority = ['secretary', 'director', 'admin'].includes(role)
   const endorsed = caseItem.kb15?.status === 'endorsed'
 
   if (!endorsed && !kb16) return null
 
-  /** TC-149 — อนุญาตให้วันที่มีผลย้อนหลังก่อนวันออกคำสั่งได้ แต่ต้องบังคับระบุเหตุผลตามระเบียบ */
-  const isBackdated = Boolean(form.issuedAt) && Boolean(form.effectiveAt) && form.effectiveAt < form.issuedAt
-
-  /** ต้องกรอกครบทั้งสี่ช่องก่อน จึงจะเปิดแฟ้มคดีเพื่อให้เจ้าหน้าที่ ปปท. กรอก คบ.16 ต่อได้ */
-  const draftReady =
-    Boolean(form.orderNo.trim()) &&
-    Boolean(form.reason.trim()) &&
-    Boolean(form.issuedAt) &&
-    Boolean(form.effectiveAt) &&
-    (!isBackdated || Boolean(form.backdatedReason.trim()))
-
-  const effective = parseAnyDate(kb16?.effectiveAt)
+  const effective = parseAnyDate(/^\d{4}-\d{2}-\d{2}$/.test(kb16?.effectiveAt || '') ? `${kb16?.effectiveAt}T00:00:00+07:00` : kb16?.effectiveAt)
   const inForce = Boolean(kb16?.signedAt && effective && effective.getTime() <= Date.now())
 
   return (
     <SectionCard
-      title="พิจารณาและออกคำสั่งยุติ (คบ.16)"
-      hint="ห้ามเริ่มสถานะยุติก่อนมีคำสั่งที่ลงนาม และคำสั่งต้องถึงวันที่มีผลก่อน"
+      title="คำสั่งยุติการคุ้มครอง · คบ.16"
+      hint="จัดทำคำสั่ง → เสนอลงนาม → แจ้งพยานด้วย คบ.17"
     >
-      {/* ---------- WIT1135 — รับ คบ.7 / คบ.15 และความเห็นจาก 11C ---------- */}
-      {caseItem.kb15 && (
-        <div className="rounded-lg border border-line bg-soft p-3 text-[0.8rem] leading-relaxed text-slate-700">
-          <strong className="text-navy-deep">เรื่องที่รับจากขั้นจัดทำเรื่องยุติ (คบ.15)</strong>
-          <div className="mt-1">
-            คบ.15 ฉบับที่ {caseItem.kb15.version} · {caseItem.kb15.summary}
-          </div>
-          {caseItem.terminationTrigger?.ref && <div>ต้นเรื่อง: {caseItem.terminationTrigger.ref}</div>}
-          {/* TC-144 — เหตุยุติเสริมที่เกิดพร้อมกับเหตุหลัก ต้องเห็นต่อเนื่องมาถึงขั้นออกคำสั่ง คบ.16 ด้วย */}
-          {(caseItem.terminationTrigger?.additionalReasons || []).length > 0 && (
-            <div>
-              เหตุยุติเสริม:{' '}
-              {(caseItem.terminationTrigger?.additionalReasons || [])
-                .map((r) => r.ref || r.source)
-                .join(' · ')}
-            </div>
-          )}
-          {caseItem.kb15.reviewNote && <div>ความเห็นผู้บังคับบัญชา: {caseItem.kb15.reviewNote}</div>}
-        </div>
-      )}
-
       {/* ---------- WIT1136 — ผู้มีอำนาจพิจารณาก่อน จึงจะร่าง คบ.16 ได้ ---------- */}
       {!approval && isAuthority && (
         <div className="space-y-2 rounded-lg border border-slate-200 p-3">
@@ -138,91 +99,14 @@ export const Kb16Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
       )}
 
       {approval?.approved && !kb16 && (
-        <p className="text-[0.8rem] text-emerald-700">
-          <i className="fa-solid fa-circle-check mr-1" />
-          อนุมัติให้ยุติเมื่อ {approval.decidedAt} โดย {approval.decidedBy} — จัดทำร่างคำสั่งได้
-        </p>
-      )}
-
-      {/* ---------- WIT1138 — ร่าง คบ.16 ---------- */}
-      {approval?.approved && !kb16 && isOfficer && (
-        <div className="space-y-2">
-          <div className="grid gap-2 sm:grid-cols-3">
-            <input
-              value={form.orderNo}
-              onChange={(e) => setForm((p) => ({ ...p, orderNo: e.target.value }))}
-              placeholder="คำสั่งที่"
-              className="ws-input"
-            />
-            <label className="block">
-              <span className="block text-[0.8rem] text-muted mb-1">วันที่ออกคำสั่ง</span>
-              <input
-                type="date"
-                value={form.issuedAt}
-                onChange={(e) => setForm((p) => ({ ...p, issuedAt: e.target.value }))}
-                className="ws-input w-full"
-              />
-              <ThaiDateHint value={form.issuedAt} testId="kb16-issued-be" />
-            </label>
-            <label className="block">
-              <span className="block text-[0.8rem] text-muted mb-1">วันที่คำสั่งมีผล</span>
-              <input
-                type="date"
-                value={form.effectiveAt}
-                onChange={(e) => setForm((p) => ({ ...p, effectiveAt: e.target.value }))}
-                className="ws-input w-full"
-              />
-              <ThaiDateHint value={form.effectiveAt} testId="kb16-effective-be" />
-            </label>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-soft p-5">
+          <div>
+            <span className="ws-status success">อนุมัติให้จัดทำคำสั่งแล้ว</span>
+            <p className="mt-3 font-semibold text-navy">คบ.16 · คำสั่งยุติการให้ความคุ้มครองพยาน</p>
+            <p className="mt-1 text-sm text-muted">กรอกเลขคำสั่ง เหตุยุติ และวันที่ในแบบฟอร์ม</p>
           </div>
-          <input
-            value={form.reason}
-            onChange={(e) => setForm((p) => ({ ...p, reason: e.target.value }))}
-            placeholder="เหตุยุติตามคำสั่ง"
-            className="ws-input w-full"
-          />
-
-          {/* ---------- TC-149 — วันที่มีผลย้อนหลังก่อนวันออกคำสั่ง: อนุญาตแต่ต้องบังคับเหตุผล ---------- */}
-          {isBackdated && (
-            <div className="space-y-2 rounded-lg border border-rose-300 bg-rose-50/70 p-3">
-              <p className="text-[0.8rem] font-bold text-rose-700">
-                <i className="fa-solid fa-triangle-exclamation mr-1.5" />
-                วันที่มีผลย้อนหลังก่อนวันออกคำสั่ง — ต้องระบุเหตุผลตามระเบียบ
-              </p>
-              <textarea
-                value={form.backdatedReason}
-                onChange={(e) => setForm((p) => ({ ...p, backdatedReason: e.target.value }))}
-                placeholder="ระบุเหตุผลที่วันที่มีผลย้อนหลังก่อนวันออกคำสั่ง"
-                rows={2}
-                className="ws-input border w-full border-rose-300 focus:border-rose-500"
-              />
-            </div>
-          )}
-
-          <Button
-            type="button"
-            disabled={!draftReady}
-            title={
-              draftReady
-                ? 'เปิดแฟ้มคดีและเพิ่มแบบ คบ.16 เข้าแฟ้ม'
-                : isBackdated
-                  ? 'กรุณาระบุเหตุผลที่วันที่มีผลย้อนหลังก่อนวันออกคำสั่ง'
-                  : 'กรุณากรอกคำสั่งที่ วันที่ออกคำสั่ง วันที่คำสั่งมีผล และเหตุยุติให้ครบก่อน'
-            }
-            onClick={() => {
-              /* เพิ่ม คบ.16 เข้ารายการแบบฟอร์มในแฟ้ม (extraForms) แล้วพาไปหน้าแฟ้มคดีให้เจ้าหน้าที่ ปปท. กรอกต่อ */
-              issueKb16(caseItem.no, {
-                ...form,
-                backdatedReason: isBackdated ? form.backdatedReason.trim() : undefined,
-              })
-              showToast('เพิ่มแบบ คบ.16 เข้าแฟ้มแล้ว — เปิดแฟ้มคดีเพื่อกรอกรายละเอียด')
-              navigate({ to: '/dossier/$caseNo', params: { caseNo: caseItem.no } })
-            }}
-            className="rounded-lg bg-blue px-5 py-2 text-[0.8rem] font-bold text-white hover:bg-blue-dark transition disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-muted disabled:shadow-none disabled:hover:bg-slate-300"
-          >
-            <i className="fa-solid fa-folder-open mr-1.5" />
-            เปิดแฟ้มคดี
-          </Button>
+          {isOfficer ? <Button type="button" onClick={() => navigate({ to: '/form/$formId', params: { formId: '16' }, search: { caseNo: caseItem.no, from: 'termination' } })}>จัดทำ คบ.16</Button>
+            : <span className="text-sm text-muted">รอผู้รับผิดชอบจัดทำ คบ.16</span>}
         </div>
       )}
 
@@ -270,21 +154,10 @@ export const Kb16Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
         </div>
       )}
 
-      {/* รอเจ้าหน้าที่กรอกแบบ คบ.16 ในแฟ้มแล้วกดส่งให้อนุมัติ ก่อนผู้มีอำนาจจึงจะลงนามได้ */}
       {kb16 && !kb16.signedAt && kb16.status !== 'submitted' && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-soft p-3 text-[0.8rem] text-slate-600">
-          <span>
-            <i className="fa-solid fa-hourglass-half mr-1.5" />
-            รอเจ้าหน้าที่กรอกแบบ คบ.16 ในแฟ้มแล้วกด “ส่งให้อนุมัติ” — ผู้มีอำนาจจึงจะลงนามได้
-          </span>
-          <Link
-            to="/dossier/$caseNo"
-            params={{ caseNo: caseItem.no }}
-            className="min-h-[38px] rounded-lg border border-[#9aabba] bg-white px-3 py-1.5 text-[0.85rem] font-semibold text-navy hover:bg-slate-50 transition"
-          >
-            <i className="fa-solid fa-folder-open mr-1.5" />
-            เปิดแฟ้มคดี
-          </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+          <span className="text-sm text-muted">ร่าง คบ.16 · ยังไม่เสนอลงนาม</span>
+          {isOfficer && <Button type="button" onClick={() => navigate({ to: '/form/$formId', params: { formId: '16' }, search: { caseNo: caseItem.no, from: 'termination' } })}>แก้ไขและส่ง คบ.16</Button>}
         </div>
       )}
 

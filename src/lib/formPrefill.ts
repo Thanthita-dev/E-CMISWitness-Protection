@@ -94,11 +94,15 @@ export const buildSeedForCase = (
   formId: number,
   caseItem: Pick<
     CaseItem,
-    'no' | 'person' | 'mainCaseNo' | 'intakeChannel' | 'intakeDocType' | 'source' | 'createdAt' | 'resultNotices' | 'orderedMethods' | 'approvedMethods'
+    'no' | 'person' | 'mainCaseNo' | 'intakeChannel' | 'intakeDocType' | 'source' | 'createdAt' | 'resultNotices' | 'orderedMethods' | 'approvedMethods' | 'kb16' | 'kb15'
   >,
   kb2Draft?: Record<string, any>
 ): Record<string, any> => {
   if (formId === 9 || formId === 10) return { 'คำร้องลงวันที่': caseItem.createdAt?.slice(0, 10) || '', ...caseItem.resultNotices?.[formId]?.fields }
+  if (formId === 16) {
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+    return { 'ชื่อพยาน': caseItem.person, 'เลขที่คำสั่ง': caseItem.kb16?.orderNo || '', 'ปีคำสั่ง': String(Number(today.slice(0, 4)) + 543), 'เหตุยุติ': caseItem.kb16?.reason || caseItem.kb15?.summary || '', 'วันที่ออกคำสั่ง': caseItem.kb16?.issuedAt || today, 'วันที่มีผล': caseItem.kb16?.effectiveAt || today, 'เหตุผลวันที่มีผลย้อนหลัง': caseItem.kb16?.backdatedReason || '' }
+  }
   if (formId === 7) {
     const name = splitName(caseItem.person)
     return { 'ชื่อผู้ยื่น': name.first, 'นามสกุลผู้ยื่น': name.last, 'ชื่อพยาน': name.first, 'นามสกุลพยาน': name.last, 'ฐานะผู้ยื่น': 'พยาน', 'ยุติให้ใคร': 'พยาน' }
@@ -114,7 +118,7 @@ export const buildSeedForCase = (
  * ไม่ใช่ร่างที่ค้างมาจากแฟ้มก่อนหน้า
  */
 export const activateCaseForms = (
-  caseItem: Pick<CaseItem, 'no' | 'person' | 'mainCaseNo' | 'intakeChannel' | 'intakeDocType' | 'source' | 'createdAt' | 'resultNotices' | 'orderedMethods' | 'approvedMethods'>,
+  caseItem: Pick<CaseItem, 'no' | 'person' | 'mainCaseNo' | 'intakeChannel' | 'intakeDocType' | 'source' | 'createdAt' | 'resultNotices' | 'orderedMethods' | 'approvedMethods' | 'kb16' | 'kb15'>,
   formIds: number[] = PER_CASE_FORMS
 ): void => {
   const { ensureDraftForCase } = useFormDraftStore.getState()

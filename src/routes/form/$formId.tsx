@@ -16,6 +16,7 @@ import { Kb3FormEditor } from '../../components/forms/Kb3FormEditor'
 import { Kb4FormEditor } from '../../components/forms/Kb4FormEditor'
 import { Kb5FormEditor } from '../../components/forms/Kb5FormEditor'
 import { Kb6FormEditor } from '../../components/forms/Kb6FormEditor'
+import { Kb16FormEditor } from '../../components/forms/Kb16FormEditor'
 import { Kb7FormEditor } from '../../components/forms/Kb7FormEditor'
 import { Kb11FormEditor } from '../../components/forms/Kb11FormEditor'
 import { Kb12FormEditor } from '../../components/forms/Kb12FormEditor'
@@ -147,7 +148,7 @@ function FormDetailPage() {
 
     /** เปิดจากแฟ้ม = กลับแฟ้ม · เปิดจากเมนูแบบฟอร์ม = กลับรายการแบบฟอร์ม · นอกนั้นกลับทะเบียน (TC-053) */
     const backTo = caseNo && from === 'termination'
-        ? ({ to: '/termination/$caseNo', params: { caseNo }, search: { source: 'witness_kb7' as const } } as const)
+        ? ({ to: '/termination/$caseNo', params: { caseNo }, search: { source: formNumber === 7 ? 'witness_kb7' as const : undefined } } as const)
         : caseNo
         ? ({ to: '/dossier/$caseNo', params: { caseNo } } as const)
         : from === 'forms'
@@ -184,6 +185,8 @@ function FormDetailPage() {
                 return <Kb13FormEditor onSaved={handleSaved} />
             case 14:
                 return <Kb14FormEditor onSaved={handleSaved} caseNo={caseNo} />
+            case 16:
+                return <Kb16FormEditor caseNo={caseNo} onSaved={handleSaved} />
             case 15:
                 return <Kb15FormEditor onSaved={handleSaved} />
             default:

@@ -76,11 +76,11 @@ export const Kb15Section: React.FC<{ caseItem: CaseItem; role: string; initialSo
 
   return (
     <SectionCard
-      title={trigger ? "จัดทำ คบ.15" : "เริ่มเรื่องยุติการคุ้มครอง"}
-      hint={trigger ? undefined : "บันทึกที่มา แล้วจัดทำ คบ.15 เสนอพิจารณา"}
+      title={trigger || kb15 ? "จัดทำ คบ.15" : "เริ่มเรื่องยุติการคุ้มครอง"}
+      hint={trigger || kb15 ? undefined : "บันทึกที่มา แล้วจัดทำ คบ.15 เสนอพิจารณา"}
     >
       {/* ---------- WIT1125-WIT1128 — เหตุเริ่มยุติมาจากทางใด ---------- */}
-      {!trigger && (
+      {!trigger && !kb15 && (
         isOfficer && (
           <div className="space-y-4" data-testid="termination-trigger-form">
             <fieldset>

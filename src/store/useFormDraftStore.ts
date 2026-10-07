@@ -38,7 +38,7 @@ export interface FormLock {
  * เมื่อเปิดแบบเดียวกันจากอีกแฟ้ม ระบบเก็บของแฟ้มเดิมไว้ใน caseDrafts แล้วสลับของแฟ้มใหม่เข้ามาแทน
  * — ข้อมูลพยานและความเห็นของแฟ้มหนึ่งจึงไม่รั่วไปโผล่ในอีกแฟ้ม และด่านตรวจอ่านจากร่างของแฟ้มที่เปิดอยู่จริง
  */
-export const PER_CASE_FORMS = [3, 4, 5, 6, 7, 9, 10, 11, 14]
+export const PER_CASE_FORMS = [3, 4, 5, 6, 7, 9, 10, 11, 14, 16]
 
 /** ข้อมูลของแบบ คบ. ที่แฟ้มหนึ่งเก็บไว้ขณะที่ไม่ได้เป็นแฟ้มที่เปิดอยู่ */
 export interface CaseFormBundle {
@@ -421,6 +421,10 @@ export const useFormDraftStore = create<FormDraftState>()(
               revisions: incoming.revisions[formId] ? { ...state.revisions, [formId]: incoming.revisions[formId] } : withoutKey(state.revisions, formId),
               signatures: { ...withoutPrefix(state.signatures, prefix), ...Object.fromEntries(Object.entries(incoming.signatures).filter(([key]) => key.startsWith(prefix))) },
             })
+            return
+          }
+          if (owner === undefined && (formId === 7 || formId === 16)) {
+            set({ drafts: { ...state.drafts, [formId]: { ...seed } }, draftCaseNo: { ...state.draftCaseNo, [formId]: caseNo }, draftTouched: { ...state.draftTouched, [formId]: false } })
             return
           }
           if (owner === undefined) {

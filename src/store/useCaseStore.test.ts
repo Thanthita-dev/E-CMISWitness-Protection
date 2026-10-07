@@ -92,7 +92,7 @@ describe('WIT1130 / WIT1139 — การยุติต้องรอ คบ.1
     const c = current()
     expect(c.stage).toBe('terminated')
     expect(c.kb16?.locked).toBe(true)
-    expect(c.closedAt).toBe(effective)
+    expect(c.closedAt).toBeUndefined() // คำสั่งมีผลแล้ว แต่ยังต้องแจ้ง คบ.17 และรอปิดแฟ้ม
   })
 
   it('คำสั่งที่ยังไม่ถึงวันที่มีผล ลงนามแล้วก็ยังไม่ยุติ', () => {

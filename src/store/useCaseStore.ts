@@ -4502,7 +4502,7 @@ export const useCaseStore = create<CaseState>()(
         if (!current?.kb16) return
         const at = nowDisplay()
         const signer = signerName || ACTOR.secretary
-        const effective = parseAnyDate(current.kb16.effectiveAt)
+        const effective = parseAnyDate(/^\d{4}-\d{2}-\d{2}$/.test(current.kb16.effectiveAt || '') ? `${current.kb16.effectiveAt}T00:00:00+07:00` : current.kb16.effectiveAt)
         const inForce = Boolean(effective && effective.getTime() <= Date.now())
         const episode = current.episode || deriveEpisode(current)
 
@@ -4513,7 +4513,8 @@ export const useCaseStore = create<CaseState>()(
           status: inForce ? 'ยุติการคุ้มครองแล้วตามคำสั่ง คบ.16' : `ลงนาม คบ.16 แล้ว · มีผลวันที่ ${formatThaiDate(current.kb16.effectiveAt)}`,
           owner: protectionResponsibleName(current),
           next: 'จัดทำ คบ.17 แจ้งคำสั่งยุติและสิทธิอุทธรณ์ แล้วออกเลขผ่านสารบรรณเดิม',
-          closedAt: inForce ? current.kb16.effectiveAt : undefined,
+          // ปิดมาตรการตามวันที่มีผล แต่แฟ้มยังต้องทำ คบ.17 และรอพ้นสิทธิอุทธรณ์
+          closedAt: undefined,
           terminationRequest: current.terminationRequest
             ? { ...current.terminationRequest, status: 'approved', decidedAt: at, decidedBy: signer, decisionNote: current.kb16.reason }
             : current.terminationRequest,
