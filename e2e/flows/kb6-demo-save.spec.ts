@@ -11,8 +11,6 @@ const field = (page: Page, label: string) =>
 test('แฟ้มรับเป็น คบ.1 — บันทึก คบ.6 โดยเว้น 1.1/2.2 ได้ ไม่มีคำเตือน และเติมชื่อจาก คบ.1', async ({ page }) => {
   await seedMockState(page, 'Case 1', 'officer')
   await page.goto('/intake')
-  await page.getByRole('radio', { name: /^กรณีปกติ/ }).click()
-  await page.locator('#intakeScreeningNote').fill('ทดสอบ')
   await page.getByRole('button', { name: 'เจ้าหน้าที่กรอก คบ.1' }).click()
   const caseNo = await newCaseNoAfterIntake(page, { expectForm: 1, backToDossier: false })
 
@@ -30,7 +28,7 @@ test('แฟ้มรับเป็น คบ.1 — บันทึก คบ.6
   const toast = page.locator('.swal2-toast')
   await expect(toast).toContainText('บันทึกแบบ คบ.6 เรียบร้อยแล้ว')
   await expect(toast).not.toContainText('ยังเว้นว่าง')
-  await expect(page).toHaveURL(new RegExp(`/dossier/${caseNo}`))
+  await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(caseNo)}`))
 
   await page.goto(`/form/6?caseNo=${caseNo}`)
   // 1.1 = ผู้ยื่นคำร้องตามข้อ 1 ของ คบ.1 · 2.2 = พยานตามข้อ 2 ของ คบ.1 (ว่างจึงใช้ชื่อผู้ยื่น)

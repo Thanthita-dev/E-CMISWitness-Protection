@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Locator, Page } from '@playwright/test'
@@ -21,6 +21,11 @@ export async function captureEvidence(page: Page, id: string, target: Locator | 
   const handles = await Promise.all(targets.map((t) => t.elementHandle()))
   await page.evaluate(
     ({ els, text }) => {
+      // ซ่อน toast แจ้งผลชั่วคราว ไม่ให้บังจุดที่ถ่าย (ถอดออกพร้อมกรอบหลังถ่าย)
+      const hideToast = document.createElement('style')
+      hideToast.className = '__evidence'
+      hideToast.textContent = '.swal2-toast, .swal2-container.swal2-backdrop-hide { visibility: hidden !important; }'
+      document.head.appendChild(hideToast)
       els.forEach((el, i) => {
         if (!el) return
         const r = (el as HTMLElement).getBoundingClientRect()
@@ -64,5 +69,7 @@ export async function captureEvidence(page: Page, id: string, target: Locator | 
     { els: handles, text: label }
   )
   await page.screenshot({ path: resolve(EVIDENCE_DIR, `${id}.png`) })
+  // คำอธิบายภาพสำหรับรายงาน (scripts/feedback-report) — ข้อความเดียวกับป้ายบนภาพ
+  writeFileSync(resolve(EVIDENCE_DIR, `${id}.json`), JSON.stringify({ label }))
   await page.evaluate(() => document.querySelectorAll('.__evidence').forEach((n) => n.remove()))
 }

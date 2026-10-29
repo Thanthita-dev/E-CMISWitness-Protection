@@ -5,8 +5,9 @@ import { useCaseStore } from '../store/useCaseStore'
 import { useAuthStore } from '../store/useAuthStore'
 import { useFormDraftStore } from '../store/useFormDraftStore'
 import { useNotificationStore } from '../store/useNotificationStore'
+import { passDestinationIncoming, passDirectorToDeputy, passSecretaryOutgoing, recordSarabanCheckpoint } from './sarabanTestHelpers'
 
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 const initial = (): CaseItem => ({
   no: NO, form: 'คบ.1', person: 'นางสาวกมลชนก บุญรักษา', stage: 'external_pending',
   status: 'รอเลขาธิการพิจารณา', owner: 'เลขาธิการ ป.ป.ท.', next: 'พิจารณา', risk: 'สูง',
@@ -18,7 +19,14 @@ const policyBeforeTests = structuredClone(NOTICE_FIELD_POLICY)
 const store = () => useCaseStore.getState()
 const current = () => store().getCase(NO)!
 const role = (r: Parameters<ReturnType<typeof useAuthStore.getState>['setRole']>[0]) => useAuthStore.getState().setRole(r)
-const approve = (destination: 'got' | 'original_owner' = 'original_owner') => store().secretaryApprove(NO, 'ลธ. 501/2569', 'สมควรคุ้มครอง', destination, 'ดำเนินการตามวิธีที่อนุมัติ', 30)
+const approve = (destination: 'got' | 'original_owner' = 'original_owner') => {
+  const ok = store().secretaryApprove(NO, 'ลธ. 501/2569', 'สมควรคุ้มครอง', destination, 'ดำเนินการตามวิธีที่อนุมัติ', 30)
+  if (ok) {
+    expect(passSecretaryOutgoing(NO)).toBe(true)
+    if (destination === 'original_owner') expect(passDestinationIncoming(NO)).toBe(true)
+  }
+  return ok
+}
 const document = (formNo: 9 | 10 = 9) => current().resultNotices![formNo]!
 /** Policy fixture for testing the guarded mechanism only; this is not a production field approval. */
 const configureDeferredTestPolicy = () => Object.assign(NOTICE_FIELD_POLICY, {
@@ -40,6 +48,19 @@ describe('การลงนามและเติมรายละเอี�
     Object.assign(NOTICE_FIELD_POLICY, structuredClone(policyBeforeTests))
   })
 
+  it('บันทึกผลรับจากวันที่ส่งเดิมได้แม้ยังไม่มีประวัติส่งรูปแบบใหม่', () => {
+    role('officer')
+    store().prepareResultNotices(NO)
+    store().updateCase(NO, { activity7State: 'approved', kb9Signed: true, dispatchedAt: '2026-10-28T03:00:00Z' })
+    const originalDispatches = document().dispatches.length
+    store().recordDelivery(NO, '2026-10-28T05:00:00Z', {
+      recipient: current().person, ackType: 'เจ้าหน้าที่ยืนยันผลการนำส่ง', ackDocument: 'บันทึกยืนยันการรับหนังสือผ่านระบบ',
+    })
+    expect(current().deliveredAt).toBe('2026-10-28T05:00:00Z')
+    expect(current().deliveryRecipient).toBe(current().person)
+    expect(document().dispatches).toHaveLength(originalDispatches)
+  })
+
   it('เตรียม คบ.9/10 ครั้งเดียวในแฟ้มเดิมและไม่ลงนามเมื่อช่องก่อนลงนามยังขาด', () => {
     Object.assign(NOTICE_FIELD_POLICY, { confirmed: false, allowedAfterSigning: [], requiredForSend: ['เลขที่หนังสือ'] })
     expect(store().prepareResultNotices(NO)).toBe(true)
@@ -53,7 +74,19 @@ describe('การลงนามและเติมรายละเอี�
     expect(document().original).toBeUndefined()
   })
 
-  for (const formNo of [9, 10] as const) {
+  it('คบ.9 ลงนามแล้วส่งได้ทันที ไม่ต้องเติมเลขที่/วันที่หนังสือหลังลงนาม', () => {
+    configureDeferredTestPolicy()
+    expect(approve()).toBe(true)
+    expect(document(9).status).toBe('completed')
+    expect(missingNoticeFields(document(9))).toEqual([])
+    role('officer')
+    expect(store().checkResultNoticeReady(NO)).toBe(true)
+    store().recordDispatch(NO, 'ไปรษณีย์ตอบรับด่วน (EMS)', 'TEST501')
+    expect(document(9).status).toBe('sent')
+    expect(document(9).dispatches).toHaveLength(1)
+  })
+
+  for (const formNo of [10] as (9 | 10)[]) {
     it(`ผลพิจารณาลงนามเฉพาะ คบ.${formNo} ไม่ซ้ำ แล้วเติมรุ่นใหม่และส่งฉบับที่ตรวจครบ`, () => {
       configureDeferredTestPolicy()
       if (formNo === 9) expect(approve()).toBe(true)
@@ -112,6 +145,7 @@ describe('การลงนามและเติมรายละเอี�
     role('got_receiver')
     expect(store().completeResultNotice(NO, 9, { เลขที่หนังสือ: 'ห้ามธุรการ' })).toBe(false)
     expect(store().advanceProtectionHandoff(NO, 'assign', 'ข้ามผอ.', 'GOT-OFF-001')).toBe(false)
+    expect(recordSarabanCheckpoint(NO)).toBe(true)
     expect(store().advanceProtectionHandoff(NO, 'receive')).toBe(true)
     expect(store().advanceProtectionHandoff(NO, 'submit')).toBe(true)
     role('got_director')
@@ -246,7 +280,10 @@ describe('การลงนามและเติมรายละเอี�
     store().forwardCase(NO, 'director_review')
     role('director')
     store().signKb6(NO, 'director')
-    store().forwardCase(NO, 'deputy_review')
+    useAuthStore.getState().setOrgUnitId('central-wp')
+    store().forwardCase(NO, 'director_outgoing_registry')
+    expect(passDirectorToDeputy(NO)).toBe(true)
+    expect(current().stage).toBe('deputy_review')
     role('deputy_secretary')
     store().signKb6(NO, 'deputy')
     store().forwardCase(NO, 'external_pending')
@@ -309,7 +346,10 @@ describe('การลงนามและเติมรายละเอี�
     role('supervisor')
     store().forwardCase(NO, 'director_review', 'ผ่านความเห็นชั้นต้น')
     role('director')
-    store().forwardCase(NO, 'deputy_review', 'ผ่าน ผอ.')
+    useAuthStore.getState().setOrgUnitId('central-wp')
+    store().forwardCase(NO, 'director_outgoing_registry', 'ผ่าน ผอ.')
+    expect(passDirectorToDeputy(NO)).toBe(true)
+    role('deputy_secretary')
     role('deputy_secretary')
     store().forwardCase(NO, 'external_pending', 'เสนอเลขาธิการ')
     expect(current().stage).toBe('external_pending')
@@ -321,7 +361,7 @@ describe('การลงนามและเติมรายละเอี�
 
   for (const formNo of [9, 10] as const) {
     it(`คบ.${formNo} ร่างเก่าที่ไม่รู้เจ้าของไม่ถูกยกให้แฟ้มแรก และสลับแฟ้มแล้วคืนเฉพาะข้อมูลของตน`, () => {
-      const B = 'WP-2569-000502'
+      const B = '0502/2569'
       const legacy = { เลขที่หนังสือ: 'OTHER-BOOK', เลขคำร้อง: 'OTHER-CASE', คำร้องลงวันที่: 'OTHER-DATE', สาระสำคัญ: 'OTHER-REASON' }
       const legacyLock = { lockedAt: '2026-09-01T08:00:00Z', lockedBy: 'UNKNOWN-LEGACY', reason: 'เจ้าของร่างไม่ทราบ' }
       const legacySignature = { signed: true, signerName: 'UNKNOWN-LEGACY', signedAt: '2026-09-01T08:00:00Z' }
@@ -384,7 +424,7 @@ describe('นโยบายช่องหนังสือและฉบั�
   })
 
   it('นโยบายที่ยังไม่ยืนยันห้ามใช้รายการช่องที่เสนอเพื่อข้ามข้อมูลก่อนลงนาม', () => {
-    const draft = createNoticeDraft(9, initial(), '2026-10-07T08:00:00Z', 'เจ้าหน้าที่')
+    const draft = createNoticeDraft(10, initial(), '2026-10-07T08:00:00Z', 'เจ้าหน้าที่')
     // ข้อมูลทดสอบนโยบายเท่านั้น ไม่ใช่ข้อเสนออนุญาตช่องสำหรับระบบจริง
     draft.policy = { confirmed: false, allowedAfterSigning: ['ช่องทดสอบ'], requiredForSend: ['ช่องทดสอบ'] }
     expect(noticeCanSign(draft)).toBe(false)
@@ -423,7 +463,7 @@ describe('นโยบายช่องหนังสือและฉบั�
   }
 
   it('ลงนามโดยมีช่องเติมภายหลังที่ขาด สถานะไม่กลายเป็นพร้อมส่งหรือส่งแล้ว', () => {
-    const draft = createNoticeDraft(9, initial(), '2026-10-07T08:00:00Z', 'เจ้าหน้าที่')
+    const draft = createNoticeDraft(10, initial(), '2026-10-07T08:00:00Z', 'เจ้าหน้าที่')
     draft.policy = { confirmed: true, allowedAfterSigning: ['ช่องเติมภายหลังทดสอบ'], requiredForSend: ['ช่องเติมภายหลังทดสอบ'] }
     const signed = signNoticeSnapshot(draft, initial(), '2026-10-07T09:00:00Z', 'เลขาธิการทดสอบ', 'ลธ. 501/2569', 'เหตุผลทดสอบ')
     expect(signed.status).toBe('signed_incomplete')

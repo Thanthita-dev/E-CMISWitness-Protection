@@ -1,3 +1,4 @@
+import { useVisibleCases } from '../hooks/useVisibleCases'
 import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { PageHeader } from '../components/common/PageHeader'
@@ -11,7 +12,7 @@ export const Route = createFileRoute('/activity7-results')({
 })
 
 function Activity7ResultsPage() {
-  const cases = useCaseStore((state) => state.cases)
+  const cases = useVisibleCases()
 
   // Cases with activity 7 interaction or secretary decisions
   const a7Cases = cases.filter((c) => c.stage === 'external_pending' || c.activity7State || c.secretaryReviewState)

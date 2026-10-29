@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import { isReviewerFor } from '../../lib/protectionHandoff'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Button } from '../common/Button'
 import { Article14EscalationProposal, CaseItem } from '../../types/case'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 const STAGE_LABEL: Record<Article14EscalationProposal['stage'], string> = {
   supervisor: 'รอ ผบช.ชั้นต้น พิจารณา',
@@ -49,8 +51,8 @@ export const Article14EscalationCard: React.FC<{ caseItem: CaseItem }> = ({ case
     proposal && (proposal.stage === 'supervisor' || proposal.stage === 'director') ? proposal : undefined
   const canDecide =
     pendingProposal &&
-    ((pendingProposal.stage === 'supervisor' && (currentRole === 'supervisor' || currentRole === 'admin')) ||
-      (pendingProposal.stage === 'director' && (currentRole === 'director' || currentRole === 'admin')))
+    ((pendingProposal.stage === 'supervisor' && isReviewerFor(currentRole, 'supervisor', caseItem)) ||
+      (pendingProposal.stage === 'director' && isReviewerFor(currentRole, 'director', caseItem)))
 
   /** เสนอแนวทางใหม่ได้เมื่อรอบก่อนถูกส่งคืนมาแก้ (การเสนอครั้งแรกอยู่ในปุ่ม "ดำเนินการไม่ได้" ของหน้า article14.tsx) */
   const canPropose = isOfficer && proposal?.stage === 'returned'
@@ -64,7 +66,7 @@ export const Article14EscalationCard: React.FC<{ caseItem: CaseItem }> = ({ case
     }
     showConfirmAlert({
       icon: 'warning',
-      title: 'เสนอแนวทางใหม่ต่อผู้มีอำนาจ?',
+      title: 'เสนอแนวทางใหม่ต่อ ผอ.สำนัก/กอง?',
       html: confirmBody(
         'บันทึกแนวทางใหม่หลังถูกส่งคืน แล้วเสนอขึ้นผู้บังคับบัญชาตามลำดับชั้นอีกครั้ง',
         [
@@ -149,7 +151,7 @@ export const Article14EscalationCard: React.FC<{ caseItem: CaseItem }> = ({ case
     <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3.5 space-y-3" data-testid="article14-escalation-card">
       <div className="text-[0.8rem] font-bold text-rose-900">
         <i className="fa-solid fa-building-circle-exclamation mr-1.5" />
-        {proposal.failedAgency} แจ้งว่าดำเนินการไม่ได้: เสนอผู้มีอำนาจพิจารณาแนวทางใหม่
+        {proposal.failedAgency} แจ้งว่าดำเนินการไม่ได้: เสนอ ผอ.สำนัก/กอง พิจารณาแนวทางใหม่
       </div>
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[0.8rem] leading-relaxed text-amber-900">
@@ -189,7 +191,7 @@ export const Article14EscalationCard: React.FC<{ caseItem: CaseItem }> = ({ case
       {/* ชั้นเจ้าหน้าที่ — เสนอแนวทางใหม่อีกครั้งหลังถูกส่งคืน */}
       {canPropose && (
         <div className="space-y-2.5" data-testid="article14-escalation-propose">
-          <textarea
+          <VoiceTextarea
             rows={2}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -204,7 +206,7 @@ export const Article14EscalationCard: React.FC<{ caseItem: CaseItem }> = ({ case
             data-testid="article14-escalation-approach"
             className="ws-input border w-full border-rose-300 focus:border-rose-500"
           />
-          <textarea
+          <VoiceTextarea
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -226,7 +228,7 @@ export const Article14EscalationCard: React.FC<{ caseItem: CaseItem }> = ({ case
       {/* ชั้นผู้บังคับบัญชา — ผบช.ชั้นต้น แล้วต่อด้วย ผอ.สำนัก/กอง */}
       {canDecide && pendingProposal && (
         <div className="space-y-2" data-testid="article14-escalation-decide">
-          <textarea
+          <VoiceTextarea
             rows={2}
             value={decisionNote}
             onChange={(e) => setDecisionNote(e.target.value)}

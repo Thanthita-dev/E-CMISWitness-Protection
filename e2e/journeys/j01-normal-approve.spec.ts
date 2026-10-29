@@ -1,11 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
 import { confirmSecretaryApproval } from '../helpers/postApproval'
+import { termDownLeg, termUpLeg } from '../helpers/termination'
 import { checkNoticeReady, completeNoticeDetails } from '../helpers/noticeDocuments'
 import { CASE_NO, DOSSIER_URL, areaField, confirmDialog, expectStage, fieldAfterLabel, formRow, signInModal } from './journey-helpers'
 
 /**
- * J01 · เส้นทางปกติ (scenario `normal-approve`) — เดินต่อเนื่องแฟ้มเดียว WP-2569-000501
+ * J01 · เส้นทางปกติ (scenario `normal-approve`) — เดินต่อเนื่องแฟ้มเดียว 0501/2569
  *
  * แท็บที่ผ่าน: 02 → 03 → 04 → 05 → 07 → 08A → 08A-1 → 10 → 11A → 11C → 11D
  * (Case 1 … Case 1.19 ตามผัง) — seed mock state "Case 1" ครั้งเดียว แล้วขับผ่าน UI ล้วน ๆ
@@ -16,8 +17,8 @@ import { CASE_NO, DOSSIER_URL, areaField, confirmDialog, expectStage, fieldAfter
  */
 
 const MONITOR_URL = `/protection-monitor?caseNo=${CASE_NO}`
-const REVIEW_URL = `/protection-review/${CASE_NO}`
-const TERM_URL = `/termination/${CASE_NO}`
+const REVIEW_URL = `/protection-review/${encodeURIComponent(CASE_NO)}`
+const TERM_URL = `/termination/${encodeURIComponent(CASE_NO)}`
 const METHODS_URL = '/protection-methods'
 const METHOD1_URL = `/protection-method/1?caseNo=${CASE_NO}`
 
@@ -82,10 +83,10 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
   // 03 มอบหมาย — ผอ. (Case 1.2) → เจ้าหน้าที่ประเมินความเร่งด่วน (Case 1.3)
   // ============================================================
   await test.step('WIT0304 / WIT0305 / WIT0306 · ผอ. เลือกและมอบหมายเจ้าของสำนวน แล้วส่งต่อเข้าคิวเจ้าหน้าที่', async () => {
-    // WIT0301 รับคำขอจากแท็บ 02 / WIT0302-0303 ตรวจคำขอ — ⚙️/🟡 ผอ. ก่อนมอบหมายมองไม่เห็นแบบ คบ. (ต่างจากผัง)
+    // WIT0301 รับคำขอจากแท็บ 02 / WIT0302-0303 ตรวจคำขอ — ผอ. ตรวจแบบ คบ. ได้ก่อนมอบหมาย (ดูอย่างเดียว)
     await switchRole(page, 'director')
     await page.goto(DOSSIER_URL)
-    await expect(formRow(page, 'คบ.1')).toHaveCount(0) // 🟡 ผังให้ ผอ. ตรวจเอกสารตั้งต้นได้ แต่ prototype ซ่อนจนกว่าจะมอบหมาย
+    await expect(formRow(page, 'คบ.1')).toBeVisible()
 
     await page.getByRole('button', { name: 'มอบหมายเจ้าของสำนวน' }).click()
     await expect(page.getByText(/มอบหมายแล้ว:/)).toBeVisible()
@@ -104,7 +105,17 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     await page.goto(DOSSIER_URL)
     await expect(page.getByTestId('dossier-forms')).toBeVisible()
     await expect(formRow(page, 'คบ.1')).toBeVisible()
-    await expect(formRow(page, 'คบ.3')).toBeVisible()
+    // คบ.3 เข้าแฟ้มหลังกลั่นกรองแล้วเท่านั้น
+    await expect(formRow(page, 'คบ.3')).toHaveCount(0)
+    // ลำดับงาน: ยังไม่มี คบ.1 → การ์ดคดีหลักให้จัดทำ คบ.1 ก่อน (WIT0403/0404)
+    await expect(page.getByTestId('main-case-link-waiting-kb1')).toBeVisible()
+    await formRow(page, 'คบ.1').getByRole('link', { name: 'เปิดแบบฟอร์ม' }).click()
+    await expect(page).toHaveURL(/\/form\/1/)
+    for (let i = 0; i < 6; i++) {
+      await page.getByRole('button', { name: 'ส่วนถัดไป' }).click()
+    }
+    await page.getByRole('button', { name: 'บันทึกแบบ คบ.1' }).click()
+    await page.goto(DOSSIER_URL)
     // WIT0212 / WIT0213 / WIT0214 — เจ้าของสำนวนเชื่อมโยงเลขสำนวนหลักได้ → ยืนยันเชื่อมโยงคดี
     await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
     await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
@@ -367,7 +378,7 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     // WIT0815 ◇ คำสั่งชั่วคราว หรือคำร้องหลัก? — ⚙️ ระบบแยกเอง: ไม่มี คบ.5 จึงเป็นคำร้องหลัก (แขนง WIT0816 ใช้เฉพาะเส้นทางเร่งด่วน)
     await page.goto(METHODS_URL)
     await page.locator(`a[href="${METHOD1_URL}"]`).click()
-    await expect(page).toHaveURL(new RegExp(`/protection-method/1\\?caseNo=${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/protection-method/1\\?caseNo=${CASE_NO.replace('/', '(?:/|%2F)')}`))
     // คำร้องหลักต้องลงนาม คบ.8 ก่อน — ปุ่ม "ถัดไป" ของ wizard ยังถูกปิด
     await expect(page.getByText(/คบ\.8 ยังไม่ผ่านการลงนาม/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'ถัดไป' })).toBeDisabled()
@@ -629,6 +640,8 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     expect(c?.stage).not.toBe('terminated')
     // การ์ด 11D ปรากฏบนหน้าเดียวกัน
     await expect(page.getByText('พิจารณาและออกคำสั่งยุติ (คบ.16)', { exact: true })).toBeVisible()
+    // ขาไป: ธุรการหน่วย → ธุรการสำนักงานเลขาธิการ → เลขาธิการ (ผู้มีอำนาจยุติ)
+    await termUpLeg(page, CASE_NO)
   })
 
   // ============================================================
@@ -636,8 +649,8 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
   // ============================================================
   await test.step('WIT1135 / WIT1136 · ผอ. รับ คบ.15 พร้อมความเห็นจาก 11C แล้วอนุมัติให้ยุติ', async () => {
     // WIT1136 ◇ อนุมัติให้ยุติ? — เลือก "อนุมัติ" (แขนงไม่อนุมัติ WIT1137 คุ้มครองต่อ เป็นของเส้นทางอื่น)
-    // ผู้มีอำนาจจะเป็น ผอ.สำนัก/กอง หรือเลขาธิการฯ ก็ได้ — ตาม mock state Case 1.16 ใช้ ผอ.
-    await switchRole(page, 'director')
+    // ผู้มีอำนาจยุติคือเลขาธิการ ป.ป.ท. เท่านั้น (ผ่านธุรการ) — ผอ.หน่วยไม่อนุมัติการยุติ
+    await switchRole(page, 'secretary')
     await page.goto(TERM_URL)
     await expect(page.getByText('เรื่องที่รับจากขั้นจัดทำเรื่องยุติ (คบ.15)')).toBeVisible()
     await page.getByPlaceholder('ความเห็นประกอบผลพิจารณา').fill('อนุมัติให้ยุติตามที่เสนอ เหตุภัยหมดไปแล้ว')
@@ -649,6 +662,8 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     expect(approval.approved).toBe(true)
     expect(c?.stage).not.toBe('terminated')
     expect(c?.kb16).toBeFalsy()
+    // ขากลับ: ผลพิจารณาผ่านธุรการสำนักงานเลขาธิการ → ธุรการหน่วย → เจ้าของสำนวน
+    await termDownLeg(page, CASE_NO)
   })
 
   await test.step('WIT1138 · เจ้าหน้าที่ร่างคำสั่ง คบ.16 (คำสั่งที่ วันที่ออก วันที่มีผล) แล้วส่งให้อนุมัติที่แถว คบ.16 ในแฟ้ม', async () => {
@@ -660,7 +675,7 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     await page.getByLabel('วันที่คำสั่งมีผล').fill(isoDaysFromToday(10))
     await page.getByPlaceholder('เหตุยุติตามคำสั่ง').fill('ครบกำหนดคุ้มครองและเหตุภัยดับลง')
     await page.getByRole('button', { name: 'เปิดแฟ้มคดี' }).click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 
     let c = await readCase(page, CASE_NO)
     const draft = c?.kb16 as Record<string, unknown>
@@ -677,6 +692,7 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
 
     c = await readCase(page, CASE_NO)
     expect((c?.kb16 as Record<string, unknown>).status).toBe('submitted')
+    await termUpLeg(page, CASE_NO) // เสนอลงนามผ่านธุรการ → เลขาธิการ
   })
 
   await test.step('WIT1139 · เลขาธิการฯ ลงนามคำสั่ง คบ.16 (ล็อกฉบับ)', async () => {
@@ -691,6 +707,7 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     expect(kb16.locked).toBe(true)
     // ลงนามแล้วแต่ยังไม่ถึงวันที่มีผล — ยังไม่ยุติ
     expect(c?.stage).not.toBe('terminated')
+    await termDownLeg(page, CASE_NO) // คำสั่งที่ลงนามแล้วกลับหน่วยผ่านธุรการ
   })
 
   await test.step('WIT1140 · บันทึกวันหยุดปฏิบัติจริงแยกจากวันออกคำสั่ง/วันที่มีผล', async () => {
@@ -708,7 +725,7 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     await page.goto(TERM_URL)
     await page.getByPlaceholder('ชื่อไฟล์หนังสือ').fill('คบ17_แจ้งคำสั่งยุติ.pdf')
     await page.getByRole('button', { name: 'เปิดแฟ้มคดี' }).click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
     let c = await readCase(page, CASE_NO)
     expect((c?.kb17 as Record<string, unknown>).status).toBe('draft')
 
@@ -716,13 +733,15 @@ test('J01 · เส้นทางปกติ: รับเรื่อง → 
     await confirmDialog(page, 'ส่งให้ลงนาม')
     c = await readCase(page, CASE_NO)
     expect((c?.kb17 as Record<string, unknown>).status).toBe('submitted')
+    await termUpLeg(page, CASE_NO) // เสนอลงนามผ่านธุรการ → เลขาธิการ
 
-    await switchRole(page, 'secretary')
     await page.goto(TERM_URL)
     await page.getByRole('button', { name: 'ลงนาม คบ.17' }).click()
     await expect(page.locator('.swal2-toast')).toContainText('ลงนาม คบ.17')
     c = await readCase(page, CASE_NO)
     expect((c?.kb17 as Record<string, unknown>).signedAt).toBeTruthy()
+    await termDownLeg(page, CASE_NO) // ฉบับลงนามกลับหน่วยผ่านธุรการ
+    await page.goto(TERM_URL)
   })
 
   await test.step('WIT1142 / WIT1143 · ออกเลขและนำส่ง คบ.17 ผ่านสารบรรณเดิม แล้วอัปโหลดฉบับส่งเข้าแฟ้ม', async () => {

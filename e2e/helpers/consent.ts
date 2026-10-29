@@ -37,12 +37,10 @@ export async function drawSignature(page: Page) {
   await page.mouse.up()
 }
 
-/** ผู้ขอคุ้มครองเปิดลิงก์ → อ่านครบทุกหน้า → วาดลายมือชื่อ → รับรอง → ยืนยัน (ไม่มีขั้นยืนยันตัวตน) */
+/** ผู้ขอคุ้มครองเปิดลิงก์ → วาดลายมือชื่อ → ยืนยัน (หน้าลงชื่ออย่างเดียว ไม่แสดงเอกสาร) */
 export async function witnessSigns(page: Page, url: string) {
   await page.goto(url)
-  for (let i = 0; i < 3; i++) await page.getByTestId('consent-next-page').click()
   await drawSignature(page)
-  await page.getByTestId('consent-ack-checkbox').check()
-  await page.getByTestId('consent-sign-button').click()
+  await page.getByTestId('signature-confirm-button').click()
   await expect(page.getByTestId('consent-signed')).toBeVisible()
 }

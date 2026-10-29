@@ -1,6 +1,22 @@
 import { expect, test, type Page } from '@playwright/test'
-import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
+import { KB1_DONE, readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
 import { sendConsentLink, witnessSigns } from '../helpers/consent'
+import { submitFastTrackToDirector } from '../journeys/journey-helpers'
+
+/**
+ * ลำดับงานเจ้าของสำนวน: คบ.1 → เชื่อมโยงคดีหลัก → กลั่นกรอง → คบ.3
+ * เทสต์ที่ทดสอบ คบ.3 ตั้งต้นจากแฟ้มที่ผ่านสามขั้นแรกแล้ว (บันทึก คบ.1 · ไม่พบคดีพร้อมเหตุผล · กรณีปกติ)
+ */
+const SCREENED = {
+  ...KB1_DONE,
+  mainCaseNotFound: true,
+  mainCaseNotFoundReason: 'ค้นแล้วไม่พบสำนวนที่ตรงกันในระบบ E-CMIS',
+  mainCaseStatus: 'not_found',
+  urgency: 'normal',
+  urgent: false,
+  urgencyAssessedAt: '10/09/2569 09:00',
+  urgencyAssessedBy: 'นางสาวอรุณี ใจมั่น',
+}
 
 /**
  * Sheet 04 · จัดทำ คบ.1 / คบ.3 และแยกเส้นทาง (WIT0401 → WIT0412)
@@ -11,8 +27,8 @@ import { sendConsentLink, witnessSigns } from '../helpers/consent'
  *   เร่งด่วน → คบ.4/คบ.5 → แท็บ 06 (Fast Track)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'
 const DIRECTOR = 'นายวีระยุทธ พิทักษ์ธรรม'
 
@@ -53,25 +69,30 @@ test.describe('TC-022 — จัดทำ คบ.1 จากข้อมูล �
   test('TC-022 · [Happy] คบ.1 ดึงข้อมูลตั้งต้นมาให้ และบันทึกลายมือชื่อยินยอมพร้อมวันเวลา', async ({ page }) => {
     await seedMockState(page, 'Case 1.3', 'officer', { kb1SignaturePending: true })
     await page.goto(DOSSIER_URL)
-    // Case 1.3 ตั้งต้นยังไม่เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงก่อนจึงจะผ่านด่านส่งต่อ
-    await linkMainCaseAsOfficer(page)
+    // ลำดับงาน: จัดทำ คบ.1 ก่อน — การ์ดคดีหลักยังเชื่อมโยงไม่ได้
+    await expect(page.getByTestId('main-case-link-waiting-kb1')).toBeVisible()
 
     // WIT0404 — เปิด คบ.1 ต้องมีข้อมูลตั้งต้นให้แล้ว (จำลองมาจาก คบ.2)
     await formRow(page, 'คบ.1').getByRole('link', { name: 'เปิดแบบฟอร์ม' }).click()
     await expect(page).toHaveURL(/\/form\/1/)
     await expect(fieldInput(page, 'ชื่อ')).toHaveValue('กมลชนก')
     await expect(fieldInput(page, 'นามสกุล')).toHaveValue('บุญรักษา')
+    // บันทึก คบ.1 จากส่วนท้ายของแบบ — ปลดล็อกขั้นเชื่อมโยงคดีหลักและกลั่นกรอง
+    await page.getByRole('button', { name: '8. ลายมือชื่อ' }).click()
+    await page.getByRole('button', { name: 'บันทึกแบบ คบ.1' }).click()
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
+    expect((await readCase(page, CASE_NO))?.kb1CompletedAt).toBeTruthy()
 
-    await page.goto(DOSSIER_URL)
     await expect(page.getByText('รับแจ้งทางโทรศัพท์ (คบ.2) — รอพยานเข้ามาลงนามยินยอมใน คบ.1')).toBeVisible()
 
-    // ต้องประเมินความเร่งด่วนก่อน จึงจะเห็นทางลัดลงนามยินยอม คบ.1 (ลำดับบล็อกเกอร์ในการ์ด)
+    // เชื่อมโยงคดีหลักแล้วกลั่นกรอง จึงจะเห็นทางลัดลงนามยินยอม คบ.1 (ลำดับบล็อกเกอร์ในการ์ด)
+    await linkMainCaseAsOfficer(page)
     await page.getByRole('button', { name: 'กรณีปกติ (→ คบ.3 → คบ.6)' }).click()
 
     // WIT0406 — ลงนามยินยอม
     await signKb1Consent(page)
 
-    await expect(page.getByText('ลายมือชื่อยินยอมในแบบ คบ.1 ครบถ้วน')).toBeVisible()
+    await expect(page.getByText('พยานยังไม่ได้ลงนามยินยอมในแบบ คบ.1')).toHaveCount(0)
     const after = await readCase(page, CASE_NO)
     expect(after?.kb1SignaturePending).toBe(false)
     expect(after?.kb1SignedAt).toBeTruthy()
@@ -80,7 +101,7 @@ test.describe('TC-022 — จัดทำ คบ.1 จากข้อมูล �
 
 test.describe('TC-023 — ข้าม คบ.3 ได้เมื่อ คบ.1 ครบถ้วน', () => {
   test('TC-023 · [Happy] บันทึก Skip Record พร้อมเหตุผล ผู้บันทึก และวันเวลา', async ({ page }) => {
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', SCREENED)
     await page.goto(DOSSIER_URL)
 
     await page.getByRole('button', { name: 'กดข้าม คบ.3 (ระบุเหตุผล)' }).click()
@@ -105,11 +126,11 @@ test.describe('TC-023 — ข้าม คบ.3 ได้เมื่อ คบ.
 
 test.describe('TC-024 — จัดทำ คบ.3 บันทึกข้อเท็จจริงประกอบคำร้อง', () => {
   test('TC-024 · [Happy] คบ.3 ถูกสร้างผูกกับ คบ.1 ในแฟ้มเดียวกัน พร้อมเลขเวอร์ชันเริ่มต้น', async ({ page }) => {
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', SCREENED)
     await page.goto(DOSSIER_URL)
 
     await formRow(page, 'คบ.3').getByRole('link', { name: 'เปิดแบบฟอร์ม' }).click()
-    await expect(page).toHaveURL(/\/form\/3\?caseNo=WP-2569-000501/)
+    await expect(page).toHaveURL(/\/form\/3\?caseNo=0501(\/|%2F)2569/)
     // เลขเวอร์ชันเริ่มต้นของฉบับแรก
     await expect(page.getByText('ฉบับที่ 1')).toBeVisible()
 
@@ -128,9 +149,9 @@ test.describe('TC-024 — จัดทำ คบ.3 บันทึกข้อ�
 
 test.describe('TC-025 — กรณีไม่เร่งด่วน → จัดทำ คบ.6 และไปแท็บ 05', () => {
   test('TC-025 · [Happy] ส่งชุดเสนอไปเส้นทางปกติ (แท็บ 05) แจ้งเตือนผู้บังคับบัญชาชั้นต้น', async ({ page }) => {
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
-    // Case 1.3 ตั้งต้นยังไม่เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงก่อนจึงจะผ่านด่านส่งต่อ
+    // บันทึก คบ.1 แล้ว — เจ้าของสำนวนเชื่อมโยงคดีหลัก แล้วกลั่นกรองในการ์ดเดียวกัน
     await linkMainCaseAsOfficer(page)
 
     await page.getByRole('button', { name: 'กรณีปกติ (→ คบ.3 → คบ.6)' }).click()
@@ -142,7 +163,7 @@ test.describe('TC-025 — กรณีไม่เร่งด่วน → จ�
     await page.locator('label:has-text("1.1 ได้รับคำร้อง")').locator('xpath=following-sibling::input[1]').fill('นางสาวกมลชนก บุญรักษา')
     await page.locator('label:has-text("2.2 ชื่อ-สกุล พยาน")').locator('xpath=following-sibling::input[1]').fill('นางสาวกมลชนก บุญรักษา')
     await page.getByRole('button', { name: 'บันทึกแบบ คบ.6' }).click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 
     await page.getByTestId('forward-case-button').click()
     await confirmDialog(page, 'ยืนยันส่งต่อ', 'ผู้บังคับบัญชาชั้นต้น')
@@ -156,31 +177,32 @@ test.describe('TC-025 — กรณีไม่เร่งด่วน → จ�
 
 test.describe('TC-026 — กรณีเร่งด่วน → ไปแท็บ 06 Fast Track', () => {
   test('TC-026 · [Happy] ส่งตรงถึง ผอ.สำนัก/กอง โดยไม่บังคับให้ทำ คบ.6 ก่อน', async ({ page }) => {
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
-    // Case 1.3 ตั้งต้นยังไม่เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงก่อนจึงจะผ่านด่านส่งต่อ
+    // บันทึก คบ.1 แล้ว — เจ้าของสำนวนเชื่อมโยงคดีหลัก แล้วกลั่นกรองในการ์ดเดียวกัน
     await linkMainCaseAsOfficer(page)
 
     await page.getByRole('button', { name: 'กรณีจำเป็นเร่งด่วน (→ คบ.3 → คบ.4 → คบ.5)' }).click()
     await expect(page.getByText(/กรณีจำเป็นเร่งด่วน — คบ\.3 → คบ\.4 → คบ\.5/)).toBeVisible()
 
-    await page.getByTestId('forward-case-button').click()
-    await confirmDialog(page, 'ยืนยันส่งต่อ', 'ผอ.สำนัก/กอง')
+    await submitFastTrackToDirector(page, CASE_NO)
 
     const after = await readCase(page, CASE_NO)
     expect(after?.stage).toBe('director_review')
     expect(after?.owner).toBe(DIRECTOR)
     expect(after?.fastTracked).toBe(true)
 
-    // แท็บ 06 — การ์ด Fast Track เปิดขึ้น ไม่บังคับให้ลงนาม คบ.6 ก่อน
-    await expect(page.getByTestId('fast-track-card')).toBeVisible()
-    await expect(page.getByText('จัดทำ คบ.4 พร้อมร่าง คบ.5 แล้วส่ง', { exact: false })).toBeVisible()
+    // แท็บ 06 — ผอ.สำนัก/กอง เห็นส่วนตรวจเรื่องคุ้มครองชั่วคราวในการ์ดส่งงาน ไม่บังคับให้ลงนาม คบ.6 ก่อน
+    await switchRole(page, 'director')
+    await expect(page.getByTestId('fast-track-card')).toHaveAttribute('data-fast-track-step', 'director_review')
+    await expect(page.getByTestId('fast-track-review-list')).toBeVisible()
   })
 })
 
 test.describe('TC-027 — ส่งต่อโดยไม่ลงนามยินยอมใน คบ.1', () => {
   test('TC-027 · [Negative] ระบบไม่อนุญาตให้ส่งต่อจนกว่าจะมีลายมือชื่อยินยอมใน คบ.1', async ({ page }) => {
     await seedMockState(page, 'Case 1.3', 'officer', {
+      ...KB1_DONE,
       kb1SignaturePending: true,
       urgency: 'normal',
       urgent: false,
@@ -205,7 +227,7 @@ test.describe('TC-027 — ส่งต่อโดยไม่ลงนามย
 
 test.describe('TC-028 — เลือกข้าม คบ.3 โดยไม่กรอกเหตุผล', () => {
   test('TC-028 · [Negative] ระบบบังคับให้ระบุเหตุผลก่อนบันทึก Skip Record', async ({ page }) => {
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', SCREENED)
     await page.goto(DOSSIER_URL)
 
     await page.getByRole('button', { name: 'กดข้าม คบ.3 (ระบุเหตุผล)' }).click()
@@ -275,9 +297,9 @@ test.describe('TC-030 — แก้ไขผลประเมินความ
     const history = (after?.assignmentHistory || []) as Array<{ detail?: string }>
     expect(history.some((h) => (h.detail || '').includes('เปลี่ยนเส้นทางจากปกติเป็นเร่งด่วน'))).toBe(true)
 
-    // แท็บ 06 — การ์ด Fast Track เปิดขึ้นให้ ผอ.สำนัก/กอง ดำเนินการต่อ
+    // แท็บ 06 — ผอ.สำนัก/กอง เห็นว่ายังไม่มี คบ.4 / ร่าง คบ.5 ต้องส่งกลับให้จัดทำก่อน (WIT0615)
     await switchRole(page, 'director')
-    await expect(page.getByTestId('fast-track-card')).toBeVisible()
+    await expect(page.getByTestId('fast-track-decision-required-banner')).toContainText('ยังไม่มี คบ.4 / ร่าง คบ.5')
   })
 })
 

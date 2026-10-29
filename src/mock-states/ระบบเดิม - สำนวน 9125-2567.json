@@ -1,0 +1,19 @@
+{
+  "name": "ระบบเดิม - สำนวน 9125/2567",
+  "description": "[เจ้าของสำนวน เขต 4] เรื่องเดียวที่ย้ายมาจากระบบเดิม (กจ.6) — สำนวน 9125/2567 “ทุจริตการจัดซื้อจัดจ้าง โครงการจัดซื้อครุภัณฑ์คอมพิวเตอร์” · ไฟล์ คบ.1 ที่ถ่ายโอน 1 ไฟล์ · ยุติการคุ้มครองแล้ว เปิดดูได้อย่างเดียว · ไม่มีชื่อพยาน/วันที่คุ้มครอง/แบบ คบ. อื่น เพราะระบบเดิมไม่มีข้อมูล",
+  "to": "/registry",
+  "group": "ข้อมูลจากระบบเดิม",
+  "capturedUsers": {
+    "OWN-REG4": {
+      "name": "วีระพงษ์ ขยันยิ่ง"
+    },
+    "REC-REG4": {
+      "name": "ปวีณา บันทึกไว"
+    }
+  },
+  "localStorageData": {
+    "ecmis-auth-storage": "{\"state\":{\"currentRole\":\"case_owner\",\"currentOfficerUserId\":\"OWN-REG4\",\"currentDirectorUserId\":\"DIR-REG1\",\"currentOrgUnitId\":\"pacc-reg-4\",\"sidebarCollapsed\":false,\"isGlobalSearchOpen\":false,\"globalSearchQuery\":\"\",\"isAuthenticated\":true,\"loginUsername\":\"reg4.caseowner\",\"rememberLogin\":true},\"version\":0}",
+    "ecmis-case-storage-v2": "{\"state\":{\"cases\":[{\"no\":\"MIG-9125-2567\",\"form\":\"คำร้อง\",\"person\":\"\",\"status\":\"ยุติการคุ้มครองแล้ว · ข้อมูลจากระบบเดิม\",\"stage\":\"terminated\",\"owner\":\"\",\"next\":\"เรื่องสิ้นสุดแล้ว · เปิดดูได้อย่างเดียว\",\"risk\":\"ยังไม่ประเมิน\",\"intakeDocType\":\"kb1\",\"intakeUnit\":\"สำนักงาน ป.ป.ท. เขต 4\",\"orgUnitId\":\"pacc-reg-4\",\"assignedOfficerUserId\":\"OWN-REG4\",\"protectionOwnerUserId\":\"OWN-REG4\",\"linkedMainCaseId\":\"9125/2567\",\"mainCaseNo\":\"9125/2567\",\"mainCaseTitle\":\"ทุจริตการจัดซื้อจัดจ้าง โครงการจัดซื้อครุภัณฑ์คอมพิวเตอร์\",\"mainCaseStatus\":\"ชี้มูลแล้ว\",\"mainCaseLeadOfficer\":\"วีระพงษ์ ขยันยิ่ง\",\"mainCaseLeadOfficerUserId\":\"OWN-REG4\",\"createdAt\":\"2025-01-20T07:30:00.000Z\",\"updatedAt\":\"2025-01-20T07:30:00.000Z\",\"documents\":[{\"id\":\"F-0101\",\"category\":\"source\",\"name\":\"คบ1_คำร้องขอคุ้มครองพยาน.pdf\"}],\"legacySource\":{\"system\":\"ระบบเดิม (Data Migration กจ.6 / กจ.5)\",\"runId\":\"RUN-2026-001\",\"sourceCaseNo\":\"9125/2567\",\"sourceUnit\":\"ปปท.4 · สำนักงาน ป.ป.ท. เขต 4\",\"migratedFiles\":[{\"fileId\":\"F-0101\",\"docCategory\":\"KB01\",\"docLabel\":\"คบ.1 คำร้องขอให้คุ้มครองพยาน\",\"fileName\":\"คบ1_คำร้องขอคุ้มครองพยาน.pdf\",\"mimeType\":\"application/pdf\",\"objectKey\":\"ecmis-wit/9125-2567/KB01/คบ1_คำร้องขอคุ้มครองพยาน.pdf\",\"objectVersion\":\"v1\",\"srcPath\":\"\\\\\\\\NAS\\\\กจ06_คุ้มครองพยาน\\\\ปปท.4\\\\9125-2567\\\\คบ.1\\\\คบ1_คำร้องขอคุ้มครองพยาน.pdf\",\"fileMtime\":\"2025-01-20 14:30\"}]}}],\"activeCaseNo\":\"MIG-9125-2567\"},\"version\":0}",
+    "ecmis-role-set": "legacy-migration"
+  }
+}

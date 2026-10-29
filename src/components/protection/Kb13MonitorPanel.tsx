@@ -5,14 +5,16 @@ import { Badge } from '../common/Badge'
 import { useCaseStore } from '../../store/useCaseStore'
 import { CaseItem, MonthlyReport, ProtectionMethodNo } from '../../types/case'
 import { METHOD_LABELS, deriveEpisode } from '../../lib/episode'
-import { getKb13Progress, kb13DueStatus, lastLockedKb13Round, needsReview, openKb13Round } from '../../lib/kb13'
+import { getKb13Progress, isExternalRound, isKb13RoundReadyToReceive, kb13DueStatus, lastLockedKb13Round, needsReview, openKb13Round, reportSourceLabel } from '../../lib/kb13'
 import { MethodProgressStepper } from './MethodProgressStepper'
 import { ReviewBranchModal } from './ReviewBranchModal'
 import { ReceiveReportModal } from './ReceiveReportModal'
 import { OpenRoundModal } from './OpenRoundModal'
+import { ExternalReportForm } from './ExternalReportForm'
 import { formatThaiDate, currentReportPeriod, thaiMonthName, addDays } from '../../lib/utils'
 import { showToast } from '../../lib/swal'
 import { protectionMethodSwitchNotice, toggleProtectionMethod } from '../../lib/constants'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
 
@@ -56,7 +58,8 @@ export const Kb13MonitorPanel: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
 
   /** เปิดรอบ(WIT1004) เข้าไปแทนที่จัดทำ-ลงนาม-ตรวจรับ-สถานะ-ปิดรอบ เมื่อมีรอบเปิดอยู่ ตรงกับที่การ์ดเดิมสลับกันแสดงอยู่แล้ว */
   const pageKeys = useMemo<WizardPageKey[]>(
-    () => (round ? ['episode', 'cycle', 'draft', 'signature'] : ['episode', 'cycle', 'open']),
+    /** รอบหนังสือภายนอกไม่มีหน้าลงนาม — ข้ามไปตรวจรับได้ทันทีหลังบันทึกรับหนังสือ */
+    () => (round ? (isExternalRound(round) ? ['episode', 'cycle', 'draft'] : ['episode', 'cycle', 'draft', 'signature']) : ['episode', 'cycle', 'open']),
     [round]
   )
 
@@ -103,7 +106,8 @@ export const Kb13MonitorPanel: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
 
       {activeKey === 'episode' && <EpisodeCard caseItem={caseItem} />}
       {activeKey === 'cycle' && <ReportCycleCard caseItem={caseItem} />}
-      {activeKey === 'draft' && round && <DraftRoundCard caseItem={caseItem} round={round} />}
+      {/* รอบหนังสือภายนอก: WIT1005 = บันทึกรับหนังสือ แทนการจัดทำ คบ.13 (ไม่มีหน้าลงนาม) */}
+      {activeKey === 'draft' && round && (isExternalRound(round) ? <ExternalReportForm caseNo={caseItem.no} round={round} /> : <DraftRoundCard caseItem={caseItem} round={round} />)}
       {activeKey === 'signature' && round && <SignatureStatusCard caseItem={caseItem} round={round} />}
 
       <RoundHistory
@@ -197,7 +201,7 @@ const AreaField: React.FC<{
 }> = ({ label, value, onChange, rows = 3, disabled }) => (
   <label className="block">
     <span className="ws-label">{label}</span>
-    <textarea
+    <VoiceTextarea
       rows={rows}
       value={value}
       disabled={disabled}
@@ -557,12 +561,15 @@ const RoundHistory: React.FC<{
                 {r.periodFrom && r.periodTo ? ` · ${formatThaiDate(r.periodFrom)}–${formatThaiDate(r.periodTo)}` : ''}
               </strong>
               <div className="flex items-center gap-2">
+                {isExternalRound(r) && <Badge variant="info" icon="fa-envelope-open-text">{reportSourceLabel(r)}</Badge>}
                 <Badge variant={r.lockedAt ? 'success' : 'warning'}>{r.lockedAt ? 'ปิดรอบแล้ว' : 'กำลังดำเนินการ'}</Badge>
                 {r.id === receivableRoundId && (
                   <Button
                     type="button"
                     onClick={onReceive}
-                    className="rounded-lg border border-blue bg-blue/10 px-3 py-1 text-[0.8rem] font-bold text-blue-dark hover:bg-blue/20 transition"
+                    disabled={isExternalRound(r) && !r.reviewedAt && !isKb13RoundReadyToReceive(r)}
+                    title={isExternalRound(r) && !r.reviewedAt && !isKb13RoundReadyToReceive(r) ? 'ต้องบันทึกรับหนังสือและแนบไฟล์ก่อน' : undefined}
+                    className="rounded-lg border border-blue bg-blue/10 px-3 py-1 text-[0.8rem] font-bold text-blue-dark hover:bg-blue/20 transition disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <i className="fa-solid fa-inbox mr-1.5" />
                     {!r.reviewedAt
@@ -584,7 +591,11 @@ const RoundHistory: React.FC<{
                 )}
               </div>
             </div>
-            <p className="text-[0.8rem] text-slate-600">{r.summary || 'ยังไม่ได้จัดทำเนื้อรายงาน'}</p>
+            <p className="text-[0.8rem] text-slate-600">{isExternalRound(r)
+                ? r.externalLetter
+                  ? `${r.externalLetter.agency} · เลขที่ ${r.externalLetter.letterNo}`
+                  : 'ยังไม่ได้บันทึกรับหนังสือ'
+                : r.summary || 'ยังไม่ได้จัดทำเนื้อรายงาน'}</p>
             <p className="text-[0.8rem] text-muted">
               {r.orderRef ? `คำสั่ง ${r.orderRef}` : ''}
               {r.orderDays ? ` · ${r.orderDays} วัน` : ''}

@@ -9,9 +9,9 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * TC-055 Case 4.2/4.3 — แฟ้มอุทธรณ์ไม่มีทาง "ส่งกลับเข้าสายพิจารณาปกติ" เดินตามลำดับชั้นถึงมติเท่านั้น
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
-const APPEAL_URL = `/appeal-folder/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
+const APPEAL_URL = `/appeal-folder/${encodeURIComponent(CASE_NO)}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
   const dialog = page.locator('.swal2-popup:not(.swal2-toast)')

@@ -20,7 +20,7 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  *  - TC-086, TC-088..TC-093 เป็นเทสต์ใหม่ที่ต่อท้ายไฟล์นี้
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const METHOD4_URL = `/protection-method/4?caseNo=${CASE_NO}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'
@@ -453,7 +453,7 @@ test.describe('TC-086 — ประสานฯ ครบเส้นทาง: 
 test.describe('TC-088 — รับรายงาน คบ.13 ประจำเดือนจากหน่วยงานผู้รับ', () => {
   test('TC-088 · [Happy] หน่วยงานผู้รับดำเนินการคุ้มครอง ครบรอบเดือนแล้วบันทึกรายงาน คบ.13', async ({ page }) => {
     await seedMockState(page, 'Case 1.12', 'officer', AT_ACTIVE_METHOD4)
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
 
     await page.getByRole('button', { name: 'ส่งรายงาน คบ.13' }).click()
     await page
@@ -544,7 +544,7 @@ test.describe('TC-092 — วันส่งมอบจริงต้องแ
 test.describe('TC-093 — เหตุสำคัญระหว่างรอบรายงาน ต้องแยกจากรอบรายงานประจำเดือน', () => {
   test('TC-093 · [Edge] บันทึกเหตุสำคัญกลางเดือนทันที แยกจากรอบ คบ.13 ประจำเดือน', async ({ page }) => {
     await seedMockState(page, 'Case 1.12', 'officer', AT_ACTIVE_METHOD4)
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
 
     await page.getByRole('button', { name: 'รายงานเหตุสำคัญ' }).click()
     await page.getByPlaceholder('หัวข้อเหตุการณ์ เช่น พบบุคคลต้องสงสัยเฝ้าสังเกตการณ์').fill('พยานถูกคุกคามซ้ำ')

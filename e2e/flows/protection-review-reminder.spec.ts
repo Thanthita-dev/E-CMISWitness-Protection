@@ -1,7 +1,8 @@
 import { addProtectionMonths } from '../../src/lib/protectionMonths'
 import { expect, test } from '@playwright/test'
 import { seedMockState, readCase, switchRole } from '../helpers/seed'
-const NO = 'WP-2569-009901'
+import { passSarabanCheckpoint } from '../helpers/saraban'
+const NO = '9901/2569'
 
 test('แจ้งเตือนผู้รับผิดชอบปัจจุบันและเปิดงานทบทวนจากปุ่มข้าง คบ.13', async ({ page }) => {
   await seedMockState(page, 'Approved - วิธีที่ 4', undefined, { stage: 'method_operation' })
@@ -12,10 +13,10 @@ test('แจ้งเตือนผู้รับผิดชอบปัจ�
     await expect(cell.getByRole('link')).toHaveText('ดูระยะเวลาคุ้มครอง')
   }
   await page.screenshot({ path: '/private/tmp/a6-overview-single-action.png' })
-  await page.goto('/protection-duration?caseNo=WP-2569-009902')
-  await expect(page.getByRole('link', { name: 'ขอขยายเวลา คบ.14', exact: true })).toHaveAttribute('href', '/form/14?caseNo=WP-2569-009902')
-  await page.goto('/protection-duration?caseNo=WP-2569-009903')
-  await expect(page.getByRole('link', { name: 'ส่งต่อกรมคุ้มครองสิทธิฯ', exact: true })).toHaveAttribute('href', '/article14?caseNo=WP-2569-009903')
+  await page.goto('/protection-duration?caseNo=9902/2569')
+  await expect(page.getByRole('link', { name: 'ขอขยายเวลา คบ.14', exact: true })).toHaveAttribute('href', '/form/14?caseNo=9902%2F2569')
+  await page.goto('/protection-duration?caseNo=9903/2569')
+  await expect(page.getByRole('link', { name: 'ส่งต่อกรมคุ้มครองสิทธิฯ', exact: true })).toHaveAttribute('href', '/article14?caseNo=9903%2F2569')
   await expect(page.getByRole('dialog', { name: 'แจ้งเตือนทบทวนการคุ้มครอง', exact: true })).not.toBeVisible()
   const original = await readCase(page, NO)
   await page.goto(`/protection-duration?caseNo=${NO}`)
@@ -27,7 +28,7 @@ test('แจ้งเตือนผู้รับผิดชอบปัจ�
   await expect(dialog).not.toBeVisible()
   expect(await readCase(page, NO)).toEqual(original)
   await page.getByRole('link', { name: 'ขอขยายเวลา คบ.14', exact: true }).click()
-  await expect(page).toHaveURL(`/form/14?caseNo=${NO}`)
+  await expect(page).toHaveURL(`/form/14?caseNo=${encodeURIComponent(NO)}`)
   await expect(page.getByRole('textbox', { name: /เหตุผลความจำเป็น/ })).toHaveValue(/ภัยคุกคาม/)
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.screenshot({ path: '/private/tmp/a6-kb14-form.png', fullPage: true })
@@ -56,11 +57,17 @@ test('แจ้งเตือนผู้รับผิดชอบปัจ�
     await page.getByRole('button', { name: 'ยืนยันครบถ้วน', exact: true }).click()
     await expect.poll(async () => (await readCase(page, NO)).extensionRequests.at(-1).approvalStage).toBe(next)
     expect((await readCase(page, NO)).protectionEndAt).toBe(original.protectionEndAt)
+    if (role === 'director') {
+      await passSarabanCheckpoint(page, NO, 'receiver')
+      await passSarabanCheckpoint(page, NO, 'secretary_receiver')
+    }
   }
   await switchRole(page, 'secretary')
   await page.getByRole('button', { name: /อนุมัติขยายเวลา$/ }).click()
   await page.getByRole('button', { name: 'ยืนยันอนุมัติ', exact: true }).click()
   await expect.poll(async () => (await readCase(page, NO)).extensionRequests.at(-1).status).toBe('approved')
+  await passSarabanCheckpoint(page, NO, 'secretary_receiver')
+  await passSarabanCheckpoint(page, NO, 'receiver')
   expect((await readCase(page, NO)).owner).toBe(original.assignedOfficer)
   expect((await readCase(page, NO)).protectionEndAt).toBe(addProtectionMonths(original.protectionEndAt, 1))
 })

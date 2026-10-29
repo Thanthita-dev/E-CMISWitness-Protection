@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { BackLink } from '../components/common/BackLink'
 import { PageHeader } from '../components/common/PageHeader'
 import { Badge } from '../components/common/Badge'
-import { useCaseStore } from '../store/useCaseStore'
+import { useVisibleCases } from '../hooks/useVisibleCases'
 import { Kb13MonitorPanel } from '../components/protection/Kb13MonitorPanel'
 import { kb13DueStatus } from '../lib/kb13'
 import { formatThaiDate } from '../lib/utils'
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/protection-monitor')({
  */
 function ProtectionMonitorPage() {
   const { caseNo } = Route.useSearch()
-  const cases = useCaseStore((s) => s.cases)
+  const cases = useVisibleCases()
   const caseItem = cases.find((c) => c.no === caseNo)
 
   /**

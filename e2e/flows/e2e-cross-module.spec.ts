@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
+
+/** ผ่านธุรการ: ขาไป ธุรการหน่วย → ธุรการสำนักงานเลขาธิการ · ขากลับ กลับกัน */
+async function passArticle14Clerks(page: Page, caseNo: string, direction: 'up' | 'down') {
+  const order = direction === 'up' ? (['receiver', 'secretary_receiver'] as const) : (['secretary_receiver', 'receiver'] as const)
+  for (const clerk of order) await passSarabanCheckpoint(page, caseNo, clerk)
+}
 
 /**
  * E2E ข้ามโมดูล / Business Rule รวม — TC-154 .. TC-161
@@ -13,12 +20,12 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * แยกวิธีคุ้มครอง) จะเดินผ่านปุ่ม/ฟอร์มจริงเพื่อยืนยันกฎเหล่านั้นด้วย
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const MONITOR_URL = `/protection-monitor?caseNo=${CASE_NO}`
-const TERMINATION_URL = `/termination/${CASE_NO}`
-const EXTENSION_URL = `/protection-extension/${CASE_NO}`
-const APPEAL_URL = `/appeal-folder/${CASE_NO}`
+const TERMINATION_URL = `/termination/${encodeURIComponent(CASE_NO)}`
+const EXTENSION_URL = `/protection-extension/${encodeURIComponent(CASE_NO)}`
+const APPEAL_URL = `/appeal-folder/${encodeURIComponent(CASE_NO)}`
 
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'
@@ -35,6 +42,7 @@ async function confirmDialog(page: Page, buttonName: string, expectedText?: stri
 // ---------------------------------------------------------------------------
 // TC-154 · [E2E-01] เส้นทางเร่งด่วนเต็มรูปแบบ: คบ.2→คบ.5→คุ้มครอง→คบ.13→ยุติ
 // ---------------------------------------------------------------------------
+
 test.describe('TC-154 · [E2E-01] เส้นเร่งด่วนเต็มรูปแบบ — Episode ต่อเนื่อง TEMPORARY+MAIN = 120 วัน และเอกสารถูกล็อก', () => {
   test('TC-154 · ปลายทางของเส้นทางเร่งด่วน: Episode เดียวไม่ถูกรีเซ็ต วันสะสมรวม 120 วัน และคำสั่งยุติถูกล็อก', async ({ page }) => {
     // ประกอบสถานะ "ปลายทาง" ของเส้นทาง — TEMPORARY (คบ.5) 20 วัน ต่อเนื่องด้วย MAIN (คบ.8) 100 วัน ใน Episode เดียวกัน
@@ -132,7 +140,7 @@ test.describe('TC-155 · [E2E-02] อนุมัติขยายเวลา 
     await backLink.click()
     // TC-155 — ลิงก์กลับแท็บ 10 ต้องพกเลขคำร้อง (search caseNo) ไปด้วย เพื่อเปิดแท็บ 10 ของแฟ้มนี้โดยตรง
     // แทนที่จะเด้งไปหน้ารวม '/protection' ให้ผู้ใช้เลือกสำนวนซ้ำอีกครั้ง
-    await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO.replace('/', '(?:/|%2F)')}`))
 
     // ช่วงคุ้มครองใหม่ถูก "เพิ่ม" เป็น Phase ที่สอง ไม่ใช่แก้ทับ Phase เดิม
     const after = await readCase(page, CASE_NO)
@@ -185,6 +193,8 @@ test.describe('TC-156 · [E2E-03] อุทธรณ์สำเร็จ — �
     await page.getByTestId('appeal-resolution-overturn').click()
     // จอยืนยันย้ำข้อห้ามสำคัญของเส้นทางนี้ — ห้ามสร้าง คบ.1 ใหม่
     await confirmDialog(page, 'ยืนยันมติเปลี่ยนแปลงคำสั่ง', 'ไม่สร้าง คบ.1 ใหม่')
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver')
 
     const resolved = await readCase(page, CASE_NO)
     expect((resolved?.appealResolution as Record<string, unknown>).outcome).toBe('overturn')
@@ -236,28 +246,25 @@ test.describe('TC-157 · [E2E-04] ครบเพดาน 180 วัน — ข
       .getByLabel('รายงานผล / ประเมินความเสี่ยง (อ้าง คบ.13 และคำสั่งเดิม) *')
       .fill('ผลประเมินตาม คบ.13 ล่าสุดยังพบความเสี่ยงระดับสูง')
     await page.getByTestId('submit-article14-proposal').click()
-    await confirmDialog(page, 'ยืนยันเสนอ', 'เข้าคิวผู้บังคับบัญชาตรวจ')
-
-    // ผู้บังคับบัญชาชั้นต้นเห็นชอบ
-    await switchRole(page, 'supervisor')
-    await page.goto('/article14')
-    await page.getByTestId('article14-endorse-button').click()
-    await confirmDialog(page, 'ยืนยันเห็นชอบ')
-
-    // เลขาธิการฯ เห็นชอบเสนอคณะกรรมการ
-    await switchRole(page, 'secretary')
-    await page.goto('/article14')
-    await page.getByTestId('article14-endorse-button').click()
-    await confirmDialog(page, 'ยืนยันเห็นชอบ')
-
-    // คณะกรรมการมีมติเห็นชอบส่งกรม
-    await switchRole(page, 'committee')
-    await page.goto('/article14')
-    await page.getByTestId('article14-committee-approve').getByRole('button')
-    await page.locator('input[placeholder="เลขที่มติ / ครั้งที่ประชุม"]').fill('มติที่ 12/2569')
-    await page.locator('input[placeholder="สาระสำคัญของมติ"]').fill('เห็นชอบส่งกรมคุ้มครองสิทธิและเสรีภาพ')
-    await page.getByTestId('article14-committee-approve').click()
-    await confirmDialog(page, 'ยืนยันมติ')
+    await confirmDialog(page, 'ยืนยันจัดทำ', 'ผู้บังคับบัญชาชั้นต้น')
+    // สร้างหนังสือแจ้งกรมฯ แล้วพาเข้าแฟ้ม — เจ้าหน้าที่กด "ส่งให้ผู้บังคับบัญชาชั้นต้น" ที่การ์ดท้ายแฟ้มเอง
+    // เปิดแบบฟอร์มหนังสือส่งกรมคุ้มครองสิทธิฯ แล้วกด "บันทึกหนังสือ" ก่อน ปุ่มส่งจึงกดได้
+    await page.goto(`/form/18?caseNo=${CASE_NO}`)
+    await page.getByRole('button', { name: /บันทึกหนังสือ$/ }).click()
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
+    await page.getByTestId('article14-review-footer').getByTestId('article14-submit-review').click()
+    await page.getByRole('button', { name: 'ยืนยันส่ง', exact: true }).click()
+    await page.locator('.swal2-popup:not(.swal2-toast)').waitFor({ state: 'detached' })
+    // พิจารณาตามลำดับชั้น ผบช.ชั้นต้น → ผอ.สำนัก/กอง → รองเลขาธิการ → เลขาธิการ (ไม่ผ่านมติคณะกรรมการ)
+    for (const role of ['supervisor', 'director', 'deputy_secretary', 'secretary']) {
+      await switchRole(page, role)
+      await page.goto('/article14')
+      await page.getByTestId('article14-endorse-button').click()
+      await confirmDialog(page, 'ยืนยันเห็นชอบ')
+      // ผอ. เสนอขึ้นสำนักงานเลขาธิการ / เลขาธิการส่งผลกลับหน่วย → ต้องผ่านธุรการทั้งสองฝั่ง
+      if (role === 'director') await passArticle14Clerks(page, CASE_NO, 'up')
+      if (role === 'secretary') await passArticle14Clerks(page, CASE_NO, 'down')
+    }
 
     expect(((await readCase(page, CASE_NO))?.article14 as Record<string, unknown>)?.step).toBe('letter_sent')
 
@@ -265,7 +272,7 @@ test.describe('TC-157 · [E2E-04] ครบเพดาน 180 วัน — ข
     await switchRole(page, 'officer')
     await page.goto('/article14')
     await page.locator('input[placeholder="เลขที่หนังสือ (สารบรรณเดิม)"]').fill('ปปท 0007/9001')
-    await page.getByRole('button', { name: 'บันทึกหนังสือขาออก' }).click()
+    await page.getByTestId('article14-record-delivery').click()
     await confirmDialog(page, 'ยืนยันบันทึก')
     // WIT0860 — บันทึกหนังสือตอบรับจากกรมก่อนส่งมอบ
     await page.getByPlaceholder('เลขที่หนังสือตอบรับของกรม').fill('ยธ 0007/2569')

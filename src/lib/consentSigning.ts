@@ -187,7 +187,7 @@ export const toSignatureRecord = (req: ConsentRequest): SignatureRecord | undefi
         signerName: req.signerName || req.recipient.name,
         signedAt: formatConsentDateTime(req.signedAt),
         signatureImage: req.signatureImage,
-        note: `ลงชื่ออิเล็กทรอนิกส์ผ่านลิงก์ ${formatConsentDateTime(req.signedAt)} · คบ.1 ฉบับที่ ${req.version} (สาธิต)`,
+        note: `ลงชื่ออิเล็กทรอนิกส์ผ่านลิงก์ ${formatConsentDateTime(req.signedAt)} · คบ.1 ฉบับที่ ${req.version}`,
       }
     : undefined
 

@@ -14,7 +14,7 @@ import { readCase, seedMockState } from '../helpers/seed'
  * ทำที่รายการแบบฟอร์มในแฟ้ม ไม่ใช่ที่แผงนี้ ตามกติกาเดิมของระบบ)
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const MONITOR_URL = `/protection-monitor?caseNo=${CASE_NO}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
@@ -277,7 +277,7 @@ test.describe('Sheet 10 · WIT1001-1013 — ติดตามและราย
     await expect(page.getByText(/ส่งทบทวนแล้วเมื่อ/)).toBeVisible()
     await expect(page.getByRole('link', { name: 'ทบทวนผลการคุ้มครอง', exact: true }).first()).toHaveAttribute(
       'href',
-      `/protection-review/${CASE_NO}`
+      `/protection-review/${encodeURIComponent(CASE_NO)}`
     )
 
     const after = await readCase(page, CASE_NO)

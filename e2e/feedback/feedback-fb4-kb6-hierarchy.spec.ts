@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
+import { KB1_DONE, readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
 
 /**
  * FB-4 · TC-009 ~ TC-012 — ความเห็นตามลำดับชั้นในแบบ คบ.6 (ข้อ 9–13)
@@ -9,13 +9,13 @@ import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../h
  * ของระดับอื่นจากหน้ากรอกแบบฟอร์ม (/form/6) ไม่ได้ และมีปุ่ม "ลงนาม" อยู่ในแถบปุ่มท้ายหน้าฟอร์มเดียวกัน
  * ข้าง "บันทึกแบบ คบ.6" สำหรับผู้มีสิทธิ์ในขั้นตอนปัจจุบัน (ไม่ใช่ปุ่ม "ลงนาม" ข้างแถว คบ.6 ในหน้าแฟ้มอีกต่อไป)
  *
- * หมายเหตุการแมปเคส: ชีต test case อ้างเลขคำร้อง WP-2569-000503 ซึ่งไม่มีอยู่จริงใน mock data —
- * ทุก mock state ในระบบใช้เลขคำร้องเดียวกันคือ WP-2569-000501 จึงใช้เลขนี้แทนทุกเทสต์ในไฟล์นี้
+ * หมายเหตุการแมปเคส: ชีต test case อ้างเลขคำร้อง 0503/2569 ซึ่งไม่มีอยู่จริงใน mock data —
+ * ทุก mock state ในระบบใช้เลขคำร้องเดียวกันคือ 0501/2569 จึงใช้เลขนี้แทนทุกเทสต์ในไฟล์นี้
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const FORM6_URL = `/form/6?caseNo=${CASE_NO}`
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 
 /** ช่อง textarea ของข้อความเห็นแต่ละข้อ อ้างจาก label ตรงตัวในแบบ คบ.6 */
 function opinionArea(page: Page, label: string) {
@@ -84,7 +84,7 @@ test.describe('TC-010 — หลังส่งต่อขึ้นชั้น
     page,
   }) => {
     // เริ่มที่ officer/staff_review (Case 1.3) → ส่งต่อ → ผบช.ชั้นต้นกรอกและลงนามข้อ 10 → ส่งต่อ ผอ.
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
     // Case 1.3 ตั้งต้นยังไม่เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงก่อนจึงจะผ่านด่านส่งต่อ
     await linkMainCaseAsOfficer(page)

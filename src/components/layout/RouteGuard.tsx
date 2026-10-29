@@ -26,7 +26,7 @@ export const RouteGuard: React.FC = () => {
         บทบาท <strong>{ROLE_NAMES[currentRole]}</strong> ไม่มีหน้าที่ในหน้า{' '}
         <code className="rounded bg-white px-1.5 py-0.5 text-xs text-slate-700">{pathname}</code>
         <br />
-        หากต้องการเข้าถึง กรุณาสลับบทบาทที่แถบด้านบนขวา
+        หากต้องการเข้าถึง กรุณาออกจากระบบแล้วเข้าสู่ระบบด้วยบัญชีที่มีสิทธิ์
       </p>
       <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
         <Link

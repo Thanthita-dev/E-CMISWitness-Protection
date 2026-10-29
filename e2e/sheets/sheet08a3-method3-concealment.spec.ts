@@ -9,7 +9,7 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  *      → ทดสอบสิทธิ์/การรั่วไหล (WIT0834-0836) → เปิดใช้มาตรการ (WIT0837)
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const METHOD3_URL = `/protection-method/3?caseNo=${CASE_NO}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
@@ -242,7 +242,7 @@ test.describe('08A-3 · WIT0830-0837 — วิธีที่ 3 ปกปิด
     }
 
     // WIT0837 — ต้องเปิดตรวจ Access Log ได้จากแท็บประวัติของแฟ้ม ไม่ใช่ต้องไปเปิดฐานข้อมูลเอง
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await page.getByTestId('dossier-tab-audit').click()
     await expect(page.getByTestId('dossier-audit-log-list')).toBeVisible()
     await expect(page.getByTestId('dossier-audit-log-access-entry').first()).toBeVisible()

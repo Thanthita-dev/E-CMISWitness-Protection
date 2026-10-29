@@ -1,14 +1,20 @@
 import { Button } from '../common/Button'
-import React, { useState } from 'react'
-import { useFormDraftStore } from '../../store/useFormDraftStore'
+import React, { useContext, useEffect, useState } from 'react'
+import { signaturesForCase, useFormDraftStore } from '../../store/useFormDraftStore'
 import { useSignatureLinkStore } from '../../store/useSignatureLinkStore'
+import { useCaseStore } from '../../store/useCaseStore'
 import { SignatureModal } from '../common/SignatureModal'
 import { showToast, showLinkDialog } from '../../lib/swal'
 import { ATTACHMENT_ACCEPT, filterValidAttachments } from '../../lib/fileValidation'
 import { Area, Checks, DateField, DocHeaderFields, Field, Grid, Radios, Section } from './fields/FormKit'
 import { FormFilesPanel } from './FormFilesPanel'
-import { CaseClosedBanner, useIsFormCaseClosed } from './FormCaseScope'
+import { FormSarabanPanel } from './FormSarabanPanel'
+import { FormInitialTabContext } from './FormInitialTab'
+import { CaseClosedBanner, useIsFormCaseClosed, useIsFormCaseLegacy } from './FormCaseScope'
 import { ApplicantConsentPanel } from './ApplicantConsentPanel'
+import { userNameById } from '../../lib/constants'
+import { DocActions, useEditorView } from './EditorView'
+import { usePaperSignSlot } from './paper/paperSign'
 
 interface Kb1FormEditorProps {
     onSaved?: () => void
@@ -46,6 +52,9 @@ const KB1_REQUIRED_FIELDS: Array<{ name: string; label: string }> = [
 ]
 
 /** คบ.1 — คำร้องขอให้มีการคุ้มครองพยานตามมาตรการคุ้มครองเบื้องต้น (ข้อ 1–8 ตามต้นฉบับ) */
+/** แท็บแรกที่แผงข้างกระดาษแสดง (6. บุคคลที่เกี่ยวข้อง) — แท็บก่อนหน้ากรอกบนกระดาษได้ */
+const ASIDE_FIRST_SECTION = 4
+
 export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo }) => {
     const {
         section,
@@ -58,16 +67,41 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
         addAttachmentSet,
         addFileToSet,
         removeFileFromSet,
-        signatures,
+        signatures: allSignatures,
+        signatureCases,
         signDocument,
     } = useFormDraftStore()
+    /** คบ.1 ไม่แยกร่างตามแฟ้ม — แสดง/ลงลายมือชื่อเฉพาะของแฟ้มที่เปิดอยู่ */
+    const signatures = React.useMemo(() => signaturesForCase(allSignatures, signatureCases, caseNo), [allSignatures, signatureCases, caseNo])
 
     const createSignatureLink = useSignatureLinkStore((s) => s.createLink)
+    const markKb1Completed = useCaseStore((s) => s.markKb1Completed)
+
+    /** เปิดตรงแท็บทะเบียนสารบรรณจาก ?tab=saraban */
+    const initialTab = useContext(FormInitialTabContext)
+    useEffect(() => {
+        if (initialTab === 'saraban') setSection(8)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialTab])
+
+    /** โหมดกรอกบนเอกสาร: แผงข้างกระดาษเหลือส่วนที่กรอกบนกระดาษไม่ได้ (บุคคล เอกสารประกอบ ลายมือชื่อ รวมไฟล์ สารบรรณ) */
+    const aside = useEditorView() === 'aside'
+    useEffect(() => {
+        if (!aside || section >= ASIDE_FIRST_SECTION) return
+        /** กลับมากรอกผ่านแบบฟอร์มแล้วเปิดแท็บเดิมที่กรอกค้างไว้ */
+        const previous = section
+        setSection(6)
+        return () => setSection(previous)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [aside])
 
     const draft = getDraft(1)
     /** WIT1148 — แฟ้มปิดงานคุ้มครองแล้ว: ล็อกทั้งฉบับ ยกเว้นแท็บรวมไฟล์ที่ยังดู/ดาวน์โหลดได้ */
     const caseClosed = useIsFormCaseClosed(1)
+    const caseLegacy = useIsFormCaseLegacy(1)
     const [activeSignKey, setActiveSignKey] = useState<string | null>(null)
+    /** เจ้าพนักงานลงนามรับรองจากเส้นลงชื่อบนกระดาษได้ (ผู้ขอคุ้มครองลงชื่อเองผ่านลิงก์) */
+    usePaperSignSlot('kb1-officer', caseClosed ? null : { onSign: () => setActiveSignKey('kb1-officer') })
     const [newPerson, setNewPerson] = useState({
         title: 'นาย',
         firstName: '',
@@ -87,6 +121,7 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
         { label: '7. เอกสารประกอบ', icon: 'fa-paperclip' },
         { label: '8. ลายมือชื่อ', icon: 'fa-file-signature' },
         { label: 'รวมไฟล์ คบ.', icon: 'fa-folder-open' },
+        { label: 'ทะเบียนสารบรรณ', icon: 'fa-stamp' },
     ]
 
     const handleAddPerson = () => {
@@ -116,8 +151,8 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
 
     return (
         <div className="ws-card overflow-hidden">
-            <div className="flex border-b border-line bg-soft overflow-x-auto p-1.5 gap-1">
-                {tabs.map((tab, idx) => (
+            <div className={`flex border-b border-line bg-soft p-1.5 gap-1 ${aside ? 'flex-wrap' : 'overflow-x-auto'}`}>
+                {tabs.map((tab, idx) => (aside && idx < ASIDE_FIRST_SECTION) ? null : (
                     <Button
                         key={idx}
                         type="button"
@@ -131,8 +166,8 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                 ))}
             </div>
 
-            <fieldset disabled={caseClosed && section !== 7} className="m-0 min-w-0 border-0 p-5 md:p-6 space-y-6">
-                {caseClosed && <CaseClosedBanner />}
+            <fieldset disabled={caseClosed && section !== 7 && section !== 8} className={`m-0 min-w-0 border-0 space-y-6 ${aside ? 'p-4' : 'p-5 md:p-6'}`}>
+                {caseClosed && <CaseClosedBanner legacy={caseLegacy} />}
                 {/* 1. ข้าพเจ้า (ผู้ยื่นคำร้อง) */}
                 {section === 0 && (
                     <div className="space-y-5">
@@ -618,10 +653,13 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
 
                 {/* รวมไฟล์ คบ. — ไฟล์แนบของแบบ คบ. ทุกฉบับในสำนวนเดียวกัน */}
                 {section === 7 && <FormFilesPanel formId={1} />}
+
+                {/* ทะเบียนสารบรรณ — เลขรับ/เลขทะเบียนส่งของ คบ.1 ที่ธุรการลงทะเบียน */}
+                {section === 8 && <FormSarabanPanel formId={1} />}
             </fieldset>
 
-            <div className="flex items-center justify-between border-t border-line bg-soft px-5 py-3.5">
-                <Button
+            <div className={`flex items-center border-t border-line bg-soft ${aside ? 'flex-col gap-2 p-4 [&>*]:w-full' : 'justify-between px-5 py-3.5'}`}>
+                {!aside && <Button
                     type="button"
                     disabled={section === 0}
                     onClick={() => setSection(Math.max(0, section - 1))}
@@ -629,10 +667,10 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                 >
                     <i className="fa-solid fa-arrow-left" />
                     ส่วนก่อนหน้า
-                </Button>
+                </Button>}
 
-                <div className="flex gap-2">
-                    {section < tabs.length - 1 && (
+                <div className={aside ? 'flex flex-col gap-2' : 'flex gap-2'}>
+                    {!aside && section < tabs.length - 1 && (
                         <Button
                             type="button"
                             onClick={() => setSection(section + 1)}
@@ -643,7 +681,8 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                         </Button>
                     )}
                     {/* ลงนามครบแล้วบันทึกได้ทันที ไม่ต้องผ่านแท็บรวมไฟล์ */}
-                    {section >= tabs.length - 2 && (
+                    {(aside || section >= tabs.length - 3) && (
+                        <DocActions>
                         <Button
                             type="button"
                             disabled={caseClosed}
@@ -651,9 +690,11 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                                 const missing = KB1_REQUIRED_FIELDS.filter((f) => !String(draft[f.name] ?? '').trim())
                                 if (missing.length > 0) {
                                     showToast(`กรุณากรอกฟิลด์บังคับให้ครบก่อนบันทึก: ${missing.map((m) => m.label).join(' / ')}`, 'error')
-                                    setSection(0)
+                                    if (!aside) setSection(0)
                                     return
                                 }
+                                /** ปลดล็อกขั้นเชื่อมโยงคดีหลักและกลั่นกรองความเร่งด่วนของแฟ้มนี้ */
+                                if (caseNo) markKb1Completed(caseNo)
                                 showToast('บันทึกแบบ คบ.1 ฉบับสมบูรณ์เรียบร้อยแล้ว')
                                 onSaved?.()
                             }}
@@ -662,6 +703,7 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                             <i className="fa-solid fa-check" />
                             บันทึกแบบ คบ.1
                         </Button>
+                        </DocActions>
                     )}
                 </div>
             </div>
@@ -680,7 +722,7 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                             const person = relatedPersons.find((rp) => rp.id === pid)
                             return person ? `${person.title}${person.firstName} ${person.lastName}` : ''
                         })()
-                        : 'นางสาวอรุณี ใจมั่น',
+                        : userNameById('OFF-001'),
                 }
 
                 return (
@@ -691,7 +733,7 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                         defaultSignerName={signMeta.defaultSignerName}
                         onClose={() => setActiveSignKey(null)}
                         onConfirm={(name, img) => {
-                            signDocument(activeSignKey, name, img)
+                            signDocument(activeSignKey, name, img, caseNo)
                             setActiveSignKey(null)
                             showToast('บันทึกลายมือชื่ออิเล็กทรอนิกส์แล้ว')
                         }}
@@ -700,7 +742,7 @@ export const Kb1FormEditor: React.FC<Kb1FormEditorProps> = ({ onSaved, caseNo })
                                 title: signMeta.title,
                                 signerRole: signMeta.signerRole,
                                 defaultSignerName: signMeta.defaultSignerName,
-                                target: { kind: 'formDraft', key: activeSignKey },
+                                target: { kind: 'formDraft', key: activeSignKey, caseNo },
                             })
                             setActiveSignKey(null)
                             showLinkDialog('สร้างลิงก์เซ็นทางไกลสำเร็จ', `${window.location.origin}/sign/${token}`)

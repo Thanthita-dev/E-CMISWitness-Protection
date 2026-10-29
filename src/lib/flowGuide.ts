@@ -4,7 +4,7 @@ import { MOCK_STATES, applyMockState } from './mockState'
 import type { UserRole } from '../types/user'
 
 /**
- * คู่มือเดิน flow — จับคู่ขั้น WIT ในผัง drawio (context/user-flow) กับหน้าจอใน prototype
+ * คู่มือเดิน flow — จับคู่ขั้น WIT กับหน้าจอใน prototype (ปรับตาม code ปัจจุบัน ไม่ใช่ผัง drawio ใน context/user-flow)
  * ข้อมูลอยู่ที่ src/flow-guide/flow-map.json (แหล่งเดียวกับ docs/flow-guide.md)
  */
 
@@ -104,7 +104,7 @@ export function mockStateRole(name: string): UserRole | null {
 }
 
 /** แทนที่บทบาทใน ecmis-auth-storage ตามตรรกะเดียวกับ useAuthStore.setRole (หน่วยงานเปลี่ยนตามบทบาท) */
-function overrideRole(role: UserRole) {
+export function overrideRole(role: UserRole) {
     const raw = localStorage.getItem('ecmis-auth-storage')
     if (!raw) return
     const auth = JSON.parse(raw)

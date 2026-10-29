@@ -1,3 +1,5 @@
+import { policeAllSigned } from '../../lib/policeLetters'
+import { PoliceLetterBundlePanel } from './PoliceLetterBundlePanel'
 import { legacyMonthLabel, monthLabel, protectionMonths } from '../../lib/protectionMonths'
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -10,7 +12,6 @@ import { useCaseStore } from '../../store/useCaseStore'
 import { CaseItem, MethodSiteEvaluation, ProtectionMethodNo, ProtectionMethodTrack } from '../../types/case'
 import {
   MASKABLE_IDENTIFIERS,
-  OFFICIAL_LETTER_CHANNELS,
   ROLE_NAMES,
 } from '../../lib/constants'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
@@ -22,9 +23,14 @@ import {
   privacyWindow,
   SITE_TYPE_LABELS,
 } from '../../lib/episode'
-import { method1Gate, methodStartBlocker, method4ReplyRecorded, wizardSectionCount } from '../../lib/methodProgress'
+import { currentMethod4Letters, method1Gate, methodStartBlocker, method4ReplyRecorded, wizardSectionCount } from '../../lib/methodProgress'
 import { ATTACHMENT_ACCEPT, ATTACHMENT_RULE_TEXT, getAttachmentRejection } from '../../lib/fileValidation'
 import { CoordinationDeclineCard } from './CoordinationDeclineCard'
+import { CoordinationLetterSend } from './CoordinationLetterSend'
+import { letterClerkUnitName, letterLockedForOfficer } from '../../lib/coordinationLetterNumbering'
+import { dispatchUnitFor, formatSarabanDate } from '../../lib/saraban'
+import { formatThaiDate } from '../../lib/utils'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 export const todayIso = () => new Date().toISOString().slice(0, 10)
 
@@ -127,9 +133,10 @@ const TextField: React.FC<{
   onChange: (v: string) => void
   placeholder?: string
   type?: string
-}> = ({ label, value, onChange, placeholder, type = 'text' }) => (
+  required?: boolean
+}> = ({ label, value, onChange, placeholder, type = 'text', required }) => (
   <label className="block">
-    <span className="ws-label">{label}</span>
+    <span className="ws-label">{label}{required && <span className="text-danger"> *</span>}</span>
     <input
       type={type}
       value={value}
@@ -148,7 +155,7 @@ const AreaField: React.FC<{ label: string; value: string; onChange: (v: string) 
 }) => (
   <label className="block">
     <span className="ws-label">{label}</span>
-    <textarea
+    <VoiceTextarea
       rows={rows}
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -596,8 +603,8 @@ const Method2Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack 
             <div className="mt-2 space-y-1.5">
               <p>สถานที่ที่เลือกอยู่นอกขอบเขตที่อนุมัติ — เลือกใหม่ให้อยู่ในขอบเขต หรือเสนอเปลี่ยนวิธี/เงื่อนไขก่อน</p>
               <Link
-                to="/protection-review/$caseNo"
-                params={{ caseNo: caseItem.no }}
+                to="/protection-duration"
+                search={{ caseNo: caseItem.no }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400 bg-white px-3 py-1.5 text-[0.8rem] font-bold text-rose-800 hover:bg-rose-50 transition"
               >
                 <i className="fa-solid fa-list-check" />
@@ -938,21 +945,17 @@ const Method3Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack 
 
 const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack; coordinationOnly?: boolean }> = ({ caseItem, track, coordinationOnly }) => {
   const navigate = useNavigate()
-  const { updateMethodTrack, addOfficialLetter, setMethodStatus, completeMethod4Handover } =
+  const { updateMethodTrack, addOfficialLetter, setMethodStatus, completeMethod4Handover, requestCoordinationLetterNumber } =
     useCaseStore()
   const co = track.coordination || {}
   const set = (patch: Record<string, unknown>) => updateMethodTrack(caseItem.no, 4, { coordination: { ...co, ...patch } })
 
-  const letters = (caseItem.officialLetters || []).filter((l) => l.context === 'method4')
-  const letterDraft = co.letterDraft || defaultCoordinationLetter(caseItem)
-  const [letterOpen, setLetterOpen] = useState(false)
-  const [letterError, setLetterError] = useState('')
-  const letterDialog = useRef<HTMLDialogElement>(null)
-  useEffect(() => {
-    if (letterOpen) letterDialog.current?.showModal()
-    else letterDialog.current?.close()
-  }, [letterOpen])
-  const [outgoing, setOutgoing] = useState({ channel: 'direct', trackingNo: '' })
+  const letters = currentMethod4Letters(caseItem)
+  const agencyType = co.agencyType || 'police'
+  const isPolice = agencyType === 'police'
+  const agencyNoun = isPolice ? 'สถานีตำรวจ' : 'หน่วยงาน'
+  const approvalLetter = caseItem.coordinationApproval?.agencyType === agencyType ? caseItem.coordinationApproval : undefined
+  const letterDraft = co.letterDraft || approvalLetter?.signature?.draft || defaultCoordinationLetter(caseItem, agencyType)
   const [incoming, setIncoming] = useState({ registryNo: '', registryDate: todayIso(), contactPerson: '', accepted: true, reason: '' })
   /** ไฟล์หนังสือตอบกลับขาเข้า (ไม่บังคับ) — เก็บชื่อไฟล์และ blob URL สำหรับเปิดดูในทะเบียนหนังสือ */
   const [incomingFile, setIncomingFile] = useState<{ name: string; url: string } | null>(null)
@@ -963,7 +966,7 @@ const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack;
   const missingConsent = !caseItem.kb11Signed && !hasConsent(caseItem, 'kb5')
 
   const selectedStation = POLICE_STATIONS.find((station) => station.id === co.stationId || (!co.stationId && station.name === co.agency))
-  const agency = selectedStation?.name || ''
+  const agency = isPolice ? caseItem.policeLetters?.data.station || selectedStation?.name || '' : co.agency || ''
 
   const handleIncomingFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -979,61 +982,15 @@ const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack;
     reader.readAsDataURL(file)
     showToast('แนบไฟล์หนังสือตอบกลับแล้ว')
   }
-  const channelLabel =
-    OFFICIAL_LETTER_CHANNELS.find((c) => c.value === outgoing.channel)?.label || outgoing.channel
+  /** ธุรการหน่วยเจ้าของเรื่องออกเลขหนังสือก่อนนำส่ง — ข้อมูลเดิมที่นำส่งไปแล้วโดยไม่ผ่านขั้นนี้ถือว่านำส่งแล้ว */
+  const numbering = co.letterNumbering
+  const letterSent = caseItem.policeLetters && isPolice ? !!caseItem.policeLetters.letters.station.sentAt : numbering?.status === 'sent' || (!numbering && letters.some((l) => l.direction === 'outgoing' && l.sentAt))
+  const letterLocked = !!approvalLetter?.signature || letterSent || letterLockedForOfficer(numbering)
 
   /** ทุกปุ่มในแผงนี้เปลี่ยนสถานะแฟ้มหรือเขียนหนังสือเข้าทะเบียน จึงผ่านจอยืนยันทุกปุ่ม */
-  const handleSendOutgoing = () => {
-    if (!selectedStation) { setLetterError('กรุณาค้นหาและเลือกสถานีตำรวจที่ประสาน'); return }
-    if (!letterDraft.subject.trim() || !letterDraft.body.trim() || !letterDraft.registryDate) { setLetterError('กรุณากรอกเรื่อง เนื้อหา และวันที่หนังสือประสาน'); return }
-    if (!letterDraft.registryNo.trim()) {
-      setLetterError('กรุณาระบุเลขที่หนังสือจากระบบสารบรรณ')
-      return
-    }
-    setLetterError('')
-    letterDialog.current?.close()
-    setLetterOpen(false)
-    showConfirmAlert({
-      icon: 'question',
-      title: 'บันทึกหนังสือประสานขาออก?',
-      html: confirmBody(
-        'บันทึกหนังสือประสานขอความร่วมมือคุ้มครองพยานเข้าทะเบียนหนังสือของวิธีนี้',
-        [
-          ['หน่วยงานปลายทาง', agency],
-          ['เลขที่หนังสือ', letterDraft.registryNo.trim()],
-          ['ลงวันที่', letterDraft.registryDate],
-          ['ช่องทางนำส่ง', channelLabel],
-          ['เลขติดตาม', outgoing.trackingNo.trim() || '-'],
-        ],
-        'บันทึกหนังสือประสานพร้อมฉบับที่นำส่ง และเปิดขั้นแนบหนังสือตอบรับจากสถานีตำรวจ'
-      ),
-      showCancelButton: true,
-      confirmButtonText: 'ยืนยันบันทึกหนังสือขาออก',
-      cancelButtonText: 'ยกเลิก',
-    }).then((res) => {
-      if (!res.isConfirmed) { setLetterOpen(true); return }
-      addOfficialLetter(caseItem.no, {
-        direction: 'outgoing',
-        context: 'method4',
-        methodNo: 4,
-        subject: letterDraft.subject,
-        draftSnapshot: { ...letterDraft },
-        registryNo: letterDraft.registryNo.trim(),
-        registryDate: letterDraft.registryDate,
-        agency,
-        channel: outgoing.channel as 'direct' | 'post' | 'official_other',
-        trackingNo: outgoing.trackingNo.trim(),
-        sentAt: new Date().toISOString(),
-      })
-      updateMethodTrack(caseItem.no, 4, { coordination: { ...co, agency, letterDraft, responseStatus: 'awaiting' }, wizardStep: 2 })
-      setMethodStatus(caseItem.no, 4, 'preparing')
-      showToast('บันทึกหนังสือประสานขาออกแล้ว')
-    })
-  }
-
   const handleAccept = () => {
-    if (!letters.some((letter) => letter.direction === 'outgoing' && letter.sentAt)) { showToast('กรุณาจัดทำและบันทึกการนำส่งหนังสือประสานก่อน', 'warning'); return }
-    if (!incomingFile) { showToast('กรุณาแนบหนังสือตอบรับจากสถานีตำรวจ', 'warning'); return }
+    if (isPolice ? !policeAllSigned(caseItem.policeLetters) : !approvalLetter?.signature && !letters.some((letter) => letter.direction === 'outgoing' && letter.sentAt)) { showToast(isPolice ? 'หนังสือประสานตำรวจต้องลงนามครบก่อนบันทึกตอบรับ' : 'กรุณาจัดทำและบันทึกการนำส่งหนังสือประสานก่อน', 'warning'); return }
+    if (!incomingFile) { showToast(`กรุณาแนบหนังสือตอบรับจาก${agencyNoun}`, 'warning'); return }
     showConfirmAlert({
       icon: 'question',
       title: 'บันทึกหนังสือตอบรับดำเนินการ?',
@@ -1078,7 +1035,9 @@ const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack;
   }
 
   const handleDecline = () => {
-    if (!incoming.reason.trim()) {
+    if (!incomingFile) { showToast(`กรุณาแนบหนังสือตอบกลับจาก${agencyNoun}`, 'warning'); return }
+    const declineReason = `ตามหนังสือตอบกลับที่แนบ: ${incomingFile.name}`
+    if (!declineReason) {
       showToast('กรุณาระบุเหตุผลการปฏิเสธ', 'warning')
       return
     }
@@ -1091,7 +1050,7 @@ const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack;
           ['หน่วยงาน', agency],
           ['เลขที่หนังสือรับ', incoming.registryNo.trim() || '-'],
           ['วันที่รับ', incoming.registryDate],
-          ['เหตุผลการปฏิเสธ', incoming.reason.trim()],
+          ['เหตุผลการปฏิเสธ', declineReason],
           ['ไฟล์หนังสือตอบกลับ', incomingFile?.name || '-'],
         ],
         'วิธีที่ 4 เปลี่ยนเป็น <strong>เริ่มไม่ได้</strong> และเปิดการ์ด <strong>หน่วยงานปฏิเสธ</strong> ให้เสนอหน่วยงานใหม่ผ่าน ผบช.ชั้นต้น → ผอ.สำนัก/กอง'
@@ -1109,20 +1068,20 @@ const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack;
         registryNo: incoming.registryNo.trim(),
         registryDate: incoming.registryDate,
         agency,
-        note: incoming.reason.trim(),
+        note: declineReason,
         documentName: incomingFile?.name,
         documentPreviewUrl: incomingFile?.url,
         receivedAt: new Date().toISOString(),
       })
-      set({ responseStatus: 'declined', declinedReason: incoming.reason.trim() })
-      setMethodStatus(caseItem.no, 4, 'blocked', { reason: `หน่วยงานปฏิเสธ: ${incoming.reason.trim()}` })
-      showToast('บันทึกการปฏิเสธ — เสนอผู้มีอำนาจพิจารณาหน่วยงานใหม่ได้ที่การ์ดหน่วยงานปฏิเสธด้านล่าง')
+      set({ responseStatus: 'declined', declinedReason: declineReason })
+      setMethodStatus(caseItem.no, 4, 'blocked', { reason: `หน่วยงานปฏิเสธ: ${declineReason}` })
+      showToast('บันทึกการปฏิเสธ — เสนอ ผอ.สำนัก/กอง พิจารณาหน่วยงานใหม่ได้ที่การ์ดหน่วยงานปฏิเสธด้านล่าง')
     })
   }
 
   const handleCompleteHandover = () => {
     if (!method4ReplyRecorded(caseItem)) {
-      showToast('กรุณาแนบและบันทึกหนังสือตอบรับจากสถานีตำรวจก่อน', 'warning')
+      showToast(`กรุณาแนบและบันทึกหนังสือตอบรับจาก${agencyNoun}ก่อน`, 'warning')
       return
     }
     /** TC-091 — ห้ามส่งมอบจริงถ้ายังไม่มีฐานความยินยอม (คบ.11 หรือความยินยอม คบ.5) แม้ปุ่มจะถูกกดมาได้ทางอื่น */
@@ -1163,45 +1122,13 @@ const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack;
 
   const [storedStep, setStep] = useWizardStep(caseItem.no, 4, track.wizardStep)
   // หน่วยงานและหนังสือขาออกอยู่ในขั้นเดียวกัน โดยคง index เดิมของข้อมูลที่บันทึกไว้
-  const step = Math.max(1, storedStep)
+  const step = Math.max(2, storedStep)
   const sections = [
-    <Card key="0842" title="สถานีตำรวจที่ประสาน" hint="เลือกสถานีตำรวจและระบุผู้ประสานงาน" action={
-      <Button type="button" variant="primary" size="md" onClick={() => setLetterOpen(true)}>ทำหนังสือประสาน</Button>
-    }>
-      <PoliceStationPicker province={co.province || selectedStation?.province || ''} stationId={selectedStation?.id || ''}
-        onProvinceChange={(province) => set({ province, stationId: '', agency: '', contactPerson: '', contactPosition: '', contactPhone: '' })}
-        onStationChange={(stationId) => {
-          const station = POLICE_STATIONS.find((item) => item.id === stationId)
-          set({ stationId, province: station?.province || co.province || '', agency: station?.name || '', contactPerson: '', contactPosition: '', contactPhone: '' })
-        }} />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <TextField label="ผู้ประสานงาน" value={co.contactPerson || ''} onChange={(contactPerson) => set({ contactPerson })} />
-        <TextField label="ตำแหน่ง" value={co.contactPosition || ''} onChange={(contactPosition) => set({ contactPosition })} />
-        <TextField label="เบอร์โทร" value={co.contactPhone || ''} onChange={(contactPhone) => set({ contactPhone })} type="tel" />
-      </div>
-    </Card>,
-    <Card key="0843" title="หนังสือประสานและการนำส่ง">
-      {letterError && <p role="alert" className="text-sm text-rose-700">{letterError}</p>}
-      <CoordinationLetterComposer caseItem={caseItem} stationName={agency} draft={letterDraft} onChange={(letterDraft) => set({ letterDraft })} />
-      <div className="grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
-        <label className="block"><span className="ws-label">ส่งหนังสือประสานโดย</span>
-          <select aria-label="ส่งหนังสือประสานโดย" className="ws-input w-full" value={outgoing.channel} onChange={(e) => setOutgoing((draft) => ({ ...draft, channel: e.target.value }))}>
-            <option value="direct">เจ้าหน้าที่ส่งมอบด้วยตนเอง</option><option value="post">ไปรษณีย์</option>
-          </select>
-        </label>
-        {outgoing.channel === 'post' && <TextField label="เลขติดตามไปรษณีย์" value={outgoing.trackingNo} onChange={(trackingNo) => setOutgoing((draft) => ({ ...draft, trackingNo }))} />}
-      </div>
-      <Button type="button" variant="primary" size="md" onClick={handleSendOutgoing} data-testid="coordination-send-outgoing">ยืนยันนำส่งหนังสือประสาน</Button>
-    </Card>,
-    <Card key="0844" title="หนังสือตอบกลับขาเข้า" hint="ตอบรับ หรือปฏิเสธพร้อมเหตุผล">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <TextField label="เลขที่หนังสือรับ" value={incoming.registryNo} onChange={(v) => setIncoming((p) => ({ ...p, registryNo: v }))} />
-        <TextField label="วันที่รับ" value={incoming.registryDate} onChange={(v) => setIncoming((p) => ({ ...p, registryDate: v }))} type="date" />
-        <TextField label="ผู้ติดต่อของหน่วยงาน" value={incoming.contactPerson} onChange={(v) => setIncoming((p) => ({ ...p, contactPerson: v }))} />
-        <AreaField label="เหตุผล (กรณีปฏิเสธ)" value={incoming.reason} onChange={(v) => setIncoming((p) => ({ ...p, reason: v }))} rows={2} />
-      </div>
+    null, // Former agency/contact step; retain stored step indexes.
+    null, // Former coordination letter composer.
+    <Card key="0844" title="หนังสือตอบกลับขาเข้า" hint="แนบหนังสือตอบกลับ แล้วเลือกดำเนินการตามผลในหนังสือ">
       <div className="space-y-1.5">
-        <span className="ws-label">หนังสือตอบรับจากสถานีตำรวจ *</span>
+        <span className="ws-label">หนังสือตอบรับจาก{agencyNoun} <span className="text-danger">*</span></span>
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-lg bg-blue px-3.5 text-[0.88rem] font-semibold text-white transition hover:bg-blue-dark">
             <i className="fa-solid fa-cloud-arrow-up text-[0.8rem]" />
@@ -1351,23 +1278,19 @@ const Method4Panel: React.FC<{ caseItem: CaseItem; track: ProtectionMethodTrack;
 
   return (
     <div className="space-y-5">
-      {step > 1 && <Card title="ข้อมูลการประสานสถานีตำรวจ">
+      {step > 2 && <Card title={`ข้อมูลการประสาน${agencyNoun}`}>
         <dl className="grid gap-3 sm:grid-cols-2" data-testid="coordination-summary">
-          <div><dt className="ws-label">สถานีตำรวจที่ประสาน</dt><dd className="font-semibold text-navy">{agency || '—'}</dd></div>
-          <div><dt className="ws-label">จังหวัด</dt><dd>{co.province || selectedStation?.province || '—'}</dd></div>
+          <div><dt className="ws-label">{agencyNoun}ที่ประสาน</dt><dd className="font-semibold text-navy">{agency || '—'}</dd></div>
+          {isPolice && <div><dt className="ws-label">จังหวัด</dt><dd>{co.province || selectedStation?.province || '—'}</dd></div>}
           <div><dt className="ws-label">ผู้ประสานงาน</dt><dd>{co.contactPerson || '—'}</dd></div>
           <div><dt className="ws-label">ตำแหน่ง / เบอร์โทร</dt><dd>{co.contactPosition || '—'} · {co.contactPhone || '—'}</dd></div>
           <div><dt className="ws-label">สถานะการประสาน</dt><dd>{co.responseStatus === 'accepted' ? 'ได้รับหนังสือตอบรับแล้ว' : co.responseStatus === 'declined' ? 'หน่วยงานปฏิเสธ' : 'รอหนังสือตอบรับ'}</dd></div>
         </dl>
         {coordinationOnly && <Link to="/protection" search={{}} className="inline-flex min-h-[44px] items-center rounded-lg bg-navy px-4 py-2 font-semibold text-white hover:bg-blue">ไปภาพรวมการคุ้มครอง</Link>}
       </Card>}
-      {step === 1 && sections[0]}
-      {step !== 1 && !coordinationOnly && sections[step]}
-      {createPortal(<dialog ref={letterDialog} aria-label="ทำหนังสือประสานสถานีตำรวจ" onCancel={() => setLetterOpen(false)}
-        className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-6xl overflow-y-auto rounded-xl bg-paper p-5 text-ink shadow-card backdrop:bg-[rgba(4,17,36,.52)]">
-        <div className="mb-4 flex justify-end"><Button type="button" variant="secondary" size="md" onClick={() => setLetterOpen(false)}>ปิด</Button></div>
-        {sections[1]}
-      </dialog>, document.body)}
+      {/* Police letters are already handled with the approval bundle; open the reply directly. */}
+      {!coordinationOnly && sections[step]}
+
 
       {letters.length > 0 && (
         <Card title="ทะเบียนหนังสือของวิธีนี้" hint="รับ-ส่งผ่านระบบสารบรรณเดิมภายนอก E-CMIS">

@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
+import { isReviewerFor } from '../../lib/protectionHandoff'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Button } from '../common/Button'
 import { CaseItem, ConsentDeclineAction, ConsentDeclineProposal, ProtectionMethodNo } from '../../types/case'
 import { PROTECTION_METHOD_OPTIONS, protectionMethodSwitchNotice, toggleProtectionMethod } from '../../lib/constants'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 /** วิธีที่เปิดเป็นเส้นทางปฏิบัติได้จริงคือ 1-4 (ข้อ 5 เป็นมาตรการเสริมใน คบ.4 ไม่ใช่เส้นทางแยก) */
 const ROUTABLE_METHODS: ProtectionMethodNo[] = [1, 2, 3, 4]
@@ -81,8 +83,8 @@ export const ConsentDeclineCard: React.FC<{ caseItem: CaseItem; consentRef: 'kb1
   const pendingProposal = proposal && (proposal.stage === 'supervisor' || proposal.stage === 'director') ? proposal : undefined
   const canDecide =
     pendingProposal &&
-    ((pendingProposal.stage === 'supervisor' && (currentRole === 'supervisor' || currentRole === 'admin')) ||
-      (pendingProposal.stage === 'director' && (currentRole === 'director' || currentRole === 'admin')))
+    ((pendingProposal.stage === 'supervisor' && isReviewerFor(currentRole, 'supervisor', caseItem)) ||
+      (pendingProposal.stage === 'director' && isReviewerFor(currentRole, 'director', caseItem)))
 
   /** เจ้าหน้าที่เสนอได้เมื่อยังไม่มีข้อเสนอค้าง หรือข้อเสนอรอบก่อนถูกส่งคืนมาแก้ */
   const canPropose = isOfficer && (!proposal || proposal.stage === 'returned')
@@ -242,7 +244,7 @@ export const ConsentDeclineCard: React.FC<{ caseItem: CaseItem; consentRef: 'kb1
       {/* ชั้นเจ้าหน้าที่ — บันทึกเหตุและเลือกแนวทางที่จะเสนอ */}
       {canPropose && (
         <div className="space-y-2.5" data-testid="wit0812-propose">
-          <textarea
+          <VoiceTextarea
             rows={2}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -320,7 +322,7 @@ export const ConsentDeclineCard: React.FC<{ caseItem: CaseItem; consentRef: 'kb1
       {/* ชั้นผู้บังคับบัญชา — ผบช.ชั้นต้น แล้วต่อด้วย ผอ.สำนัก/กอง */}
       {canDecide && pendingProposal && (
         <div className="space-y-2" data-testid="wit0812-decide">
-          <textarea
+          <VoiceTextarea
             rows={2}
             value={decisionNote}
             onChange={(e) => setDecisionNote(e.target.value)}

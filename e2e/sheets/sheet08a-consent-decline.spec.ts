@@ -13,7 +13,7 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * แล้วแนวทางที่อนุมัติต้องพาแฟ้มไปต่อจริง ไม่ใช่จบที่ป้ายสถานะ
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const METHODS_URL = '/protection-methods'
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'

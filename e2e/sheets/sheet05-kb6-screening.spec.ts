@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
+import { KB1_DONE, readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
 
 /**
  * Sheet 05 · เส้นทางปกติ: กลั่นกรอง คบ.6 (WIT0501 → WIT0514)
@@ -9,8 +9,8 @@ import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../h
  * แล้วส่งรองเลขาธิการฯ กลั่นกรองก่อนถึงเลขาธิการฯ (แท็บ 07)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const DIRECTOR = 'นายวีระยุทธ พิทักษ์ธรรม'
 const DEPUTY = 'นายพิพัฒน์ ศรีสุวรรณ'
 
@@ -159,7 +159,7 @@ function areaField(page: Page, label: string) {
 
 test.describe('TC-036 — ส่งชุดเสนอโดยขาด คบ.6', () => {
   test('TC-036 · [Negative] ควรตรวจความครบถ้วนของชุดเสนอก่อนอนุญาตให้ส่ง', async ({ page }) => {
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
     // Case 1.3 ตั้งต้นยังไม่เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงก่อนจึงจะผ่านด่านส่งต่อ
     await linkMainCaseAsOfficer(page)
@@ -196,7 +196,7 @@ test.describe('TC-037 — ผู้บังคับบัญชาลงนา
 test.describe('TC-037b — ลงนาม คบ.6 จากหน้าแฟ้มโดยตรง (โหมดสาธิต)', () => {
   test('TC-037b · ผบช.ชั้นต้นกด "ลงนาม" ในการ์ดส่งงาน แล้วเสนอ ผอ. ได้ โดยไม่ต้องเปิดแบบฟอร์ม', async ({ page }) => {
     await seedMockState(page, 'Case 1.4', 'supervisor')
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     const forwardButton = page.getByTestId('forward-case-button')
     await expect(forwardButton).toBeDisabled()
 

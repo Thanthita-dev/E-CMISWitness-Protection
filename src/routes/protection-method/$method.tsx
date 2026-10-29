@@ -11,6 +11,7 @@ import { NumberedStepper, type StepperStep } from '../../components/common/Numbe
 import { getMethodProgress } from '../../lib/methodProgress'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { CaseLockScope } from '../../components/common/CaseLockScope'
+import { useVisibleCases } from '../../hooks/useVisibleCases'
 
 interface MethodSearch {
   caseNo?: string
@@ -32,7 +33,8 @@ function MethodPage() {
   const { caseNo } = Route.useSearch()
   const methodNo = Number(method) as ProtectionMethodNo
 
-  const caseItem = useCaseStore((s) => s.cases.find((c) => c.no === caseNo) || s.cases[0])
+  const cases = useVisibleCases()
+  const caseItem = caseNo ? cases.find((c) => c.no === caseNo) : cases[0]
   const track = (caseItem?.methodTracks || []).find((t) => t.method === methodNo)
 
   if (!caseItem || ![1, 2, 3, 4].includes(methodNo)) {

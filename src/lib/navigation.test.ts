@@ -10,18 +10,22 @@ import { NAV_ITEMS, getNavItemsForRole, getNavTreeForRole } from './permissions'
  * ถูกตัดทางเข้าถึงงานของตน หรือได้เห็นงานของบทบาทอื่น — ต้องตรวจกับ user flow ก่อนแก้ตัวเลข
  */
 const EXPECTED_NAV: Record<UserRole, string[]> = {
-  got_receiver: ['/registry', '/forms'],
-  got_director: ['/registry', '/forms'],
-  got_officer: ['/registry', '/activity7-results', '/protection', '/protection-methods', '/protection-monitor', '/protection-reviews', '/protection-extensions', '/termination', '/article14', '/notice', '/delivery-tracking', '/forms'],
+  got_receiver: ['/registry', '/saraban', '/forms'],
+  /** ผอ. กอท. — พิจารณางานตามลำดับชั้นของแฟ้มที่ส่งต่อ กอท. */
+  got_director: ['/registry', '/protection-methods', '/protection-monitor', '/protection-extensions', '/termination', '/article14', '/forms'],
+  /** ผบช.ต้น กอท. — กลั่นกรองงานตามลำดับชั้นของแฟ้มที่ส่งต่อ กอท. */
+  got_supervisor: ['/registry', '/protection-methods', '/protection-monitor', '/protection-extensions', '/termination', '/article14', '/forms'],
+  secretary_receiver: ['/registry', '/saraban', '/forms'],
+  got_officer: ['/registry', '/activity7-results', '/protection', '/protection-methods', '/protection-monitor', '/protection-extensions', '/termination', '/article14', '/notice', '/delivery-tracking', '/forms'],
   /** ธุรการ — รับคำร้องเข้าทะเบียนและงานสารบรรณนำส่ง */
-  receiver: ['/registry', '/delivery-tracking', '/appeal', '/forms'],
+  receiver: ['/registry', '/delivery-tracking', '/saraban', '/appeal', '/forms'],
   officer: [
     '/registry',
     '/activity7-results',
     '/protection',
     '/protection-methods',
     '/protection-monitor',
-    '/protection-reviews',
+
     '/protection-extensions',
     '/termination',
     '/article14',
@@ -37,7 +41,7 @@ const EXPECTED_NAV: Record<UserRole, string[]> = {
     '/protection',
     '/protection-methods',
     '/protection-monitor',
-    '/protection-reviews',
+
     '/protection-extensions',
     '/termination',
     '/article14',
@@ -53,7 +57,7 @@ const EXPECTED_NAV: Record<UserRole, string[]> = {
     '/activity7-results',
     '/protection-methods',
     '/protection-monitor',
-    '/protection-reviews',
+
     '/protection-extensions',
     '/termination',
     '/article14',
@@ -67,7 +71,7 @@ const EXPECTED_NAV: Record<UserRole, string[]> = {
     '/protection',
     '/protection-methods',
     '/protection-monitor',
-    '/protection-reviews',
+
     '/protection-extensions',
     '/termination',
     '/article14',

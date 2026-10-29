@@ -1,27 +1,26 @@
 import { expect, test, type Page } from '@playwright/test'
-import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
+import { KB1_DONE, readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
 
 /**
  * FB-1 / FB-5 · User Feedback — เดินหน้ากระบวนการ (Progress Forward)
  * อ้างอิง context/test-case/user-feedback/E-CMIS_UserTest_Feedback_TestCases.xlsx
  *
- * หมายเหตุการแม็ปเคส: ทุก mock state ใช้แฟ้มเดียวกันคือ WP-2569-000501 — ชีตทดสอบเดิมอ้างถึง
- * WP-2569-000502/000503 ซึ่งไม่มีอยู่จริงในระบบ (มีเฉพาะ WP-2569-000501) จึงใช้ WP-2569-000501
+ * หมายเหตุการแม็ปเคส: ทุก mock state ใช้แฟ้มเดียวกันคือ 0501/2569 — ชีตทดสอบเดิมอ้างถึง
+ * 0502/2569/000503 ซึ่งไม่มีอยู่จริงในระบบ (มีเฉพาะ 0501/2569) จึงใช้ 0501/2569
  * ร่วมกับ mock state ที่ใกล้เคียงขั้นตอนที่สุดแทนตลอดทั้งไฟล์นี้:
  *   - TC-001/TC-002 → 'Case 1' (receiver_intake) และ 'Case 1.3' (staff_review)
  *   - TC-013/TC-014/TC-015 → 'Case 1.3' (staff_review, คบ.1/คบ.3 พร้อมแล้ว รอทำ คบ.6)
  *
- * การ์ด "ส่งงานและดำเนินการในขั้นตอนนี้" คือ ForwardWorkflowCard.tsx — ส่วน checklist บนสุด
- * (บันทึกคำร้อง / เชื่อมโยงเลขสำนวน / คบ.1 / คบ.3 / คบ.6) ปรับให้ "กรองตามขั้นตอนปัจจุบัน" แล้ว —
- * บรรทัด คบ.3 ไม่แสดงในขั้นรับเรื่อง/มอบหมาย และบรรทัด คบ.6 แสดงตั้งแต่ขั้น ผบช.ชั้นต้นเป็นต้นไป (เส้นทางปกติ)
+ * การ์ด "ส่งงานและดำเนินการในขั้นตอนนี้" คือ ForwardWorkflowCard.tsx — ถอดกล่อง checklist เงื่อนไขความพร้อมออกแล้ว
+ * เงื่อนไขที่ยังไม่ครบแจ้งผ่าน title ของปุ่มส่งต่อและข้อความล็อกใต้ปุ่มแทน
  *
  * หมายเหตุกฎธุรกิจ (ยืนยันโดยเจ้าของระบบ): ข้อ 10 "ความเห็นผู้บังคับบัญชาชั้นต้น" ใน คบ.6 กรอกได้
  * เฉพาะผู้บังคับบัญชาชั้นต้นที่ขั้น supervisor_review เท่านั้น เจ้าหน้าที่เจ้าของสำนวนไม่กรอกข้อ 10-13
  * ปุ่ม "ลงนาม" ของ คบ.6 ย้ายไปอยู่ในหน้า /form/6 เอง (ไม่มีในรายการแบบฟอร์มของแฟ้มอีกต่อไป)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
   const dialog = page.locator('.swal2-popup:not(.swal2-toast)')
@@ -38,21 +37,11 @@ function formRow(page: Page, code: string) {
     .locator('div.rounded-xl', { has: page.getByText(code, { exact: true }) })
 }
 
-/** ส่วน checklist "ตรวจสอบเงื่อนไขความพร้อม" ในการ์ดส่งงาน — ใช้ scope การตรวจสอบให้แคบลง */
+/** กล่อง checklist "ตรวจสอบเงื่อนไขความพร้อม" เดิมในการ์ดส่งงาน — ถอดออกแล้ว ใช้ยืนยันว่าไม่กลับมาแสดง */
 function readinessChecklist(page: Page) {
   return page
     .locator('section', { has: page.getByText('ส่งงานและดำเนินการในขั้นตอนนี้') })
     .locator('div.bg-slate-50.border-slate-200')
-}
-
-/**
- * แถวเดี่ยวของบรรทัด คบ.6 ในการ์ด checklist — ต้อง scope แคบกว่า readinessChecklist() ทั้งก้อน
- * เพราะบรรทัดอื่น (เช่น "บันทึกคำร้อง...ครบถ้วน", "คบ.1...ครบถ้วน") ก็มีคำว่า "ครบถ้วน" ปนอยู่ด้วย
- */
-function kb6ChecklistRow(page: Page) {
-  return readinessChecklist(page).locator('div.flex.items-center.gap-2', {
-    hasText: '(คบ.6)',
-  })
 }
 
 /**
@@ -74,8 +63,8 @@ async function seedKb6OpinionField(page: Page, field: string, value: string) {
   )
 }
 
-test.describe('FB-1 · ตรวจสอบรายการ checklist ในการ์ดส่งงานให้ตรงกับสถานะปัจจุบัน', () => {
-  test('TC-001 · [High] รับเรื่อง (คบ.1) แล้วส่งต่อ ผอ. — checklist ต้องแสดงเฉพาะรายการของขั้นตอนปัจจุบัน', async ({
+test.describe('FB-1 · การ์ดส่งงานไม่แสดง checklist เงื่อนไขความพร้อม', () => {
+  test('TC-001 · [High] รับเรื่อง (คบ.1) แล้วส่งต่อ ผอ. — การ์ดส่งงานไม่มีกล่อง checklist', async ({
     page,
   }) => {
     // Case 1 = receiver_intake — kb1SignaturePending: false ตั้งต้นอยู่แล้ว (พยานลงนามยินยอมใน คบ.1 ครบถ้วนแล้ว)
@@ -88,16 +77,8 @@ test.describe('FB-1 · ตรวจสอบรายการ checklist ใน�
     // ขั้นที่ 1 — ธุรการไม่เห็นการ์ดเชื่อมโยงคดีหลัก เจ้าของสำนวนที่ได้รับมอบหมายเป็นผู้เชื่อมโยงภายหลัง
     await expect(page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' })).toHaveCount(0)
 
-    const checklist = readinessChecklist(page)
-    await expect(checklist).toContainText('บันทึกคำร้องและข้อมูลผู้ยื่นครบถ้วน')
-    await expect(checklist).toContainText('ยังไม่ได้เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเป็นผู้เชื่อมโยง ส่งต่อได้')
-    await expect(checklist).toContainText('ลายมือชื่อยินยอมในแบบ คบ.1 ครบถ้วน')
-
-    // ที่ขั้นตอนนี้ (ก่อนมอบหมายเจ้าของสำนวน / ยังไม่ประเมินความเร่งด่วน) ต้อง "ไม่มี" บรรทัดเกี่ยวกับ
-    // บันทึกความเห็นเสนอ (คบ.6) เพราะยังไม่ถึงขั้นจัดทำ คบ.6 เลย
-    await expect(checklist.getByText(/บันทึกเสนอความเห็น \(คบ\.6\)|บันทึกความเห็นเสนอ \(คบ\.6\)/)).toHaveCount(0)
-    // คบ.3 จัดทำโดยเจ้าของสำนวน — ขั้นรับเรื่องต้องไม่มีบรรทัด คบ.3 เช่นกัน
-    await expect(checklist.getByText(/\(คบ\.3\)|ข้าม คบ\.3 แล้ว/)).toHaveCount(0)
+    await expect(page.getByText('ส่งงานและดำเนินการในขั้นตอนนี้')).toBeVisible()
+    await expect(readinessChecklist(page)).toHaveCount(0)
 
     // ส่งต่อให้ ผอ.สำนัก/กอง มอบหมายเจ้าของสำนวน
     await page.getByTestId('forward-case-button').click()
@@ -106,11 +87,11 @@ test.describe('FB-1 · ตรวจสอบรายการ checklist ใน�
     expect(after?.stage).toBe('director_assign')
   })
 
-  test('TC-002 · [High] บรรทัด checklist ของ คบ.6 ต้องไม่ปรากฏก่อนถึงขั้น ผบช.ชั้นต้น แม้ประเมินความเร่งด่วนและบันทึก คบ.6 แล้ว', async ({
+  test('TC-002 · [High] ขั้นเจ้าของสำนวน — ปุ่มส่งต่อล็อกจนบันทึก คบ.6 แล้วจึงปลดล็อก', async ({
     page,
   }) => {
     // Case 1.3 = staff_review — "ก่อนถึงขั้นจัดทำ คบ.6" คือก่อนมอบหมาย/ประเมินความเร่งด่วน/จัดการ คบ.3 เสร็จ
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
     // Case 1.3 ตั้งต้นยังไม่เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงก่อนจึงจะผ่านด่านส่งต่อ
     await linkMainCaseAsOfficer(page)
@@ -118,11 +99,6 @@ test.describe('FB-1 · ตรวจสอบรายการ checklist ใน�
     const before = await readCase(page, CASE_NO)
     expect(before?.urgency).toBeFalsy()
     expect(before?.kb6PreparedAt).toBeFalsy()
-
-    // ก่อนถึงขั้นเตรียม คบ.6 (ยังไม่ประเมินความเร่งด่วน) ต้อง "ไม่มี" บรรทัดเกี่ยวกับ คบ.6 ในการ์ด checklist เลย
-    await expect(
-      readinessChecklist(page).getByText(/บันทึกเสนอความเห็น \(คบ\.6\)|บันทึกความเห็นเสนอ \(คบ\.6\)/)
-    ).toHaveCount(0)
 
     // เดินหน้าสู่ "ขั้นเตรียม คบ.6" ตามเงื่อนไขในสเปค — ประเมินความเร่งด่วนเป็น "ปกติ" ผ่าน UI จริง
     await page.getByRole('button', { name: 'กรณีปกติ (→ คบ.3 → คบ.6)' }).click()
@@ -133,8 +109,7 @@ test.describe('FB-1 · ตรวจสอบรายการ checklist ใน�
     await page.getByRole('button', { name: 'ยืนยันข้าม คบ.3' }).click()
     await expect(page.getByText('บันทึกการข้าม คบ.3 พร้อมเหตุผลเรียบร้อยแล้ว')).toBeVisible()
 
-    // ขั้นเจ้าของสำนวนยังไม่แสดงบรรทัด คบ.6 (แสดงตั้งแต่ขั้น ผบช.ชั้นต้นเป็นต้นไป) — แจ้งผ่านบล็อก "ชุดเสนอยังไม่ครบ" แทน
-    await expect(kb6ChecklistRow(page)).toHaveCount(0)
+    // ยังไม่ได้จัดทำ คบ.6 — แจ้งผ่าน title ของปุ่มส่งต่อ
     await expect(page.getByTestId('forward-case-button')).toHaveAttribute('title', /ยังไม่ได้จัดทำแบบ คบ\.6/)
 
     // จัดทำและบันทึกแบบ คบ.6
@@ -150,8 +125,7 @@ test.describe('FB-1 · ตรวจสอบรายการ checklist ใน�
     expect(afterSave?.kb6PreparedAt).toBeTruthy()
 
     await page.goto(DOSSIER_URL)
-    // หลังบันทึก คบ.6 แล้ว ขั้นเจ้าหน้าที่ยังไม่แสดงบรรทัด คบ.6 แต่บล็อก "ชุดเสนอยังไม่ครบ" ต้องหายไป
-    await expect(kb6ChecklistRow(page)).toHaveCount(0)
+    // หลังบันทึก คบ.6 แล้ว ปุ่มส่งต่อต้องปลดล็อก
     await expect(page.getByTestId('forward-case-button')).toBeEnabled()
   })
 })
@@ -188,9 +162,6 @@ test.describe('FB-5 · เดินหน้ากระบวนการหล
     expect(saved?.kb6PreparedAt).toBeTruthy()
 
     await page.goto(DOSSIER_URL)
-
-    // ขั้นเจ้าหน้าที่ไม่แสดงบรรทัด คบ.6 ใน checklist (แสดงตั้งแต่ขั้น ผบช.ชั้นต้นเป็นต้นไป)
-    await expect(kb6ChecklistRow(page)).toHaveCount(0)
 
     // Expected: ต้องมีปุ่ม "ส่งผู้บังคับบัญชาชั้นต้น" ที่กดได้ (ไม่ค้าง/ไม่ถูก disable)
     const forwardButton = page.getByTestId('forward-case-button')
@@ -260,10 +231,6 @@ test.describe('FB-5 · เดินหน้ากระบวนการหล
     await seedMockState(page, 'Case 1.4', 'supervisor', { kb6PreparedAt: '09/09/2569 16:00' })
     await seedKb6OpinionField(page, 'ความเห็นผู้บังคับบัญชาชั้นต้น', '')
     await page.goto(DOSSIER_URL)
-
-    // checklist ของ คบ.6 ต้องยังคงเป็นสีเหลือง (ยังไม่มีลายมือชื่อ) ไม่ใช่สีเขียว "ครบถ้วน"
-    const kb6Row = kb6ChecklistRow(page)
-    await expect(kb6Row).not.toContainText(/ครบถ้วน/)
 
     // ปุ่ม "เสนอ ผอ.สำนัก/กอง" ต้องถูกปิดกั้น (disabled) พร้อม title ระบุชัดว่ายังไม่ได้ลงนาม คบ.6
     // โหมดสาธิต: ไม่บังคับกรอกความเห็นก่อน — มีปุ่ม "ลงนาม" ให้กดได้ทันทีจากหน้าแฟ้ม

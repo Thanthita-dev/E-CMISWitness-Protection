@@ -1,4 +1,7 @@
 import { shiftMockDates } from './mockDateShift'
+import { getRoleSet, ROLE_SET_STORAGE_KEY } from './roleSets'
+import { remapMockStateUserNames, resolveCapturedUsers, type CapturedUsers } from './mockStateRoleNames'
+import baselineUsers from '../data/mock-state-baseline-users.json' with { type: 'json' }
 
 export interface MockState {
     name: string
@@ -8,6 +11,8 @@ export interface MockState {
     group?: string
     /** วันที่บันทึก state — ถ้ามี จะเลื่อนวันเวลา ISO ทั้งหมดให้สัมพันธ์กับวันที่โหลด (ดู shiftMockDates) */
     capturedAt?: string
+    /** ชื่อ/ตำแหน่งผู้ใช้ที่ state นี้ถูกบันทึกมา — ไม่ระบุ = ตาม mock-state-baseline-users.json (ชื่อที่ไฟล์เดิมทั้งหมดบันทึกไว้) */
+    capturedUsers?: CapturedUsers
     localStorageData: Record<string, string>
 }
 
@@ -45,7 +50,11 @@ export function getEcmisLocalStorageKeys(): string[] {
 /** ล้าง ecmis-* key เดิมทั้งหมด แล้วเซ็ตค่าใหม่ตาม state (overwrite ทั้งหมด) */
 export function applyMockState(state: MockState) {
     getEcmisLocalStorageKeys().forEach((key) => localStorage.removeItem(key))
-    Object.entries(shiftMockDates(state.localStorageData, state.capturedAt)).forEach(([key, value]) => {
+    const shifted = shiftMockDates(state.localStorageData, state.capturedAt)
+    // แปลงชื่อผู้ใช้ที่ฝังในข้อมูลให้ตรงกับชุดรายชื่อที่ state เลือก (ecmis-role-set) — แก้ชื่อใน role set แล้วมีผลทุก state
+    const roleSet = getRoleSet(state.localStorageData[ROLE_SET_STORAGE_KEY])
+    const data = remapMockStateUserNames(shifted, resolveCapturedUsers(state.capturedUsers, baselineUsers), roleSet.users)
+    Object.entries(data).forEach(([key, value]) => {
         localStorage.setItem(key, value)
     })
 }

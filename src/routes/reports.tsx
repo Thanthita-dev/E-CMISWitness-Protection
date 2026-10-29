@@ -2,17 +2,21 @@ import React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { PageHeader } from '../components/common/PageHeader'
 import { StatCard, StatGrid } from '../components/common/StatCard'
-import { useCaseStore } from '../store/useCaseStore'
+import { useVisibleCases } from '../hooks/useVisibleCases'
+import { currentReportPeriod, thaiMonthName } from '../lib/utils'
+import { monthlyReportStats } from '../lib/monthlyReportStats'
 
 export const Route = createFileRoute('/reports')({
   component: ReportsPage,
 })
 
 function ReportsPage() {
-  const cases = useCaseStore((state) => state.cases)
+  const cases = useVisibleCases()
 
   const normalCount = cases.filter((c) => !c.urgent).length
   const urgentCount = cases.filter((c) => c.urgent).length
+  const period = currentReportPeriod()
+  const monthly = monthlyReportStats(cases, period)
   const highRiskCount = cases.filter((c) => c.risk === 'สูง' || c.risk === 'วิกฤต').length
 
   return (
@@ -30,6 +34,21 @@ function ReportsPage() {
         <StatCard label="ความเสี่ยงสูง/วิกฤต" value={highRiskCount} subtext="จัดชุดคุ้มครองพิเศษ" variant="warning" />
         <StatCard label="ความสำเร็จตาม SLA" value="96.5%" subtext="ดำเนินการทันเวลา" variant="success" />
       </StatGrid>
+
+      {/* Monthly report status (this month) */}
+      <div className="ws-card p-5 space-y-4">
+        <h2 className="text-[1.1rem] font-bold leading-snug text-navy border-b border-line pb-2">
+          การรายงานผลประจำเดือน (เดือนนี้)
+        </h2>
+        <p className="text-[0.8rem] text-muted">
+          งวด {thaiMonthName(period)} · เรื่องที่อยู่ระหว่างคุ้มครอง {monthly.underProtection} เรื่อง
+        </p>
+        <StatGrid>
+          <StatCard label="ได้รับ คบ.13 แล้ว" value={monthly.kb13} subtext="เรื่อง" variant="success" />
+          <StatCard label="ได้รับหนังสือภายนอกแล้ว" value={monthly.external} subtext="หนังสือรายงานจากหน่วยงานภายนอก" variant="success" />
+          <StatCard label="ยังค้างรายงาน" value={monthly.pending} subtext="ยังไม่มี คบ.13 หรือหนังสือภายนอก" variant="warning" />
+        </StatGrid>
+      </div>
 
       {/* Statistical Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

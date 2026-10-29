@@ -5,9 +5,10 @@ import { selectCaseDraft, useFormDraftStore } from '../store/useFormDraftStore'
 import { useNotificationStore } from '../store/useNotificationStore'
 import { KB11_SIGN_SLOTS, kb11Gate } from './formSignature'
 import type { CaseItem } from '../types/case'
+import { passDestinationIncoming, passSecretaryOutgoing } from './sarabanTestHelpers'
 
-const NO = 'WP-2569-000501'
-const OTHER = 'WP-2569-000502'
+const NO = '0501/2569'
+const OTHER = '0502/2569'
 const initial = (no = NO): CaseItem => ({
   no, form: 'คบ.1', person: no === NO ? 'นางสาวกมลชนก บุญรักษา' : 'นายสมชาย คนละแฟ้ม',
   stage: 'external_pending', status: 'รอพิจารณา', owner: 'เลขาธิการ ป.ป.ท.', next: 'พิจารณา', risk: 'สูง',
@@ -23,6 +24,9 @@ const approve = (destination: 'original_owner' | 'got' = 'original_owner') => {
     destination, durationDays: 30, fields: {},
   })).toBe(true)
   expect(state().confirmPreliminaryDecision(NO, 9)).toBe(true)
+  /** ธุรการ สลธ. ออกเลขส่ง แล้ว (เจ้าของสำนวนเดิม) ธุรการสำนัก/กอง ลงเลขรับ — กอท. หยุดรอธุรการคดี กอท. */
+  expect(passSecretaryOutgoing(NO)).toBe(true)
+  if (destination === 'original_owner') expect(passDestinationIncoming(NO)).toBe(true)
 }
 beforeEach(() => {
   localStorage.clear()
@@ -109,10 +113,10 @@ describe('เลขาธิการลงนาม คบ.9 แล้วเจ
     state().updateCase(NO, { dispatchedAt: '2026-10-08T08:00:00Z', deliveredAt: '2026-10-08T09:00:00Z', deliveryRecipient: item().person, deliveryAckType: 'ใบตอบรับไปรษณีย์ (EMS)' })
     const forms = useFormDraftStore.getState()
     forms.ensureDraftForCase(11, NO, {})
-    for (const slot of KB11_SIGN_SLOTS.slice(0, 3)) forms.signDocument(slot.key, slot.label)
+    forms.signDocument(KB11_SIGN_SLOTS[0].key, KB11_SIGN_SLOTS[0].label)
     state().recordConsent(NO, consent)
     expect(item().kb11Signed).not.toBe(true)
-    forms.signDocument(KB11_SIGN_SLOTS[3].key, KB11_SIGN_SLOTS[3].label)
+    forms.signDocument(KB11_SIGN_SLOTS[1].key, KB11_SIGN_SLOTS[1].label)
     state().recordConsent(NO, consent)
     expect(item().kb11Signed).toBe(true)
     expect(item().consents?.filter((entry) => entry.ref === 'kb11' && entry.consented)).toHaveLength(1)

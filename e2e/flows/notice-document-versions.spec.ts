@@ -3,8 +3,8 @@ import { readCase, seedMockState } from '../helpers/seed'
 import { confirmSecretaryApproval, handoffAction } from '../helpers/postApproval'
 import { checkNoticeReady, completeNoticeDetails, dispatchNotice } from '../helpers/noticeDocuments'
 
-const NO = 'WP-2569-000501'
-const DOSSIER = `/dossier/${NO}`
+const NO = '0501/2569'
+const DOSSIER = `/dossier/${encodeURIComponent(NO)}`
 const role = (page: Page, value: string) => page.getByLabel('เลือกบทบาทผู้ใช้งาน').selectOption(value)
 const readNotice = async (page: Page, formNo = 9) => ((await readCase(page, NO))?.resultNotices as Record<string, any>)?.[formNo]
 
@@ -98,7 +98,7 @@ test('GOT รับผ่านธุรการและ ผอ. ก่อน�
   expect((await readCase(page, NO))?.assignedOfficerUserId).toBe('OFF-001')
   await checkNoticeReady(page)
   await dispatchNotice(page)
-  expect((await readNotice(page)).dispatches[0].by).toBe('นางสาวณิชา คุ้มภัย')
+  expect((await readNotice(page)).dispatches[0].by).toBe('นางสาวอรุณี ใจมั่น')
 })
 
 test('ข้อมูลยังขาดส่งไม่ได้ กดซ้ำไม่เพิ่มรุ่นหรือเอกสาร และ generic editor แก้ฉบับเดิมไม่ได้', async ({ page }) => {
@@ -122,8 +122,8 @@ test('ข้อมูลยังขาดส่งไม่ได้ กดซ�
     useFormDraftStore.getState().updateSignedField(9, 'เลขาธิการ', 'เปลี่ยนผู้ลงนาม')
     useFormDraftStore.getState().updateField(9, 'วันที่อนุมัติ', 'เปลี่ยนวัน')
     useFormDraftStore.getState().reviseForm(9, 'ผิดสิทธิ', 'แก้ทับ')
-    useCaseStore.getState().updateCase('WP-2569-000501', { activity7State: 'rejected', secretarySignedAt: 'เปลี่ยน' })
-    return useCaseStore.getState().getCase('WP-2569-000501')?.resultNotices?.[9]?.original
+    useCaseStore.getState().updateCase('0501/2569', { activity7State: 'rejected', secretarySignedAt: 'เปลี่ยน' })
+    return useCaseStore.getState().getCase('0501/2569')?.resultNotices?.[9]?.original
   })
   expect(illegal).toEqual(original)
   await page.reload()

@@ -1,17 +1,17 @@
 import { expect, test } from '@playwright/test'
 import { readCase, seedMockState } from '../helpers/seed'
 
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 test('เลือกที่มาของเรื่องยุติได้ชัดเจน บันทึกแล้วจัดทำ คบ.15 โดยยังไม่ยุติการคุ้มครอง', async ({ page }) => {
   await seedMockState(page, 'Approved - วิธีที่ 4', undefined, { stage: 'protection', terminationTrigger: undefined, kb15: undefined, kb16: undefined, kb17: undefined })
-  await page.goto(`/termination/${NO}`)
+  await page.goto(`/termination/${encodeURIComponent(NO)}`)
   const form = page.getByTestId('termination-trigger-form')
   await expect(form.getByRole('radio')).toHaveCount(3)
   await form.getByRole('radio', { name: /พยานขอยุติ/ }).click()
-  await expect(page).toHaveURL(new RegExp(`/form/7\\?caseNo=${NO}&from=termination`))
+  await expect(page).toHaveURL(new RegExp(`/form/7\\?caseNo=${NO.replace('/', '(?:/|%2F)')}&from=termination`))
   await page.locator('textarea[placeholder="ระบุเหตุผลและผลการประเมินความปลอดภัยล่าสุด..."]').fill('พยานประสงค์ขอยุติ')
   await page.getByRole('button', { name: /บันทึก คบ.7 และกลับเรื่องยุติ/ }).click()
-  await expect(page).toHaveURL(new RegExp(`/termination/${NO}`))
+  await expect(page).toHaveURL(new RegExp(`/termination/${encodeURIComponent(NO)}`))
   await expect(form.getByRole('radio', { name: /พยานขอยุติ/ })).toBeChecked()
   await expect(form.getByRole('textbox', { name: 'เหตุผลและข้อมูลประกอบ', exact: true })).toHaveValue('พยานประสงค์ขอยุติ')
   expect((await readCase(page, NO)).stage).toBe('protection')
@@ -21,10 +21,10 @@ test('เลือกที่มาของเรื่องยุติไ�
   await page.evaluate(() => {
     const key = 'ecmis-case-storage-v2'
     const store = JSON.parse(localStorage.getItem(key)!)
-    store.state.cases.push({ ...store.state.cases[0], no: 'WP-2569-000999', person: 'พยานอื่น ทดสอบ' })
+    store.state.cases.push({ ...store.state.cases[0], no: '0999/2569', person: 'พยานอื่น ทดสอบ' })
     localStorage.setItem(key, JSON.stringify(store))
   })
-  await page.goto('/form/7?caseNo=WP-2569-000999&from=termination')
+  await page.goto('/form/7?caseNo=0999/2569&from=termination')
   await expect(page.locator('textarea[placeholder="ระบุเหตุผลและผลการประเมินความปลอดภัยล่าสุด..."]')).toHaveValue('')
   await page.goto(`/form/7?caseNo=${NO}&from=termination`)
   await expect(page.locator('textarea[placeholder="ระบุเหตุผลและผลการประเมินความปลอดภัยล่าสุด..."]')).toHaveValue('พยานประสงค์ขอยุติ')

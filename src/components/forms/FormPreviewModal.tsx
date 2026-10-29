@@ -5,11 +5,12 @@ import { FORMS_CATALOG } from '../../lib/constants'
 
 interface FormPreviewModalProps {
   formId: number | null
+  caseNo?: string
   onClose: () => void
 }
 
 /** ดูเอกสาร A4 แบบอ่านอย่างเดียว — สำหรับผู้ที่ไม่ได้รับมอบหมายเป็นเจ้าของสำนวนนี้ */
-export const FormPreviewModal: React.FC<FormPreviewModalProps> = ({ formId, onClose }) => {
+export const FormPreviewModal: React.FC<FormPreviewModalProps> = ({ formId, caseNo, onClose }) => {
   if (formId === null) return null
   const formMeta = FORMS_CATALOG.find((f) => f.n === formId) || FORMS_CATALOG[0]
 
@@ -34,7 +35,7 @@ export const FormPreviewModal: React.FC<FormPreviewModalProps> = ({ formId, onCl
         </div>
 
         <div className="overflow-y-auto p-5">
-          <FormPaperViewer formId={formId} />
+          <FormPaperViewer formId={formId} caseNo={caseNo} />
         </div>
       </div>
     </div>

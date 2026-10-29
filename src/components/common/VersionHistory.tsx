@@ -33,7 +33,11 @@ export const VersionHistory: React.FC<{
   lockedBy?: string
   lockedNote?: string
   testId?: string
-}> = ({ code, currentVersion, entries, locked, lockedBy, lockedNote, testId }) => {
+  /** ป้ายของแต่ละรุ่น (เช่น "ฉบับเดิม" / "บันทึกเพิ่มเติม ครั้งที่ N") — ระบุแล้วปุ่มจะเป็น "ดูฉบับเดิมและบันทึกก่อนหน้า" ไม่ระบุ = ค่าเดิม */
+  labelForVersion?: (version: number) => string
+  /** ป้ายของรายการปัจจุบัน — ไม่ระบุ = ใช้ labelForVersion(currentVersion) หรือค่าเดิม */
+  currentLabel?: string
+}> = ({ code, currentVersion, entries, locked, lockedBy, lockedNote, testId, labelForVersion, currentLabel }) => {
   const [open, setOpen] = useState(false)
   const previousCount = entries.length
   const tid = testId || `${code}-version-history`
@@ -75,7 +79,7 @@ export const VersionHistory: React.FC<{
               onClick={() => setOpen((v) => !v)}
               className="inline-flex min-h-[38px] items-center rounded-lg border border-[#9aabba] bg-white px-3 py-1 text-[0.85rem] font-semibold text-navy transition hover:bg-slate-50"
             >
-              {open ? 'ซ่อนประวัติเวอร์ชัน' : 'ดูประวัติเวอร์ชัน'}
+              {labelForVersion ? (open ? 'ซ่อนฉบับเดิมและบันทึกก่อนหน้า' : 'ดูฉบับเดิมและบันทึกก่อนหน้า') : open ? 'ซ่อนประวัติเวอร์ชัน' : 'ดูประวัติเวอร์ชัน'}
             </button>
           </div>
 
@@ -87,7 +91,7 @@ export const VersionHistory: React.FC<{
                   data-testid={`${tid}-item-${entry.version}`}
                   className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 leading-relaxed"
                 >
-                  <strong className="text-navy-deep">ฉบับที่ {entry.version}</strong>
+                  <strong className="text-navy-deep">{labelForVersion ? labelForVersion(entry.version) : `ฉบับที่ ${entry.version}`}</strong>
                   <span className="text-slate-400"> · </span>
                   <span>{STATUS_LABEL[entry.status]}</span>
                   {entry.at && (
@@ -106,7 +110,7 @@ export const VersionHistory: React.FC<{
                 </li>
               ))}
               <li className="rounded-lg border border-blue-200 bg-blue-50/60 px-2.5 py-2 font-semibold text-blue-900">
-                ฉบับปัจจุบัน (เวอร์ชัน {currentVersion})
+                {labelForVersion ? `ฉบับปัจจุบัน (${currentLabel ?? labelForVersion(currentVersion)})` : `ฉบับปัจจุบัน (เวอร์ชัน ${currentVersion})`}
               </li>
             </ol>
           )}

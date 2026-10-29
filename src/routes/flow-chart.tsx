@@ -15,15 +15,33 @@ import {
     TAB_SUMMARY,
     edgeByKey,
     edgeKey,
+    crossEdgesOfStep,
     formMeta,
     overviewMinimap,
+    overviewStep,
+    stepEdgeByParam,
+    stepEdgeParam,
     tabRoles,
     tabStatusCount,
 } from '../components/flow-guide/FlowOverviewChart'
-import { DiagramNode, TAB_DIAGRAMS, TabStepDiagram, nodeForms, stepByCode, tabDiagramMinimap } from '../components/flow-guide/TabStepDiagram'
+import { OVERVIEW_DETAIL, OverviewStep, OverviewStepEdge } from '../components/flow-guide/overviewLayout'
+import {
+    ALL_SNAPSHOT_KEYS,
+    DiagramEdge,
+    DiagramNode,
+    TAB_DIAGRAMS,
+    TabDiagram,
+    TabStepDiagram,
+    nodeForms,
+    stepByCode,
+    tabDiagramMinimap,
+} from '../components/flow-guide/TabStepDiagram'
 import { ZoomViewport } from '../components/flow-guide/ZoomViewport'
-import { PlayButton, StatusBadge, roleName } from '../components/flow-guide/playback'
+import { FlowDownloadButtons } from '../components/flow-guide/FlowDownloadButtons'
+import { PlayButton, PlayMark, SnapshotInfo, SnapshotPlayButton, StatusBadge, roleName } from '../components/flow-guide/playback'
 import { FLOW_GUIDE, FlowGuideTab, hasMockState, tabForms, tabShortTitle } from '../lib/flowGuide'
+import { hasSnapshot, snapshotCoverage, snapshotFor, snapshotKey } from '../lib/flowSnapshots'
+import { useAuthStore } from '../store/useAuthStore'
 import { cn } from '../lib/utils'
 
 interface FlowChartSearch {
@@ -31,21 +49,32 @@ interface FlowChartSearch {
     tab?: string
     /** กล่องที่เลือกในผังรายขั้น (id ในผัง drawio) */
     node?: string
+    /** เส้นที่เลือกในผังรายขั้น (id เส้นในผัง drawio เช่น E01) */
+    link?: string
     /** เส้นที่เลือกในผังภาพรวม ("ต้นทาง>ปลายทาง") */
     edge?: string
     /** กล่องแท็บที่เลือกในผังภาพรวม (เปิดแผงคำอธิบาย ยังไม่กางผังรายขั้น) */
     box?: string
+    /** กล่องขั้นสำคัญที่เลือกในผังภาพรวม ("แท็บ:เลข WIT" เช่น 05:WIT0502) */
+    ms?: string
+    /** เส้นระหว่างขั้นสำคัญในกรอบแท็บที่เลือกในผังภาพรวม ("แท็บ:ต้นทาง>ปลายทาง") */
+    mlink?: string
 }
 
 export const Route = createFileRoute('/flow-chart')({
     validateSearch: (search: Record<string, unknown>): FlowChartSearch => ({
         tab: typeof search.tab === 'string' ? search.tab : undefined,
         node: typeof search.node === 'string' ? search.node : undefined,
+        link: typeof search.link === 'string' ? search.link : undefined,
         edge: typeof search.edge === 'string' ? search.edge : undefined,
         box: typeof search.box === 'string' ? search.box : undefined,
+        ms: typeof search.ms === 'string' ? search.ms : undefined,
+        mlink: typeof search.mlink === 'string' ? search.mlink : undefined,
     }),
     component: FlowChartPage,
 })
+
+const COVERAGE = snapshotCoverage(ALL_SNAPSHOT_KEYS)
 
 const TAB_IDS = FLOW_GUIDE.tabs.map((t) => t.tab)
 
@@ -56,17 +85,28 @@ function referencedTabs(text: string, current: string): string[] {
 }
 
 function FlowChartPage() {
-    const { tab, node, edge, box } = Route.useSearch()
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+    const { tab, node, link, edge, box, ms, mlink } = Route.useSearch()
     const navigate = Route.useNavigate()
     const tabInfo = FLOW_GUIDE.tabs.find((t) => t.tab === tab) ?? null
     const diagram = tabInfo ? TAB_DIAGRAMS[tabInfo.tab] : null
     const selectedNode = diagram?.nodes.find((n) => n.id === node) ?? null
+    const selectedLink = diagram?.edges.find((e) => e.id === link) ?? null
     const selectedEdge = tabInfo ? null : edgeByKey(edge)
-    const selectedBox = tabInfo || selectedEdge ? null : FLOW_GUIDE.tabs.find((t) => t.tab === box) ?? null
+    const overviewOnly = !tabInfo
+    const [msTab, msCode] = (ms ?? '').split(':')
+    const selectedMilestone = overviewOnly ? overviewStep(msTab, msCode) ?? null : null
+    const selectedMilestoneEdge = overviewOnly && !selectedMilestone ? stepEdgeByParam(mlink) : null
+    const selectedBox = tabInfo || selectedEdge || selectedMilestone || selectedMilestoneEdge ? null : FLOW_GUIDE.tabs.find((t) => t.tab === box) ?? null
 
     // การเลือกกล่อง/เส้นแทนที่ประวัติเดิม ส่วนการกางผังรายขั้นเป็นหน้าใหม่ (กดย้อนกลับได้)
-    const selecting = (x: FlowChartSearch) => !!x.node || !!x.edge || !!x.box
-    const go = (search: FlowChartSearch) => navigate({ search, replace: selecting(search) || (!search.tab && (!!node || !!edge || !!box)) })
+    const selecting = (x: FlowChartSearch) => !!x.node || !!x.link || !!x.edge || !!x.box || !!x.ms || !!x.mlink
+    const go = (search: FlowChartSearch) =>
+        navigate({
+            search,
+            // เลือกกล่อง/เส้นภายในมุมมองเดิม (ภาพรวมหรือแท็บเดิม) แทนที่ประวัติ ส่วนการข้ามมุมมอง (เช่น เปิดผังรายขั้นจาก milestone) เป็นหน้าใหม่
+            replace: (selecting(search) && search.tab === tab) || (!search.tab && (!!node || !!link || !!edge || !!box || !!ms || !!mlink)),
+        })
     const index = tabInfo ? TAB_IDS.indexOf(tabInfo.tab) : -1
 
     const minimap = useMemo(() => (diagram ? tabDiagramMinimap(diagram) : overviewMinimap()), [diagram])
@@ -127,11 +167,21 @@ function FlowChartPage() {
                 title="ผังภาพรวม Activity 6"
                 description={
                     <>
-                        กดกล่องแท็บหรือเส้นเพื่อดูคำอธิบาย แล้วกด "เปิดผังรายขั้น" เพื่อกางขั้น WIT ตามผัง drawio · กดขั้น WIT เพื่อดูวิธีเล่นใน prototype · ลากเพื่อเลื่อน, Ctrl/⌘ + ล้อเมาส์เพื่อซูม
+                        กรอบแท็บแสดงขั้นสำคัญของแต่ละแท็บ · กดหัวกรอบ ขั้นสำคัญ หรือเส้นเพื่อดูคำอธิบายและเล่นจากจุดนั้น แล้วกด "เปิดผังรายขั้น" เพื่อกางขั้น WIT ทั้งหมดของแท็บ · ลากเพื่อเลื่อน, Ctrl/⌘ + ล้อเมาส์เพื่อซูม
                     </>
                 }
                 actions={
                     <>
+                        {!isAuthenticated && (
+                            <Link
+                                to="/login"
+                                className="inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy transition hover:bg-slate-50"
+                            >
+                                <i className="fa-solid fa-right-to-bracket" />
+                                เข้าสู่ระบบ
+                            </Link>
+                        )}
+                        <FlowDownloadButtons kind="flow-chart" />
                         <Link
                             to="/flow-guide"
                             className="inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy transition hover:bg-slate-50"
@@ -158,13 +208,25 @@ function FlowChartPage() {
                 toolbarLeft={toolbarLeft}
                 legend={<Legend detail={!!diagram} />}
                 panel={
-                    selectedNode && tabInfo ? (
+                    selectedLink && diagram && tabInfo ? (
+                        <StepEdgePanel
+                            edge={selectedLink}
+                            diagram={diagram}
+                            tab={tabInfo.tab}
+                            onClose={() => go({ tab: tabInfo.tab })}
+                            onOpen={go}
+                        />
+                    ) : selectedNode && tabInfo ? (
                         <NodePanel
                             node={selectedNode}
                             tab={tabInfo.tab}
                             onClose={() => go({ tab: tabInfo.tab })}
                             onOpenTab={(t) => go({ tab: t })}
                         />
+                    ) : selectedMilestone ? (
+                        <MilestonePanel tab={msTab} step={selectedMilestone} onClose={() => go({})} onOpen={go} />
+                    ) : selectedMilestoneEdge ? (
+                        <MilestoneEdgePanel tab={selectedMilestoneEdge.tab} edge={selectedMilestoneEdge.edge} onClose={() => go({})} onOpen={go} />
                     ) : selectedEdge ? (
                         <EdgePanel edge={selectedEdge} onClose={() => go({})} onOpen={go} />
                     ) : selectedBox ? (
@@ -175,8 +237,11 @@ function FlowChartPage() {
                 {diagram && tabInfo ? (
                     <TabStepDiagram
                         diagram={diagram}
+                        tab={tabInfo.tab}
                         selected={selectedNode?.id ?? null}
                         onSelect={(n) => go({ tab: tabInfo.tab, node: n.id === node ? undefined : n.id })}
+                        selectedEdge={selectedLink?.id ?? null}
+                        onSelectEdge={(e) => go({ tab: tabInfo.tab, link: e.id === link ? undefined : e.id })}
                     />
                 ) : (
                     <FlowOverviewCanvas
@@ -184,6 +249,10 @@ function FlowChartPage() {
                         selectedTab={selectedBox?.tab ?? null}
                         selectedEdge={selectedEdge ? edgeKey(selectedEdge) : null}
                         onPickEdge={(e) => go({ edge: edgeKey(e) === edge ? undefined : edgeKey(e) })}
+                        selectedStep={selectedMilestone ? ms ?? null : null}
+                        onPickStep={(t, code) => go({ ms: `${t}:${code}` === ms ? undefined : `${t}:${code}` })}
+                        selectedStepEdge={selectedMilestoneEdge ? mlink ?? null : null}
+                        onPickStepEdge={(t, e) => go({ mlink: stepEdgeParam(t, e) === mlink ? undefined : stepEdgeParam(t, e) })}
                     />
                 )}
             </ZoomViewport>
@@ -201,15 +270,20 @@ const Legend: React.FC<{ detail: boolean }> = ({ detail }) => (
                 </li>
             ))}
         </ul>
+        <p className="flex flex-wrap items-center gap-1.5 text-muted">
+            <PlayMark className="pointer-events-auto shadow-none" />
+            = มี snapshot ให้เล่นจากจุดนั้น · มี snapshot <strong className="text-ink">{COVERAGE.done}/{COVERAGE.total}</strong> จุด
+        </p>
         {detail ? (
             <p className="text-muted">
                 ◇ จุดตัดสินใจ · ⬭ จุดรับ/ส่งต่อแท็บ · <span className="rounded-full bg-blue px-1.5 text-[0.74rem] text-white">ป้าย</span> = บทบาทใน
                 prototype · <FormLegendChip /> = แบบ คบ. ที่เกี่ยวข้อง · แถบด้านซ้าย = swimlane ในผัง
             </p>
         ) : (
-            <p className="text-muted">
-                แถบสีใต้กล่อง = สัดส่วนสถานะของขั้นในแท็บ · <span className="rounded bg-blue-soft px-1.5 text-[0.74rem] text-blue">ป้าย</span> = บทบาทที่ต้องใช้ ·
-                <FormLegendChip /> = แบบ คบ. ที่ใช้ในแท็บ · เส้นประ = ย้อนกลับ · ชี้/กดที่กล่อง เส้น หรือป้ายบนเส้นเพื่อดูคำอธิบาย
+            <p className="max-w-[40rem] text-muted">
+                กรอบ = แท็บ (แถบสีใต้หัวกรอบ = สัดส่วนสถานะของขั้น) · กล่อง = ขั้นสำคัญ สีตามสถานะ ◇ = จุดตัดสินใจ กล่องมน = จุดส่งต่อ ·{' '}
+                <span className="rounded bg-blue-soft px-1.5 text-[0.74rem] text-blue">ป้าย</span> = บทบาท · <FormLegendChip /> = แบบ คบ. · เส้นบางในกรอบ = ลำดับขั้น ·
+                เส้นเข้มข้ามกรอบ = ส่งต่อแท็บ · เส้นประ = ย้อนกลับ · ชี้/กดหัวกรอบ กล่อง หรือเส้นเพื่อดูคำอธิบาย
             </p>
         )}
     </div>
@@ -228,6 +302,8 @@ const NodePanel: React.FC<{ node: DiagramNode; tab: string; onClose: () => void;
     const step = stepByCode(node.code)
     const jumps = referencedTabs(node.text, tab)
     const forms = node.kind === 'note' ? [] : nodeForms(node)
+    const snapKey = node.kind === 'note' ? null : snapshotKey.node(tab, node.id)
+    const snap = snapshotFor(snapKey)
 
     return (
         <aside className="flex min-h-0 flex-col overflow-hidden ws-card">
@@ -309,7 +385,7 @@ const NodePanel: React.FC<{ node: DiagramNode; tab: string; onClose: () => void;
                         )}
                     </dl>
                 ) : (
-                    <p className="text-muted">{node.kind === 'note' ? 'หมายเหตุในผัง drawio' : 'กล่องในผังที่ไม่มีเลข WIT'}</p>
+                    <p className="text-muted">{node.kind === 'note' ? 'หมายเหตุในผัง' : 'กล่องในผังที่ไม่มีเลข WIT'}</p>
                 )}
 
                 <FormLinks forms={forms} />
@@ -330,17 +406,23 @@ const NodePanel: React.FC<{ node: DiagramNode; tab: string; onClose: () => void;
                 )}
             </div>
 
-            {step && (
+            {(step || snap) && (
                 <footer className="flex flex-wrap items-center gap-2 border-t border-line p-3">
-                    {hasMockState(step.mock_state) && <PlayButton mockState={step.mock_state} role={step.role} route={step.route} />}
-                    <Link
-                        to="/flow-guide"
-                        search={{ tab }}
-                        hash={step.code}
-                        className="inline-flex min-h-[38px] items-center rounded-lg border border-[#9aabba] bg-white px-3 py-1.5 text-[0.85rem] font-semibold text-navy hover:bg-slate-50"
-                    >
-                        ดูในคู่มือ
-                    </Link>
+                    {snapKey && snap ? (
+                        <SnapshotPlayButton snapshotKey={snapKey} />
+                    ) : (
+                        step && hasMockState(step.mock_state) && <PlayButton mockState={step.mock_state} role={step.role} route={step.route} />
+                    )}
+                    {step && (
+                        <Link
+                            to="/flow-guide"
+                            search={{ tab }}
+                            hash={step.code}
+                            className="inline-flex min-h-[38px] items-center rounded-lg border border-[#9aabba] bg-white px-3 py-1.5 text-[0.85rem] font-semibold text-navy hover:bg-slate-50"
+                        >
+                            ดูในคู่มือ
+                        </Link>
+                    )}
                 </footer>
             )}
         </aside>
@@ -374,6 +456,293 @@ const FormLinks: React.FC<{ forms: number[] }> = ({ forms }) =>
         </section>
     ) : null
 
+/** ชื่อกล่องในแผงเส้น: เลข WIT (ถ้ามี) + ข้อความในกล่อง */
+const nodeTitle = (n: DiagramNode | undefined, onPick: () => void) =>
+    n ? (
+        <button
+            type="button"
+            onClick={onPick}
+            className="flex w-full items-start gap-2 min-h-[38px] rounded-lg border border-line px-2 py-1.5 text-left hover:border-blue hover:bg-blue-soft"
+        >
+            {n.code && <span className="shrink-0 rounded bg-navy px-1.5 py-px font-mono text-[0.8rem] font-bold text-white">{n.code}</span>}
+            <span className="min-w-0 flex-1 leading-snug text-ink">{n.text || 'จุดเริ่ม'}</span>
+            <i className="fa-solid fa-arrow-right mt-0.5 text-[0.8rem] text-muted" />
+        </button>
+    ) : null
+
+const StepEdgePanel: React.FC<{
+    edge: DiagramEdge
+    diagram: TabDiagram
+    tab: string
+    onClose: () => void
+    onOpen: (search: FlowChartSearch) => void
+}> = ({ edge, diagram, tab, onClose, onOpen }) => {
+    const source = diagram.nodes.find((n) => n.id === edge.source)
+    const target = diagram.nodes.find((n) => n.id === edge.target)
+    const snapKey = snapshotKey.edge(tab, edge.id)
+    const snap = snapshotFor(snapKey)
+
+    return (
+        <aside className="flex min-h-0 flex-col overflow-hidden ws-card">
+            <header className="flex items-start gap-2 border-b border-line p-3">
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[0.88rem] font-bold text-navy">
+                        <span className="text-[0.8rem] font-normal text-muted">เส้นในผังแท็บ</span>
+                        <span className="font-mono">{tab}</span>
+                        {edge.label && <span className="rounded-full bg-blue px-2 py-0.5 text-[0.74rem] font-semibold text-white">{edge.label}</span>}
+                        {edge.dashed && <span className="text-[0.8rem] font-normal text-muted">เส้นประ</span>}
+                    </div>
+                    <p className="mt-1.5 text-[0.95rem] font-semibold leading-snug text-ink">
+                        {source?.code ?? source?.text ?? 'จุดเริ่ม'} → {target?.code ?? target?.text ?? 'จุดจบ'}
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="ปิด"
+                    className="h-[38px] w-[38px] shrink-0 rounded-lg text-muted hover:bg-soft hover:text-ink"
+                >
+                    <i className="fa-solid fa-xmark" />
+                </button>
+            </header>
+
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 text-[0.88rem]">
+                <section className="space-y-1">
+                    <h3 className="mb-1.5 font-semibold text-muted">จากกล่อง</h3>
+                    {nodeTitle(source, () => onOpen({ tab, node: source?.id }))}
+                    <h3 className="mb-1.5 mt-3 font-semibold text-muted">ไปกล่อง</h3>
+                    {nodeTitle(target, () => onOpen({ tab, node: target?.id }))}
+                </section>
+
+                {snap ? (
+                    <SnapshotInfo snap={snap} />
+                ) : (
+                    <p className="text-muted">เส้นนี้ยังไม่มี snapshot ให้เล่น</p>
+                )}
+            </div>
+
+            {snap && (
+                <footer className="flex flex-wrap items-center gap-2 border-t border-line p-3">
+                    <SnapshotPlayButton snapshotKey={snapKey} />
+                </footer>
+            )}
+        </aside>
+    )
+}
+
+/** แถวชื่อขั้นสำคัญ (เลข WIT + ข้อความ) ในแผงเส้น กดแล้วไปเลือกกล่องนั้น */
+const stepRow = (tab: string, code: string, onPick: () => void) => {
+    const s = overviewStep(tab, code)
+    return (
+        <button
+            type="button"
+            onClick={onPick}
+            className="flex w-full items-start gap-2 min-h-[38px] rounded-lg border border-line px-2 py-1.5 text-left hover:border-blue hover:bg-blue-soft"
+        >
+            <span className="shrink-0 rounded bg-navy px-1.5 py-px font-mono text-[0.8rem] font-bold text-white">{code}</span>
+            <span className="min-w-0 flex-1 leading-snug text-ink">
+                <span className="mr-1 font-mono font-bold text-navy">{tab}</span>
+                {s?.label}
+            </span>
+            <i className="fa-solid fa-arrow-right mt-0.5 text-[0.8rem] text-muted" />
+        </button>
+    )
+}
+
+const MilestonePanel: React.FC<{ tab: string; step: OverviewStep; onClose: () => void; onOpen: (search: FlowChartSearch) => void }> = ({
+    tab,
+    step,
+    onClose,
+    onOpen,
+}) => {
+    const info = stepByCode(step.code)
+    const tabInfo = FLOW_GUIDE.tabs.find((t) => t.tab === tab)
+    const forms = info ? nodeForms({ id: step.code, code: step.code, kind: 'step', text: info.text, x: 0, y: 0, w: 0, h: 0 }) : []
+    const snap = snapshotFor(step.snapshot)
+    const detail = OVERVIEW_DETAIL.tabs[tab]
+    const incoming = detail.edges.filter((e) => e.to === step.code)
+    const outgoing = detail.edges.filter((e) => e.from === step.code)
+    const cross = crossEdgesOfStep(tab, step.code)
+    const pending = detail.pending?.includes(step.code)
+    const hasDiagramNode = !!TAB_DIAGRAMS[tab]?.nodes.some((n) => n.id === step.code)
+
+    return (
+        <aside className="flex min-h-0 flex-col overflow-hidden ws-card">
+            <header className="flex items-start gap-2 border-b border-line p-3">
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="rounded-md bg-navy px-2 py-0.5 font-mono text-[0.8rem] font-bold text-white">{step.code}</span>
+                        <span className="text-[0.8rem] text-muted">
+                            ขั้นสำคัญในแท็บ <span className="font-mono font-bold text-navy">{tab}</span> {tabInfo && tabShortTitle(tabInfo)}
+                        </span>
+                        {info && <StatusBadge status={info.implemented} />}
+                    </div>
+                    <p className="mt-1.5 text-[0.95rem] font-semibold leading-snug text-ink">{info?.text ?? step.label}</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="ปิด"
+                    className="h-[38px] w-[38px] shrink-0 rounded-lg text-muted hover:bg-soft hover:text-ink"
+                >
+                    <i className="fa-solid fa-xmark" />
+                </button>
+            </header>
+
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 text-[0.88rem]">
+                {pending && <p className="ws-callout">ขั้นนี้ยังไม่มีกล่องในผังรายขั้นของแท็บ {tab} (กำลังปรับผังแท็บนี้)</p>}
+                {info && (
+                    <dl className="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-3 gap-y-1.5">
+                        <dt className="font-semibold text-muted">ในผัง</dt>
+                        <dd className="text-ink">{info.lane}</dd>
+                        {info.role && (
+                            <>
+                                <dt className="font-semibold text-muted">บทบาทใน prototype</dt>
+                                <dd className="text-ink">
+                                    <span className="font-semibold">{roleName(info.role)}</span>
+                                    {info.role_note && <span className="block text-[0.8rem] text-muted">{info.role_note}</span>}
+                                </dd>
+                            </>
+                        )}
+                        {info.route && (
+                            <>
+                                <dt className="font-semibold text-muted">หน้า</dt>
+                                <dd>
+                                    <code className="break-all rounded bg-soft px-1 text-ink">{info.route}</code>
+                                </dd>
+                            </>
+                        )}
+                        {info.how_to && (
+                            <>
+                                <dt className="font-semibold text-muted">วิธีกด</dt>
+                                <dd className="leading-relaxed text-ink">{info.how_to}</dd>
+                            </>
+                        )}
+                        {info.note && (
+                            <>
+                                <dt className="font-semibold text-warning">หมายเหตุ</dt>
+                                <dd className="leading-relaxed text-warning">{info.note}</dd>
+                            </>
+                        )}
+                    </dl>
+                )}
+
+                {(incoming.length > 0 || outgoing.length > 0 || cross.length > 0) && (
+                    <section className="space-y-1">
+                        <h3 className="mb-1.5 font-semibold text-muted">เส้นที่เกี่ยวข้อง</h3>
+                        {incoming.map((e) => (
+                            <div key={`in-${e.from}`}>{stepRow(tab, e.from, () => onOpen({ mlink: stepEdgeParam(tab, e) }))}</div>
+                        ))}
+                        {outgoing.map((e) => (
+                            <div key={`out-${e.to}`}>{stepRow(tab, e.to, () => onOpen({ mlink: stepEdgeParam(tab, e) }))}</div>
+                        ))}
+                        {cross.map((e) => (
+                            <button
+                                key={edgeKey(e)}
+                                type="button"
+                                onClick={() => onOpen({ edge: edgeKey(e) })}
+                                className="flex w-full items-start gap-2 min-h-[38px] rounded-lg border border-line px-2 py-1.5 text-left hover:border-blue hover:bg-blue-soft"
+                            >
+                                <span className="shrink-0 font-mono font-bold text-navy">
+                                    {e.from} → {e.to}
+                                </span>
+                                <span className="min-w-0 flex-1 leading-snug text-ink">
+                                    {e.label && <span className="mr-1 rounded-full bg-blue px-1.5 text-[0.74rem] font-semibold text-white">{e.label}</span>}
+                                    ส่งต่อข้ามแท็บ
+                                </span>
+                                <i className="fa-solid fa-circle-info mt-0.5 text-[0.8rem] text-muted" />
+                            </button>
+                        ))}
+                    </section>
+                )}
+
+                <FormLinks forms={forms} />
+            </div>
+
+            <footer className="flex flex-wrap items-center gap-2 border-t border-line p-3">
+                {snap ? (
+                    <SnapshotPlayButton snapshotKey={step.snapshot} />
+                ) : (
+                    info && hasMockState(info.mock_state) && <PlayButton mockState={info.mock_state} role={info.role} route={info.route} />
+                )}
+                <button
+                    type="button"
+                    onClick={() => onOpen({ tab, node: hasDiagramNode ? step.code : undefined })}
+                    className="inline-flex min-h-[38px] items-center rounded-lg bg-navy px-3 py-1.5 text-[0.85rem] font-semibold text-white hover:bg-blue"
+                >
+                    <i className="fa-solid fa-diagram-project mr-1" />
+                    เปิดผังรายขั้น
+                </button>
+            </footer>
+        </aside>
+    )
+}
+
+const MilestoneEdgePanel: React.FC<{ tab: string; edge: OverviewStepEdge; onClose: () => void; onOpen: (search: FlowChartSearch) => void }> = ({
+    tab,
+    edge,
+    onClose,
+    onOpen,
+}) => {
+    const snap = snapshotFor(edge.snapshot)
+    const direct = edge.snapshot.startsWith('edge:')
+    const tabInfo = FLOW_GUIDE.tabs.find((t) => t.tab === tab)
+
+    return (
+        <aside className="flex min-h-0 flex-col overflow-hidden ws-card">
+            <header className="flex items-start gap-2 border-b border-line p-3">
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[0.88rem] font-bold text-navy">
+                        <span className="text-[0.8rem] font-normal text-muted">เส้นในแท็บ</span>
+                        <span className="font-mono">{tab}</span>
+                        {edge.label && <span className="rounded-full bg-blue px-2 py-0.5 text-[0.74rem] font-semibold text-white">{edge.label}</span>}
+                    </div>
+                    <p className="mt-1.5 text-[0.95rem] font-semibold leading-snug text-ink">
+                        {edge.from} → {edge.to}
+                    </p>
+                    {tabInfo && <p className="mt-0.5 text-[0.8rem] text-muted">{tabShortTitle(tabInfo)}</p>}
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="ปิด"
+                    className="h-[38px] w-[38px] shrink-0 rounded-lg text-muted hover:bg-soft hover:text-ink"
+                >
+                    <i className="fa-solid fa-xmark" />
+                </button>
+            </header>
+
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 text-[0.88rem]">
+                <section className="space-y-1">
+                    <h3 className="mb-1.5 font-semibold text-muted">จากขั้น</h3>
+                    {stepRow(tab, edge.from, () => onOpen({ ms: `${tab}:${edge.from}` }))}
+                    <h3 className="mb-1.5 mt-3 font-semibold text-muted">ไปขั้น</h3>
+                    {stepRow(tab, edge.to, () => onOpen({ ms: `${tab}:${edge.to}` }))}
+                </section>
+                <p className="text-[0.8rem] text-muted">
+                    {direct ? 'เส้นนี้ตรงกับเส้นหนึ่งเส้นในผังรายขั้น' : 'ระหว่างสองขั้นนี้ยังมีขั้นย่อยอื่นในผังรายขั้น (เล่นได้จากจุดที่พร้อมทำขั้นปลายทาง)'}
+                </p>
+                {snap ? (
+                    <SnapshotInfo snap={snap} />
+                ) : (
+                    <p className="text-muted">เส้นนี้ยังไม่มี snapshot ให้เล่น</p>
+                )}
+            </div>
+
+            <footer className="flex flex-wrap items-center gap-2 border-t border-line p-3">
+                {snap && <SnapshotPlayButton snapshotKey={edge.snapshot} />}
+                <button
+                    type="button"
+                    onClick={() => onOpen({ tab })}
+                    className="inline-flex min-h-[38px] items-center rounded-lg border border-line bg-blue-soft px-3 py-1.5 text-[0.85rem] font-semibold text-blue hover:border-blue"
+                >
+                    เปิดผังรายขั้น <i className="fa-solid fa-arrow-right ml-0.5" />
+                </button>
+            </footer>
+        </aside>
+    )
+}
+
 /** กล่องในผังรายขั้นของแท็บต้นทางที่ตรงกับ WIT ของเส้น — ใช้เปิดผังแล้วเลือกกล่องนั้นให้เลย */
 const witNodeId = (tab: string, wit?: string) => (wit ? TAB_DIAGRAMS[tab]?.nodes.find((n) => n.code === wit)?.id : undefined)
 
@@ -401,7 +770,10 @@ const EdgePanel: React.FC<{ edge: OverviewEdge; onClose: () => void; onOpen: (se
         )
     }
     const nodeId = witNodeId(edge.from, edge.wit)
+    const cross = OVERVIEW_DETAIL.cross[edgeKey(edge)]
     const mockState = edge.mockState ?? null
+    const snapKey = snapshotKey.overview(edgeKey(edge))
+    const snap = hasSnapshot(snapKey)
 
     return (
         <aside className="flex min-h-0 flex-col overflow-hidden ws-card">
@@ -453,12 +825,24 @@ const EdgePanel: React.FC<{ edge: OverviewEdge; onClose: () => void; onOpen: (se
                     {tabLink(edge.to, 'ไป')}
                 </section>
 
+                {cross && (
+                    <section className="space-y-1">
+                        <h3 className="mb-1.5 font-semibold text-muted">ขั้นสำคัญที่เส้นนี้เชื่อม</h3>
+                        {stepRow(edge.from, cross.from, () => onOpen({ ms: `${edge.from}:${cross.from}` }))}
+                        {stepRow(edge.to, cross.to, () => onOpen({ ms: `${edge.to}:${cross.to}` }))}
+                    </section>
+                )}
+
                 <FormLinks forms={edge.forms ?? []} />
             </div>
 
-            {(nodeId || hasMockState(mockState)) && (
+            {(nodeId || snap || hasMockState(mockState)) && (
                 <footer className="flex flex-wrap items-center gap-2 border-t border-line p-3">
-                    {hasMockState(mockState) && <PlayButton mockState={mockState} role={edge.mockRole ?? null} route={edge.mockRoute ?? null} />}
+                    {snap ? (
+                        <SnapshotPlayButton snapshotKey={snapKey} />
+                    ) : (
+                        hasMockState(mockState) && <PlayButton mockState={mockState} role={edge.mockRole ?? null} route={edge.mockRoute ?? null} />
+                    )}
                     {nodeId && (
                         <button
                             type="button"
@@ -579,7 +963,11 @@ const TabPanel: React.FC<{ tab: FlowGuideTab; onClose: () => void; onOpen: (sear
                     <i className="fa-solid fa-diagram-project mr-1" />
                     เปิดผังรายขั้น
                 </button>
-                {hasMockState(tab.entry_mock_state) && <PlayButton mockState={tab.entry_mock_state} role={tab.entry_role} route={null} />}
+                {hasSnapshot(snapshotKey.tab(tab.tab)) ? (
+                    <SnapshotPlayButton snapshotKey={snapshotKey.tab(tab.tab)} label="เริ่มแท็บนี้" />
+                ) : (
+                    hasMockState(tab.entry_mock_state) && <PlayButton mockState={tab.entry_mock_state} role={tab.entry_role} route={null} />
+                )}
                 <Link
                     to="/flow-guide"
                     search={{ tab: tab.tab }}

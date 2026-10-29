@@ -1,11 +1,14 @@
 import { CaseItem, FastTrackStep, ProtectionMethodNo } from '../types/case'
 import { checkTemporaryDuration, deriveEpisode } from './episode'
+import { isoFromThaiParts } from './utils'
+import { isCaseWorkerRole, protectionMethodSelectionIssue } from './constants'
+import { UserRole } from '../types/user'
 
 /**
  * Sheet 06 — เส้นทางเร่งด่วน คบ.4 / คบ.5 และการคุ้มครองชั่วคราว
  *
  * แหล่งความจริงเดียวว่า "เคสนี้อยู่ขั้นไหนของเส้นทางเร่งด่วน และกดอะไรได้บ้าง"
- * ใช้ร่วมกันระหว่างการ์ดในแฟ้ม (FastTrackCard) และเงื่อนไขห้ามลัดขั้นตอนของ ForwardWorkflowCard
+ * ใช้ร่วมกันระหว่างส่วนเส้นทางเร่งด่วน (FastTrackSubmitPanel · FastTrackPanel) และเงื่อนไขห้ามลัดขั้นตอนของ ForwardWorkflowCard
  *
  * หลักที่ผังเน้นและโค้ดนี้ยึดไว้
  *  - เรื่องคุ้มครองชั่วคราวเดินแยกจากคำร้องหลัก · คำร้องหลักต้องเดินต่อเสมอ (WIT0614)
@@ -28,9 +31,60 @@ export const temporaryDecisionPending = (caseItem: CaseItem): boolean => {
   return step === 'drafting' || step === 'director_review' || step === 'returned'
 }
 
-/** ผ่านประตู WIT0606 แล้วหรือยัง — เป็นเงื่อนไขเปิดปุ่มอนุมัติ/ไม่อนุมัติที่ WIT0609 */
-export const readinessConfirmed = (caseItem: CaseItem): boolean =>
-  Boolean(caseItem.fastTrack?.readinessCheckedAt) && caseItem.fastTrack?.step === 'director_review'
+/**
+ * ผู้ลงนามใน คบ.4 / คบ.5 ของเส้นทางเร่งด่วน — ลงนามที่หน้ากรอกแบบ (ปุ่ม "ลงนาม" ข้าง "บันทึกแบบ") แบบเดียวกับ คบ.6
+ *  - ผู้เสนอท้าย คบ.4 ลงนามอย่างเดียว ตอนจัดทำ/แก้ไขก่อนส่ง ผอ. (WIT0603 · WIT0608)
+ *  - ผอ. ลงความเห็นข้อ 13 ใน คบ.4 แล้วลงนาม และลงนามคำสั่ง คบ.5 ตามลำดับ (คบ.4 ก่อน คบ.5) ตอน ผอ. พิจารณา (WIT0605 → WIT0611)
+ */
+export interface FastTrackSigner {
+  /** คีย์ลายมือชื่อใน useFormDraftStore */
+  key: 'kb4-officer' | 'kb4-director' | 'kb5-director'
+  formId: 4 | 5
+  label: string
+  signerRole: string
+  /** ช่องชื่อผู้ลงนามในแบบ ที่จะถูกเติมให้ตรงกับผู้ลงนามจริง */
+  nameField: string
+  /** ช่องความเห็นที่ต้องมีก่อนลงนาม — ว่างตอนกดลงนามระบบเติม FAST_TRACK_DEFAULT_OPINION */
+  opinionField?: string
+  byDirector: boolean
+}
+
+export const FAST_TRACK_DEFAULT_OPINION = 'เห็นชอบให้คุ้มครองชั่วคราวตามที่เสนอ'
+
+export const FAST_TRACK_SIGNERS: FastTrackSigner[] = [
+  {
+    key: 'kb4-officer',
+    formId: 4,
+    label: 'ผู้เสนอ',
+    signerRole: 'นักสืบสวนสอบสวนชำนาญการ (ผู้เสนอ)',
+    nameField: 'ผู้เสนอ',
+    byDirector: false,
+  },
+  {
+    key: 'kb4-director',
+    formId: 4,
+    label: 'ความเห็นผู้อำนวยการสำนัก (ข้อ 13)',
+    signerRole: 'ผู้อำนวยการสำนัก/กอง/ศูนย์',
+    nameField: 'ผู้อำนวยการ',
+    opinionField: 'ความเห็นผู้อำนวยการ',
+    byDirector: true,
+  },
+  {
+    key: 'kb5-director',
+    formId: 5,
+    label: 'ผู้อำนวยการสำนัก/กอง/ศูนย์ ผู้ออกคำสั่ง',
+    signerRole: 'ผู้อำนวยการสำนัก/กอง/ศูนย์',
+    nameField: 'ผู้อำนวยการ',
+    byDirector: true,
+  },
+]
+
+/** ถึงคิวของผู้ลงนามข้อนี้ตามขั้นของแฟ้มหรือยัง (ไม่รวมว่าลงนามไปแล้วหรือยัง — ผู้เรียกตรวจจากลายมือชื่อเอง) */
+export const fastTrackSignerTurn = (signer: FastTrackSigner, caseItem: CaseItem, role: UserRole): boolean => {
+  const step = fastTrackStep(caseItem)
+  if (!signer.byDirector) return (step === 'drafting' || step === 'returned') && isCaseWorkerRole(role)
+  return step === 'director_review' && (role === 'director' || role === 'admin')
+}
 
 export interface FastTrackGateResult {
   unlocked: boolean
@@ -40,27 +94,57 @@ export interface FastTrackGateResult {
 
 /**
  * WIT0603 → WIT0604 — เจ้าหน้าที่ส่ง คบ.4 และร่าง คบ.5 ตรงถึง ผอ. ได้หรือยัง
- * ต้องเลือกวิธีตามข้อ 15 อย่างน้อยหนึ่งวิธีก่อน เพราะชุดวิธีนี้คือสิ่งที่จะถูกอนุมัติ
- * แล้วส่งไปเปิดเส้นทางปฏิบัติที่แท็บ 08 (WIT0613) — ถ้าว่างไว้ระบบจะไม่รู้ว่าอนุมัติวิธีใด
+ * ส่งเอกสารให้ ผอ. ตรวจได้แม้ยังไม่ระบุวิธีคุ้มครอง โดยตรวจความครบถ้วนของมาตรการในขั้นพิจารณา
  */
 export const submitFastTrackGate = (
   caseItem: CaseItem,
   selectedMethods: number[],
-  durationDays?: number
+  durationDays?: number,
+  /** ช่วงวันที่ในร่าง คบ.5 ยังไม่ครบหรือไม่ถูกต้อง — มาจาก kb5TemporaryPeriod */
+  periodError?: string,
+  /** ตัวเลือกย่อยที่เลือกไว้ใน คบ.4 (readMethodSubitems) — ข้อ 4 ต้องเลือก 4.1–4.4 ก่อนส่ง */
+  subitemSelected?: Record<number, string>
 ): FastTrackGateResult => {
   if (!isFastTrackCase(caseItem))
     return { unlocked: false, reason: 'เคสนี้ไม่ได้ประเมินเป็นกรณีจำเป็นเร่งด่วน — เดินเส้นทางปกติที่ คบ.6' }
   const step = fastTrackStep(caseItem)
   if (step !== 'drafting' && step !== 'returned')
     return { unlocked: false, reason: 'เสนอ ผอ. พิจารณาไปแล้ว — รอผลการพิจารณาคุ้มครองชั่วคราว' }
-  if (selectedMethods.length === 0)
-    return {
-      unlocked: false,
-      reason: 'ยังไม่ได้เลือกวิธีคุ้มครอง (วิธีที่ 1–4) ในแบบ คบ.4 — เลือกได้มากกว่าหนึ่งวิธี',
-    }
+  const methodIssue = subitemSelected && protectionMethodSelectionIssue(selectedMethods, subitemSelected)
+  if (methodIssue) return { unlocked: false, reason: `${methodIssue} ในแบบ คบ.4` }
+  if (periodError) return { unlocked: false, reason: periodError }
   const duration = temporaryDurationCheck(caseItem, durationDays)
   if (!duration.allowed) return { unlocked: false, reason: duration.reason }
   return { unlocked: true }
+}
+
+export interface Kb5TemporaryPeriod {
+  /** yyyy-mm-dd (ค.ศ.) — ว่างเมื่อยังไม่กรอกหรืออ่านไม่ออก */
+  startIso: string
+  endIso: string
+  /** นับรวมวันแรกและวันสุดท้าย (1–30 ม.ค. = 30 วัน) · 0 เมื่อช่วงวันที่ยังใช้ไม่ได้ */
+  days: number
+  error?: string
+}
+
+/**
+ * WIT0603 — ช่วงเวลาคุ้มครองชั่วคราวอ่านจาก "ตั้งแต่วันที่ … ถึงวันที่ …" ในร่าง คบ.5
+ * จำนวนวันที่ใช้ตรวจเพดานรวม 180 วันจึงตรงกับคำสั่งที่ ผอ. ลงนามเสมอ ไม่ต้องกรอกซ้ำในแฟ้ม
+ */
+export const kb5TemporaryPeriod = (draft: Record<string, unknown>): Kb5TemporaryPeriod => {
+  const startIso = isoFromThaiParts(draft['เริ่มวันที่'], draft['เริ่มเดือน'], draft['เริ่มพ.ศ.'])
+  const endIso = isoFromThaiParts(draft['ถึงวันที่'], draft['ถึงเดือน'], draft['ถึงพ.ศ.'])
+  if (!startIso || !endIso)
+    return {
+      startIso,
+      endIso,
+      days: 0,
+      error: 'ยังไม่ได้ระบุช่วงวันที่คุ้มครอง (ตั้งแต่วันที่ – ถึงวันที่) ในแบบ คบ.5',
+    }
+  const days = Math.round((Date.parse(endIso) - Date.parse(startIso)) / 86_400_000) + 1
+  if (days < 1)
+    return { startIso, endIso, days: 0, error: 'วันที่สิ้นสุดในแบบ คบ.5 อยู่ก่อนวันที่เริ่ม — แก้ช่วงวันที่ให้ถูกต้อง' }
+  return { startIso, endIso, days }
 }
 
 /**

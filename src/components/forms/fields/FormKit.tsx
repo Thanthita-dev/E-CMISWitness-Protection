@@ -1,21 +1,26 @@
+import { showConfirmAlert } from '../../../lib/swal'
 import React, { useCallback, useContext, useId, useState } from 'react'
 import { Button } from '../../common/Button'
 import { Badge } from '../../common/Badge'
+import { FormCodeTooltip } from '../../common/FormCodeTooltip'
 import { useFormDraftStore } from '../../../store/useFormDraftStore'
 import { useCaseStore } from '../../../store/useCaseStore'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { FormFilesPanel } from '../FormFilesPanel'
-import { CaseClosedBanner, useIsFormCaseClosed } from '../FormCaseScope'
+import { FormSarabanPanel } from '../FormSarabanPanel'
+import { FormInitialTabContext } from '../FormInitialTab'
+import { AsideSlotContext, DocActions, useEditorView } from '../EditorView'
+import { CaseClosedBanner, useIsFormCaseClosed, useIsFormCaseLegacy } from '../FormCaseScope'
 import { ThaiDateHint } from '../../common/ThaiDateHint'
-import { formatThaiDateTime, toIsoDate, toIsoDateTimeLocal } from '../../../lib/utils'
+import { formatThaiDateTime, isoFromThaiParts, thaiPartsFromIso, toIsoDate, toIsoDateTimeLocal } from '../../../lib/utils'
 import {
   KB6_METHOD_EXTERNAL,
   PROTECTION_METHOD_OPTIONS,
   ROLE_NAMES,
-  protectionMethodSwitchNotice,
+  protectionMethodSelectionIssue,
   toggleProtectionMethod,
 } from '../../../lib/constants'
-import { showToast } from '../../../lib/swal'
+import { VoiceTextarea } from '../../common/VoiceTextarea'
 
 /**
  * ชุดคอนโทรลสำหรับหน้ากรอกแบบ คบ. — ทุกตัวผูกกับ key เดียวกับที่หน้ากระดาษ A4 อ่าน
@@ -68,12 +73,12 @@ export const Grid: React.FC<{ cols?: 1 | 2 | 3 | 4; children: React.ReactNode }>
 const Label: React.FC<{ label: string; required?: boolean; htmlFor?: string }> = ({ label, required, htmlFor }) => (
   <label className="ws-label" htmlFor={htmlFor}>
     {label}
-    {required && <span className="text-rose-600"> *</span>}
+    {required && <span className="text-danger"> *</span>}
   </label>
 )
 
 /** แบบ คบ. ฉบับนี้ถูกล็อกอยู่หรือไม่ — ใช้ปิดช่องกรอกอัตโนมัติเมื่อฉบับลงนามแล้ว หรือแฟ้มปิดงานคุ้มครองแล้ว (WIT1148) */
-const useIsFormLocked = (formId: number) => {
+export const useIsFormLocked = (formId: number) => {
   const signedLock = useFormDraftStore((s) => Boolean(s.locks[formId]))
   const caseClosed = useIsFormCaseClosed(formId)
   return signedLock || caseClosed
@@ -147,7 +152,7 @@ export const Area: React.FC<{
   return (
     <div onPointerDown={locked ? onLockedAttempt : undefined} data-locked={locked || undefined}>
       <Label label={label} required={required} htmlFor={areaId} />
-      <textarea
+      <VoiceTextarea
         id={areaId}
         rows={rows}
         value={f.get(name)}
@@ -329,8 +334,13 @@ export const EditorShell: React.FC<{
   allowRevise?: boolean
   /** แฟ้มที่แบบนี้สังกัด — ใช้บันทึกความพยายามแก้ไขฉบับลงนามลง Audit Log ของแฟ้ม (WIT0611) */
   caseNo?: string
-}> = ({ code, title, hint, formId, children, footer, allowRevise = true, caseNo }) => {
-  const [tab, setTab] = useState<'form' | 'files'>('form')
+  /** ป้ายแทน "ฉบับที่ N" (เช่น บันทึกเพิ่มเติมของการขอขยายระยะเวลา) — ไม่ระบุ = ใช้ค่าเดิม */
+  versionLabel?: string
+  /** ป้ายของแต่ละรุ่นในประวัติ (ใช้เมื่อกำหนดจะเปลี่ยนคำปุ่มเป็น "ดูฉบับเดิมและบันทึกก่อนหน้า" ด้วย) */
+  labelForVersion?: (version: number) => string
+}> = ({ code, title, hint, formId, children, footer, allowRevise = true, caseNo, versionLabel, labelForVersion }) => {
+  const initialTab = useContext(FormInitialTabContext)
+  const [tab, setTab] = useState<'form' | 'files' | 'saraban'>(typeof formId === 'number' && initialTab === 'saraban' ? 'saraban' : 'form')
   const showFilesTab = typeof formId === 'number'
 
   const lock = useFormDraftStore((s) => (typeof formId === 'number' ? s.locks[formId] : undefined))
@@ -341,21 +351,65 @@ export const EditorShell: React.FC<{
   const [showRevisions, setShowRevisions] = useState(false)
   /** WIT1148 — แฟ้มปิดงานคุ้มครองแล้ว: ล็อกทั้งฉบับ ไม่มีปุ่มสร้างเวอร์ชันใหม่ ดูไฟล์/ประวัติเวอร์ชันได้ */
   const caseClosed = useIsFormCaseClosed(formId ?? 0)
+  const caseLegacy = useIsFormCaseLegacy(formId ?? 0)
+  const view = useEditorView()
+  const [asideSlot, setAsideSlot] = useState<HTMLElement | null>(null)
+  const aside = view === 'aside'
+
+  /** ปุ่มท้ายแบบ (บันทึก/ลงนาม) — กรอกบนเอกสาร: ยกไปแถบดำเนินการล่างของหน้า */
+  const footerRow = footer && (aside
+    ? <DocActions>{footer}</DocActions>
+    : <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-line">{footer}</div>)
+  /**
+   * โหมดกรอกบนเอกสาร: ช่องกรอกยังอยู่ (ซ่อนไว้ให้ effect/ค่าตั้งต้นของแต่ละแบบทำงานตามเดิม)
+   * ส่วนที่ห่อด้วย DocAside เช่น ปุ่มลงนาม ถูกยกมาแสดงในแผงนี้
+   */
+  const formBody = aside ? (
+    <>
+      <div ref={setAsideSlot} className="space-y-4 empty:hidden" />
+      <div hidden>
+        <AsideSlotContext.Provider value={asideSlot}>{children}</AsideSlotContext.Provider>
+      </div>
+      {footerRow}
+    </>
+  ) : (
+    <>
+      {children}
+      {footerRow}
+    </>
+  )
+
+  const lockedBody = (
+    <FormLockAuditContext.Provider value={{ caseNo, code }}>
+      {caseClosed ? (
+        /** ปุ่ม/ช่องกรอกทุกตัวในกรอบนี้ใช้ไม่ได้ (เช่น บันทึก ลงนาม) — แท็บและปุ่มดูประวัติอยู่นอก fieldset จึงยังใช้ได้ */
+        <fieldset disabled data-testid="case-closed-fieldset" className="m-0 min-w-0 space-y-5 border-0 p-0">
+          {formBody}
+        </fieldset>
+      ) : formBody}
+    </FormLockAuditContext.Provider>
+  )
 
   return (
-    <div className="ws-card min-w-0 p-4 md:p-6 space-y-5">
+    <div className={aside ? 'ws-card min-w-0 p-4 space-y-4' : 'ws-card min-w-0 p-4 md:p-6 space-y-5'}>
       <div className="border-b border-line pb-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded bg-blue-soft px-2 py-0.5 text-[0.8rem] font-bold text-blue">{code}</span>
-          <h3 className="text-[1.05rem] font-bold text-navy">{title}</h3>
+          {typeof formId === 'number' ? (
+            <FormCodeTooltip formNo={formId}>
+              <span className="rounded bg-blue-soft px-2 py-0.5 text-[0.8rem] font-bold text-blue">{code}</span>
+            </FormCodeTooltip>
+          ) : (
+            <span className="rounded bg-blue-soft px-2 py-0.5 text-[0.8rem] font-bold text-blue">{code}</span>
+          )}
+          {!aside && <h3 className="text-[1.05rem] font-bold text-navy">{title}</h3>}
           {typeof formId === 'number' && (
-            <Badge variant="neutral">ฉบับที่ {version}</Badge>
+            <Badge variant="neutral">{versionLabel ?? `ฉบับที่ ${version}`}</Badge>
           )}
         </div>
-        {hint && <p className="text-[0.8rem] text-muted mt-1">{hint}</p>}
+        {hint && !aside && <p className="text-[0.8rem] text-muted mt-1">{hint}</p>}
       </div>
 
-      {caseClosed && <CaseClosedBanner />}
+      {caseClosed && <CaseClosedBanner legacy={caseLegacy} />}
 
       {/* ล็อกฉบับลงนาม — ห้ามแก้ทับ ต้องสร้างเวอร์ชันใหม่ (WIT0506 / WIT0513 / WIT1119) */}
       {lock && typeof formId === 'number' && (
@@ -373,7 +427,11 @@ export const EditorShell: React.FC<{
               type="button"
               variant="secondary"
               size="md"
-              onClick={() => reviseForm(formId, 'เจ้าหน้าที่ผู้รับผิดชอบ', 'แก้ไขตามเหตุผลที่ส่งกลับ')}
+              onClick={async () => {
+                if (![15, 16, 17].includes(formId)) { reviseForm(formId, 'เจ้าหน้าที่ผู้รับผิดชอบ', 'แก้ไขตามเหตุผลที่ส่งกลับ'); return }
+                const result = await showConfirmAlert({ title: 'สร้างฉบับใหม่เพื่อแก้ไข', input: 'text', inputLabel: 'เหตุผลการแก้ไข', text: 'เก็บฉบับลงนามเดิมไว้ และเริ่มเสนอเอกสารที่ได้รับผลกระทบใหม่ โดยไม่เปลี่ยนผลการคุ้มครองหรือคำอุทธรณ์เดิม', showCancelButton: true, confirmButtonText: 'สร้างฉบับใหม่', cancelButtonText: 'ยกเลิก', inputValidator: value => !value?.trim() ? 'กรุณาระบุเหตุผล' : undefined })
+                if (result.isConfirmed) reviseForm(formId, 'เจ้าหน้าที่ผู้รับผิดชอบ', String(result.value))
+              }}
             >
               สร้างเวอร์ชันใหม่เพื่อแก้ไข (เก็บฉบับเดิมไว้)
             </Button>
@@ -403,7 +461,7 @@ export const EditorShell: React.FC<{
               data-testid="form-revision-history-toggle"
               onClick={() => setShowRevisions((v) => !v)}
             >
-              {showRevisions ? 'ซ่อนประวัติเวอร์ชัน' : 'ดูประวัติเวอร์ชัน'}
+              {labelForVersion ? (showRevisions ? 'ซ่อนฉบับเดิมและบันทึกก่อนหน้า' : 'ดูฉบับเดิมและบันทึกก่อนหน้า') : showRevisions ? 'ซ่อนประวัติเวอร์ชัน' : 'ดูประวัติเวอร์ชัน'}
             </Button>
           </div>
 
@@ -415,7 +473,7 @@ export const EditorShell: React.FC<{
                   data-testid={`form-revision-item-${rev.version}`}
                   className="rounded-lg border border-line bg-white px-2.5 py-2 leading-relaxed"
                 >
-                  <strong className="text-navy-deep">ฉบับที่ {rev.version}</strong>
+                  <strong className="text-navy-deep">{labelForVersion ? labelForVersion(rev.version) : `ฉบับที่ ${rev.version}`}</strong>
                   <span className="text-muted"> · </span>
                   <span>{new Date(rev.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</span>
                   <span className="text-muted"> · </span>
@@ -424,7 +482,7 @@ export const EditorShell: React.FC<{
                 </li>
               ))}
               <li className="rounded-lg border border-line bg-blue-soft px-2.5 py-2 font-semibold text-navy">
-                ฉบับปัจจุบันที่กำลังแก้ไข (เวอร์ชัน {version})
+                {labelForVersion ? `ฉบับปัจจุบันที่กำลังแก้ไข (${versionLabel ?? labelForVersion(version)})` : `ฉบับปัจจุบันที่กำลังแก้ไข (เวอร์ชัน ${version})`}
               </li>
             </ol>
           )}
@@ -434,8 +492,9 @@ export const EditorShell: React.FC<{
       {showFilesTab && (
         <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-soft p-1.5">
           {([
-            { key: 'form', label: 'กรอกข้อมูล', icon: 'fa-pen-to-square' },
+            { key: 'form', label: aside ? 'ลงนามและบันทึก' : 'กรอกข้อมูล', icon: aside ? 'fa-file-signature' : 'fa-pen-to-square' },
             { key: 'files', label: 'รวมไฟล์ คบ.', icon: 'fa-folder-open' },
+            { key: 'saraban', label: 'ทะเบียนสารบรรณ', icon: 'fa-stamp' },
           ] as const).map((t) => (
             <button
               key={t.key}
@@ -452,24 +511,10 @@ export const EditorShell: React.FC<{
         </div>
       )}
 
-      {showFilesTab && tab === 'files' ? (
-        <FormFilesPanel formId={formId as number} />
-      ) : (
-        <FormLockAuditContext.Provider value={{ caseNo, code }}>
-          {caseClosed ? (
-            /** ปุ่ม/ช่องกรอกทุกตัวในกรอบนี้ใช้ไม่ได้ (เช่น บันทึก ลงนาม) — แท็บและปุ่มดูประวัติอยู่นอก fieldset จึงยังใช้ได้ */
-            <fieldset disabled data-testid="case-closed-fieldset" className="m-0 min-w-0 space-y-5 border-0 p-0">
-              {children}
-              {footer && <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-line">{footer}</div>}
-            </fieldset>
-          ) : (
-            <>
-              {children}
-              {footer && <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-line">{footer}</div>}
-            </>
-          )}
-        </FormLockAuditContext.Provider>
-      )}
+      {showFilesTab && tab === 'files' && <FormFilesPanel formId={formId as number} />}
+      {showFilesTab && tab === 'saraban' && <FormSarabanPanel formId={formId as number} />}
+      {/* แผงข้างกระดาษคงส่วนลงนาม/บันทึกไว้ (ซ่อน) ขณะเปิดแท็บอื่น — ปุ่มลงนามบนกระดาษยังใช้ได้ */}
+      {showFilesTab && tab !== 'form' ? (aside ? <div hidden>{lockedBody}</div> : null) : lockedBody}
     </div>
   )
 }
@@ -477,7 +522,7 @@ export const EditorShell: React.FC<{
 /**
  * รูปแบบการคุ้มครองตามข้อ 15 — ข้อ 1–3 ติ๊กร่วมกันได้ ส่วนข้อ 4 เลือกเดี่ยว (ดู toggleProtectionMethod)
  * ใช้ร่วมกันระหว่างข้อ 8.2 ของ คบ.6 (เส้นทางปกติ) และข้อ 4.2 ของ คบ.4 (เส้นทางเร่งด่วน WIT0603)
- * ข้อ 5 เป็นมาตรการเสริมที่มีเฉพาะใน คบ.4 และไม่เปิดเป็นเส้นทางปฏิบัติที่แท็บ 08
+ * ข้อ 5 เป็นมาตรการเสริม (withFifth) ซึ่งตอนนี้ทั้ง คบ.4 และ คบ.6 ไม่ใช้แล้ว — ไม่เปิดเป็นเส้นทางปฏิบัติที่แท็บ 08
  */
 export const ProtectionMethodChecks: React.FC<{
   selected: number[]
@@ -486,14 +531,29 @@ export const ProtectionMethodChecks: React.FC<{
   withFifth?: boolean
   disabled?: boolean
   testIdPrefix?: string
-}> = ({ selected, onChange, withFifth = false, disabled, testIdPrefix = 'method-option' }) => {
+  /** FB-014 — ชื่อรูปแบบที่ใช้แทนชื่อมาตรฐานเป็นรายข้อ (คบ.4/คบ.6 ใช้เปลี่ยนข้อ 4) */
+  labels?: Record<number, string>
+  /** ตัวเลือกย่อยใต้แต่ละข้อ เช่น 4.1 ส่งให้กรมการปกครอง — แสดงเมื่อเลือกข้อนั้น และเลือกได้ข้อเดียว */
+  subitems?: Record<number, string[]>
+  /** ตัวเลือกย่อยที่เลือกไว้ แยกตามเลขข้อ */
+  subitemSelected?: Record<number, string>
+  onSubitemChange?: (n: number, text: string) => void
+}> = ({
+  selected,
+  onChange,
+  withFifth = false,
+  disabled,
+  testIdPrefix = 'method-option',
+  labels,
+  subitems,
+  subitemSelected,
+  onSubitemChange,
+}) => {
   const externalOn = selected.includes(KB6_METHOD_EXTERNAL)
+  const selectionIssue = protectionMethodSelectionIssue(selected, subitemSelected)
 
-  const toggle = (n: number) => {
-    const notice = protectionMethodSwitchNotice(selected, n)
-    if (notice) showToast(notice, 'warning')
-    onChange(toggleProtectionMethod(selected, n))
-  }
+  /** เลือกข้ามกลุ่ม (ข้อ 1–3 กับข้อ 4) ระบบนำข้อที่ขัดกันออกให้เอง ไม่ต้องแจ้งข้อความ */
+  const toggle = (n: number) => onChange(toggleProtectionMethod(selected, n))
 
   return (
     <div>
@@ -501,9 +561,10 @@ export const ProtectionMethodChecks: React.FC<{
       <div className="space-y-1">
         {PROTECTION_METHOD_OPTIONS.filter((o) => withFifth || o.n !== 5).map((o) => {
           const checked = selected.includes(o.n)
+          const choices = checked ? subitems?.[o.n] : undefined
           return (
+            <React.Fragment key={o.n}>
             <button
-              key={o.n}
               type="button"
               disabled={disabled}
               aria-pressed={checked}
@@ -517,14 +578,42 @@ export const ProtectionMethodChecks: React.FC<{
                     : 'border-[#aebdca] bg-white text-ink hover:bg-soft'
               }`}
             >
-              {checked ? '☑' : '☐'} {o.n}. {o.label}
+              {checked ? '☑' : '☐'} {o.n}. {labels?.[o.n] ?? o.label}
             </button>
+            {choices && (
+              <div role="radiogroup" aria-label={`ตัวเลือกย่อยข้อ ${o.n}`} className="space-y-1 pl-6">
+                {choices.map((text, i) => (
+                  <label
+                    key={i}
+                    className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-[0.88rem] text-ink hover:bg-soft"
+                  >
+                    <input
+                      type="radio"
+                      name={`${testIdPrefix}-${o.n}-sub`}
+                      className="h-[18px] w-[18px]"
+                      disabled={disabled}
+                      checked={subitemSelected?.[o.n] === text}
+                      onChange={() => onSubitemChange?.(o.n, text)}
+                      data-testid={`${testIdPrefix}-${o.n}-sub-${i + 1}`}
+                    />
+                    {o.n}.{i + 1} {text}
+                  </label>
+                ))}
+              </div>
+            )}
+            </React.Fragment>
           )
         })}
       </div>
       {externalOn && (
         <p className="mt-1 text-[0.8rem] font-semibold text-warning">
           เลือกข้อ 4 แล้ว — เอกสารจะไม่มีข้อ 8.1 (คำสั่งมอบหมายชุดเจ้าพนักงาน)
+        </p>
+      )}
+      {/* ต้องเลือกรูปแบบ (และตัวเลือกย่อยของข้อที่มี) ให้ครบก่อนส่งต่อ — การ์ดส่งงานในแฟ้มใช้เงื่อนไขเดียวกัน */}
+      {!disabled && selectionIssue && (
+        <p className="mt-1 text-[0.8rem] font-semibold text-warning" role="status" data-testid={`${testIdPrefix}-required`}>
+          {selectionIssue} — ต้องเลือกก่อนส่งต่อ
         </p>
       )}
     </div>
@@ -558,6 +647,47 @@ export const DateField: React.FC<{
         disabled={isDisabled}
         onChange={(e) => f.set(name, e.target.value)}
         className={`${INPUT}${isDisabled ? ' cursor-not-allowed' : ''}`}
+      />
+      <ThaiDateHint value={iso} />
+    </div>
+  )
+}
+
+/**
+ * ช่องวันที่แบบปฏิทินที่เขียนลงช่อง วัน / เดือน / พ.ศ. แยกกันตามหน้ากระดาษราชการ
+ * หน้ากระดาษจึงอ่าน key เดิมได้ตามปกติ · ค่าเดิมที่พิมพ์เป็นข้อความ (เดือนชื่อเต็ม/ตัวย่อ/ตัวเลข) แปลงมาแสดงในปฏิทินได้
+ */
+export const ThaiDatePickerFields: React.FC<{
+  formId: number
+  label: string
+  dayKey: string
+  monthKey: string
+  yearKey: string
+  required?: boolean
+  testId?: string
+}> = ({ formId, label, dayKey, monthKey, yearKey, required, testId }) => {
+  const f = useField(formId)
+  const locked = useIsFormLocked(formId)
+  const onLockedAttempt = useLockedEditAttempt(locked, label)
+  const iso = isoFromThaiParts(f.get(dayKey), f.get(monthKey), f.get(yearKey))
+  const dateId = useId()
+  const handleChange = (value: string) => {
+    const parts = thaiPartsFromIso(value)
+    f.set(dayKey, parts?.day ?? '')
+    f.set(monthKey, parts?.month ?? '')
+    f.set(yearKey, parts?.year ?? '')
+  }
+  return (
+    <div onPointerDown={locked ? onLockedAttempt : undefined} data-locked={locked || undefined}>
+      <Label label={label} required={required} htmlFor={dateId} />
+      <input
+        id={dateId}
+        type="date"
+        value={iso}
+        disabled={locked}
+        data-testid={testId}
+        onChange={(e) => handleChange(e.target.value)}
+        className={`${INPUT}${locked ? ' cursor-not-allowed' : ''}`}
       />
       <ThaiDateHint value={iso} />
     </div>

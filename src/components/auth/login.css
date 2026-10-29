@@ -1,0 +1,19 @@
+/* หน้า /login — ลวดลายพื้นหลังแผงซ้าย (ส่วนอื่นใช้ Tailwind) */
+.wp-login__aside {
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        radial-gradient(ellipse at 20% 85%, rgba(40, 70, 150, 0.35), transparent 55%),
+        linear-gradient(135deg, #0d1b3e 0%, #1a2f6b 55%, #090f26 100%);
+    background-size: 48px 48px, 48px 48px, auto, auto;
+}
+.wp-login__field:focus-within {
+    border-color: #b5901e;
+    outline: 3px solid rgba(202, 166, 49, 0.18);
+}
+.wp-login__link:focus-visible,
+.wp-login__submit:focus-visible,
+.wp-login__eye:focus-visible {
+    outline: 3px solid rgba(202, 166, 49, 0.5);
+    outline-offset: 2px;
+}

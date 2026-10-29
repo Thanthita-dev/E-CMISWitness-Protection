@@ -57,6 +57,26 @@ describe('FileManager', () => {
     expect(screen.queryByText('คบ.6')).not.toBeInTheDocument()
   })
 
+  it('scope=dossier รับเป็นคำร้องดิบ ก่อน ผอ. มอบหมาย — ยังไม่มีโฟลเดอร์ คบ.1 และไม่เห็นไฟล์ข้างใน', () => {
+    useCaseStore.setState({ cases: [{ ...TEST_CASE, form: 'คำร้อง', stage: 'receiver_intake' }] })
+    render(<FileManager scope="dossier" />)
+    expect(screen.queryByText('คบ.1')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText(/ค้นหาไฟล์ใน/), { target: { value: 'บัตรประชาชน' } })
+    expect(screen.queryByText('บัตรประชาชน_กมลชนก.pdf')).not.toBeInTheDocument()
+  })
+
+  it('scope=dossier รับเป็นคำร้องดิบ หลัง ผอ. มอบหมายแล้ว — เห็นโฟลเดอร์ คบ.1', () => {
+    useCaseStore.setState({ cases: [{ ...TEST_CASE, form: 'คำร้อง', stage: 'staff_review' }] })
+    render(<FileManager scope="dossier" />)
+    expect(screen.getByText('คบ.1')).toBeInTheDocument()
+  })
+
+  it('scope=dossier รับเป็น คบ.1 มาแต่แรก — เห็นโฟลเดอร์ คบ.1 ตั้งแต่ขั้นรับเรื่อง', () => {
+    useCaseStore.setState({ cases: [{ ...TEST_CASE, stage: 'receiver_intake' }] })
+    render(<FileManager scope="dossier" />)
+    expect(screen.getByText('คบ.1')).toBeInTheDocument()
+  })
+
   it('อัปโหลดในแฟ้มที่รากมีให้เลือกปลายทาง แต่ในแบบ คบ. ไม่มี', () => {
     const dossier = render(<FileManager scope="dossier" />)
     // เรียงลำดับ + ปลายทาง

@@ -18,7 +18,7 @@ import { CASE_NO, DOSSIER_URL, cancelDialog, confirmDialog, expectStage, formRow
  *   J12-E  ผู้บังคับบัญชาส่งคืนข้อเสนอผลทบทวน 11A (WIT1106) → เจ้าหน้าที่เสนอใหม่เป็น "เปลี่ยนวิธี"
  */
 
-const REVIEW_URL = `/protection-review/${CASE_NO}`
+const REVIEW_URL = `/protection-review/${encodeURIComponent(CASE_NO)}`
 const METHODS_URL = '/protection-methods'
 const MONITOR_URL = `/protection-monitor?caseNo=${CASE_NO}`
 
@@ -329,7 +329,7 @@ test.describe('J12 · ทบทวนผล → เปลี่ยนวิธ�
       expect(c?.approvedMethods).toEqual([1])
       expect(c?.kb11Signed).toBe(true)
       await page.getByRole('link', { name: /ไปรายงานผลการคุ้มครอง · กำหนดรอบ คบ\.13 ถัดไป/ }).click()
-      await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO.replace('/', '(?:/|%2F)')}`))
       await expect(page).toHaveURL(MONITOR_URL)
     })
   })

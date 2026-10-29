@@ -29,13 +29,13 @@ export default defineConfig({
         },
     },
     server: {
-        port: 3000,
+        port: 3005,
         host: true,
-        allowedHosts: ["mac.teerut.com"]
+        allowedHosts: ["mac.teerut.com", "pacc-demo.teerut.com"]
     },
     preview: {
-        port: 3000,
+        port: 3005,
         host: true,
-        allowedHosts: ["mac.teerut.com"]
+        allowedHosts: ["mac.teerut.com", "pacc-demo.teerut.com"]
     },
 })

@@ -4,9 +4,9 @@ import { confirmSecretaryApproval, handoffAction } from '../helpers/postApproval
 import { checkNoticeReady, completeNoticeDetails } from '../helpers/noticeDocuments'
 import { confirmDialog, fieldAfterLabel, formRow, signInModal } from '../journeys/journey-helpers'
 
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 test.use({ actionTimeout: 10_000 })
-const DOSSIER = `/dossier/${NO}`
+const DOSSIER = `/dossier/${encodeURIComponent(NO)}`
 const selectRole = async (page: Page, role: string) => page.getByLabel('เลือกบทบาทผู้ใช้งาน').selectOption(role)
 const readHandoff = async (page: Page) => (await readCase(page, NO))?.protectionHandoff as Record<string, any> | undefined
 
@@ -87,7 +87,7 @@ test('กอท. ผ่านธุรการ → ผอ. → ผู้รั�
   await expect(page.getByRole('alert')).toContainText('เลือกผู้รับผิดชอบ')
   await expect(page.getByTestId('got-assignee-select').locator('option')).toHaveCount(3)
   await page.getByTestId('got-assignee-select').selectOption('GOT-OFF-001')
-  await handoffAction(page, 'assign', 'มอบหมาย นางสาวณิชา คุ้มภัย รับผิดชอบตามคำสั่งเดิม')
+  await handoffAction(page, 'assign', 'มอบหมาย นางสาวอรุณี ใจมั่น รับผิดชอบตามคำสั่งเดิม')
   await page.reload()
   await expect(page.getByTestId('handoff-status')).toContainText('รอผู้รับผิดชอบรับงาน')
 
@@ -117,7 +117,7 @@ test('กอท. ผ่านธุรการ → ผอ. → ผู้รั�
   await page.getByTestId('kb11-form-sign').click()
   for (let i = 0; i < 4; i++) {
     await page.getByRole('button', { name: 'ลงลายมือชื่อ' }).first().click()
-    await signInModal(page, i === 3 ? 'นางสาวณิชา คุ้มภัย' : 'ผู้ลงนามสาธิต')
+    await signInModal(page, i === 3 ? 'นางสาวอรุณี ใจมั่น' : 'ผู้ลงนามสาธิต')
   }
   await page.getByRole('button', { name: 'บันทึกข้อตกลง คบ.11' }).click()
   await expect.poll(async () => (await readCase(page, NO))?.kb11Signed).toBe(true)
@@ -133,7 +133,7 @@ test('กอท. ผ่านธุรการ → ผอ. → ผู้รั�
   await page.getByLabel('สมาชิกชุดปฏิบัติและการจัดเวร').fill('ชุดคุ้มครองสาธิต กอท. แบ่งเวร 3 ผลัด')
   await page.getByLabel('ยานพาหนะ').fill('รถยนต์สาธิต 1 คัน')
   await page.getByRole('button', { name: 'ถัดไป' }).click()
-  await page.getByLabel('ผู้ชี้แจง').fill('นางสาวณิชา คุ้มภัย')
+  await page.getByLabel('ผู้ชี้แจง').fill('นางสาวอรุณี ใจมั่น')
   await page.getByTestId('method-1-start').click()
   await confirmDialog(page, 'ยืนยันเริ่มปฏิบัติจริง')
   await expect.poll(async () => (await readHandoff(page))?.step).toBe('active')
@@ -141,11 +141,11 @@ test('กอท. ผ่านธุรการ → ผอ. → ผู้รั�
   expect(final?.activity7State).toBe('approved')
   expect(final?.decisionNumber).toBe(orderNo)
   expect(final?.stage).toBe('protection')
-  expect(final?.owner).toBe('นางสาวณิชา คุ้มภัย')
+  expect(final?.owner).toBe('นางสาวอรุณี ใจมั่น')
   const dispatchLog = (final?.assignmentHistory as any[]).find((e) => e.action.startsWith('บันทึกการนำส่งหนังสือแจ้งผล'))
   const receiptLog = (final?.assignmentHistory as any[]).find((e) => e.action === 'บันทึกวันที่พยานได้รับหนังสือ')
-  expect(dispatchLog?.actor).toBe('นางสาวณิชา คุ้มภัย')
-  expect(receiptLog?.actor).toBe('นางสาวณิชา คุ้มภัย')
+  expect(dispatchLog?.actor).toBe('นางสาวอรุณี ใจมั่น')
+  expect(receiptLog?.actor).toBe('นางสาวอรุณี ใจมั่น')
   expect((final?.documents as any[]).filter((d) => d.id.startsWith('DOC-FINAL-'))).toHaveLength(1)
   expect((await readHandoff(page))?.events.map((e: any) => e.actorRole)).toEqual(['secretary', 'got_receiver', 'got_receiver', 'got_director', 'got_officer', 'got_officer'])
   await page.reload()
@@ -162,15 +162,15 @@ test('ธุรการมอบหมายแทน ผอ. ไม่ได�
     const modulePath = '/scripts/post-approval-fixture.ts'
     const { useCaseStore } = await import(modulePath)
     const s = useCaseStore.getState()
-    return [s.advanceProtectionHandoff('WP-2569-000501', 'assign', 'ข้ามขั้น', 'GOT-OFF-001'),
-      s.advanceProtectionHandoff('WP-2569-000501', 'submit', 'ข้ามรับเรื่อง')]
+    return [s.advanceProtectionHandoff('0501/2569', 'assign', 'ข้ามขั้น', 'GOT-OFF-001'),
+      s.advanceProtectionHandoff('0501/2569', 'submit', 'ข้ามรับเรื่อง')]
   })
   expect(results).toEqual([false, false])
   await handoffAction(page, 'receive')
   const duplicate = await page.evaluate(async () => {
     const modulePath = '/scripts/post-approval-fixture.ts'
     const { useCaseStore } = await import(modulePath)
-    return useCaseStore.getState().advanceProtectionHandoff('WP-2569-000501', 'receive', 'กดซ้ำ')
+    return useCaseStore.getState().advanceProtectionHandoff('0501/2569', 'receive', 'กดซ้ำ')
   })
   expect(duplicate).toBe(false)
   expect((await readHandoff(page))?.events).toHaveLength(2)

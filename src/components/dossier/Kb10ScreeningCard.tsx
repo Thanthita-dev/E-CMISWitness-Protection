@@ -7,6 +7,8 @@ import { useAuthStore } from '../../store/useAuthStore'
 import { isCaseWorkerRole, APPEAL_WINDOW_DAYS } from '../../lib/constants'
 import { daysUntil } from '../../lib/utils'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
+import { VoiceTextarea } from '../common/VoiceTextarea'
+import { sarabanInTransit } from '../../lib/saraban'
 
 /** ขั้นของเส้นทางไม่อนุมัติตามผัง 09A — 0 ร่าง → 1 เสนอกลั่นกรอง → 2 ผ่านกลั่นกรอง → 3 ลงนาม → 4 ส่งออก/ปิด */
 const STEP_LABEL = [
@@ -26,7 +28,7 @@ const STEP_LABEL = [
  *
  * ทุกปุ่มในการ์ดนี้เปลี่ยนเจ้าของงานหรือสถานะแฟ้ม จึงผ่านจอยืนยันทุกปุ่ม
  */
-export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }) => {
+export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem; compact?: boolean }> = ({ caseItem, compact = false }) => {
   const { submitKb10ForScreening, screenKb10ByDeputy, closeNonApprovalCase } = useCaseStore()
   const { currentRole } = useAuthStore()
 
@@ -39,6 +41,8 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
   const [waiverEvidence, setWaiverEvidence] = useState('')
 
   const step = caseItem.nonApprovalStep || 0
+  /** ร่างอยู่ระหว่างธุรการลงทะเบียนนำส่ง — ผู้รับปลายทางยังไม่เห็นปุ่มดำเนินการ */
+  const inTransit = sarabanInTransit(caseItem, 'kb10')
   const document = noticeForCase(caseItem)
   const isOfficer = isCaseWorkerRole(currentRole) && (!document || noticeWorkerAllowed(currentRole, caseItem, useAuthStore.getState().currentOfficerUserId))
   const isDeputy = currentRole === 'deputy_secretary' || currentRole === 'admin'
@@ -61,7 +65,7 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
       icon: 'question',
       title: 'เสนอรองเลขาธิการฯ กลั่นกรอง คบ.10?',
       html: confirmBody(
-        'ยืนยันว่าร่าง คบ.10 ครบถ้วนแล้ว จึงเสนอขึ้นกลั่นกรองก่อนถึงผู้มีอำนาจลงนาม',
+        'ยืนยันว่าร่าง คบ.10 ครบถ้วนแล้ว จึงเสนอขึ้นกลั่นกรองก่อนถึงเลขาธิการ ป.ป.ท.ลงนาม',
         [
           ['แฟ้มคำร้อง', `${caseItem.no} · ${caseItem.person}`],
           ['ผลการตรวจของเจ้าหน้าที่', readinessNote.trim()],
@@ -173,7 +177,8 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
   }
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3 text-[0.8rem]" data-testid="kb10-screening-card">
+    <div className={compact ? "space-y-4 text-[0.88rem]" : "rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3 text-[0.8rem]"} data-testid="kb10-screening-card">
+      {!compact && <>
       <div className="font-bold text-amber-900">
         <i className="fa-solid fa-user-shield mr-1.5" />
         {document ? 'การรับแจ้งผลและสิทธิอุทธรณ์ คบ.10' : 'ด่านก่อนลงนาม คบ.10 — ตรวจความครบถ้วนและกลั่นกรองข้อความแจ้งสิทธิอุทธรณ์'}
@@ -203,12 +208,21 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
         )}
       </div>
 
+      </>}
+
+      {inTransit && (
+        <div className="rounded-lg border border-slate-200 bg-white p-2.5 text-[0.88rem] text-slate-600" data-testid="kb10-in-transit">
+          <i className="fa-solid fa-truck-fast mr-1.5" />
+          อยู่ระหว่างธุรการลงทะเบียนนำส่ง — ผู้รับปลายทางดำเนินการต่อได้หลังธุรการบันทึกรับเข้า
+        </div>
+      )}
+
       {/* WIT0904 — ชั้นเจ้าหน้าที่ผู้รับผิดชอบ */}
-      {!document && isOfficer && step === 0 && !caseItem.kb10SignedAt && (
+      {!document && isOfficer && !inTransit && step === 0 && !caseItem.kb10SignedAt && (
         <div className="space-y-2" data-testid="kb10-readiness">
           <label className="block">
-            <span className="block font-bold text-slate-700 mb-1">ผลการตรวจความครบถ้วนของร่าง คบ.10 *</span>
-            <textarea
+            <span className="block font-bold text-slate-700 mb-1">ผลการตรวจความครบถ้วนของร่าง คบ.10 <span className="text-danger">*</span></span>
+            <VoiceTextarea
               rows={3}
               value={readinessNote}
               onChange={(e) => setReadinessNote(e.target.value)}
@@ -232,13 +246,13 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
       )}
 
       {/* WIT0905 — ชั้นรองเลขาธิการฯ */}
-      {!document && isDeputy && step === 1 && (
+      {!document && isDeputy && !inTransit && step === 1 && (
         <div className="space-y-2" data-testid="kb10-deputy">
           <p className="text-[0.88rem] leading-relaxed text-amber-900">
             ตรวจว่าข้อความใน คบ.10 ตรงกับผลพิจารณา และมีข้อความแจ้งสิทธิอุทธรณ์ภายใน {APPEAL_WINDOW_DAYS} วันครบถ้วน
             ก่อนถึงมือผู้ลงนาม
           </p>
-          <textarea
+          <VoiceTextarea
             rows={3}
             value={deputyNote}
             onChange={(e) => setDeputyNote(e.target.value)}
@@ -281,23 +295,23 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
         </div>
       ) : (
         canRecordWaiver && (
-          <div className="space-y-2 rounded-lg border border-slate-300 bg-white p-3" data-testid="kb10-waiver">
-            <div className="font-bold text-slate-800">
-              <i className="fa-solid fa-user-slash mr-1.5" />
-              พยานแจ้งไม่ประสงค์อุทธรณ์ (บันทึกก่อนครบกรอบ {APPEAL_WINDOW_DAYS} วันได้)
-            </div>
-            <textarea
+          <div className="space-y-4" data-testid="kb10-waiver">
+            <label htmlFor="kb10-waiver-note" className="block font-semibold text-slate-700">รายละเอียดที่พยานแจ้ง <span className="text-danger">*</span></label>
+            <VoiceTextarea
               rows={2}
               value={waiverNote}
               onChange={(e) => setWaiverNote(e.target.value)}
-              placeholder="ข้อความที่พยานแจ้ง เช่น พยานแจ้งทางโทรศัพท์/ด้วยตนเองว่าไม่ประสงค์อุทธรณ์คำสั่งไม่อนุมัติ"
+              placeholder="ระบุวันที่ ช่องทาง และข้อความที่พยานแจ้ง"
+              id="kb10-waiver-note"
               data-testid="kb10-waiver-note"
               className="ws-input w-full text-ink"
             />
+            <label htmlFor="kb10-waiver-evidence" className="block font-semibold text-slate-700">หลักฐานอ้างอิง <span className="text-danger">*</span></label>
             <input
+              id="kb10-waiver-evidence"
               value={waiverEvidence}
               onChange={(e) => setWaiverEvidence(e.target.value)}
-              placeholder="หลักฐาน * เช่น หนังสือสละสิทธิ์อุทธรณ์ / บันทึกถ้อยคำที่พยานลงชื่อ"
+              placeholder="ชื่อเอกสารหรือเลขที่หนังสือ"
               data-testid="kb10-waiver-evidence"
               className="ws-input w-full text-ink"
             />
@@ -310,7 +324,7 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
                 size="md"
               >
                 <i className="fa-solid fa-box-archive" />
-                บันทึกพยานไม่ประสงค์อุทธรณ์ · ปิดเรื่อง
+                บันทึกและปิดเรื่อง
               </Button>
             </div>
           </div>
@@ -324,7 +338,7 @@ export const Kb10ScreeningCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }
               <i className="fa-solid fa-flag-checkered mr-1.5" />
               พ้นกรอบอุทธรณ์ {APPEAL_WINDOW_DAYS} วันแล้ว {Math.abs(appealDaysLeft ?? 0)} วัน และไม่มีการยื่นอุทธรณ์
             </div>
-            <textarea
+            <VoiceTextarea
               rows={2}
               value={closeNote}
               onChange={(e) => setCloseNote(e.target.value)}

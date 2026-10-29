@@ -8,8 +8,9 @@ import { ECMIS_USER_DIRECTORY } from './constants'
 import { canEditFormsInDossier, isAssignedProtectionOfficer, isMyQueueCase } from './permissions'
 import { canOperateHandoff, gotAssignableOfficers, isHandoffQueueCase } from './protectionHandoff'
 import { KB11_SIGN_SLOTS } from './formSignature'
+import { passDestinationIncoming, passSecretaryOutgoing, recordSarabanCheckpoint } from './sarabanTestHelpers'
 
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 const initial = (): CaseItem => ({
   no: NO, form: 'คบ.1', person: 'นางสาวกมลชนก บุญรักษา', stage: 'external_pending',
   status: 'รอเลขาธิการพิจารณา', owner: 'เลขาธิการ ป.ป.ท.', next: 'พิจารณา', risk: 'สูง',
@@ -20,9 +21,19 @@ const initial = (): CaseItem => ({
 const store = () => useCaseStore.getState()
 const current = () => store().cases.find((c) => c.no === NO)!
 const role = (r: Parameters<ReturnType<typeof useAuthStore.getState>['setRole']>[0]) => useAuthStore.getState().setRole(r)
-const approve = (destination: 'got' | 'original_owner' = 'got') => store().secretaryApprove(NO, 'ลธ. 501/2569', 'สมควรคุ้มครอง', destination, 'ดำเนินการตามวิธีที่อนุมัติ', 30)
+/** อนุมัติแล้วเดินธุรการ สลธ. ออกเลขส่งให้ครบ — ปลายทางเจ้าของสำนวนเดิมเดินต่อจนธุรการลงเลขรับและส่งถึงเจ้าของสำนวน */
+const approve = (destination: 'got' | 'original_owner' = 'got') => {
+  const ok = store().secretaryApprove(NO, 'ลธ. 501/2569', 'สมควรคุ้มครอง', destination, 'ดำเนินการตามวิธีที่อนุมัติ', 30)
+  if (ok) {
+    expect(current().protectionHandoff?.step).toBe('pending_outgoing')
+    expect(passSecretaryOutgoing(NO)).toBe(true)
+    if (destination === 'original_owner') expect(passDestinationIncoming(NO)).toBe(true)
+  }
+  return ok
+}
 const progressToAssignment = () => {
   expect(approve()).toBe(true)
+  expect(recordSarabanCheckpoint(NO)).toBe(true)
   role('got_receiver')
   expect(store().advanceProtectionHandoff(NO, 'receive', 'ตรวจเอกสารครบ')).toBe(true)
   expect(store().advanceProtectionHandoff(NO, 'submit', 'เสนอเพื่อมอบหมาย')).toBe(true)
@@ -60,8 +71,8 @@ describe('ส่งงานหลังอนุมัติในแฟ้ม�
     expect(canOperateHandoff('officer', c, 'OFF-001')).toBe(true)
     expect(approve('original_owner')).toBe(false)
     expect(current().documents).toHaveLength(2)
-    expect(current().protectionHandoff?.events).toHaveLength(1)
-    expect(useNotificationStore.getState().notifications.map((n) => n.toUserId)).toEqual(['OFF-001'])
+    expect(current().protectionHandoff?.events).toHaveLength(3)
+    expect(useNotificationStore.getState().notifications.map((n) => n.toUserId)).toEqual(['OFF-001', 'REC-001', 'SECREC-001'])
   })
 
   it('ส่ง กอท. ต้องเริ่มที่ธุรการ และเก็บเจ้าของสำนวนเดิมแยกจากผู้รับผิดชอบ', () => {
@@ -84,12 +95,14 @@ describe('ส่งงานหลังอนุมัติในแฟ้ม�
     expect(store().advanceProtectionHandoff(NO, 'assign', 'มอบหมาย', 'GOT-OFF-001')).toBe(false)
     role('got_receiver')
     expect(store().advanceProtectionHandoff(NO, 'submit')).toBe(false)
+    expect(store().advanceProtectionHandoff(NO, 'receive')).toBe(false) // ยังไม่ลงเลขทะเบียนรับ
+    expect(recordSarabanCheckpoint(NO)).toBe(true)
     expect(store().advanceProtectionHandoff(NO, 'receive')).toBe(true)
     expect(store().advanceProtectionHandoff(NO, 'receive')).toBe(false)
     expect(store().advanceProtectionHandoff(NO, 'assign', 'มอบหมาย', 'GOT-OFF-001')).toBe(false)
     expect(store().advanceProtectionHandoff(NO, 'submit')).toBe(true)
     expect(store().advanceProtectionHandoff(NO, 'submit')).toBe(false)
-    expect(current().protectionHandoff?.events).toHaveLength(3)
+    expect(current().protectionHandoff?.events).toHaveLength(4)
     expect(current().activity7State).toBe('approved')
     expect(current().decisionNumber).toBe('ลธ. 501/2569')
   })
@@ -139,9 +152,9 @@ describe('ส่งงานหลังอนุมัติในแฟ้ม�
     expect(current().stage).toBe('protection')
     expect(current().protectionHandoff?.step).toBe('active')
     expect(current().activity7State).toBe('approved')
-    expect(current().protectionHandoff?.events).toHaveLength(6)
+    expect(current().protectionHandoff?.events).toHaveLength(7)
     store().setMethodStatus(NO, 1, 'active')
-    expect(current().protectionHandoff?.events).toHaveLength(6)
+    expect(current().protectionHandoff?.events).toHaveLength(7)
     expect(current().protectionHandoff?.events.every((e) => e.actorUserId && e.at && e.fromUserId && e.toUserId)).toBe(true)
   })
 
@@ -174,7 +187,7 @@ describe('ส่งงานหลังอนุมัติในแฟ้ม�
     await useCaseStore.persist.rehydrate()
     expect(current()).toEqual(before)
     const notes = useNotificationStore.getState().notifications
-    expect(notes.map((n) => n.toUserId)).toEqual(['GOT-OFF-001', 'GOT-DIR-001', 'GOT-REC-001'])
+    expect(notes.map((n) => n.toUserId)).toEqual(['GOT-OFF-001', 'GOT-DIR-001', 'GOT-REC-001', 'SECREC-001'])
     expect(filterNotificationsForUser(notes, ['OFF-001'], 'officer')).toHaveLength(0)
   })
 

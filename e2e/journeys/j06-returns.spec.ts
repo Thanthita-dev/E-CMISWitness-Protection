@@ -1,5 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
+
+/** ขากลับจากสำนักงานเลขาธิการลงหน่วย: ธุรการ สลธ. ออกเลขส่ง → ธุรการหน่วยลงเลขรับ */
+const passDownLeg = async (page: Page) => {
+  await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver')
+  await passSarabanCheckpoint(page, CASE_NO, 'receiver')
+  await page.goto(DOSSIER_URL)
+}
 import { CASE_NO, DOSSIER_URL, areaField, confirmDialog, formRow, signInModal } from './journey-helpers'
 
 /**
@@ -69,7 +77,7 @@ async function reviseForm(page: Page, code: 'คบ.3' | 'คบ.6', version: nu
     }
   }
   await page.getByRole('button', { name: `บันทึกแบบ ${code}` }).click()
-  await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+  await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 }
 
 test.describe('J06 · ส่งกลับแก้ไขตามลำดับชั้น (05 · 07)', () => {
@@ -202,6 +210,7 @@ test.describe('J06 · ส่งกลับแก้ไขตามลำดั�
       await page.getByRole('textbox').last().fill('ข้อเท็จจริงใน คบ.3 ไม่ครบ ให้แนบผลตรวจสอบเพิ่มเติมและแก้ คบ.6 ให้สอดคล้อง')
       await page.getByTestId('decision-confirm-button').click()
       await expect.poll(async () => (await caseOf(page))?.activity7State).toBe('returned')
+      await passDownLeg(page)
 
       const c = await caseOf(page)
       expect(c?.stage).toBe('director_review')
@@ -291,6 +300,7 @@ test.describe('J06 · ส่งกลับแก้ไขตามลำดั�
       expect((await caseOf(page))?.stage).toBe('deputy_review')
       await returnFromDossier(page, 'director_opinion_unclear', 'ความเห็นข้อ 11 ของ ผอ. ยังไม่ระบุเหตุผลประกอบระดับภัย ให้ทบทวนและเสนอใหม่')
       await expect.poll(async () => (await caseOf(page))?.stage).toBe('director_review')
+      await passDownLeg(page)
 
       const c = await caseOf(page)
       expect(c?.owner).toBe(DIRECTOR)
@@ -299,7 +309,7 @@ test.describe('J06 · ส่งกลับแก้ไขตามลำดั�
       // ส่งกลับ ผอ. ไม่ใช่เจ้าหน้าที่ — ไม่ใช่วง WIT0510 ของ ผอ.
       expect(c?.directorReturn).not.toBe(true)
       const h = await historyOf(page)
-      expect(h[h.length - 1].detail).toContain('ความเห็นข้อ 11')
+      expect(h.some((x) => String(x.detail).includes('ความเห็นข้อ 11'))).toBe(true)
     })
 
     await switchRole(page, 'director')
@@ -337,6 +347,7 @@ test.describe('J06 · ส่งกลับแก้ไขตามลำดั�
     await test.step('WIT0513 · ◇ ชุดเสนอไม่ครบ → ส่งกลับเจ้าหน้าที่ผู้รับผิดชอบ', async () => {
       await returnFromDossier(page, 'kb6_attachment_incomplete', 'ชุดเสนอขาดเอกสารแนบ ให้เติมให้ครบและเสนอใหม่ตามลำดับชั้น')
       await expect.poll(async () => (await caseOf(page))?.stage).toBe('staff_review')
+      await passDownLeg(page)
       const c = await caseOf(page)
       expect(c?.owner).toBe(OFFICER)
       expect(c?.returnedByRole).toBe('deputy_secretary')
@@ -384,6 +395,7 @@ test.describe('J06 · ส่งกลับแก้ไขตามลำดั�
         await page.getByRole('textbox').last().fill(`รอบที่ ${round}: ขอข้อมูลเพิ่มเติมประกอบการพิจารณา`)
         await page.getByTestId('decision-confirm-button').click()
         await expect.poll(async () => (await caseOf(page))?.activity7State).toBe('returned')
+        await passDownLeg(page)
         const c = await caseOf(page)
         expect(c?.stage).toBe('director_review')
         expect(c?.owner).toBe(DIRECTOR)

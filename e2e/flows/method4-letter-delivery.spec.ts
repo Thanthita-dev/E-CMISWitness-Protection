@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { seedMockState, readCase } from '../helpers/seed'
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 for (const channel of ['direct', 'post']) {
   test(`หนังสือประสาน A4 นำส่ง ${channel} แล้วแนบหนังสือตอบรับก่อนคุ้มครอง`, async ({ page }) => {
     await seedMockState(page, 'Approved - วิธีที่ 4', undefined, {
@@ -47,7 +47,7 @@ for (const channel of ['direct', 'post']) {
     await page.evaluate(async () => {
       const path = '/scripts/post-approval-fixture.ts'
       const { useCaseStore } = await import(path)
-      useCaseStore.getState().setMethodStatus('WP-2569-000501', 4, 'active')
+      useCaseStore.getState().setMethodStatus('0501/2569', 4, 'active')
     })
     expect(((await readCase(page, NO))?.methodTracks as any[])[0].status).toBe('preparing')
     await workspace.getByTestId('coordination-incoming-file-input').setInputFiles({ name: 'หนังสือตอบรับ.pdf', mimeType: 'application/pdf', buffer: Buffer.from('test response evidence') })
@@ -57,13 +57,13 @@ for (const channel of ['direct', 'post']) {
     expect(((await readCase(page, NO))?.methodTracks as any[])[0].coordination.responseStatus).toBe('awaiting')
     await workspace.getByTestId('coordination-accept').click()
     await page.locator('.swal2-confirm').click()
-    await expect(page).toHaveURL(/\/protection-duration\?caseNo=WP-2569-000501/)
+    await expect(page).toHaveURL(/\/protection-duration\?caseNo=0501(\/|%2F)2569/)
     await expect(page.getByTestId('protection-time-bar')).toContainText('30 วัน')
     await page.reload()
     const reply = ((await readCase(page, NO))?.officialLetters as any[]).find((l) => l.direction === 'incoming')
     expect(reply.documentName).toBe('หนังสือตอบรับ.pdf')
     expect(reply.documentPreviewUrl).toMatch(/^data:application\/pdf;base64,/)
-    await expect(page).toHaveURL(/\/protection-duration\?caseNo=WP-2569-000501/)
+    await expect(page).toHaveURL(/\/protection-duration\?caseNo=0501(\/|%2F)2569/)
     await expect(page.getByTestId('protection-time-bar')).toContainText('30 วัน')
     await page.goto('/protection-methods')
     await page.getByRole('link', { name: 'เปิดงาน', exact: true }).click()
@@ -74,7 +74,7 @@ for (const channel of ['direct', 'post']) {
     await expect(page.getByRole('tablist')).toHaveCount(0)
     await expect(page.getByTestId('protection-time-bar')).toHaveCount(0)
     await page.getByRole('link', { name: 'ดูระยะเวลาคุ้มครอง', exact: true }).click()
-    await expect(page).toHaveURL(/\/protection-duration\?caseNo=WP-2569-000501/)
+    await expect(page).toHaveURL(/\/protection-duration\?caseNo=0501(\/|%2F)2569/)
     await expect(page.getByTestId('protection-time-bar')).toBeVisible()
     await expect(page.getByText('ข้อมูลการประสานและเตรียมส่งมอบ', { exact: true })).toHaveCount(0)
     await expect(page.getByTestId('protection-time-bar')).not.toContainText('รอบันทึกวันเริ่มจริง')
@@ -86,6 +86,6 @@ for (const channel of ['direct', 'post']) {
     await expect(page.getByRole('link', { name: 'คบ13-พฤศจิกายน.pdf', exact: true })).toBeVisible()
     expect((await readCase(page, NO))?.protectionReportUploads).toHaveLength(1)
     expect((await readCase(page, NO))?.actualStartedAt).toBeFalsy()
-    await expect(page.getByRole('link', { name: 'ยุติคุ้มครองพยาน', exact: true })).toHaveAttribute('href', '/termination/WP-2569-000501')
+    await expect(page.getByRole('link', { name: 'ยุติคุ้มครองพยาน', exact: true })).toHaveAttribute('href', '/termination/0501%2F2569')
   })
 }

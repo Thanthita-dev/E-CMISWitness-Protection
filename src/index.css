@@ -676,6 +676,37 @@ body {
   background: #94a3b8;
 }
 
+
+/* ฟอนต์ตระกูล Sarabun ที่ฝังในระบบ — แบบ คบ. ต้นฉบับใช้ TH SarabunPSK/IT๙ 16pt จึงแสดงเหมือนกันทุกเครื่อง */
+@font-face { font-family: 'TH Sarabun New'; src: local('TH Sarabun New'), url('/assets/fonts/THSarabunNew.ttf') format('truetype'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'TH Sarabun New'; src: local('TH Sarabun New Bold'), url('/assets/fonts/THSarabunNew-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'TH Sarabun New'; src: local('TH Sarabun New Italic'), url('/assets/fonts/THSarabunNew-Italic.ttf') format('truetype'); font-weight: 400; font-style: italic; }
+
+/*
+ * กระดาษแบบ คบ. — ค่าตาม Word ต้นฉบับ: A4, ขอบซ้าย 3 ซม. ขวา 2 ซม., ตัวอักษร 16pt, ระยะบรรทัดใกล้เคียงบรรทัดเดี่ยวของ Word
+ * ใช้ทั้งตัวอย่างบนหน้าจอและผลพิมพ์
+ */
+.kb-paper {
+  width: 794px;
+  min-height: 1123px;
+  /* ขอบบน/ล่างเว้นที่ให้ "ลับ" ซึ่ง Word วางในหัว/ท้ายกระดาษ */
+  padding: 64px 76px 56px 113px;
+  font-family: 'TH Sarabun New', 'TH SarabunIT๙', 'TH SarabunPSK', 'Sarabun', sans-serif;
+  font-size: 16pt;
+  line-height: 1.15;
+  color: #000;
+}
+/* ชุดพิมพ์จัดหน้าไว้นอกจอ (ไม่ใช้ display:none เพื่อวัดความสูงย่อพอดีหน้าได้) */
+.kb-print-root { position: absolute; left: -10000px; top: 0; visibility: hidden; pointer-events: none; }
+@media print {
+  @page { size: A4; margin: 0; }
+  body.kb-printing > *:not(.kb-print-root) { display: none !important; }
+  body.kb-printing .kb-print-root { position: static; visibility: visible; }
+  /* ไม่ย่อ ไม่ตัด: ข้อมูลยาวเกินหนึ่งแผ่นไหลต่อไปแผ่นถัดไป */
+  .kb-print-root .kb-paper { box-shadow: none; border-radius: 0; min-height: 297mm; height: auto; overflow: visible; break-after: page; zoom: 1 !important; }
+  .kb-print-root .kb-paper:last-child { break-after: auto; }
+}
+
 /* Official A4 Government Document Styles */
 .paper-a4 {
   position: relative;
@@ -700,6 +731,59 @@ body {
   content: '';
   display: block;
   clear: both;
+}
+
+.official-fill-input {
+  font: inherit;
+  font-weight: 700;
+  color: #173e70;
+  background: rgba(247, 237, 203, 0.55);
+  border: 0;
+  border-bottom: 1px dotted #4b5563;
+  border-radius: 2px;
+  padding: 0 4px;
+  display: inline-block;
+  field-sizing: content;
+  max-width: 100%;
+  line-height: inherit;
+}
+.official-fill-input:focus {
+  outline: 2px solid #caa631;
+  background: #fff8df;
+}
+@media print {
+  .official-fill-input { background: transparent; }
+}
+/* ช่องวันที่ที่ยังว่าง: ไม่แสดง dd/mm/yyyy จนกว่าจะคลิกเลือก */
+.official-fill-input.is-empty:not(:focus)::-webkit-datetime-edit { color: transparent; }
+/* ข้อความยาว (อ่าน/พิมพ์): เส้นจุดใต้ทุกบรรทัดที่ข้อความตัดขึ้นใหม่ */
+.paper-text-lines { white-space: pre-wrap; overflow-wrap: anywhere; color: #173e70; font-weight: 700; line-height: 1.45; }
+.paper-solid-rows {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #173e70;
+  font-weight: 700;
+  /* ระยะบรรทัดเป็น px เต็มจำนวน — ลายเส้นซ้ำไม่คลาดจนเกิดเส้นซ้อนตอนพิมพ์ */
+  line-height: var(--paper-rule-height, 28px);
+  background-image: linear-gradient(to bottom, transparent calc(100% - 2px), #334155 calc(100% - 2px), #334155 calc(100% - 1px), transparent calc(100% - 1px));
+  background-size: 100% var(--paper-rule-height, 28px);
+  background-repeat: repeat-y;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.paper-text-lines > span { border-bottom: 1px dotted #4b5563; padding: 0 4px 1px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+/* ข้อความยาวบนกระดาษ: เส้นประทุกบรรทัด สูงตามข้อความ ไม่มีแถบเลื่อน */
+.paper-rows-input {
+  display: block;
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  padding: 0 4px;
+  border-bottom: 0;
+  background-color: rgba(247, 237, 203, 0.55);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.45em - 1px), #4b5563 calc(1.45em - 1px), #4b5563 1.45em);
+  line-height: 1.45em;
 }
 
 .official-dotted-fill {
@@ -750,3 +834,19 @@ body {
 .swal2-styled:focus-visible {
   box-shadow: 0 0 0 3px rgba(202, 166, 49, 0.45) !important;
 }
+
+/* ปุ่มลงนามบนเส้นลงชื่อของกระดาษ (ดู paper/paperSign.tsx) — ซ้อนบนเส้น ไม่ดันแบบเอกสาร และไม่พิมพ์ */
+.paper-sign-anchor { position: relative; display: inline-block; }
+.paper-sign-slot { position: absolute; left: 50%; bottom: 0.1em; z-index: 2; transform: translateX(-50%); line-height: 1; white-space: nowrap; }
+.paper-sign-above > .paper-sign-slot { bottom: calc(100% + 0.15em); }
+@media print { .paper-sign-slot { display: none !important; } }
+
+/* หน้าอนุมัติ คบ.6 ใช้บรรทัดเส้น 22px ใกล้เคียงบรรทัดตัวอักษร 16pt ของต้นฉบับ
+ * คงขนาดตัวอักษรและพื้นที่ลงนาม ไม่ย่อทั้งหน้าและไม่ตัดข้อมูลที่ยาวเกินแบบ */
+.kb6-approval-page { --paper-rule-height: 22px; }
+.kb6-approval-page .paper-memo-sign { margin-top: 0; }
+.kb6-approval-page .paper-memo-sign > .paper-sign-anchor { display: flex; }
+.kb6-approval-page .kb6-opinion-section { margin-top: 2px; }
+
+/* รูปลายเซ็นอยู่ในพื้นที่เดิมของบันทึก ไม่เพิ่มความสูงหน้าอนุมัติเมื่อเซ็นครบ */
+.kb6-approval-page .paper-memo-sign > .paper-sign-anchor img { max-height: 1.25em; }

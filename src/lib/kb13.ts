@@ -18,6 +18,8 @@ export interface Kb13Step {
   code: string
   label: string
   done: boolean
+  /** ขั้นที่ไม่ต้องทำในรอบนี้ (เช่น ลงนาม คบ.13 เมื่อใช้หนังสือภายนอก) — นับเป็นผ่านแต่แสดงให้ต่างจากขั้นที่ทำจริง */
+  skipped?: boolean
 }
 
 export interface Kb13Progress {
@@ -40,9 +42,34 @@ export const openKb13Round = (caseItem: Pick<CaseItem, 'monthlyReports'>): Month
 export const lastLockedKb13Round = (caseItem: Pick<CaseItem, 'monthlyReports'>): MonthlyReport | undefined =>
   [...(caseItem.monthlyReports || [])].reverse().find((r) => Boolean(r.lockedAt))
 
+export const EXTERNAL_REPORT_LABEL = 'หนังสือรายงานจากหน่วยงานภายนอก'
+
+/** รอบนี้ใช้หนังสือภายนอกแทน คบ.13 หรือไม่ — รอบเดิมที่ไม่มี source ถือเป็น คบ.13 */
+export const isExternalRound = (round?: Pick<MonthlyReport, 'source'>): boolean => round?.source === 'external'
+
+/**
+ * เคสที่คุ้มครองโดยหน่วยงานอื่น (วิธีที่ 4 ประสานหน่วยงานอื่น) ไม่ได้ใช้ชุดคุ้มครองของ ป.ป.ท.
+ * จึงไม่จัดทำ คบ.13 — เจ้าหน้าที่อัปโหลดหนังสือรายงานจากหน่วยงานนั้นแทน
+ */
+export const usesExternalReport = (caseItem?: Pick<CaseItem, 'methodTracks'>): boolean =>
+  Boolean(caseItem?.methodTracks?.some((t) => t.method === 4))
+
+/** ชื่อแบบรายงานของรอบสำหรับแสดงผล */
+export const reportSourceLabel = (round?: Pick<MonthlyReport, 'source'>): string =>
+  isExternalRound(round) ? EXTERNAL_REPORT_LABEL : 'คบ.13'
+
+/**
+ * พร้อมตรวจรับ (WIT1008) หรือยัง — คบ.13 ต้องลงนามครบสองช่อง
+ * ส่วนรอบหนังสือภายนอกไม่มีการลงนามในระบบ ใช้การบันทึกรับหนังสือพร้อมไฟล์แทน
+ */
+export const isKb13RoundReadyToReceive = (round?: MonthlyReport): boolean =>
+  isExternalRound(round)
+    ? Boolean(round?.externalLetter?.documentUrl)
+    : Boolean(round?.officerSignedAt && round?.witnessSignedAt)
+
 /** WIT1005 ถือว่าจัดทำครบเมื่อมีช่วงรายงาน คำสั่ง/จำนวนวัน ผู้ปฏิบัติ และสรุปผลครบทุกช่อง */
 export const isKb13RoundDrafted = (round?: MonthlyReport): boolean =>
-  Boolean(round?.periodFrom && round?.periodTo && round?.orderRef && round?.operators && round?.summary)
+  isExternalRound(round) ? Boolean(round?.externalLetter) : Boolean(round?.periodFrom && round?.periodTo && round?.orderRef && round?.operators && round?.summary)
 
 export interface Kb13MethodMismatch {
   /** วิธีที่รายงานว่าปฏิบัติจริง แต่ไม่ได้รับอนุมัติ */
@@ -116,6 +143,7 @@ export const getKb13Progress = (caseItem: CaseItem, asOf?: string | Date): Kb13P
   /** รอบที่เพิ่งล็อกไปถือว่าผ่านทุกขั้นของรอบนั้นแล้ว — ใช้ตัดสินขั้นท้ายเมื่อไม่มีรอบเปิดอยู่ */
   const closed = round ? undefined : lastLockedKb13Round(caseItem)
   const active = round || closed
+  const external = isExternalRound(active)
 
   const steps: Kb13Step[] = [
     { code: 'WIT1001', label: 'รับ Episode เดียว (TEMPORARY/MAIN)', done: hasEpisode },
@@ -126,9 +154,15 @@ export const getKb13Progress = (caseItem: CaseItem, asOf?: string | Date): Kb13P
       done: Boolean(caseItem.nextReportDueAt) || (caseItem.monthlyReports || []).length > 0,
     },
     { code: 'WIT1004', label: 'รวบรวมผลทุกวิธีเข้ารอบรายงาน', done: Boolean(active) },
-    { code: 'WIT1005', label: 'จัดทำ คบ.13 ของรอบนี้', done: isKb13RoundDrafted(active) },
-    { code: 'WIT1006', label: 'เจ้าหน้าที่ผู้ปฏิบัติลงนาม', done: Boolean(active?.officerSignedAt) },
-    { code: 'WIT1007', label: 'พยานลงนามรับรอง', done: Boolean(active?.witnessSignedAt) },
+    external
+      ? { code: 'WIT1005', label: `บันทึกรับ${EXTERNAL_REPORT_LABEL}`, done: isKb13RoundDrafted(active) }
+      : { code: 'WIT1005', label: 'จัดทำ คบ.13 ของรอบนี้', done: isKb13RoundDrafted(active) },
+    external
+      ? { code: 'WIT1006', label: 'เจ้าหน้าที่ผู้ปฏิบัติลงนาม (ไม่ต้องลงนาม · หนังสือภายนอก)', done: true, skipped: true }
+      : { code: 'WIT1006', label: 'เจ้าหน้าที่ผู้ปฏิบัติลงนาม', done: Boolean(active?.officerSignedAt) },
+    external
+      ? { code: 'WIT1007', label: 'พยานลงนามรับรอง (ไม่ต้องลงนาม · หนังสือภายนอก)', done: true, skipped: true }
+      : { code: 'WIT1007', label: 'พยานลงนามรับรอง', done: Boolean(active?.witnessSignedAt) },
     { code: 'WIT1008', label: 'รับและตรวจผลเทียบวิธีที่อนุมัติ', done: Boolean(active?.reviewedAt) },
     { code: 'WIT1009', label: 'บันทึกสถานะล่าสุดและข้อเสนอ', done: Boolean(active?.riskLevel) },
     { code: 'WIT1010', label: 'ล็อกฉบับลงนามเป็นรอบรายงานใหม่', done: Boolean(active?.lockedAt) },

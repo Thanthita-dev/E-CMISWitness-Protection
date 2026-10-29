@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
+import { isReviewerFor } from '../../lib/protectionHandoff'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Button } from '../common/Button'
 import { CaseItem, CoordinationDeclineProposal } from '../../types/case'
 import { EXTERNAL_TRANSFER_AGENCIES } from '../../lib/constants'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 const STAGE_LABEL: Record<CoordinationDeclineProposal['stage'], string> = {
   supervisor: 'รอ ผบช.ชั้นต้น พิจารณา',
@@ -53,8 +55,8 @@ export const CoordinationDeclineCard: React.FC<{ caseItem: CaseItem; declinedAge
     proposal && (proposal.stage === 'supervisor' || proposal.stage === 'director') ? proposal : undefined
   const canDecide =
     pendingProposal &&
-    ((pendingProposal.stage === 'supervisor' && (currentRole === 'supervisor' || currentRole === 'admin')) ||
-      (pendingProposal.stage === 'director' && (currentRole === 'director' || currentRole === 'admin')))
+    ((pendingProposal.stage === 'supervisor' && isReviewerFor(currentRole, 'supervisor', caseItem)) ||
+      (pendingProposal.stage === 'director' && isReviewerFor(currentRole, 'director', caseItem)))
 
   /** เสนอได้เมื่อยังไม่มีข้อเสนอค้าง หรือข้อเสนอรอบก่อนถูกส่งคืนมาแก้ */
   const canPropose = isOfficer && (!proposal || proposal.stage === 'returned')
@@ -66,7 +68,7 @@ export const CoordinationDeclineCard: React.FC<{ caseItem: CaseItem; declinedAge
     }
     showConfirmAlert({
       icon: 'warning',
-      title: 'เสนอหน่วยงานใหม่ต่อผู้มีอำนาจ?',
+      title: 'เสนอหน่วยงานใหม่ต่อ ผอ.สำนัก/กอง?',
       html: confirmBody(
         'บันทึกผลการปฏิเสธแล้วเสนอหน่วยงานที่จะประสานแทน ขึ้นผู้บังคับบัญชาตามลำดับชั้น',
         [
@@ -151,7 +153,7 @@ export const CoordinationDeclineCard: React.FC<{ caseItem: CaseItem; declinedAge
     <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3.5 space-y-3" data-testid="wit0845-card">
       <div className="text-[0.8rem] font-bold text-rose-900">
         <i className="fa-solid fa-building-circle-exclamation mr-1.5" />
-        หน่วยงานปฏิเสธ: บันทึกหนังสือและเหตุผล แล้วเสนอผู้มีอำนาจพิจารณาหน่วยงานใหม่
+        หน่วยงานปฏิเสธ: บันทึกหนังสือและเหตุผล แล้วเสนอ ผอ.สำนัก/กอง พิจารณาหน่วยงานใหม่
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-2.5 text-[0.8rem] leading-relaxed text-slate-600">
@@ -209,7 +211,7 @@ export const CoordinationDeclineCard: React.FC<{ caseItem: CaseItem; declinedAge
               ))}
             </select>
           </label>
-          <textarea
+          <VoiceTextarea
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -231,7 +233,7 @@ export const CoordinationDeclineCard: React.FC<{ caseItem: CaseItem; declinedAge
       {/* ชั้นผู้บังคับบัญชา — ผบช.ชั้นต้น แล้วต่อด้วย ผอ.สำนัก/กอง */}
       {canDecide && pendingProposal && (
         <div className="space-y-2" data-testid="wit0845-decide">
-          <textarea
+          <VoiceTextarea
             rows={2}
             value={decisionNote}
             onChange={(e) => setDecisionNote(e.target.value)}

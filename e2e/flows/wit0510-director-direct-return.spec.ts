@@ -9,8 +9,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * → วนเข้า WIT0508 ผอ. ตรวจใหม่ · ทั้งวงต้องไม่ผ่านผู้บังคับบัญชาชั้นต้นอีกรอบ
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const DIRECTOR = 'นายวีระยุทธ พิทักษ์ธรรม'
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'

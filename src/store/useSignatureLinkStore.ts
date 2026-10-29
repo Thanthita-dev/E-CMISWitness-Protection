@@ -5,7 +5,7 @@ import { Kb6SignerRole, OutgoingNoticeFormNo } from '../types/case'
 
 /** Where a signing link's result should be applied once the external signer confirms. */
 export type SignatureLinkTarget =
-  | { kind: 'formDraft'; key: string }
+  | { kind: 'formDraft'; key: string; caseNo?: string }
   | { kind: 'kb1Case'; caseNo: string }
   | { kind: 'kb6'; caseNo: string; role: Kb6SignerRole }
   | { kind: 'outgoingNotice'; caseNo: string; formNo: OutgoingNoticeFormNo }

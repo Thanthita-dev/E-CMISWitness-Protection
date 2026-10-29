@@ -1,3 +1,4 @@
+import { useVisibleCases } from '../hooks/useVisibleCases'
 import React from 'react'
 import { createFileRoute, Link, Outlet, useMatches } from '@tanstack/react-router'
 import { PageHeader } from '../components/common/PageHeader'
@@ -6,6 +7,8 @@ import { useCaseStore } from '../store/useCaseStore'
 import { PROTECTION_TOTAL_CAP_DAYS } from '../lib/constants'
 import { deriveEpisode, summarizeEpisode } from '../lib/episode'
 import { formatThaiDate } from '../lib/utils'
+import { isTerminationAppealable } from '../lib/terminationProgress'
+import { kb15PendingStage, kb15StageLabel } from '../lib/protectionHandoff'
 
 export const Route = createFileRoute('/termination')({
   component: TerminationLayout,
@@ -23,26 +26,27 @@ function TerminationLayout() {
 
 /** ขั้นตอนที่สำนวนไปถึงแล้วในเส้นทาง 11C → 11D */
 function terminationStep(c: CaseItem): { label: string; tone: string } {
-  if (c.closedAt && c.stage === 'terminated') return { label: 'ปิดงานแล้ว', tone: 'bg-slate-100 text-slate-600' }
+  if (c.terminationDocumentsClosedAt) return { label: 'ปิดงานเอกสารแล้ว', tone: 'bg-slate-100 text-slate-600' }
   if (c.stage === 'appeal' && c.appealAgainst === 'kb17')
     return { label: 'อยู่ระหว่างอุทธรณ์', tone: 'bg-warning-soft text-warning' }
-  if (c.kb17?.deliveredAt) return { label: 'อยู่ในกรอบอุทธรณ์', tone: 'bg-warning-soft text-warning' }
+  if (c.kb17?.deliveredAt) return { label: 'บันทึกการรับแจ้งแล้ว', tone: 'bg-warning-soft text-warning' }
   if (c.kb17?.dispatchedAt) return { label: 'นำส่ง คบ.17 แล้ว', tone: 'bg-blue-100 text-blue-800' }
   if (c.kb16?.signedAt) return { label: 'ลงนาม คบ.16 แล้ว', tone: 'bg-blue-100 text-blue-800' }
   if (c.kb16) return { label: 'ร่าง คบ.16 · รอลงนาม', tone: 'bg-blue-100 text-blue-800' }
   if (c.terminationApproval && !c.terminationApproval.approved)
     return { label: 'ไม่อนุมัติให้ยุติ · คุ้มครองต่อ', tone: 'bg-danger-soft text-danger-dark' }
-  if (c.kb15?.status === 'endorsed') return { label: 'เสนอผู้มีอำนาจ', tone: 'bg-blue-100 text-blue-800' }
-  if (c.kb15) return { label: `คบ.15 ฉบับที่ ${c.kb15.version} · ${c.kb15.status === 'returned' ? 'ส่งคืนแก้' : 'รอตรวจ'}`, tone: 'bg-slate-100 text-slate-700' }
+  if (c.kb15?.status === 'endorsed') return { label: 'เลขาธิการพิจารณา คบ.15 แล้ว · รอคำสั่ง คบ.16', tone: 'bg-blue-100 text-blue-800' }
+  const kb15Stage = kb15PendingStage(c)
+  if (c.kb15) return { label: `คบ.15 ฉบับที่ ${c.kb15.version} · ${kb15Stage ? `รอ${kb15StageLabel(kb15Stage, c)}` : 'ส่งคืนแก้'}`, tone: 'bg-slate-100 text-slate-700' }
   if (c.terminationTrigger) return { label: 'รับเหตุยุติแล้ว', tone: 'bg-slate-100 text-slate-700' }
   return { label: 'ยังไม่เริ่มเรื่องยุติ', tone: 'bg-slate-100 text-slate-600' }
 }
 
 function TerminationListPage() {
-  const cases = useCaseStore((s) => s.cases)
+  const cases = useVisibleCases()
 
   const active = cases.filter((c) =>
-    ['protection', 'termination_review', 'termination_order', 'terminated', 'method_operation', 'appeal'].includes(c.stage)
+    ['protection', 'termination_review', 'termination_order', 'terminated', 'method_operation', 'appeal', 'transferred'].includes(c.stage)
   )
 
   return (
@@ -50,7 +54,7 @@ function TerminationListPage() {
       <PageHeader
         eyebrow="งานคุ้มครองพยาน · ยุติและปิดงาน"
         title="ยุติการคุ้มครองและปิดงาน"
-        description={`จัดทำ คบ.15 ออกคำสั่ง คบ.16 แจ้ง คบ.17 และปิดงานเมื่อพ้นกรอบอุทธรณ์ (เพดานรวม ${PROTECTION_TOTAL_CAP_DAYS} วัน)`}
+        description={`จัดทำ คบ.15 ออกคำสั่ง คบ.16 แจ้ง คบ.17 · ติดตามการส่งต่อและอุทธรณ์แยกจากงานเอกสาร (เพดานรวม 6 เดือน)`}
       />
 
       {active.length === 0 ? (

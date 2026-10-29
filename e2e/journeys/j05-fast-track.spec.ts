@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
-import { CASE_NO, DOSSIER_URL, cancelDialog, confirmDialog, formRow, signInModal } from './journey-helpers'
+import { CASE_NO, DOSSIER_URL, cancelDialog, confirmDialog, fillKb5Period, formRow, signInModal } from './journey-helpers'
 
 /**
  * Journey J05 — เส้นทางเร่งด่วน: คบ.4 / ร่าง คบ.5 คุ้มครองชั่วคราว (แท็บ 06 → 08A → 08A-1)
@@ -36,7 +36,7 @@ async function prepareKb6(page: import('@playwright/test').Page) {
   await page.locator('label:has-text("1.1 ได้รับคำร้อง")').locator('xpath=following-sibling::input[1]').fill(OFFICER)
   await page.locator('label:has-text("2.2 ชื่อ-สกุล พยาน")').locator('xpath=following-sibling::input[1]').fill(WITNESS)
   await page.getByRole('button', { name: 'บันทึกแบบ คบ.6' }).click()
-  await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+  await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 }
 
 /** WIT0606 ◇ ข้อมูลครบ → แผงตัดสิน WIT0609 */
@@ -71,7 +71,7 @@ test.describe('J05 · เส้นทางเร่งด่วน คบ.4/ค
 
     await test.step('WIT0601 · รับเส้นทางเร่งด่วนจากแท็บ 04', async () => {
       // ⚙️ ระบบ: การ์ด Fast Track รออยู่ ผลประเมินเป็นเร่งด่วน
-      await expect(page.getByTestId('fast-track-card')).toHaveAttribute('data-fast-track-step', 'drafting')
+      await expect(page.getByTestId('fast-track-submit-panel')).toHaveAttribute('data-fast-track-step', 'drafting')
       const c = await readCase(page, CASE_NO)
       expect(c?.urgency).toBe('urgent')
       expect(c?.stage).toBe('staff_review')
@@ -91,6 +91,7 @@ test.describe('J05 · เส้นทางเร่งด่วน คบ.4/ค
       await page.goto(KB4_FORM_URL)
       await page.getByTestId('kb4-method-option-1').click()
       await page.getByTestId('kb4-method-option-3').click()
+      await fillKb5Period(page, CASE_NO)
 
       await page.goto(DOSSIER_URL)
       await expect(page.getByTestId('fast-track-methods')).toContainText('วิธีที่ 1')
@@ -313,13 +314,12 @@ test.describe('J05 · เส้นทางเร่งด่วน คบ.4/ค
     await page.goto(DOSSIER_URL)
 
     await test.step('WIT0606 · ◇ ข้อมูลไม่ครบ → WIT0607 ส่งกลับตรงเจ้าหน้าที่', async () => {
-      await page.getByTestId('fast-track-incomplete-button').click()
-      await page.getByTestId('fast-track-return-issue').selectOption('kb5_draft_incomplete')
+      await page.getByTestId('return-case-button').click()
+      await page.getByTestId('return-issue-select').selectOption('kb5_draft_incomplete')
       await page
-        .getByTestId('fast-track-return-note')
+        .getByTestId('return-note-input')
         .fill('ร่างคำสั่ง คบ.5 ยังไม่ระบุชุดเจ้าพนักงานและช่วงเวลาคุ้มครอง ให้เติมให้ครบแล้วเสนอใหม่')
-      await page.getByTestId('fast-track-return-confirm').click()
-      await confirmDialog(page, 'ยืนยันส่งกลับแก้ไข', 'ไม่ผ่านผู้บังคับบัญชาชั้นต้น')
+      await page.getByTestId('return-confirm-button').click()
       await expect.poll(async () => (await readCase(page, CASE_NO))?.stage).toBe('staff_review')
 
       const c = await readCase(page, CASE_NO)

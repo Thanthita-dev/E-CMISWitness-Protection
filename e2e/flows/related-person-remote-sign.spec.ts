@@ -8,7 +8,7 @@ import { drawSignature } from '../helpers/consent'
  */
 test('ลายมือชื่อยินยอมของบุคคลที่เกี่ยวข้องผ่านลิงก์ แสดงในแท็บเจ้าหน้าที่ทันที', async ({ page, context }) => {
   await seedMockState(page, 'Case 1.3', 'officer')
-  await page.goto('/form/1?caseNo=WP-2569-000501')
+  await page.goto('/form/1?caseNo=0501/2569')
   await page.getByRole('button', { name: '6. บุคคลที่เกี่ยวข้อง' }).click()
   const btn = page.getByRole('button', { name: 'ลงลายมือชื่อยินยอม' }).first()
   if (!(await btn.isVisible().catch(() => false))) {

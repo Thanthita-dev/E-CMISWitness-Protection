@@ -2,12 +2,13 @@ import React, { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Button } from '../common/Button'
 import { CaseItem, MonthlyReport, ReviewOutcome } from '../../types/case'
-import { kb13DueStatus, needsReview } from '../../lib/kb13'
+import { kb13DueStatus, needsReview, reportSourceLabel } from '../../lib/kb13'
 import { PROTECTION_REVIEW_BLOCK_DAYS } from '../../lib/episode'
 import { addDays, currentReportPeriod, formatThaiDate, thaiMonthName } from '../../lib/utils'
 import { REVIEW_OUTCOMES } from '../../lib/constants'
 import { showToast, showConfirmAlert } from '../../lib/swal'
 import { useCaseStore } from '../../store/useCaseStore'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface ReviewBranchModalProps {
   caseItem: CaseItem
@@ -254,7 +255,7 @@ export const ReviewBranchModal: React.FC<ReviewBranchModalProps> = ({ caseItem, 
           <section className="rounded-xl border border-amber-300 bg-amber-50/60 p-3 space-y-2">
             <strong className="block text-[0.8rem] text-navy-deep">ต้องทบทวน</strong>
             <p className="text-[0.8rem] leading-relaxed text-slate-600">
-              ส่ง คบ.13 ล่าสุด ผลประเมินความเสี่ยง คำสั่งปัจจุบัน และยอดวันสะสมไปทบทวนผลการคุ้มครอง
+              ส่ง{reportSourceLabel(locked)}ล่าสุด ผลประเมินความเสี่ยง คำสั่งปัจจุบัน และยอดวันสะสมไปทบทวนผลการคุ้มครอง
             </p>
 
             {handoff ? (
@@ -273,7 +274,7 @@ export const ReviewBranchModal: React.FC<ReviewBranchModalProps> = ({ caseItem, 
               <>
                 <label className="block">
                   <span className="ws-label">เหตุผลที่ต้องทบทวน</span>
-                  <textarea
+                  <VoiceTextarea
                     rows={2}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
@@ -287,7 +288,7 @@ export const ReviewBranchModal: React.FC<ReviewBranchModalProps> = ({ caseItem, 
                     showConfirmAlert({
                       icon: 'question',
                       title: 'ยืนยันส่งเข้าทบทวนผลการคุ้มครอง?',
-                      text: `ส่ง คบ.13 งวด ${thaiMonthName(locked.period)} พร้อมเหตุผล: "${reason}"`,
+                      text: `ส่ง${reportSourceLabel(locked)} งวด ${thaiMonthName(locked.period)} พร้อมเหตุผล: "${reason}"`,
                       showCancelButton: true,
                       confirmButtonText: 'ยืนยัน',
                       cancelButtonText: 'ยกเลิก',
@@ -315,11 +316,11 @@ export const ReviewBranchModal: React.FC<ReviewBranchModalProps> = ({ caseItem, 
                 แนวทางที่เลือกได้หลังผู้บังคับบัญชาเห็นชอบ
               </strong>
               <p className="text-[0.8rem] leading-relaxed text-blue-900">
-                จัดทำข้อเสนอและให้ผู้บังคับบัญชาตรวจที่หน้า{' '}
-                <Link to="/protection-review/$caseNo" params={{ caseNo: caseItem.no }} className="font-bold underline">
-                  ทบทวนผลการคุ้มครอง
+                ดำเนินการต่อที่หน้า{' '}
+                <Link to="/protection-duration" search={{ caseNo: caseItem.no }} className="font-bold underline">
+                  ระยะเวลาคุ้มครอง
                 </Link>{' '}
-                — เลือกแนวทางได้เมื่อข้อเสนอผ่านการตรวจแล้ว
+                ในภาพรวมการคุ้มครอง
               </p>
 
               {latestProposal && (
@@ -367,12 +368,12 @@ export const ReviewBranchModal: React.FC<ReviewBranchModalProps> = ({ caseItem, 
               เปิดแฟ้ม {caseItem.no}
             </Link>
             <Link
-              to="/protection-review/$caseNo"
-              params={{ caseNo: caseItem.no }}
+              to="/protection-duration"
+              search={{ caseNo: caseItem.no }}
               className="min-h-[44px] rounded-lg border border-[#9aabba] bg-white px-4 py-2 text-[0.88rem] font-semibold text-navy hover:bg-slate-50 transition"
             >
               <i className="fa-solid fa-scale-balanced mr-1.5" />
-              ทบทวนผลการคุ้มครอง
+              ดูระยะเวลาคุ้มครอง
             </Link>
             <Link
               to="/termination/$caseNo"

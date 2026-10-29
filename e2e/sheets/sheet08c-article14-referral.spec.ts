@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
+
+/** ผ่านธุรการ: ขาไป ธุรการหน่วย → ธุรการสำนักงานเลขาธิการ · ขากลับ กลับกัน */
+async function passArticle14Clerks(page: Page, caseNo: string, direction: 'up' | 'down') {
+  const order = direction === 'up' ? (['receiver', 'secretary_receiver'] as const) : (['secretary_receiver', 'receiver'] as const)
+  for (const clerk of order) await passSarabanCheckpoint(page, caseNo, clerk)
+}
 
 /**
  * Sheet 08C · WIT0852 → WIT0863 — ดำเนินการตามข้อ 14 (ส่งกรมคุ้มครองสิทธิและเสรีภาพ)
@@ -17,7 +24,7 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * 3. เกณฑ์ "ใกล้ครบเพดาน" (nearCap) ฝังไว้ที่ ≤15 วันคงเหลือ — เคสที่เหลือ 20 วันจะไม่ขึ้นเป็นตัวเลือกในหน้านี้เลย
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const ARTICLE14_URL = '/article14'
 const TARGET_AGENCY = 'สำนักงานคุ้มครองพยาน กรมคุ้มครองสิทธิและเสรีภาพ กระทรวงยุติธรรม'
 
@@ -72,8 +79,9 @@ const AT_LETTER_SENT = {
   },
 }
 
-test.describe('TC-094 — จัดทำเรื่องเสนอข้อ 14 จนคณะกรรมการเห็นชอบและส่งกรม', () => {
-  test('TC-094 · [Happy] เดินครบลำดับชั้น: เสนอ → ผบช. → เลขาธิการฯ → มติคณะกรรมการเห็นชอบ → ออกหนังสือขาออก', async ({
+
+test.describe('TC-094 — จัดทำเรื่องเสนอข้อ 14 จนเลขาธิการเห็นชอบและส่งกรม', () => {
+  test('TC-094 · [Happy] เดินครบลำดับชั้น: เสนอ → ผบช. → ผอ. → รองเลขาฯ → เลขาฯ → บันทึกการนำส่ง', async ({
     page,
   }) => {
     await seedMockState(page, 'Case 1.12', 'officer', AT_NEAR_CAP)
@@ -88,52 +96,43 @@ test.describe('TC-094 — จัดทำเรื่องเสนอข้อ
       .getByRole('textbox', { name: /รายงานผล \/ ประเมินความเสี่ยง/ })
       .fill('อ้างอิง คบ.13 รอบล่าสุดและคำสั่งเดิม (คบ.11) — สะสม 178 วัน')
     await page.getByTestId('submit-article14-proposal').click()
-    await confirmDialog(page, 'ยืนยันเสนอ')
-
+    await confirmDialog(page, 'ยืนยันจัดทำ')
+    // สร้างหนังสือแจ้งกรมฯ แล้วพาเข้าแฟ้ม — เจ้าหน้าที่กด "ส่งให้ผู้บังคับบัญชาชั้นต้น" ที่การ์ดท้ายแฟ้มเอง
+    // เปิดแบบฟอร์มหนังสือส่งกรมคุ้มครองสิทธิฯ แล้วกด "บันทึกหนังสือ" ก่อน ปุ่มส่งจึงกดได้
+    await page.goto(`/form/18?caseNo=${CASE_NO}`)
+    await page.getByRole('button', { name: /บันทึกหนังสือ$/ }).click()
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
+    await page.getByTestId('article14-review-footer').getByTestId('article14-submit-review').click()
+    await page.getByRole('button', { name: 'ยืนยันส่ง', exact: true }).click()
+    await page.locator('.swal2-popup:not(.swal2-toast)').waitFor({ state: 'detached' })
     let c = await readCase(page, CASE_NO)
     let a14 = c?.article14 as Record<string, unknown>
     expect(a14.step).toBe('supervisor_review')
     expect(c?.owner).toBe('นายกิตติศักดิ์ ธรรมรักษ์')
 
-    // WIT0855 — ผบช.ชั้นต้นตรวจและเห็นชอบ
-    await switchRole(page, 'supervisor')
-    await page.goto(ARTICLE14_URL)
-    await page.getByTestId('article14-endorse-button').click()
-    await confirmDialog(page, 'ยืนยันเห็นชอบ')
-
-    c = await readCase(page, CASE_NO)
-    a14 = c?.article14 as Record<string, unknown>
-    expect(a14.step).toBe('secretary_review')
-
-    // WIT0856 — เลขาธิการฯ เสนอคณะกรรมการ
-    await switchRole(page, 'secretary')
-    await page.goto(ARTICLE14_URL)
-    await page.getByTestId('article14-endorse-button').click()
-    await confirmDialog(page, 'ยืนยันเห็นชอบ')
-
-    c = await readCase(page, CASE_NO)
-    a14 = c?.article14 as Record<string, unknown>
-    expect(a14.step).toBe('committee_pending')
-
-    // WIT0857 — คณะกรรมการเห็นชอบ
-    await switchRole(page, 'committee')
-    await page.goto(ARTICLE14_URL)
-    await page.getByPlaceholder('เลขที่มติ / ครั้งที่ประชุม').fill('มติที่ 25/2569')
-    await page.getByPlaceholder('สาระสำคัญของมติ').fill('เห็นชอบส่งกรมคุ้มครองสิทธิฯ')
-    await page.getByTestId('article14-committee-approve').click()
-    await confirmDialog(page, 'ยืนยันมติ', 'มติที่ 25/2569')
-
-    c = await readCase(page, CASE_NO)
-    a14 = c?.article14 as Record<string, unknown>
-    expect(a14.step).toBe('letter_sent')
-    expect(a14.committeeApproved).toBe(true)
-    expect(a14.committeeResolutionNo).toBe('มติที่ 25/2569')
+    // WIT0855-0856 — พิจารณาตามลำดับชั้น ผบช.ชั้นต้น → ผอ.สำนัก/กอง → รองเลขาธิการ → เลขาธิการ
+    const expectedNext = ['director_review', 'deputy_review', 'secretary_review', 'letter_sent']
+    for (const [i, role] of (['supervisor', 'director', 'deputy_secretary', 'secretary'] as const).entries()) {
+      await switchRole(page, role)
+      await page.goto(ARTICLE14_URL)
+      await page.getByTestId('article14-endorse-button').click()
+      await confirmDialog(page, 'ยืนยันเห็นชอบ')
+      // ผอ. เสนอขึ้นสำนักงานเลขาธิการ / เลขาธิการส่งผลกลับหน่วย → ต้องผ่านธุรการทั้งสองฝั่ง
+      if (role === 'director') await passArticle14Clerks(page, CASE_NO, 'up')
+      if (role === 'secretary') await passArticle14Clerks(page, CASE_NO, 'down')
+      c = await readCase(page, CASE_NO)
+      a14 = c?.article14 as Record<string, unknown>
+      expect(a14.step).toBe(expectedNext[i])
+    }
+    // เลขาธิการเห็นชอบแล้วส่งคืนเจ้าหน้าที่ทันที ไม่ผ่านมติคณะกรรมการ
+    expect(a14.committeeResolutionNo).toBeFalsy()
+    expect(c?.owner).toBe('นางสาวอรุณี ใจมั่น')
 
     // WIT0859 — ออกหนังสือแจ้ง/ประสานกรม ผ่านสารบรรณเดิม
     await switchRole(page, 'officer')
     await page.goto(ARTICLE14_URL)
     await page.getByPlaceholder('เลขที่หนังสือ (สารบรรณเดิม)').fill('ปปท 0001/7788')
-    await page.getByRole('button', { name: 'บันทึกหนังสือขาออก' }).click()
+    await page.getByTestId('article14-record-delivery').click()
     await confirmDialog(page, 'ยืนยันบันทึก', 'ปปท 0001/7788')
 
     c = await readCase(page, CASE_NO)
@@ -156,7 +155,7 @@ test.describe('TC-095 — รับตอบรับจากกรม ส่�
 
     // WIT0860 — ต้องบันทึกหนังสือขาออกและหนังสือตอบรับจากกรมก่อน จึงเปิดฟอร์มส่งมอบ (WIT0861)
     await page.locator('input[placeholder="เลขที่หนังสือ (สารบรรณเดิม)"]').fill('ปปท 0001/7788')
-    await page.getByRole('button', { name: 'บันทึกหนังสือขาออก' }).click()
+    await page.getByTestId('article14-record-delivery').click()
     await confirmDialog(page, 'ยืนยันบันทึก')
     await page.getByPlaceholder('เลขที่หนังสือตอบรับของกรม').fill('ยธ 0501/2569')
     await page.getByPlaceholder('ผู้ประสานของกรม').fill('นายประสาน ตอบรับ')
@@ -232,7 +231,7 @@ test.describe('TC-097 — ห้ามจัดทำ คบ.14 ขยายเ�
       episode: episodeWithCumulativeDays(180),
       protectionEndAt: new Date().toISOString(),
     })
-    await page.goto(`/protection-extension/${CASE_NO}`)
+    await page.goto(`/protection-extension/${encodeURIComponent(CASE_NO)}`)
 
     // ถึงเพดานแล้ว — ต้องไม่มีฟอร์มจัดทำ คบ.14 ให้กรอกเลย (ห้ามจัดทำ คบ.14 เกินเพดาน / ห้ามย้อนหลังวัน)
     await expect(page.getByText(/ถึงเพดานรวม\s*180\s*วันแล้ว/)).toBeVisible()
@@ -268,7 +267,7 @@ test.describe('TC-098 — ดำเนินการข้อ 14 โดยย�
 
     // บทบาทเจ้าหน้าที่ที่นี่ไม่มีสิทธิ์ตัดสินมติ และไม่มีฟอร์มออกหนังสือขาออกให้เห็นเลย จนกว่าจะผ่านมติ
     await expect(page.getByPlaceholder('เลขที่หนังสือ (สารบรรณเดิม)')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'บันทึกหนังสือขาออก' })).toHaveCount(0)
+    await expect(page.getByTestId('article14-record-delivery')).toHaveCount(0)
     await expect(page.getByText('รอมติคณะกรรมการ ป.ป.ท.')).toBeVisible()
 
     const c = await readCase(page, CASE_NO)

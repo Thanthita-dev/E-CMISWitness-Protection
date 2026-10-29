@@ -10,9 +10,9 @@ import { loadMockState, readCase, seedMockState } from '../helpers/seed'
 const DEMO = 'Demo'
 
 const CASES = [
-  { caseNo: 'WP-2569-000611', witness: 'นายสมชาย รักความยุติธรรม' },
-  { caseNo: 'WP-2569-000612', witness: 'ตรีรุด หล่อจัง' },
-  { caseNo: 'WP-2569-000613', witness: 'ตรีรุด หล่อจัง' },
+  { caseNo: '0611/2569', witness: 'นายสมชาย รักความยุติธรรม' },
+  { caseNo: '0612/2569', witness: 'ตรีรุด หล่อจัง' },
+  { caseNo: '0613/2569', witness: 'ตรีรุด หล่อจัง' },
 ]
 
 test('Demo · คิวธุรการเห็นครบ 3 เรื่อง โดยยังไม่เชื่อมโยงคดีหลัก', async ({ page }) => {
@@ -35,7 +35,7 @@ test('Demo · คิวธุรการเห็นครบ 3 เรื่อ
 for (const c of CASES) {
   test(`Demo · ${c.caseNo} ส่ง ผอ.สำนัก/กอง มอบหมายเจ้าของสำนวนได้`, async ({ page }) => {
     await seedMockState(page, DEMO)
-    await page.goto(`/dossier/${c.caseNo}`)
+    await page.goto(`/dossier/${encodeURIComponent(c.caseNo)}`)
 
     await expect(page.getByText(c.witness).first()).toBeVisible()
     // ธุรการไม่เห็นการ์ดเชื่อมโยงคดีหลัก และส่งต่อ ผอ. ได้โดยไม่ต้องเชื่อมโยง

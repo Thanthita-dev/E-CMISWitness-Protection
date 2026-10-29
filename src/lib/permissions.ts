@@ -1,6 +1,7 @@
 import { UserRole } from '../types/user'
-import { CaseItem } from '../types/case'
-import { canOperateHandoff, canViewHandoffCase } from './protectionHandoff'
+import { AppealFolderStage, CaseItem } from '../types/case'
+import { canOperateHandoff, canViewHandoffCase, roleForCase } from './protectionHandoff'
+import { isSarabanQueueCase, sarabanInTransit } from './saraban'
 
 /**
  * สิทธิ์การเข้าถึงตามบทบาท — ใช้ร่วมกันทั้งเมนู (Sidebar), การกันเส้นทาง (RouteGuard)
@@ -41,10 +42,9 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/protection-monitor', label: 'รายงานผลการคุ้มครอง (คบ.13)', icon: 'fa-file-waveform', group: 'operations', section: 'protect' },
 
   /** กลุ่มย่อย "ทบทวนและสิ้นสุด" — แท็บ 11A-11D และทางออกตามข้อ 14 (แท็บ 08C) */
-  { path: '/protection-reviews', label: 'รายการทบทวน', icon: 'fa-diagram-project', group: 'operations', section: 'review' },
   { path: '/protection-extensions', label: 'ขยายเวลา (คบ.14)', icon: 'fa-calendar-plus', group: 'operations', section: 'review' },
   { path: '/termination', label: 'ยุติการคุ้มครอง (คบ.15-17)', icon: 'fa-flag-checkered', group: 'operations', section: 'review' },
-  { path: '/article14', label: 'ส่งต่อกรมคุ้มครองสิทธิฯ', icon: 'fa-building-columns', group: 'operations', section: 'review' },
+  { path: '/article14', label: 'ส่งต่อหน่วยงานอื่น', icon: 'fa-building-columns', group: 'operations', section: 'review' },
 
   /**
    * กลุ่ม "แจ้งผลและนำส่ง" — ขั้นก่อนนำส่ง (คบ.9/10/11) กับขั้นติดตามพัสดุ เป็นงานช่วงเดียวกัน
@@ -53,18 +53,19 @@ export const NAV_ITEMS: NavItem[] = [
    */
   { path: '/notice', label: 'แจ้งผลแก่พยาน', icon: 'fa-paper-plane', group: 'dispatch' },
   { path: '/delivery-tracking', label: 'การนำส่งและติดตามพัสดุ', icon: 'fa-truck-fast', group: 'dispatch' },
+  /** เฉพาะธุรการ (receiver / secretary_receiver / got_receiver) — ลงเลขทะเบียนรับ-ส่งระหว่างหน่วยงาน */
+  { path: '/saraban', label: 'ทะเบียนสารบรรณ', icon: 'fa-stamp', group: 'dispatch' },
   { path: '/appeal', label: 'อุทธรณ์', icon: 'fa-rotate-left', group: 'dispatch' },
 
-  { path: '/forms', label: 'แบบฟอร์ม คบ. (1-17)', icon: 'fa-file-lines', group: 'info' },
+  { path: '/forms', label: 'แบบฟอร์มและหนังสือ', icon: 'fa-file-lines', group: 'info' },
   { path: '/reports', label: 'รายงานและสถิติ', icon: 'fa-chart-column', group: 'info' },
 ]
 
 /** เส้นทางที่ทุกบทบาทเข้าได้ — หน้าแรก คิวงานของตนเอง แฟ้มคำร้อง แบบฟอร์ม และการแจ้งเตือน */
-const COMMON_ROUTES = ['/', '/registry', '/queue', '/dossier', '/forms', '/form', '/notifications']
+const COMMON_ROUTES = ['/', '/registry', '/queue', '/dossier', '/coordination', '/forms', '/form', '/notifications']
 
 /**
  * '/protection-method' (เอกพจน์) เป็นคนละ path กับ '/protection-methods' จึงต้องระบุทั้งคู่
- * '/protection-review' (เอกพจน์ — หน้าเลือกแนวทางรายสำนวน) กับ '/protection-reviews' (พหูพจน์ — รายการ) เช่นกัน
  * '/protection-extension' (11B รายสำนวน) กับ '/protection-extensions' (รายการ) ก็ต้องระบุทั้งคู่ด้วยเหตุผลเดียวกัน
  * '/protection-monitor' (แท็บ 10 รายสำนวน) ก็เช่นกัน — ไม่ได้อยู่ใต้ '/protection/' จึงไม่ถูกครอบโดยอัตโนมัติ
  */
@@ -81,20 +82,40 @@ const OPS_ROUTES = [
 
 /** เส้นทางเฉพาะของแต่ละบทบาท (นอกเหนือจาก COMMON_ROUTES) */
 const ROLE_ROUTES: Record<UserRole, string[]> = {
-  got_receiver: [],
-  got_director: [],
-  got_officer: ['/notice', '/delivery-tracking', ...OPS_ROUTES, '/protection-reviews', '/protection-review', '/activity7-results'],
+  /** ธุรการคดี กอท. — รับคำร้องเข้าทะเบียนเหมือนธุรการสำนัก/กอง และลงเลขทะเบียนรับเรื่องที่ส่งต่อมา */
+  got_receiver: ['/intake', '/saraban', '/appeal-folder'],
+  /** ผอ. กอท. — มอบหมายผู้รับผิดชอบ และพิจารณางานตามลำดับชั้นของแฟ้มที่ส่งต่อ กอท. (เหมือน ผอ. เขต) */
+  got_director: [
+    '/protection-monitor',
+    '/protection-methods',
+    '/protection-method',
+    '/protection-extensions',
+    '/protection-extension',
+    '/article14',
+    '/termination',
+  ],
+  /** ผบช.ต้น กอท. — กลั่นกรองงานตามลำดับชั้นของแฟ้มที่ส่งต่อ กอท. (เหมือน ผบช.ชั้นต้นของเขต) */
+  got_supervisor: [
+    '/protection-monitor',
+    '/protection-methods',
+    '/protection-method',
+    '/protection-extensions',
+    '/protection-extension',
+    '/article14',
+    '/termination',
+  ],
+  /** ธุรการสำนักงานเลขาธิการ — ลงเลขรับ/เลขส่งของชุดเสนอและผลพิจารณา */
+  secretary_receiver: ['/saraban'],
+  got_officer: ['/intake', '/notice', '/appeal-folder', '/delivery-tracking', ...OPS_ROUTES, '/activity7-results'],
   /** ธุรการ — รับคำร้องเข้าทะเบียนและงานสารบรรณนำส่ง */
   /** 09B WIT0912 — ธุรการรับคำอุทธรณ์ช่องทางหนังสือเข้าระบบ (เข้าแฟ้มเดิม) */
-  receiver: ['/intake', '/delivery-tracking', '/appeal'],
+  receiver: ['/intake', '/delivery-tracking', '/appeal', '/appeal-folder', '/saraban'],
   /** เจ้าหน้าที่ ป.ป.ท. — ผู้ปฏิบัติเต็มเส้นทางตั้งแต่รับเรื่องถึงคุ้มครอง */
   officer: [
     '/intake',
     '/notice',
     '/delivery-tracking',
     ...OPS_ROUTES,
-    '/protection-reviews',
-    '/protection-review',
     '/activity7-results',
     '/reports',
     /** 09B — เจ้าหน้าที่ผู้รับผิดชอบตรวจแฟ้มอุทธรณ์ (WIT0914/0915) และทำหนังสือแจ้งผล (WIT0921) */
@@ -107,8 +128,6 @@ const ROLE_ROUTES: Record<UserRole, string[]> = {
     '/notice',
     '/delivery-tracking',
     ...OPS_ROUTES,
-    '/protection-reviews',
-    '/protection-review',
     '/activity7-results',
     '/reports',
     '/appeal',
@@ -122,8 +141,6 @@ const ROLE_ROUTES: Record<UserRole, string[]> = {
     '/activity7-results',
     '/reports',
     '/protection-monitor',
-    '/protection-reviews',
-    '/protection-review',
     '/protection-methods',
     '/protection-method',
     '/protection-extensions',
@@ -131,24 +148,19 @@ const ROLE_ROUTES: Record<UserRole, string[]> = {
     '/article14',
     '/termination',
   ],
-  /**
-   * ผอ.สำนัก/กอง — มอบหมาย ลงนาม คบ.6 และพิจารณาคำขอถอนตัว
-   * รวมหน้า 11A ด้วย เพราะ WIT1110 ให้ ผอ. เป็นผู้อนุมัติการเปลี่ยนวิธี/เงื่อนไขก่อนปรับ คบ.11
-   */
+  /** ผอ.สำนัก/กอง — มอบหมาย ลงนาม คบ.6 และพิจารณาคำขอถอนตัว */
   director: [
     '/activity7-results',
     '/reports',
-    '/protection-reviews',
-    '/protection-review',
     ...OPS_ROUTES,
     /** 09B — ผอ.สำนัก/กอง ตรวจและลงนามเสนอแฟ้มอุทธรณ์ต่อจาก ผบช.ชั้นต้น (WIT0916) */
     '/appeal',
     '/appeal-folder',
   ],
   /** เลขาธิการ ป.ป.ท. — สั่งการ ลงนามหนังสือ และพิจารณาขยาย/ยุติการคุ้มครอง */
-  /** รองเลขาธิการฯ — กลั่นกรองชุดเสนอ คบ.6 (WIT0513) คบ.10 แฟ้มอุทธรณ์ และเรื่องตามข้อ 14 ก่อนถึงเลขาธิการฯ */
-  deputy_secretary: ['/protection-extension', '/protection-extensions', '/activity7-results', '/reports', '/notice', '/appeal', '/appeal-folder', '/article14'],
-  secretary: ['/activity7-results', '/reports', '/notice', '/appeal', '/appeal-folder', ...OPS_ROUTES],
+  /** รองเลขาธิการฯ — กลั่นกรองชุดเสนอ คบ.6 (WIT0513) คบ.10 แฟ้มอุทธรณ์ เรื่องตามข้อ 14 และลงนาม คบ.15 ก่อนถึงเลขาธิการฯ */
+  deputy_secretary: ['/protection-extension', '/protection-extensions', '/activity7-results', '/reports', '/notice', '/appeal', '/appeal-folder', '/article14', '/termination'],
+  secretary: ['/coordination', '/activity7-results', '/reports', '/notice', '/appeal', '/appeal-folder', ...OPS_ROUTES],
   /** ฝ่ายเลขานุการคณะกรรมการ ป.ป.ท. — บรรจุวาระและบันทึกมติ (อุทธรณ์ + ข้อ 14) */
   committee: ['/appeal', '/appeal-folder', '/article14', '/activity7-results'],
   /** ชุดคุ้มครอง — ปฏิบัติการคุ้มครองและรายงานประจำเดือน */
@@ -159,6 +171,9 @@ const ROLE_ROUTES: Record<UserRole, string[]> = {
 }
 
 export const isAdmin = (role: UserRole): boolean => role === 'admin'
+
+/** ธุรการผู้รับคำร้องเข้าทะเบียน — ธุรการสำนัก/กอง และธุรการคดี กอท. */
+export const isIntakeClerk = (role: UserRole): boolean => role === 'receiver' || role === 'got_receiver'
 
 /** บทบาทที่ทำหน้าที่ผู้ปฏิบัติในสำนวน (เจ้าหน้าที่ ป.ป.ท. และเจ้าของสำนวน) */
 export const isCaseWorker = (role: UserRole): boolean => role === 'officer' || role === 'case_owner' || role === 'got_officer'
@@ -173,7 +188,7 @@ export const canAccessRoute = (role: UserRole, pathname: string): boolean => {
   if (path === '/protection-duration') return canAccessRoute(role, '/protection')
   if (path === '/protection-method-work') return canAccessRoute(role, '/protection-methods')
   /** หน้าเครื่องมือสำหรับ dev/QA — เปิดให้ทุกบทบาทเข้าถึงได้เสมอ ไม่ผูกกับสิทธิ์ */
-  if (path === '/mock-state' || path === '/flow-guide' || path === '/flow-chart') return true
+  if (path === '/mock-state' || path === '/flow-guide' || path === '/flow-chart' || path === '/role') return true
   if (isAdmin(role)) return true
   return getAllowedRoutes(role).some((allowed) =>
     allowed === '/' ? path === '/' : path === allowed || path.startsWith(`${allowed}/`)
@@ -244,21 +259,24 @@ export const canCreateIntake = (role: UserRole): boolean => canAccessRoute(role,
 
 /**
  * ตรวจ "ความเป็นเจ้าของคดี" — เจ้าหน้าที่/เจ้าของสำนวนลงมือกับสำนวนได้เฉพาะที่ตนได้รับมอบหมาย
- * สำนวนที่ยังไม่มีผู้รับมอบหมายถือว่าเปิดให้ผู้ปฏิบัติทุกคน (เช่น ช่วงก่อน ผอ. มอบหมาย)
+ * ก่อนมอบหมาย เห็นและลงมือได้เฉพาะผู้ที่รับเรื่องเอง
  * บทบาทอื่นตัดสินจากขั้นตอนตามลำดับชั้น ไม่ผูกกับตัวบุคคล
  */
 export const isCaseOwnedBy = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'protectionOwnerUserId' | 'protectionHandoff'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'protectionOwnerUserId' | 'protectionHandoff'> & Partial<Pick<CaseItem, 'receivedByUserId' | 'gotRevision'>>,
   officerUserId: string
 ): boolean => {
   if (isAdmin(role)) return true
+  role = roleForCase(role, caseItem)
   if (role.startsWith('got_')) return canViewHandoffCase(role, caseItem, officerUserId)
+  /** FB-018 — รอบแก้ไขที่ รองเลขาธิการฯ ส่งให้ กอท. ทำต่อ: เจ้าของเรื่องเดิมลงมือไม่ได้จนกว่างานจะกลับมา */
+  if (caseItem.gotRevision && isCaseWorker(role)) return false
   if (role === 'protection') {
     return !caseItem.protectionOwnerUserId || caseItem.protectionOwnerUserId === officerUserId
   }
   if (!isCaseWorker(role)) return true
-  if (!caseItem.assignedOfficerUserId) return true
+  if (!caseItem.assignedOfficerUserId) return Boolean(officerUserId) && caseItem.receivedByUserId === officerUserId
   return caseItem.assignedOfficerUserId === officerUserId
 }
 
@@ -270,9 +288,10 @@ export const isCaseOwnedBy = (
  */
 export const isAssignedProtectionOfficer = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'protectionHandoff'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'protectionHandoff'> & Partial<Pick<CaseItem, 'receivedByUserId'>>,
   officerUserId: string
 ): boolean => {
+  role = roleForCase(role, caseItem)
   if (caseItem.protectionHandoff) return canOperateHandoff(role, caseItem, officerUserId)
   if (isAdmin(role)) return true
   if (!isCaseWorker(role)) return false
@@ -281,24 +300,51 @@ export const isAssignedProtectionOfficer = (
 
 /**
  * WIT0306 — คิวงาน "ของฉัน" ต้องเป็นงานของตัวเจ้าหน้าที่จริง ไม่ใช่ของทุกคนในบทบาทเดียวกัน
- * เมื่อแฟ้มมีผู้รับผิดชอบแล้ว เห็นได้เฉพาะผู้ที่ถูกมอบหมาย (หรือผู้ที่เป็นคนรับเรื่องเข้าระบบเอง)
- * แฟ้มที่ยังไม่มีผู้รับผิดชอบยังเป็นงานส่วนกลางที่ผู้ปฏิบัติทุกคนหยิบได้ตามเดิม
+ * เมื่อแฟ้มมีผู้รับผิดชอบแล้ว เห็นได้เฉพาะผู้ที่ถูกมอบหมาย
+ * แฟ้มที่ยังไม่มอบหมาย เห็นได้เฉพาะเจ้าหน้าที่ที่รับเรื่องเอง
  * บทบาทที่ไม่ใช่ผู้ปฏิบัติ (ผอ./หัวหน้างาน/เลขาธิการฯ) พิจารณาตามลำดับชั้น จึงเห็นทั้งหมดเหมือนเดิม
  * ใช้ร่วมกันระหว่างหน้าคิวงาน /queue/$role กับตัวเลขบนเมนู "งานของฉัน" เพื่อไม่ให้สองจุดขัดกัน
  */
 export const isMyQueueCase = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'> & Partial<Pick<CaseItem, 'stage' | 'orgUnitId' | 'sarabanDispatch' | 'gotRevision'>>,
   officerUserId: string
 ): boolean => {
   if (isAdmin(role)) return true
+  role = roleForCase(role, caseItem)
   if (role.startsWith('got_')) return canViewHandoffCase(role, caseItem, officerUserId)
+  /** FB-018 — งานที่ กอท. รับไปแก้ไข ไม่อยู่ในคิวของเจ้าของเรื่องเดิม */
+  if (isCaseWorker(role) && caseItem.gotRevision) return false
+  /** ธุรการสำนักงานเลขาธิการเห็นเฉพาะแฟ้มที่รอลงทะเบียนสารบรรณของตน — รวมชุดนำส่ง (ข้อ 14 / คบ.14 / ยุติ / อุทธรณ์ / ส่งคืน) */
+  if (role === 'secretary_receiver') return isSarabanQueueCase(role, { stage: caseItem.stage as CaseItem['stage'], protectionHandoff: caseItem.protectionHandoff, sarabanDispatch: caseItem.sarabanDispatch })
+  if (isCaseWorker(role) && caseItem.protectionHandoff && !['accepted', 'active'].includes(caseItem.protectionHandoff.step)) return false
   if (isCaseWorker(role) && caseItem.protectionHandoff?.destination === 'got') return false
   if (!isCaseWorker(role)) return true
-  if (!caseItem.assignedOfficerUserId) return true
-  return (
-    caseItem.assignedOfficerUserId === officerUserId || caseItem.receivedByUserId === officerUserId
-  )
+  return Boolean(officerUserId) && (caseItem.assignedOfficerUserId
+    ? caseItem.assignedOfficerUserId === officerUserId
+    : caseItem.receivedByUserId === officerUserId)
+}
+
+/** ชั้นของแฟ้มอุทธรณ์ (WIT0914–WIT0919) → บทบาทที่ต้องดำเนินการในชั้นนั้น */
+const APPEAL_FOLDER_STAGE_ROLES: Partial<Record<AppealFolderStage, UserRole[]>> = {
+  officer_opinion: ['officer', 'case_owner'],
+  late_pending: ['supervisor'],
+  supervisor: ['supervisor'],
+  director: ['director'],
+  deputy: ['deputy_secretary'],
+  secretary: ['secretary'],
+  agenda: ['committee'],
+}
+
+/**
+ * แฟ้มอุทธรณ์ที่ถึงชั้นของบทบาทนี้ — เข้าคิว "งานของฉัน" เฉพาะชั้นที่รอการกระทำ
+ * (`appealFolder.stage`) ระหว่างธุรการลงทะเบียนนำส่ง แฟ้มอยู่ในคิวสารบรรณแทน
+ * ชั้นความเห็นเจ้าหน้าที่เป็นของเจ้าของสำนวนเดิม — คิวกรองเจ้าของด้วย isMyQueueCase อยู่แล้ว
+ */
+export const isAppealFolderStageReviewer = (role: UserRole, c: Pick<CaseItem, 'appealFolder'> & Partial<Pick<CaseItem, 'sarabanDispatch'>>): boolean => {
+  const stage = c.appealFolder?.stage
+  if (!stage || sarabanInTransit(c, 'appeal')) return false
+  return Boolean(APPEAL_FOLDER_STAGE_ROLES[stage]?.includes(role))
 }
 
 /**
@@ -308,12 +354,15 @@ export const isMyQueueCase = (
  */
 export const canLinkMainCase = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId'> & Partial<Pick<CaseItem, 'protectionHandoff'>>,
   officerUserId: string
 ): boolean => {
   if (isAdmin(role)) return true
+  if (caseItem.protectionHandoff) return canOperateHandoff(role, caseItem, officerUserId)
   if (!isCaseWorker(role)) return false
-  return caseItem.assignedOfficerUserId === officerUserId || caseItem.receivedByUserId === officerUserId
+  return Boolean(officerUserId) && (caseItem.assignedOfficerUserId
+    ? caseItem.assignedOfficerUserId === officerUserId
+    : caseItem.receivedByUserId === officerUserId)
 }
 
 /** การ์ดต่าง ๆ ในแฟ้มคำร้อง — บทบาทใดควรเห็นบ้าง (ซ่อนทั้งการ์ดเมื่อไม่ใช่หน้าที่) */
@@ -322,20 +371,22 @@ export const DOSSIER_CARD_ROLES = {
    * ขั้นที่ 1 — คดีหลัก: ผู้ปฏิบัติเห็นการ์ด (ลงมือได้ตาม canLinkMainCase) ผอ. ดูอย่างเดียวก่อนมอบหมาย
    * ธุรการไม่เห็นการ์ดนี้ — เจ้าของสำนวนที่ได้รับมอบหมายเป็นผู้เชื่อมโยงภายหลัง
    */
-  mainCaseLink: ['officer', 'case_owner', 'director'] as UserRole[],
+  mainCaseLink: ['officer', 'case_owner', 'got_officer', 'director'] as UserRole[],
   /** ขั้นที่ 2 — มอบหมายเจ้าของสำนวน: ผอ. เท่านั้น */
-  assignment: ['director'] as UserRole[],
+  assignment: ['director', 'got_director'] as UserRole[],
   /** ขั้นที่ 3-4 — ส่งงานตามลำดับชั้น (รองเลขาธิการฯ ส่งต่อจากขั้นกลั่นกรองไปเลขาธิการฯ) */
-  forward: ['receiver', 'officer', 'case_owner', 'supervisor', 'director', 'deputy_secretary'] as UserRole[],
+  forward: ['receiver', 'got_receiver', 'officer', 'case_owner', 'got_officer', 'supervisor', 'got_supervisor', 'director', 'got_director', 'deputy_secretary'] as UserRole[],
   /** ขั้นที่ 5 — เลขาธิการสั่งการ */
   secretaryReview: ['secretary'] as UserRole[],
+  /** ทะเบียนสารบรรณ — ธุรการลงเลขรับ/เลขส่งของแต่ละ คบ. ที่จุดส่งต่อระหว่างหน่วยงาน */
+  saraban: ['receiver', 'secretary_receiver', 'got_receiver'] as UserRole[],
   /**
    * ขั้นที่ 5 — จัดทำและนำส่งหนังสือแจ้งผล
    * รองเลขาธิการฯ อยู่ในรายการนี้เพราะ WIT0905 ให้กลั่นกรอง คบ.10 ก่อนถึงผู้ลงนาม
    */
   notice: ['officer', 'case_owner', 'got_officer', 'receiver', 'secretary', 'deputy_secretary'] as UserRole[],
   /** แก้ไขแฟ้ม — อัปโหลด/ลบเอกสาร เพิ่ม-ถอนแบบฟอร์ม บันทึกลายมือชื่อ คบ.1 */
-  editDossier: ['receiver', 'officer', 'case_owner', 'got_officer'] as UserRole[],
+  editDossier: ['receiver', 'got_receiver', 'officer', 'case_owner', 'got_officer'] as UserRole[],
   /** ขั้นที่ 6-7 — ปฏิบัติการคุ้มครอง ต่ออายุ ยุติ ส่งต่อ ถอนตัว */
   protection: ['officer', 'case_owner', 'got_officer', 'protection', 'supervisor', 'director', 'secretary'] as UserRole[],
   /** 08A — ตรวจฐานคำสั่ง ความยินยอม คบ.11 และแยกวิธีที่อนุมัติ */
@@ -343,26 +394,37 @@ export const DOSSIER_CARD_ROLES = {
   /** 08C — เรื่องเสนอตามข้อ 14 */
   article14: ['officer', 'case_owner', 'supervisor', 'director', 'deputy_secretary', 'secretary', 'committee'] as UserRole[],
   /** 11C-11D — คบ.15 / คบ.16 / คบ.17 */
-  termination: ['officer', 'case_owner', 'got_officer', 'supervisor', 'director', 'secretary', 'appeal'] as UserRole[],
+  termination: ['officer', 'case_owner', 'got_officer', 'supervisor', 'director', 'deputy_secretary', 'secretary', 'appeal'] as UserRole[],
 } as const
 
 export const canSeeDossierCard = (role: UserRole, card: keyof typeof DOSSIER_CARD_ROLES): boolean =>
   isAdmin(role) || DOSSIER_CARD_ROLES[card].includes(role)
+
+/** เรื่องที่ย้ายมาจากระบบเดิม — ถือว่าสิ้นสุดแล้ว ดูอย่างเดียว */
+export const isLegacyCase = (caseItem?: Pick<CaseItem, 'legacySource'> | null): boolean => Boolean(caseItem?.legacySource)
 
 /**
  * WIT1148 — แฟ้มที่ปิดงานคุ้มครองแล้ว (closeProtectionCase) ถูกล็อกทั้งแฟ้ม
  * ดู/พิมพ์/ดาวน์โหลดเอกสารได้อย่างเดียว ห้ามแก้ไขแบบ คบ. สร้างเวอร์ชันใหม่ แนบ/ลบไฟล์ หรือกดงานที่เปลี่ยนสถานะ
  * ใช้ตัวเดียวกันทั้ง UI และ store เพื่อไม่ให้สองจุดตัดสินไม่ตรงกัน
  * (ไม่รวมการปิดกระบวนการไม่อนุมัติ 09A — nonApprovalClosedAt เป็นอีกเส้นทางหนึ่ง)
+ * เรื่องที่ย้ายมาจากระบบเดิม (legacySource) ถือเป็นแฟ้มปิดแล้วด้วย
  */
-export const isCaseClosed = (caseItem?: Pick<CaseItem, 'closedAt' | 'stage'> | null): boolean =>
-  Boolean(caseItem?.closedAt) && caseItem?.stage === 'terminated'
+export const isCaseClosed = (caseItem?: Pick<CaseItem, 'closedAt' | 'stage' | 'legacySource'> | null): boolean =>
+  isLegacyCase(caseItem) || (Boolean(caseItem?.closedAt) && caseItem?.stage === 'terminated')
 
 export const CASE_CLOSED_NOTICE =
   'แฟ้มนี้ปิดงานคุ้มครองแล้ว — เอกสารถูกล็อก ดู/พิมพ์/ดาวน์โหลดได้เท่านั้น'
 
+export const LEGACY_CASE_NOTICE =
+  'เรื่องนี้ย้ายมาจากระบบเดิมและสิ้นสุดแล้ว — เปิดดูได้อย่างเดียว ไม่สามารถแก้ไขได้'
+
 /** ธุรการสำนัก/กอง เห็นแบบฟอร์ม คบ. ได้ แต่กรอก/แก้ไขแบบฟอร์มเองไม่ได้ */
 export const canOpenForm = (role: UserRole): boolean => isAdmin(role) || role !== 'receiver'
+
+/** ธุรการสำนัก/กอง ที่มีงานลงทะเบียนสารบรรณค้างในแฟ้มนี้ — เปิดดู คบ. ที่ต้องลงเลขได้ (ดูอย่างเดียว) */
+export const hasSarabanTask = (role: UserRole, caseItem: Pick<CaseItem, 'stage' | 'protectionHandoff'>): boolean =>
+  isSarabanQueueCase(role, caseItem)
 
 /**
  * แก้ไขแบบฟอร์ม คบ. ในแฟ้มคำร้องได้เฉพาะเจ้าหน้าที่ ป.ป.ท./เจ้าของสำนวนที่ได้รับมอบหมายเป็นเจ้าของ
@@ -372,12 +434,15 @@ export const canOpenForm = (role: UserRole): boolean => isAdmin(role) || role !=
  */
 export const canEditFormsInDossier = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'> & Partial<Pick<CaseItem, 'stage' | 'orgUnitId' | 'gotRevision'>>,
   officerUserId: string
 ): boolean => {
+  role = roleForCase(role, caseItem)
   if (caseItem.protectionHandoff) return canOperateHandoff(role, caseItem, officerUserId)
   if (isAdmin(role)) return true
   if (!isCaseWorker(role)) return false
+  /** FB-018 — รอบแก้ไขที่ กอท. รับไปทำ: แก้แบบได้เฉพาะผู้รับผิดชอบ กอท. */
+  if (caseItem.gotRevision) return role === 'got_officer' && caseItem.gotRevision.assigneeUserId === officerUserId
   return caseItem.assignedOfficerUserId === officerUserId || caseItem.receivedByUserId === officerUserId
 }
 
@@ -390,12 +455,15 @@ export const canEditFormsInDossier = (
  */
 export const canSeeFormsSection = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'> & Partial<Pick<CaseItem, 'stage' | 'orgUnitId'>>,
   officerUserId: string
 ): boolean => {
   if (isAdmin(role)) return true
+  /** ธุรการไม่กรอกแบบฟอร์ม แต่ต้องเปิดดู คบ. ที่ตนลงเลขทะเบียนได้ในช่วงที่แฟ้มรออยู่ที่ตน */
+  if (role === 'receiver') return Boolean(caseItem.stage) && hasSarabanTask(role, { stage: caseItem.stage!, protectionHandoff: caseItem.protectionHandoff })
+  if (isIntakeClerk(role) && !caseItem.protectionHandoff) return false
+  role = roleForCase(role, caseItem)
   if (role.startsWith('got_')) return canViewHandoffCase(role, caseItem, officerUserId)
-  if (role === 'receiver') return false
   if (!isCaseWorker(role)) return true
   return caseItem.assignedOfficerUserId === officerUserId || caseItem.receivedByUserId === officerUserId
 }
@@ -408,10 +476,11 @@ export const canSeeFormsSection = (
  */
 export const canSeeCaseAuditLog = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId' | 'protectionHandoff'> & Partial<Pick<CaseItem, 'stage' | 'orgUnitId'>>,
   officerUserId: string
 ): boolean => {
   if (isAdmin(role)) return true
+  role = roleForCase(role, caseItem)
   if (role.startsWith('got_')) return canViewHandoffCase(role, caseItem, officerUserId)
   if (!isCaseWorker(role)) return true
   return caseItem.assignedOfficerUserId === officerUserId || caseItem.receivedByUserId === officerUserId
@@ -424,10 +493,11 @@ export const canSeeCaseAuditLog = (
  */
 export const canSeeAllForms = (
   role: UserRole,
-  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'protectionHandoff'>,
+  caseItem: Pick<CaseItem, 'assignedOfficerUserId' | 'protectionHandoff'> & Partial<Pick<CaseItem, 'receivedByUserId'>>,
   officerUserId: string
 ): boolean => {
   if (isAdmin(role)) return true
+  role = roleForCase(role, caseItem)
   if (role.startsWith('got_')) return canViewHandoffCase(role, caseItem, officerUserId)
   if (!isCaseWorker(role)) return true
   return caseItem.assignedOfficerUserId === officerUserId

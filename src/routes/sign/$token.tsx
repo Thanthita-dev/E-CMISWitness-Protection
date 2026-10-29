@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { createFileRoute, useParams } from '@tanstack/react-router'
-import { Button } from '../../components/common/Button'
-import { SignaturePad } from '../../components/common/SignaturePad'
+import { SignatureModal } from '../../components/common/SignatureModal'
 import { useSignatureLinkStore } from '../../store/useSignatureLinkStore'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
@@ -34,9 +33,7 @@ function SignPage() {
   const signOutgoingNotice = useCaseStore((s) => s.signOutgoingNotice)
   const signDocument = useFormDraftStore((s) => s.signDocument)
 
-  const [signerName, setSignerName] = useState(link?.defaultSignerName ?? '')
-  const [isCertified, setIsCertified] = useState(false)
-  const [signatureImage, setSignatureImage] = useState<string | undefined>(undefined)
+  const [signedName, setSignedName] = useState('')
   const [justSigned, setJustSigned] = useState(false)
 
   if (!link) {
@@ -45,7 +42,7 @@ function SignPage() {
         icon="fa-link-slash"
         tone="text-danger"
         title="ไม่พบลิงก์เซ็นชื่อ"
-        description="ลิงก์นี้อาจไม่ถูกต้อง หรือเปิดจากอุปกรณ์/เบราว์เซอร์คนละเครื่องกับที่สร้างลิงก์ (สาธิต — ยังไม่มีระบบหลังบ้านจริง) กรุณาติดต่อเจ้าหน้าที่เพื่อขอลิงก์ใหม่"
+        description="ลิงก์นี้อาจไม่ถูกต้อง หรือเปิดจากอุปกรณ์/เบราว์เซอร์คนละเครื่องกับที่สร้างลิงก์ กรุณาติดต่อเจ้าหน้าที่เพื่อขอลิงก์ใหม่"
       />
     )
   }
@@ -60,15 +57,16 @@ function SignPage() {
         icon="fa-circle-check"
         tone="text-success"
         title="ลงลายมือชื่อเรียบร้อยแล้ว"
-        description={`ลงนามโดย ${link.signerName || signerName} เมื่อ ${formatThaiDateTime(link.signedAt ? new Date(link.signedAt) : new Date())}`}
+        description={`ลงนามโดย ${link.signerName || signedName} เมื่อ ${formatThaiDateTime(link.signedAt ? new Date(link.signedAt) : new Date())}`}
       />
     )
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = (signerName: string, signatureImage?: string) => {
+    if (!signerName.trim()) return
     switch (link.target.kind) {
       case 'formDraft':
-        signDocument(link.target.key, signerName, signatureImage)
+        signDocument(link.target.key, signerName, signatureImage, link.target.caseNo)
         break
       case 'kb1Case':
         confirmKb1Signature(link.target.caseNo, signerName)
@@ -81,67 +79,25 @@ function SignPage() {
         break
     }
     completeLink(token, signerName, signatureImage)
+    setSignedName(signerName)
     setJustSigned(true)
     showToast('บันทึกลายมือชื่ออิเล็กทรอนิกส์แล้ว')
   }
 
+  /** ผู้ลงนามนอกระบบลงชื่ออย่างเดียว — หน้าต่างลงนามแบบเดียวกับเจ้าหน้าที่ ไม่มีลายมือชื่อดิจิทัล */
   return (
-    <div className="min-h-screen bg-soft py-8 px-4 flex items-center justify-center">
-      <div className="ws-card w-full max-w-lg overflow-hidden">
-        <div className="border-b border-line bg-soft px-5 py-3.5">
-          <p className="ws-kicker">ลงลายมือชื่ออิเล็กทรอนิกส์</p>
-          <div className="flex items-center gap-2 text-navy font-bold text-[1rem]">
-            <i className="fa-solid fa-file-signature text-blue" aria-hidden="true" />
-            <span>{link.title}</span>
-          </div>
-        </div>
-
-        <div className="p-5 space-y-4">
-          <p className="text-[0.88rem] text-muted leading-relaxed">
-            กรุณากรอกชื่อ-สกุล วาดลายมือชื่ออิเล็กทรอนิกส์ และรับรองความถูกต้องก่อนกดยืนยันลงลายมือชื่อ
-          </p>
-
-          <div className="ws-field">
-            <label className="ws-label" htmlFor="signerName">
-              ชื่อ-สกุล ผู้ลงนาม ({link.signerRole}) *
-            </label>
-            <input
-              id="signerName"
-              type="text"
-              value={signerName}
-              onChange={(e) => setSignerName(e.target.value)}
-              className="ws-input"
-            />
-          </div>
-
-          <SignaturePad onChange={setSignatureImage} />
-
-          <label className="flex items-start gap-2.5 cursor-pointer pt-1">
-            <input
-              type="checkbox"
-              checked={isCertified}
-              onChange={(e) => setIsCertified(e.target.checked)}
-              className="ws-checkbox mt-0.5"
-            />
-            <span className="text-[0.88rem] text-ink leading-relaxed">
-              ข้าพเจ้าขอรับรองว่าข้อมูลและข้อความข้างต้นถูกต้องตรงตามความเป็นจริงทุกประการ
-            </span>
-          </label>
-        </div>
-
-        <div className="flex items-center flex-wrap justify-end gap-2.5 bg-soft px-5 py-3.5 border-t border-line">
-          <Button
-            type="button"
-            disabled={!signerName.trim() || !isCertified}
-            onClick={handleConfirm}
-            variant="primary"
-            size="md"
-          >
-            <i className="fa-solid fa-check" />
-            ยืนยันลงลายมือชื่อ
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-soft" data-testid="remote-sign-form">
+      <SignatureModal
+        isOpen
+        external
+        dismissible={false}
+        title={link.title}
+        signerRole={link.signerRole}
+        nameHint={`ลงนามในฐานะ${link.signerRole}`}
+        defaultSignerName={link.defaultSignerName}
+        onClose={() => undefined}
+        onConfirm={handleConfirm}
+      />
     </div>
   )
 }

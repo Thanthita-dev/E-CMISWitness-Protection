@@ -1,3 +1,4 @@
+import { useVisibleCases } from '../hooks/useVisibleCases'
 import { legacyMonthLabel, monthLabel, protectionMonths } from '../lib/protectionMonths'
 import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -36,7 +37,7 @@ function extensionStep(c: CaseItem): { label: string; tone: string } {
  * เข้าเกณฑ์เมื่อ 11A เลือกแนวทาง "ขยายเวลา" (WIT1109) หรือมีคำขอ คบ.14 ค้างอยู่แล้ว
  */
 function ProtectionExtensionListPage() {
-  const cases = useCaseStore((s) => s.cases)
+  const cases = useVisibleCases()
 
   const pending = cases.filter((c) => {
     if ((c.extensionRequests || []).length > 0) return true
@@ -65,7 +66,7 @@ function ProtectionExtensionListPage() {
             return (
               <Link
                 key={c.no}
-                to="/protection-extension/$caseNo"
+                to="/dossier/$caseNo"
                 params={{ caseNo: c.no }}
                 className="block ws-card p-5 transition hover:border-navy"
               >

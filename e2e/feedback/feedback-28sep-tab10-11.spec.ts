@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { captureEvidence } from '../helpers/evidence'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { termDownLeg, termUpLeg } from '../helpers/termination'
 
 /**
  * Feedback 28 Sep · แท็บ 10-11 (TC-043, TC-045, TC-050, TC-051, TC-052)
@@ -11,8 +12,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * TC-051 / TC-052   เมนู "รายงานผลการคุ้มครอง (คบ.13)" เปิดหน้ารายงาน คบ.13 ไม่เด้งไปภาพรวม
  */
 
-const CASE_NO = 'WP-2569-000501'
-const REVIEW_URL = `/protection-review/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const REVIEW_URL = `/protection-review/${encodeURIComponent(CASE_NO)}`
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const isoDaysFromToday = (n: number) => {
@@ -104,7 +105,7 @@ test.describe('Feedback 28 Sep · แท็บ 10-11', () => {
     await expect(link).toBeVisible()
     await captureEvidence(page, 'TC-045-a', link, 'มีปุ่มไปแท็บ 11B จัดทำ คบ.14 แล้ว')
     await link.click()
-    await expect(page).toHaveURL(new RegExp(`/protection-extension/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/protection-extension/${encodeURIComponent(CASE_NO)}`))
   })
 
   test('TC-045 · WIT1111 ยุติ — หลังดำเนินการมีปุ่มไปแท็บ 11C', async ({ page }) => {
@@ -114,30 +115,30 @@ test.describe('Feedback 28 Sep · แท็บ 10-11', () => {
     await expect(link).toBeVisible()
     await captureEvidence(page, 'TC-045-b', link, 'มีปุ่มไปแท็บ 11C แล้ว')
     await link.click()
-    await expect(page).toHaveURL(new RegExp(`/termination/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/termination/${encodeURIComponent(CASE_NO)}`))
   })
 
   test('TC-050 · คบ.16 หลังลงนามแสดงเลขคำสั่งและวันที่มีผลตามที่กรอก', async ({ page }) => {
     await seedMockState(page, 'Case 1.16', 'secretary')
-    await page.goto(`/termination/${CASE_NO}`)
+    await page.goto(`/termination/${encodeURIComponent(CASE_NO)}`)
     await page.getByPlaceholder('ความเห็นประกอบผลพิจารณา').fill('อนุมัติให้ยุติตามที่เสนอ')
     await page.getByRole('button', { name: 'อนุมัติให้ยุติ' }).click()
     await expect(page.locator('.swal2-toast')).toContainText('อนุมัติให้ยุติ')
+    await termDownLeg(page, CASE_NO) // ผลพิจารณากลับหน่วยผ่านธุรการ
 
     // เจ้าหน้าที่ร่าง คบ.16 ที่ 11D
-    await switchRole(page, 'officer')
-    await page.goto(`/termination/${CASE_NO}`)
+    await page.goto(`/termination/${encodeURIComponent(CASE_NO)}`)
     await page.getByPlaceholder('คำสั่งที่').fill('001/2569')
     await page.getByLabel('วันที่ออกคำสั่ง').fill(isoDaysFromToday(0))
     await page.getByLabel('วันที่คำสั่งมีผล').fill(isoDaysFromToday(0))
     await page.getByRole('button', { name: 'เปิดแฟ้มคดี' }).click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 
     // กรอกเฉพาะเลขคำสั่งและปีในแบบ คบ.16 (ไม่กรอกช่องอื่น) แล้วส่งให้อนุมัติ
     await page.goto(`/form/16?caseNo=${CASE_NO}`)
     await page.getByPlaceholder('088').fill('คส.QA-001')
     await page.getByPlaceholder('2569').fill('2569')
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await page.getByRole('button', { name: /ส่งให้ผู้มีอำนาจอนุมัติ|ส่งให้อนุมัติ|ส่งคำสั่ง/ }).first().click()
     await confirmDialog(page, 'ส่งให้อนุมัติ')
 
@@ -147,8 +148,8 @@ test.describe('Feedback 28 Sep · แท็บ 10-11', () => {
     expect(submitted.effectiveAt).toBeTruthy()
     expect(submitted.issuedAt).toBeTruthy()
 
-    await switchRole(page, 'secretary')
-    await page.goto(`/termination/${CASE_NO}`)
+    await termUpLeg(page, CASE_NO) // เสนอลงนามผ่านธุรการ → เลขาธิการ
+    await page.goto(`/termination/${encodeURIComponent(CASE_NO)}`)
     await page.getByRole('button', { name: 'ลงนามคำสั่ง คบ.16' }).click()
     await expect(page.locator('.swal2-toast')).toContainText('ลงนามคำสั่ง คบ.16')
     await expect(page.getByText('คำสั่งที่ คส.QA-001/2569')).toBeVisible()
@@ -182,6 +183,6 @@ test.describe('Feedback 28 Sep · แท็บ 10-11', () => {
     await expect(page.getByText(CASE_NO)).toBeVisible()
     await captureEvidence(page, 'TC-052-a', page.getByText(CASE_NO), 'กดเมนู คบ.13 แล้วเปิดหน้ารายงาน พร้อมรายการสำนวน (ไม่เด้งไปภาพรวม)')
     await page.getByRole('link', { name: new RegExp(CASE_NO) }).click()
-    await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO.replace('/', '(?:/|%2F)')}`))
   })
 })

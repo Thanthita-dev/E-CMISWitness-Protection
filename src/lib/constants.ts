@@ -1,12 +1,13 @@
 import { FormMeta } from '../types/forms'
+import { ACTIVE_ROLE_SET } from './roleSets'
 import { OrgUnit, EcmisUser, UserRole, RoleAssignment } from '../types/user'
-import { CaseItem, MainCaseOption, ReturnIssue } from '../types/case'
+import { Article14ReviewLevel, Article14Step, CaseItem, CoordinationAgencyType, MainCaseOption, ReturnIssue } from '../types/case'
 
 export const FORMS_CATALOG: FormMeta[] = [
     { n: 1, code: 'คบ.1', t: 'คำร้องขอให้มีการคุ้มครองพยานตามมาตรการคุ้มครองเบื้องต้น', d: 'สำหรับผู้ร้อง/พยานยื่นคำขอเพื่อเข้าสู่มาตรการคุ้มครองพยาน พร้อมลายมือชื่อยินยอมของบุคคลที่เกี่ยวข้องทุกคน', pages: 4 },
     { n: 2, code: 'คบ.2', t: 'คำร้องขอคุ้มครองพยานผ่านช่องทางการสื่อสาร', d: 'สำหรับเจ้าพนักงานบันทึกรายละเอียดกรณีเร่งด่วน เมื่อผู้ร้องขอไม่อาจมายื่นคำร้องขอด้วยตนเอง (พยานต้องมาลงนาม คบ.1 ภายหลัง)', pages: 1 },
     { n: 3, code: 'คบ.3', t: 'บันทึกข้อเท็จจริงประกอบการขอใช้มาตรการคุ้มครองเบื้องต้น', d: 'สำหรับเจ้าพนักงานบันทึกถ้อยคำและข้อเท็จจริงประกอบคำร้อง (ข้ามได้หากระบุครบใน คบ.1 แต่ต้องบันทึกเหตุผล)', pages: 2 },
-    { n: 4, code: 'คบ.4', t: 'บันทึกข้อความขอคุ้มครองพยานชั่วคราว กรณีจำเป็นเร่งด่วน', d: 'สำหรับเจ้าพนักงานเสนอ ผอ.สำนัก/กอง/ศูนย์ พิจารณามาตรการชั่วคราวทันที (Fast Track)', pages: 3 },
+    { n: 4, code: 'คบ.4', t: 'บันทึกข้อความขอคุ้มครองพยานชั่วคราว กรณีจำเป็นเร่งด่วน', d: 'สำหรับเจ้าพนักงานเสนอ ผอ.สำนัก/กอง/ศูนย์ พิจารณามาตรการชั่วคราวทันที', pages: 3 },
     { n: 5, code: 'คบ.5', t: 'คำสั่งมอบหมายเจ้าพนักงานดำเนินการให้ความคุ้มครองชั่วคราว', d: 'คำสั่ง ผอ.สำนัก/กอง/ศูนย์ แต่งตั้งชุดคุ้มครองปฏิบัติการชั่วคราวกรณีเร่งด่วน', pages: 1 },
     { n: 6, code: 'คบ.6', t: 'บันทึกข้อความการคุ้มครองพยานในเบื้องต้น', d: 'สำหรับเจ้าพนักงานประเมินความเสี่ยงและเสนอมาตรการ ผ่านความเห็นตามลำดับชั้นถึงเลขาธิการคณะกรรมการ ป.ป.ท.', pages: 3 },
     { n: 7, code: 'คบ.7', t: 'คำร้องขอยุติการคุ้มครองพยาน', d: 'เสนอเลขาธิการ ป.ป.ท. ลงนามสั่งยุติมาตรการเมื่อพยานปลอดภัยแล้ว ครบกำหนด หรือไม่อนุมัติขยายเวลา', pages: 2 },
@@ -17,9 +18,12 @@ export const FORMS_CATALOG: FormMeta[] = [
     { n: 12, code: 'คบ.12', t: 'บันทึกการส่งมอบพยานในคดีการทุจริตในภาครัฐ', d: 'บันทึกส่งมอบพยานให้หน่วยงานภายนอกดูแลต่อ พร้อมรายงานการปฏิบัติหน้าที่ของเจ้าหน้าที่คุ้มครองพยาน', pages: 2 },
     { n: 13, code: 'คบ.13', t: 'รายงานผลการปฏิบัติการคุ้มครองพยาน', d: 'รายงานการปฏิบัติงานคุ้มครองพยานประจำงวดรายเดือน และรายงานเหตุสำคัญ', pages: 1 },
     { n: 14, code: 'คบ.14', t: 'หนังสือขยายระยะเวลาการคุ้มครองพยาน', d: 'เสนอผ่านผู้บังคับบัญชาชั้นต้น ผอ.กอง รองเลขาธิการ และเลขาธิการ', pages: 1 },
-    { n: 15, code: 'คบ.15', t: 'รายงานการให้ความคุ้มครองพยานสิ้นสุด', d: 'สรุปเหตุยุติ ผลการคุ้มครองและหลักฐานประกอบ เสนอตามลำดับชั้นก่อนผู้มีอำนาจออกคำสั่งยุติ (คบ.15 เพียงอย่างเดียวยังไม่ทำให้การคุ้มครองสิ้นสุด)', pages: 2 },
-    { n: 16, code: 'คบ.16', t: 'คำสั่งยุติการให้ความคุ้มครองพยาน', d: 'คำสั่งของผู้มีอำนาจ ระบุเหตุยุติ วันที่ออกคำสั่ง และวันที่คำสั่งมีผล — สถานะยุติเกิดขึ้นเมื่อคำสั่งลงนามและถึงวันที่มีผลเท่านั้น', pages: 1 },
+    { n: 15, code: 'คบ.15', t: 'รายงานการให้ความคุ้มครองพยานสิ้นสุด', d: 'สรุปเหตุยุติ ผลการคุ้มครองและหลักฐานประกอบ เสนอตามลำดับชั้นก่อนเลขาธิการ ป.ป.ท.ออกคำสั่งยุติ (คบ.15 เพียงอย่างเดียวยังไม่ทำให้การคุ้มครองสิ้นสุด)', pages: 2 },
+    { n: 16, code: 'คบ.16', t: 'คำสั่งยุติการให้ความคุ้มครองพยาน', d: 'คำสั่งของเลขาธิการ ป.ป.ท. ระบุเหตุยุติ วันที่ออกคำสั่ง และวันที่คำสั่งมีผล — สถานะยุติเกิดขึ้นเมื่อคำสั่งลงนามและถึงวันที่มีผลเท่านั้น', pages: 1 },
     { n: 17, code: 'คบ.17', t: 'หนังสือแจ้งคำสั่งยุติการคุ้มครองพยาน', d: 'แจ้งคำสั่งยุติพร้อมสิทธิอุทธรณ์ภายใน 30 วันนับแต่วันที่พยานได้รับหนังสือ ออกเลขและนำส่งผ่านระบบสารบรรณเดิม', pages: 1 },
+    { n: 18, code: 'หนังสือส่งต่อหน่วยงานอื่น', t: 'หนังสือแจ้งให้มีมาตรการช่วยเหลือแก่พยาน (ส่งหน่วยงานปลายทาง)', d: 'หนังสือจากสำนักงาน ป.ป.ท. ถึงหัวหน้าหน่วยงานปลายทาง (กรมการปกครอง / ตำรวจ / ทหาร / กรมคุ้มครองสิทธิและเสรีภาพ) แจ้งมติให้มีมาตรการช่วยเหลือแก่พยานตามมาตรา 54 — จัดทำในเส้นทางส่งต่อหน่วยงานอื่นช่วยคุ้มครองพยาน', pages: 1, flowOnly: true },
+    { n: 19, code: 'บันทึกเสนอประธานลงนาม', t: 'บันทึกเสนอประธานกรรมการ ป.ป.ท. ลงนาม ผ่านเลขาธิการ', d: 'บันทึกเสนอประธานลงนามหนังสือถึงอธิบดีกรมคุ้มครองสิทธิและเสรีภาพ ตามต้นฉบับลูกค้า', pages: 2, flowOnly: true },
+    { n: 20, code: 'หนังสือถึงกรมคุ้มครองสิทธิฯ', t: 'หนังสือแจ้งให้มีมาตรการช่วยเหลือแก่พยาน ถึงอธิบดีกรมคุ้มครองสิทธิและเสรีภาพ', d: 'หนังสือประกอบการส่งต่อกรมคุ้มครองสิทธิและเสรีภาพ ตามต้นฉบับลูกค้า', pages: 1, flowOnly: true },
 ]
 
 export const ORG_UNITS: OrgUnit[] = [
@@ -36,22 +40,8 @@ export const ORG_UNITS: OrgUnit[] = [
     { id: 'pacc-reg-9', name: 'สำนักงาน ป.ป.ท. เขต 9 (ภาคใต้ตอนล่าง)' },
 ]
 
-export const ROLE_NAMES: Record<UserRole, string> = {
-    got_receiver: 'ธุรการคดี กอท.',
-    got_director: 'ผอ. กอท.',
-    got_officer: 'ผู้รับผิดชอบคุ้มครอง กอท.',
-    receiver: 'ธุรการสำนัก/กอง',
-    officer: 'เจ้าหน้าที่ ป.ป.ท.',
-    case_owner: 'เจ้าของสำนวน',
-    supervisor: 'ผู้บังคับบัญชาชั้นต้น',
-    director: 'ผอ.สำนัก/กอง',
-    deputy_secretary: 'รองเลขาธิการ ป.ป.ท.',
-    secretary: 'เลขาธิการ ป.ป.ท.',
-    committee: 'ฝ่ายเลขานุการคณะกรรมการ ป.ป.ท.',
-    protection: 'ชุดคุ้มครอง',
-    appeal: 'นางสาววราภรณ์ นิติธรรม (เจ้าหน้าที่อุทธรณ์)',
-    admin: 'Super Admin',
-}
+/** ชื่อบทบาทและรายชื่อผู้ใช้มาจากชุดบทบาท (src/data/role-sets/*.json) ที่เลือกตอนบูต */
+export const ROLE_NAMES: Record<UserRole, string> = ACTIVE_ROLE_SET.roleNames
 
 /**
  * บทบาทที่ทำหน้าที่ "ผู้ปฏิบัติในสำนวน" — เจ้าหน้าที่ ป.ป.ท. และเจ้าของสำนวน
@@ -66,11 +56,13 @@ export const ROLE_ORG_ASSIGNMENTS: Record<string, RoleAssignment> = {
     got_receiver: { units: ['central-gmc'] },
     got_director: { units: ['central-gmc'] },
     got_officer: { units: ['central-gmc'] },
+    got_supervisor: { units: ['central-gmc'] },
     receiver: { units: ['central-gmc', 'pacc-reg-1', 'pacc-reg-2', 'pacc-reg-3', 'pacc-reg-4', 'pacc-reg-5', 'pacc-reg-6', 'pacc-reg-7', 'pacc-reg-8', 'pacc-reg-9'] },
     officer: { units: ['central-wp', 'pacc-reg-1', 'pacc-reg-2', 'pacc-reg-3', 'pacc-reg-4', 'pacc-reg-5', 'pacc-reg-6', 'pacc-reg-7', 'pacc-reg-8', 'pacc-reg-9'] },
     case_owner: { units: ['central-wp', 'pacc-reg-1', 'pacc-reg-2', 'pacc-reg-3', 'pacc-reg-4', 'pacc-reg-5', 'pacc-reg-6', 'pacc-reg-7', 'pacc-reg-8', 'pacc-reg-9'] },
     supervisor: { units: ['central-wp', 'pacc-reg-1', 'pacc-reg-2', 'pacc-reg-3', 'pacc-reg-4', 'pacc-reg-5', 'pacc-reg-6', 'pacc-reg-7', 'pacc-reg-8', 'pacc-reg-9'] },
     director: { units: ['central-gmc', 'pacc-reg-1', 'pacc-reg-2', 'pacc-reg-3', 'pacc-reg-4', 'pacc-reg-5', 'pacc-reg-6', 'pacc-reg-7', 'pacc-reg-8', 'pacc-reg-9'] },
+    secretary_receiver: { units: ['central-gmc', 'central-wp'], central: true },
     deputy_secretary: { units: ['central-gmc', 'central-wp'], central: true },
     secretary: { units: ['central-gmc', 'central-wp'], central: true },
     committee: { units: ['central-gmc'], central: true },
@@ -79,30 +71,16 @@ export const ROLE_ORG_ASSIGNMENTS: Record<string, RoleAssignment> = {
     admin: { units: ORG_UNITS.map(u => u.id), central: true },
 }
 
-export const ECMIS_USER_DIRECTORY: EcmisUser[] = [
-    { id: 'GOT-REC-001', name: 'นางสาวพิมพ์ชนก รับเรื่อง', position: 'เจ้าพนักงานธุรการคดี', unit: 'กองอำนวยการต่อต้านทุจริต (กอท.)', orgUnitId: 'central-gmc', roles: ['got_receiver'], active: true },
-    { id: 'GOT-DIR-001', name: 'นายภาคิน อำนวยการ', position: 'ผู้อำนวยการ กอท.', unit: 'กองอำนวยการต่อต้านทุจริต (กอท.)', orgUnitId: 'central-gmc', roles: ['got_director'], active: true },
-    { id: 'GOT-OFF-001', name: 'นางสาวณิชา คุ้มภัย', position: 'นักสืบสวนสอบสวนชำนาญการ', unit: 'กองอำนวยการต่อต้านทุจริต (กอท.)', orgUnitId: 'central-gmc', roles: ['got_officer', 'protection_owner'], active: true },
-    { id: 'GOT-OFF-002', name: 'นายธันวา พิทักษ์พยาน', position: 'นักสืบสวนสอบสวนปฏิบัติการ', unit: 'กองอำนวยการต่อต้านทุจริต (กอท.)', orgUnitId: 'central-gmc', roles: ['got_officer', 'protection_owner'], active: true },
-    { id: 'OFF-001', name: 'นางสาวอรุณี ใจมั่น', position: 'นักสืบสวนสอบสวนชำนาญการ', unit: 'กลุ่มงานคุ้มครองพยาน (ส่วนกลาง)', orgUnitId: 'central-wp', roles: ['officer', 'case_owner', 'protection_owner'], active: true },
-    { id: 'OFF-002', name: 'นายธนาธิป สุวรรณเวช', position: 'นักสืบสวนสอบสวนชำนาญการ', unit: 'กลุ่มงานคุ้มครองพยาน (ส่วนกลาง)', orgUnitId: 'central-wp', roles: ['officer', 'case_owner', 'protection_owner'], active: true },
-    { id: 'OFF-REG1', name: 'พ.ต.ต. ณัฐวุฒิ สรรพกิจ', position: 'นักสืบสวนสอบสวนปฏิบัติการ', unit: 'สำนักงาน ป.ป.ท. เขต 1', orgUnitId: 'pacc-reg-1', roles: ['officer', 'case_owner', 'protection_owner'], active: true },
-    { id: 'SUP-001', name: 'นายกิตติศักดิ์ ธรรมรักษ์', position: 'หัวหน้ากลุ่มงานคุ้มครองพยาน', unit: 'กลุ่มงานคุ้มครองพยาน (ส่วนกลาง)', orgUnitId: 'central-wp', roles: ['supervisor'], active: true },
-    { id: 'SUP-REG1', name: 'พ.ต.ท. เกรียงไกร มั่นคง', position: 'หัวหน้ากลุ่มงานสืบสวน เขต 1', unit: 'สำนักงาน ป.ป.ท. เขต 1', orgUnitId: 'pacc-reg-1', roles: ['supervisor'], active: true },
-    { id: 'DIR-001', name: 'นายวีระยุทธ พิทักษ์ธรรม', position: 'ผู้อำนวยการกองบริหารคดี', unit: 'กองบริหารคดี (ส่วนกลาง)', orgUnitId: 'central-gmc', roles: ['director'], active: true },
-    { id: 'DIR-REG1', name: 'พ.ต.อ. ธนดล ยุติธรรม', position: 'ผู้อำนวยการสำนักงาน ป.ป.ท. เขต 1', unit: 'สำนักงาน ป.ป.ท. เขต 1', orgUnitId: 'pacc-reg-1', roles: ['director'], active: true },
-    { id: 'DSEC-001', name: 'นายพิพัฒน์ ศรีสุวรรณ', position: 'รองเลขาธิการคณะกรรมการ ป.ป.ท.', unit: 'สำนักงาน ป.ป.ท. (ส่วนกลาง)', orgUnitId: 'central-gmc', roles: ['deputy_secretary'], active: true },
-    { id: 'CMT-001', name: 'นางสาวปิยะนุช เลขะกุล', position: 'ฝ่ายเลขานุการคณะกรรมการ ป.ป.ท.', unit: 'สำนักงานเลขานุการคณะกรรมการ ป.ป.ท.', orgUnitId: 'central-gmc', roles: ['committee'], active: true },
-    { id: 'SEC-001', name: 'นายสุรศักดิ์ ธรรมพิทักษ์', position: 'เลขาธิการคณะกรรมการ ป.ป.ท.', unit: 'สำนักงาน ป.ป.ท. (ส่วนกลาง)', orgUnitId: 'central-gmc', roles: ['secretary'], active: true },
-    { id: 'PROT-001', name: 'ร.ต.อ. อนุชา กล้าหาญ', position: 'หัวหน้าชุดปฏิบัติการคุ้มครองพยานพิเศษ', unit: 'ชุดคุ้มครองพยาน (ส่วนกลาง)', orgUnitId: 'central-wp', roles: ['protection'], active: true },
-    { id: 'APP-001', name: 'นางสาววราภรณ์ นิติธรรม', position: 'นิติกรชำนาญการพิเศษ (งานวินิจฉัยอุทธรณ์)', unit: 'กลุ่มงานกฎหมายและอุทธรณ์', orgUnitId: 'central-gmc', roles: ['appeal'], active: true },
-    { id: 'REC-001', name: 'นายสมบัติ รับสารบรรณ', position: 'เจ้าพนักงานธุรการชำนาญงาน', unit: 'กองบริหารคดี (ส่วนกลาง)', orgUnitId: 'central-gmc', roles: ['receiver'], active: true },
-]
+export const ECMIS_USER_DIRECTORY: EcmisUser[] = ACTIVE_ROLE_SET.users
+
+/** ชื่อผู้ใช้ตามรหัสในทะเบียน — ใช้แทนการฝังชื่อบุคคล เพื่อให้เปลี่ยนชุดบทบาทแล้วชื่อเปลี่ยนตาม */
+export const userNameById = (id: string): string => ECMIS_USER_DIRECTORY.find((u) => u.id === id)?.name ?? id
+export const userPositionById = (id: string): string => ECMIS_USER_DIRECTORY.find((u) => u.id === id)?.position ?? ''
 
 export const MAIN_CASE_OPTIONS: MainCaseOption[] = [
     { id: 'GBK-2569-0001', no: 'กบค. 001/2569', title: 'คดีทุจริตโครงการจัดซื้ออุปกรณ์เทศบาลตำบลโคกสะอาด', accused: 'นายวิชาญ พรหมรักษา และพวก', agency: 'กองบริหารคดี', leadOfficer: 'ร.ต.อ.สมชาย ตรวจสอบธรรม', risk: 'สูง', matchScore: 100 },
     { id: 'GBK-2569-0123', no: 'กบค. 123/2569', title: 'คดีเรียกรับผลประโยชน์การตรวจรับงานก่อสร้างเขื่อนกั้นดิน', accused: 'นายอัครเดช บรรเจิดศิลป์', agency: 'สำนักงาน ป.ป.ท. เขต 1', leadOfficer: 'พ.ต.ท.สมศักดิ์ สืบสวนดี', risk: 'วิกฤต', matchScore: 98 },
-    { id: 'GBK-2569-0089', no: 'กบค. 089/2569', title: 'คดีเบิกจ่ายงบประมาณโครงการฝึกอบรมอันเป็นเท็จ', accused: 'นางเพ็ญศรี สุขเกษม', agency: 'กองบริหารคดี', leadOfficer: 'นายธนาธิป สุวรรณเวช', risk: 'ปานกลาง', matchScore: 85 },
+    { id: 'GBK-2569-0089', no: 'กบค. 089/2569', title: 'คดีเบิกจ่ายงบประมาณโครงการฝึกอบรมอันเป็นเท็จ', accused: 'นางเพ็ญศรี สุขเกษม', agency: 'กองบริหารคดี', leadOfficer: userNameById('OFF-002'), risk: 'ปานกลาง', matchScore: 85 },
     { id: 'GBK-2569-0045', no: 'กบค. 045/2569', title: 'คดีลักลอบตัดไม้มีค่าในเขตป่าสงวนโดยเจ้าหน้าที่เอื้อประโยชน์', accused: 'นายชูชาติ รัตนโกสินทร์', agency: 'สำนักงาน ป.ป.ท. เขต 5', leadOfficer: 'พ.ต.ต.เอกชัย ไพรพิทักษ์', risk: 'สูง', matchScore: 90 },
     // Customer Demo — เรื่องร้องเรียนจากกิจกรรมที่ 4 (context/scenario/2_Oct/scenario e-cmis.xlsx และ context/scenario/data-A4-5/) ที่มีเลขสำนวนตามมาตรา 18/1 ก
     { id: 'GBK-2569-D0001', no: 'กบค. 0001/2569', title: 'สูบบุหรี่ในที่ทำงาน', accused: 'ณัฐกานต์ แพนดอร่า', agency: 'กองบริหารคดี', leadOfficer: 'กรรชัย กำเนิดทอง', risk: 'ปานกลาง', matchScore: 100 },
@@ -184,13 +162,15 @@ export const STAGE_LABELS: Record<string, string> = {
     staff_review: 'เจ้าหน้าที่เจ้าของสำนวนดำเนินการ',
     supervisor_review: 'ผู้บังคับบัญชาชั้นต้นกลั่นกรอง',
     director_review: 'ผอ.สำนัก/กอง พิจารณาและลงนาม คบ.6',
+    director_outgoing_registry: 'ธุรการสำนัก/กอง ออกเลขทะเบียนส่ง',
+    secretary_incoming_registry: 'ธุรการสำนักงานเลขาธิการ ลงเลขทะเบียนรับ',
     deputy_review: 'รองเลขาธิการ ป.ป.ท. กลั่นกรองก่อนเสนอเลขาธิการฯ',
     external_pending: 'เลขาธิการ ป.ป.ท. พิจารณาสั่งการ',
     notice: 'จัดทำและนำส่งหนังสือแจ้งผล',
     protection: 'อยู่ระหว่างการคุ้มครองพยาน',
     appeal: 'อยู่ระหว่างพิจารณาอุทธรณ์',
     method_operation: 'ปฏิบัติการตามวิธีที่ได้รับอนุมัติ',
-    article14: 'ส่งต่อกรมคุ้มครองสิทธิและเสรีภาพ',
+    article14: 'ส่งต่อหน่วยงานอื่นช่วยคุ้มครองพยาน',
     termination_review: 'จัดทำเรื่องยุติ (คบ.15) และเสนอตามลำดับชั้น',
     termination_order: 'รอคำสั่งยุติ (คบ.16) และแจ้งผล (คบ.17)',
     terminated: 'ยุติการคุ้มครองแล้ว',
@@ -229,6 +209,9 @@ export const PROTECTION_METHOD_OPTIONS = [
 /** ชื่อฟิลด์ใน draft ของ คบ.6 ที่เก็บรูปแบบการคุ้มครองที่เลือกไว้ใน 8.2 */
 export const KB6_PROTECTION_METHOD_FIELD = 'รูปแบบคุ้มครองที่เลือก'
 
+/** FB-012 — ชื่อฟิลด์ใน draft ของ คบ.6 ที่เก็บข้อความอิสระของข้อ ๓ รูปแบบวิธีและระยะเวลาการดำเนินการคุ้มครอง */
+export const KB6_DURATION_DETAIL_FIELD = 'รายละเอียดรูปแบบวิธีและระยะเวลา'
+
 /**
  * WIT0603 — ชื่อฟิลด์ใน draft ของ คบ.4 ที่เก็บวิธีคุ้มครองตามข้อ 15 ที่เลือกไว้ในข้อ 4.2
  * แยก key จาก คบ.6 เพราะเป็นคนละฉบับและคนละเส้นทาง (เร่งด่วน vs ปกติ) แต่ใช้ตัวเลือกชุดเดียวกัน
@@ -251,21 +234,77 @@ export const readRoutableProtectionMethods = (
     return ROUTABLE_PROTECTION_METHODS.filter((n) => raw.includes(n))
 }
 
+/**
+ * คบ.5 (เคสเร่งด่วนในตัว) ต้องมอบหมายชุดเจ้าพนักงานก็ต่อเมื่อ คบ.4 เลือกวิธีที่ 1
+ * วิธีอื่น (2–4) หรือยังไม่เลือกวิธี → ไม่ต้องกรอกชุด และเอกสาร คบ.5 ตัดรายชื่อชุดออก
+ */
+export const kb5RequiresOfficerTeam = (kb4Draft: Record<string, any>): boolean =>
+    readRoutableProtectionMethods(kb4Draft, KB4_PROTECTION_METHOD_FIELD).includes(1)
+
 /** ชื่อฟิลด์ใน draft ของ คบ.6 ที่เก็บรายการกฎหมาย กฎ ระเบียบ ในข้อ 7 */
 export const KB6_LEGAL_REFS_FIELD = 'กฎหมายที่เกี่ยวข้อง'
 
-/** ชื่อฟิลด์ใน draft ของ คบ.6 ที่บอกว่าจะพิมพ์ข้อความข้อพิจารณามาตรฐานในข้อ 8 หรือเว้นเป็นเส้นประ */
-export const KB6_SHOW_RATIONALE_FIELD = 'พิมพ์ข้อความข้อพิจารณา'
+/**
+ * FB-013 — ชื่อฟิลด์ใน draft ของ คบ.6 ที่เก็บข้อพิจารณาข้อ 8 ซึ่งเจ้าหน้าที่พิมพ์เอง
+ * (เห็นควรคุ้มครองหรือไม่คุ้มครอง พร้อมเหตุผล) ว่าง = เว้นเส้นประให้เขียนด้วยลายมือ
+ */
+export const KB6_RATIONALE_FIELD = 'ข้อพิจารณา'
 
 /** จำนวนเส้นประที่ใช้แทนข้อความข้อพิจารณา — เท่ากับความสูงของข้อความเดิม เพื่อไม่ให้ 8.1 ขยับ */
 export const KB6_RATIONALE_BLANK_ROWS = 11
 
+/** FB-015 — รายละเอียดที่เจ้าหน้าที่กรอกเองใต้รูปแบบข้อ 2 (สถานที่ที่จัดให้พยานอยู่) และข้อ 3 (ข้อมูลที่ปกปิด/วิธีรักษาความลับ) ของ คบ.6 */
+export const KB6_METHOD2_DETAIL_FIELD = 'รายละเอียดรูปแบบข้อ2'
+export const KB6_METHOD3_DETAIL_FIELD = 'รายละเอียดรูปแบบข้อ3'
+
 /**
- * พิมพ์ข้อความข้อพิจารณาหรือไม่ — ค่าตั้งต้นคือพิมพ์
- * `undefined` (รวมถึง draft เก่าที่บันทึกไว้ก่อนมีฟีเจอร์นี้) จึงถือว่าพิมพ์ มีเพียง `false` เท่านั้นที่เว้นเส้นประ
+ * FB-014 — ชื่อรูปแบบที่ คบ.4 และ คบ.6 ใช้แทน PROTECTION_METHOD_OPTIONS (หน้าอื่นคงชื่อเดิม)
+ * ข้อ 4 คือ "ประสานงานหน่วยงานอื่น" ซึ่งมีตัวเลือกย่อยตาม KB6_METHOD_SUBITEMS
  */
-export const readShowRationale = (draft: Record<string, any>): boolean =>
-    draft[KB6_SHOW_RATIONALE_FIELD] !== false
+export const KB6_METHOD_LABELS: Record<number, string> = {
+    4: 'ประสานงานหน่วยงานอื่น',
+}
+
+/**
+ * ตัวเลือกย่อยใต้รูปแบบการคุ้มครองของ คบ.4/คบ.6 — แสดงเป็น 4.1, 4.2, … และเลือกได้ข้อเดียว
+ * ข้อ 4 คือหน่วยงานที่ส่งต่อ (แทนปุ่ม "เห็นควรส่งต่อกรมคุ้มครองสิทธิฯ" ที่เคยอยู่ในคำสั่งชี้ขาดของเลขาธิการ)
+ */
+export const KB6_METHOD_SUBITEMS: Record<number, string[]> = {
+    4: ['ส่งให้ตำรวจ', 'ส่งให้ทหาร', 'ส่งให้กรมคุ้มครองสิทธิและเสรีภาพ'],
+}
+
+/** ฟิลด์ใน draft ที่เก็บตัวเลือกย่อยที่เลือกไว้ (ข้อความตาม KB6_METHOD_SUBITEMS) แยกตามเลขข้อ — ใช้ชื่อเดียวกันทั้ง คบ.4 และ คบ.6 */
+export const KB6_METHOD_SUBITEM_FIELDS: Record<number, string> = {
+    4: 'หน่วยงานรูปแบบข้อ4',
+}
+
+/** ตัวเลือกย่อยที่เลือกไว้ใน draft ทุกข้อ — ใช้ส่งให้ ProtectionMethodChecks และกระดาษ */
+export const readMethodSubitems = (draft: Record<string, any>): Record<number, string> =>
+    Object.fromEntries(
+        Object.entries(KB6_METHOD_SUBITEM_FIELDS).map(([n, field]) => [Number(n), String(draft[field] ?? '')])
+    )
+
+/** ข้อที่เลือกไว้แต่ยังไม่ได้เลือกตัวเลือกย่อย (เช่น ข้อ 4 ยังไม่เลือก 4.1–4.4) — undefined เมื่อครบ */
+export const missingMethodSubitem = (
+    selected: number[],
+    subitemSelected: Record<number, string> = {}
+): number | undefined =>
+    selected.find((n) => KB6_METHOD_SUBITEMS[n]?.length && !subitemSelected[n]?.trim())
+
+/**
+ * รูปแบบการคุ้มครองใน คบ.4/คบ.6 ต้องเลือกให้ครบก่อนส่งต่อ — คืนเหตุผลที่ยังส่งไม่ได้ หรือ undefined เมื่อครบ
+ * ครบ = เลือกอย่างน้อยหนึ่งข้อ และข้อที่มีตัวเลือกย่อยต้องเลือกตัวเลือกย่อยแล้ว
+ */
+export const protectionMethodSelectionIssue = (
+    selected: number[],
+    subitemSelected: Record<number, string> = {}
+): string | undefined => {
+    if (selected.length === 0) return 'ยังไม่ได้เลือกรูปแบบการคุ้มครอง'
+    const n = missingMethodSubitem(selected, subitemSelected)
+    if (n !== undefined)
+        return `เลือกข้อ ${n} แล้วแต่ยังไม่ได้เลือกตัวเลือกย่อย (${n}.1–${n}.${KB6_METHOD_SUBITEMS[n].length})`
+    return undefined
+}
 
 /**
  * ข้อ 7 กฎหมาย กฎ ระเบียบที่เกี่ยวข้อง — ค่าตั้งต้นตามต้นฉบับ คบ.6
@@ -295,20 +334,20 @@ export const KB6_METHOD_EXTERNAL = 4
  * เลือกข้อ 4 จะล้างข้อ 1–3 ออกให้ และเลือกข้อ 1–3 จะล้างข้อ 4 ออกให้ (ข้อ 5 ใน คบ.4 เป็นมาตรการเสริม ไม่ถูกล้าง)
  */
 export const toggleProtectionMethod = <T extends number>(selected: readonly T[], n: T): T[] => {
-  if (selected.includes(n)) return selected.filter((x) => x !== n)
-  const conflicts = (x: number) =>
-    n === KB6_METHOD_EXTERNAL ? KB6_METHOD_GROUP.includes(x) : KB6_METHOD_GROUP.includes(n) && x === KB6_METHOD_EXTERNAL
-  return [...selected.filter((x) => !conflicts(x)), n].sort((a, b) => a - b)
+    if (selected.includes(n)) return selected.filter((x) => x !== n)
+    const conflicts = (x: number) =>
+        n === KB6_METHOD_EXTERNAL ? KB6_METHOD_GROUP.includes(x) : KB6_METHOD_GROUP.includes(n) && x === KB6_METHOD_EXTERNAL
+    return [...selected.filter((x) => !conflicts(x)), n].sort((a, b) => a - b)
 }
 
 /** ข้อความแจ้งเมื่อ toggleProtectionMethod ล้างวิธีที่เลือกร่วมกันไม่ได้ออกให้ — ไม่มีการล้างคืน null */
 export const protectionMethodSwitchNotice = (selected: readonly number[], n: number): string | null => {
-  if (selected.includes(n)) return null
-  if (n === KB6_METHOD_EXTERNAL && selected.some((x) => KB6_METHOD_GROUP.includes(x)))
-    return 'วิธีที่ 4 ต้องเลือกเดี่ยว — นำวิธีที่ 1–3 ออกให้แล้ว'
-  if (KB6_METHOD_GROUP.includes(n) && selected.includes(KB6_METHOD_EXTERNAL))
-    return 'วิธีที่ 1–3 เลือกร่วมกับวิธีที่ 4 ไม่ได้ — นำวิธีที่ 4 ออกให้แล้ว'
-  return null
+    if (selected.includes(n)) return null
+    if (n === KB6_METHOD_EXTERNAL && selected.some((x) => KB6_METHOD_GROUP.includes(x)))
+        return 'วิธีที่ 4 ต้องเลือกเดี่ยว — นำวิธีที่ 1–3 ออกให้แล้ว'
+    if (KB6_METHOD_GROUP.includes(n) && selected.includes(KB6_METHOD_EXTERNAL))
+        return 'วิธีที่ 1–3 เลือกร่วมกับวิธีที่ 4 ไม่ได้ — นำวิธีที่ 4 ออกให้แล้ว'
+    return null
 }
 
 /**
@@ -326,6 +365,82 @@ export const EXTERNAL_TRANSFER_AGENCIES = [
 
 /** ปลายทางของเส้นทางข้อ 14 — คนละเส้นทางกับวิธีที่ 4 */
 export const ARTICLE14_TARGET_AGENCY = 'สำนักงานคุ้มครองพยาน กรมคุ้มครองสิทธิและเสรีภาพ กระทรวงยุติธรรม'
+
+/** ตัวเลือกหน่วยงานปลายทางของวิธีที่ 4 ตอนเปิดงาน — ตำรวจเลือกสถานีจากทะเบียน หน่วยงานอื่นกรอกชื่อหน่วยงาน */
+export const COORDINATION_AGENCY_TYPES: { value: CoordinationAgencyType; label: string; agency: string; recipient: string }[] = [
+    { value: 'police', label: 'ส่งให้ตำรวจ', agency: '', recipient: '' },
+    { value: 'military', label: 'ส่งให้ทหาร', agency: 'กองบัญชาการกองทัพไทย', recipient: 'ผู้บัญชาการทหารสูงสุด' },
+    { value: 'rlpd', label: 'ส่งให้กรมคุ้มครองสิทธิและเสรีภาพ', agency: ARTICLE14_TARGET_AGENCY, recipient: 'อธิบดีกรมคุ้มครองสิทธิและเสรีภาพ' },
+]
+
+/**
+ * หน่วยงานปลายทางของเส้นทางส่งต่อตามข้อ 14 — ใช้ตัวเลือกชุดเดียวกับข้อ 4 ของ คบ.4/คบ.6 (KB6_METHOD_SUBITEMS)
+ * short ใช้ในข้อความสั้นบนหน้าจอ · name ใช้ในหนังสือ · office ใช้เป็นหน่วยงานผู้รับช่วงคุ้มครอง · recipient คือผู้รับหนังสือแบบ 18
+ */
+export const ARTICLE14_AGENCIES: Record<CoordinationAgencyType, { label: string; short: string; name: string; office: string; recipient: string }> = {
+    dopa: { label: 'ส่งให้กรมการปกครอง', short: 'กรมการปกครอง', name: 'กรมการปกครอง', office: 'กรมการปกครอง กระทรวงมหาดไทย', recipient: 'อธิบดีกรมการปกครอง' },
+    police: { label: 'ส่งให้ตำรวจ', short: 'สำนักงานตำรวจแห่งชาติ', name: 'สำนักงานตำรวจแห่งชาติ', office: 'สำนักงานตำรวจแห่งชาติ', recipient: 'ผู้บัญชาการตำรวจแห่งชาติ' },
+    military: { label: 'ส่งให้ทหาร', short: 'กองบัญชาการกองทัพไทย', name: 'กองบัญชาการกองทัพไทย', office: 'กองบัญชาการกองทัพไทย', recipient: 'ผู้บัญชาการทหารสูงสุด' },
+    rlpd: { label: 'ส่งให้กรมคุ้มครองสิทธิและเสรีภาพ', short: 'กรมคุ้มครองสิทธิฯ', name: 'กรมคุ้มครองสิทธิและเสรีภาพ', office: ARTICLE14_TARGET_AGENCY, recipient: 'อธิบดีกรมคุ้มครองสิทธิและเสรีภาพ' },
+}
+
+/** ค่าตั้งต้นของหน่วยงานปลายทางข้อ 14 — แฟ้มเดิมที่ไม่มี targetAgencyType ถือว่าส่งกรมคุ้มครองสิทธิฯ */
+export const DEFAULT_ARTICLE14_AGENCY: CoordinationAgencyType = 'rlpd'
+
+/** ลำดับตัวเลือกในป็อปอัป/ฟอร์มเสนอ — เรียงตาม 4.1–4.4 ของ คบ.4/คบ.6 */
+export const ARTICLE14_AGENCY_ORDER: CoordinationAgencyType[] = ['dopa', 'police', 'military', 'rlpd']
+
+export const isArticle14AgencyType = (value: unknown): value is CoordinationAgencyType =>
+    typeof value === 'string' && value in ARTICLE14_AGENCIES
+
+/** หน่วยงานปลายทางข้อ 14 ของแฟ้ม (ยังไม่เปิดเรื่อง/ข้อมูลเดิม = กรมคุ้มครองสิทธิฯ) */
+export const article14Agency = (caseItem?: { article14?: { targetAgencyType?: CoordinationAgencyType } }) =>
+    ARTICLE14_AGENCIES[caseItem?.article14?.targetAgencyType || DEFAULT_ARTICLE14_AGENCY]
+
+/** ตัวเลือกย่อยข้อ 4 ที่เลือกไว้ใน คบ.4/คบ.6 (ข้อความตาม KB6_METHOD_SUBITEMS) → หน่วยงานปลายทางของวิธีที่ 4 ตอนเปิดงาน */
+export const coordinationAgencyFromSubitem = (subitem?: string): CoordinationAgencyType | undefined =>
+    COORDINATION_AGENCY_TYPES.find((t) => t.label === subitem?.trim())?.value
+
+/** ชื่อวิธีในหน้าเลือกแนวทางตอนเปิดงาน (ข้อ 4 ใช้ถ้อยคำ "ดำเนินการอื่น" ตาม คบ.6) */
+export const METHOD_CHOICE_LABELS: Record<number, string> = {
+    1: 'จัดเจ้าพนักงานเป็นชุดคุ้มครอง',
+    2: 'จัดให้พยานอยู่ในสถานที่เหมาะสม',
+    3: 'ปกปิดและรักษาความลับ',
+    4: 'ดำเนินการอื่นเพื่อให้พยานได้รับความช่วยเหลือหรือได้รับการคุ้มครองตามที่เห็นสมควร',
+}
+
+/** ชื่อขั้นของเส้นทางส่งต่อกรมคุ้มครองสิทธิฯ (ใช้ทั้งหน้า /article14 และหมุดในแฟ้ม) */
+export const ARTICLE14_STEP_LABELS: Record<Article14Step, string> = {
+    proposal_draft: 'จัดทำ/แก้ไขข้อเสนอ',
+    supervisor_review: 'ผู้บังคับบัญชาชั้นต้นพิจารณา',
+    director_review: 'ผอ.สำนัก/กอง พิจารณา',
+    deputy_review: 'รองเลขาธิการพิจารณา',
+    secretary_review: 'เลขาธิการพิจารณา',
+    committee_pending: 'รอมติคณะกรรมการ ป.ป.ท.',
+    committee_rejected: 'คณะกรรมการไม่เห็นชอบ',
+    letter_sent: 'บันทึกการนำส่ง/การได้รับหนังสือกับหน่วยงานปลายทาง',
+    /** WIT0860 แขนง — กรมแจ้งว่าดำเนินการไม่ได้ ต้องเสนอผู้มีอำนาจทันทีไม่ให้คุ้มครองขาดช่วง */
+    delivery_failed: 'หน่วยงานปลายทางแจ้งว่าดำเนินการไม่ได้ · เสนอ ผอ.สำนัก/กอง',
+    response_received: 'ได้รับผลประสานแล้ว',
+    handover_ready: 'เตรียมส่งมอบ',
+    handover_done: 'ส่งมอบและเริ่มมาตรการแล้ว',
+}
+
+/**
+ * ลำดับชั้นพิจารณาเรื่องส่งต่อกรมคุ้มครองสิทธิฯ (ทั้งเสนอครั้งแรกและ Revision)
+ * ผบช.ชั้นต้น → ผอ.สำนัก/กอง → รองเลขาธิการ → เลขาธิการ แล้วส่งคืนเจ้าหน้าที่บันทึกการนำส่ง/การได้รับหนังสือ
+ */
+export const ARTICLE14_REVIEW_CHAIN: Array<{
+    level: Article14ReviewLevel
+    step: Article14Step
+    label: string
+    roles: string[]
+}> = [
+        { level: 'supervisor', step: 'supervisor_review', label: 'ผู้บังคับบัญชาชั้นต้น', roles: ['supervisor', 'admin'] },
+        { level: 'director', step: 'director_review', label: 'ผอ.สำนัก/กอง', roles: ['director', 'got_director', 'admin'] },
+        { level: 'deputy_secretary', step: 'deputy_review', label: 'รองเลขาธิการ', roles: ['deputy_secretary', 'admin'] },
+        { level: 'secretary', step: 'secretary_review', label: 'เลขาธิการ', roles: ['secretary', 'admin'] },
+    ]
 
 /** ช่องทางส่งหนังสือราชการผ่านระบบสารบรรณเดิม (WIT0843) */
 export const OFFICIAL_LETTER_CHANNELS = [
@@ -361,13 +476,22 @@ export const TERMINATION_REASONS = [
     'เลขาธิการ ป.ป.ท. ไม่อนุมัติขยายระยะเวลาคุ้มครอง',
     'พยานไม่ปฏิบัติตามข้อตกลงและเงื่อนไขการคุ้มครอง (คบ.11)',
     'พยานไม่ยินยอมรับการคุ้มครองตามวิธีที่ได้รับอนุมัติ',
+    'พยานได้รับความคุ้มครองตามกฎหมายว่าด้วยการคุ้มครองพยานในคดีอาญา',
 ]
+
+/** ข้อ 18 — noticeAppeal กำกับข้อความใน คบ.17 เท่านั้น ไม่ใช้ปิดรับคำอุทธรณ์ */
+export const TERMINATION_CLAUSES = [
+    { value: 1, label: 'ข้อ 18 (1) พยานยื่นคำร้องเป็นลายลักษณ์อักษรขอให้ยุติการคุ้มครอง', noticeAppeal: false },
+    { value: 2, label: 'ข้อ 18 (2) ครบกำหนดระยะเวลาคุ้มครอง', noticeAppeal: false },
+    { value: 3, label: 'ข้อ 18 (3) พยานได้รับความคุ้มครองตามกฎหมายว่าด้วยการคุ้มครองพยานในคดีอาญา', noticeAppeal: false },
+    { value: 4, label: 'ข้อ 18 (4) เลขาธิการสั่งให้ยุติการคุ้มครองตามข้อ 19', noticeAppeal: true },
+] as const
 
 /** แหล่งที่มาของเหตุยุติ (WIT1125-1128) */
 export const TERMINATION_TRIGGERS = [
     { value: 'witness_kb7', label: 'พยานยื่น คบ.7 ต่อเจ้าหน้าที่ หรือกรอกคำขอยุติในระบบ' },
     { value: 'external_letter', label: 'หนังสือขอยุติจากภายนอก (รับผ่านสารบรรณและอัปโหลดเข้าแฟ้มเดิม)' },
-    { value: 'due_or_officer', label: 'ครบกำหนด หรือเจ้าหน้าที่เห็นควรยุติตามผลประเมินล่าสุด' },
+    { value: 'due_or_officer', label: 'เจ้าหน้าที่ตรวจพบหรือเสนอเรื่อง' },
 ] as const
 
 /** แนวทางที่เลือกได้หลังทบทวนผล (WIT1107-1111 / WIT1149) */
@@ -375,7 +499,7 @@ export const REVIEW_OUTCOMES = [
     { value: 'continue', label: 'คุ้มครองต่อภายใต้คำสั่งเดิม', hint: 'กลับหน้าติดตามเพื่อกำหนดรอบ คบ.13 ถัดไป' },
     { value: 'extend', label: 'ขยายระยะเวลา (คบ.14)', hint: 'ทำได้เมื่อยังไม่ถึงเพดานรวม 180 วัน' },
     { value: 'change_method', label: 'เปลี่ยนวิธี / เงื่อนไข', hint: 'เสนออนุมัติและปรับ คบ.11 — เปลี่ยนเป็นวิธีที่ 1 จึงจัดทำ/แก้ คบ.8' },
-    { value: 'terminate', label: 'เข้าสู่กระบวนการยุติ', hint: 'จัดทำ คบ.15 เสนอผู้มีอำนาจออกคำสั่ง คบ.16' },
+    { value: 'terminate', label: 'เข้าสู่กระบวนการยุติ', hint: 'จัดทำ คบ.15 เสนอเลขาธิการ ป.ป.ท.ออกคำสั่ง คบ.16' },
     { value: 'article14', label: 'ครบเพดานแต่ยังมีภัย — ส่งต่อกรมคุ้มครองสิทธิฯ', hint: 'ห้ามขยาย คบ.14 ให้ส่งกรมคุ้มครองสิทธิและเสรีภาพ' },
 ] as const
 
@@ -419,12 +543,14 @@ export type IntakeDocTypeValue = (typeof INTAKE_DOC_TYPES)[number]['value']
 
 /**
  * ประเภทเอกสารที่แต่ละบทบาทมีสิทธิ์รับเข้าระบบ
- *  - ธุรการ            → คำร้อง เท่านั้น
+ *  - ธุรการ (สำนัก/กอง และคดี กอท.) → คำร้อง เท่านั้น
  *  - เจ้าของสำนวน      → คำร้อง, คบ.1, คบ.2
  *  - เจ้าหน้าที่ ป.ป.ท. → คำร้อง, คบ.1, คบ.2
  */
 export const INTAKE_DOC_TYPES_BY_ROLE: Record<string, IntakeDocTypeValue[]> = {
     receiver: ['petition'],
+    got_receiver: ['petition'],
+    got_officer: ['petition', 'kb1', 'kb2'],
     case_owner: ['petition', 'kb1', 'kb2'],
     officer: ['petition', 'kb1', 'kb2'],
     admin: ['petition', 'kb1', 'kb2'],

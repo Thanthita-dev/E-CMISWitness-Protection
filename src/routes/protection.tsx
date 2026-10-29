@@ -1,6 +1,7 @@
 import { protectionMonths, monthLabel } from '../lib/protectionMonths'
 import React from 'react'
 import { createFileRoute, Link, Navigate } from '@tanstack/react-router'
+import { article14Agency } from '../lib/constants'
 import { PageHeader } from '../components/common/PageHeader'
 import { StatCard, StatGrid } from '../components/common/StatCard'
 import { Button } from '../components/common/Button'
@@ -9,8 +10,10 @@ import { useAuthStore } from '../store/useAuthStore'
 import { visibleOperationCase, protectionResponsibleName } from '../lib/protectionHandoff'
 import { formatThaiDate } from '../lib/utils'
 import type { CaseItem } from '../types/case'
-import { protectionOverviewDemos } from '../lib/protectionOverviewDemos'
+import { protectionDemoDossierFields, protectionOverviewDemos } from '../lib/protectionOverviewDemos'
 import { deriveEpisode, summarizeEpisode } from '../lib/episode'
+import { capWarning } from '../lib/capWarning'
+import { anyMethodActive } from '../lib/methodProgress'
 
 export const Route = createFileRoute('/protection')({
   validateSearch: (search: Record<string, unknown>): { caseNo?: string } => ({ caseNo: typeof search.caseNo === 'string' ? search.caseNo : undefined }),
@@ -20,8 +23,8 @@ export const Route = createFileRoute('/protection')({
 const CLOSED = ['terminated', 'transferred', 'withdrawn']
 const workStatus = (c: CaseItem) => CLOSED.includes(c.stage) ? 'closed' :
   c.stage === 'article14' ? 'referral' :
-  c.stage === 'protection' || c.methodTracks?.some((t) => t.status === 'active') ? 'active' : 'preparing'
-const STATUS_LABELS = { preparing: 'เตรียมดำเนินการคุ้มครอง', active: 'กำลังคุ้มครอง', referral: 'รอส่งต่อกรมคุ้มครองสิทธิฯ', closed: 'สิ้นสุดแล้ว' }
+  c.stage === 'protection' || anyMethodActive(c) ? 'active' : 'preparing'
+const STATUS_LABELS = { preparing: 'เตรียมดำเนินการคุ้มครอง', active: 'กำลังคุ้มครอง', referral: 'รอส่งต่อหน่วยงานอื่น', closed: 'สิ้นสุดแล้ว' }
 
 function ProtectionPage() {
   const cases = useCaseStore((s) => s.cases)
@@ -36,19 +39,34 @@ function ProtectionPage() {
   const rows = jobs.filter((c) => (tab === 'all' || workStatus(c) === tab) &&
     (!query || [c.no, c.person, c.mainCaseNo, protectionResponsibleName(c), c.methodTracks?.find((t) => t.method === 4)?.coordination?.agency]
       .some((value) => value?.toLocaleLowerCase('th-TH').includes(query))))
+  /** แจ้งเตือนล่วงหน้า 1 เดือนก่อนครบ 6 เดือน — นับจากเคสทั้งหมดที่เห็น ไม่ขึ้นกับตัวกรอง */
+  const nearCapCount = jobs.filter((c) => capWarning(c)).length
   if (caseNo) return <Navigate to="/protection-duration" search={{ caseNo }} replace />
 
   return <div className="space-y-5">
-    <PageHeader eyebrow="งานคุ้มครองพยาน · คุ้มครองและติดตาม" title="ภาพรวมการคุ้มครอง" description="ดูจำนวนเคสคุ้มครอง ค้นหา และติดตามการดำเนินงานของแต่ละเคส" actions={jobs[0] && <Button variant="secondary" size="md" onClick={() => {
+    <PageHeader eyebrow="งานคุ้มครองพยาน · คุ้มครองและติดตาม" title="ภาพรวมการคุ้มครอง" description="ดูจำนวนเคสคุ้มครอง ค้นหา และติดตามการดำเนินงานของแต่ละเคส" actions={<Button variant="secondary" size="md" onClick={() => {
       const store = useCaseStore.getState()
-      for (const demo of protectionOverviewDemos(jobs[0])) if (!store.cases.some((c) => c.no === demo.no)) store.addCase(demo)
+      const auth = useAuthStore.getState()
+      const user = auth.getCurrentUserAccount()
+      const base: CaseItem = jobs[0] || {
+        no: 'DEMO', person: 'พยานตัวอย่าง', form: 'คำร้อง', stage: 'protection', status: 'กำลังคุ้มครอง',
+        owner: user?.name || 'เจ้าหน้าที่', next: 'ติดตามผลการคุ้มครอง', risk: 'สูง',
+        orgUnitId: user?.orgUnitId || auth.currentOrgUnitId || undefined,
+        assignedOfficer: user?.name, assignedOfficerUserId: currentOfficerUserId,
+        receivedByUserId: currentOfficerUserId, protectionOwner: user?.name, protectionOwnerUserId: currentOfficerUserId,
+      }
+      for (const demo of protectionOverviewDemos(base)) {
+        const existing = store.cases.find((c) => c.no === demo.no)
+        if (!existing) store.addCase(demo)
+        else if (existing.demoData && (!existing.linkedMainCaseId || !existing.urgencyAssessedAt)) store.updateCase(demo.no, protectionDemoDossierFields(base))
+      }
       setTab('all'); setSearchQuery('')
-    }}>เพิ่มเคสตัวอย่างทบทวน / ขยายเวลา / ส่งต่อ</Button>} />
+    }}>เพิ่มเคสตัวอย่างคุ้มครองปกติ / ทบทวน / ขยายเวลา / ส่งต่อ</Button>} />
     <StatGrid>
       <StatCard label="เคสคุ้มครองทั้งหมด" value={jobs.length} subtext="ทุกสถานะ · นับแยกรายเคส" active={tab === 'all'} onClick={() => setTab('all')} />
       <StatCard label="เตรียมดำเนินการคุ้มครอง" value={jobs.filter((c) => workStatus(c) === 'preparing').length} subtext="รอเริ่มคุ้มครอง" active={tab === 'preparing'} onClick={() => setTab('preparing')} />
       <StatCard label="กำลังคุ้มครอง" value={jobs.filter((c) => workStatus(c) === 'active').length} subtext="เคสที่เริ่มปฏิบัติแล้ว" active={tab === 'active'} onClick={() => setTab('active')} />
-      <StatCard label="รอส่งต่อกรมคุ้มครองสิทธิฯ" value={jobs.filter((c) => workStatus(c) === 'referral').length} subtext="ครบเพดาน · รอพิจารณาส่งต่อ" active={tab === 'referral'} onClick={() => setTab('referral')} />
+      <StatCard label="รอส่งต่อหน่วยงานอื่น" value={jobs.filter((c) => workStatus(c) === 'referral').length} subtext="ครบเพดาน / เสนอก่อนครบ 6 เดือน" active={tab === 'referral'} onClick={() => setTab('referral')} />
       <StatCard label="สิ้นสุดการคุ้มครอง" value={jobs.filter((c) => workStatus(c) === 'closed').length} subtext="ยุติ / ส่งต่อ / ถอนคำร้อง" active={tab === 'closed'} onClick={() => setTab('closed')} />
     </StatGrid>
     <div className="ws-card p-5 grid gap-3 md:grid-cols-[2fr_1fr_auto] items-end">
@@ -56,6 +74,10 @@ function ProtectionPage() {
       <label className="block"><span className="ws-label">สถานะงาน</span><select className="ws-input w-full" value={tab} onChange={(e) => setTab(e.target.value)}><option value="all">ทุกสถานะ</option>{Object.entries(STATUS_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <Button type="button" variant="secondary" size="md" onClick={() => { setTab('all'); setSearchQuery('') }}>ล้างเงื่อนไข</Button>
     </div>
+    {nearCapCount > 0 && <div className="ws-callout text-sm leading-relaxed" role="note" data-testid="protection-near-cap-callout">
+      <i className="fa-solid fa-hourglass-half mr-1.5" aria-hidden="true" />
+      มี <strong>{nearCapCount} เคส</strong>จะครบระยะเวลาคุ้มครอง 6 เดือนภายใน 1 เดือน — หากยังมีภัยให้เริ่มเรื่องส่งต่อหน่วยงานอื่นก่อนครบกำหนด
+    </div>}
     <section id="protection-work-panel" aria-label="รายการเคสคุ้มครองพยาน" className="ws-card overflow-hidden">
       <header className="border-b border-line p-5"><h2 className="text-lg font-bold text-navy">รายการเคสคุ้มครองพยาน</h2><p className="mt-1 text-sm text-muted">พบทั้งหมด {rows.length} เคส</p></header>
       <div className="overflow-x-auto">
@@ -72,13 +94,15 @@ function ProtectionPage() {
             const latestExtension = c.extensionRequests?.at(-1)
             const extension = !CLOSED.includes(c.stage) && !referral && (latestExtension && ['submitted', 'returned', 'pending'].includes(latestExtension.status) || c.reviewProposals?.at(-1)?.appliedOutcome === 'extend')
             const review = !CLOSED.includes(c.stage) && !referral && !extension && c.reviewHandoff && !c.reviewProposals?.at(-1)?.appliedOutcome
-            const workLabel = referral ? 'ครบ 6 เดือน · รอส่งต่อกรมคุ้มครองสิทธิฯ' : extension ? 'อยู่ระหว่างขอขยายเวลา' : review ? 'รอทบทวนการคุ้มครอง' : STATUS_LABELS[status]
+            const warning = capWarning(c)
+            const earlyReferral = Boolean(c.article14?.earlyReferral)
+            const workLabel = referral ? (earlyReferral ? `เสนอส่งต่อ${article14Agency(c).short} ก่อนครบ 6 เดือน` : `ครบ 6 เดือน · รอส่งต่อ${article14Agency(c).short}`) : extension ? 'อยู่ระหว่างขอขยายเวลา' : review ? 'รอทบทวนการคุ้มครอง' : STATUS_LABELS[status]
             return <tr key={c.no}>
               <td><Link to="/dossier/$caseNo" params={{ caseNo: c.no }} className="font-bold text-navy">{c.no}</Link><p>{c.person}</p></td>
               <td>{methods.length ? methods.map((m) => `วิธีที่ ${m}`).join(', ') : '—'}</td>
               <td><strong>{co?.agency || protectionResponsibleName(c) || 'ยังไม่ระบุ'}</strong></td>
               <td>{sixMonthDemo ? '6 เดือน' : protectionMonths(c) ? monthLabel(protectionMonths(c)) : '—'}<p className="text-muted">{c.protectionEndAt ? `สิ้นสุด ${formatThaiDate(c.protectionEndAt)}` : 'รอบันทึกวันเริ่มจริง'}</p>{c.episode && <p className="text-muted">{referral && atCap ? 'สะสมครบ 6 เดือน' : `สะสม ${Number((episode.cumulative / episode.cap * 6).toFixed(1))} / 6 เดือน`}</p>}</td>
-              <td><span className="rounded-full bg-soft px-3 py-1 font-semibold text-navy">{workLabel}</span>{c.demoData && <small className="block mt-1 text-muted">เคสตัวอย่าง</small>}</td>
+              <td><span className="rounded-full bg-soft px-3 py-1 font-semibold text-navy">{workLabel}</span>{warning && <span className="ws-status mt-1.5 inline-flex items-center gap-1" data-testid="protection-near-cap-badge"><i className="fa-solid fa-hourglass-half" aria-hidden="true" />ใกล้ครบ 6 เดือน · อีก {warning.remaining} วัน</span>}{c.demoData && <small className="block mt-1 text-muted">เคสตัวอย่าง</small>}</td>
               <td><div className="flex flex-wrap gap-2">
                 <Link to="/protection-duration" search={{ caseNo: c.no }} className="inline-flex min-h-[38px] items-center rounded-lg bg-navy px-3 py-2 font-semibold text-white">ดูระยะเวลาคุ้มครอง</Link>
               </div></td>

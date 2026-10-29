@@ -18,6 +18,7 @@ import { Route as FlowChartRouteImport } from './routes/flow-chart'
 import { Route as FlowGuideRouteImport } from './routes/flow-guide'
 import { Route as FormsRouteImport } from './routes/forms'
 import { Route as IntakeRouteImport } from './routes/intake'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MockStateRouteImport } from './routes/mock-state'
 import { Route as NoticeRouteImport } from './routes/notice'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -27,17 +28,19 @@ import { Route as ProtectionExtensionsRouteImport } from './routes/protection-ex
 import { Route as ProtectionMethodWorkRouteImport } from './routes/protection-method-work'
 import { Route as ProtectionMethodsRouteImport } from './routes/protection-methods'
 import { Route as ProtectionMonitorRouteImport } from './routes/protection-monitor'
-import { Route as ProtectionReviewsRouteImport } from './routes/protection-reviews'
 import { Route as RegistryRouteImport } from './routes/registry'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as RoleRouteImport } from './routes/role'
 import { Route as TerminationRouteImport } from './routes/termination'
 import { Route as AppealFolderCaseNoRouteImport } from './routes/appeal-folder/$caseNo'
+import { Route as CoordinationCaseNoRouteImport } from './routes/coordination/$caseNo'
 import { Route as DossierCaseNoRouteImport } from './routes/dossier/$caseNo'
 import { Route as FormFormIdRouteImport } from './routes/form/$formId'
 import { Route as ProtectionExtensionCaseNoRouteImport } from './routes/protection-extension/$caseNo'
 import { Route as ProtectionMethodMethodRouteImport } from './routes/protection-method/$method'
-import { Route as ProtectionReviewCaseNoRouteImport } from './routes/protection-review/$caseNo'
 import { Route as QueueRoleRouteImport } from './routes/queue/$role'
+import { Route as SarabanIndexRouteImport } from './routes/saraban/index'
+import { Route as SarabanCaseNoRouteImport } from './routes/saraban/$caseNo'
 import { Route as SignTokenRouteImport } from './routes/sign/$token'
 import { Route as TerminationCaseNoRouteImport } from './routes/termination/$caseNo'
 import { Route as SignConsentTokenRouteImport } from './routes/sign/consent/$token'
@@ -87,6 +90,11 @@ const IntakeRoute = IntakeRouteImport.update({
   path: '/intake',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MockStateRoute = MockStateRouteImport.update({
   id: '/mock-state',
   path: '/mock-state',
@@ -132,11 +140,6 @@ const ProtectionMonitorRoute = ProtectionMonitorRouteImport.update({
   path: '/protection-monitor',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectionReviewsRoute = ProtectionReviewsRouteImport.update({
-  id: '/protection-reviews',
-  path: '/protection-reviews',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RegistryRoute = RegistryRouteImport.update({
   id: '/registry',
   path: '/registry',
@@ -147,6 +150,11 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RoleRoute = RoleRouteImport.update({
+  id: '/role',
+  path: '/role',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TerminationRoute = TerminationRouteImport.update({
   id: '/termination',
   path: '/termination',
@@ -155,6 +163,11 @@ const TerminationRoute = TerminationRouteImport.update({
 const AppealFolderCaseNoRoute = AppealFolderCaseNoRouteImport.update({
   id: '/appeal-folder/$caseNo',
   path: '/appeal-folder/$caseNo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoordinationCaseNoRoute = CoordinationCaseNoRouteImport.update({
+  id: '/coordination/$caseNo',
+  path: '/coordination/$caseNo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DossierCaseNoRoute = DossierCaseNoRouteImport.update({
@@ -178,14 +191,19 @@ const ProtectionMethodMethodRoute = ProtectionMethodMethodRouteImport.update({
   path: '/protection-method/$method',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectionReviewCaseNoRoute = ProtectionReviewCaseNoRouteImport.update({
-  id: '/protection-review/$caseNo',
-  path: '/protection-review/$caseNo',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const QueueRoleRoute = QueueRoleRouteImport.update({
   id: '/queue/$role',
   path: '/queue/$role',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SarabanIndexRoute = SarabanIndexRouteImport.update({
+  id: '/saraban/',
+  path: '/saraban/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SarabanCaseNoRoute = SarabanCaseNoRouteImport.update({
+  id: '/saraban/$caseNo',
+  path: '/saraban/$caseNo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignTokenRoute = SignTokenRouteImport.update({
@@ -214,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/flow-guide': typeof FlowGuideRoute
   '/forms': typeof FormsRoute
   '/intake': typeof IntakeRoute
+  '/login': typeof LoginRoute
   '/mock-state': typeof MockStateRoute
   '/notice': typeof NoticeRoute
   '/notifications': typeof NotificationsRoute
@@ -223,19 +242,21 @@ export interface FileRoutesByFullPath {
   '/protection-method-work': typeof ProtectionMethodWorkRoute
   '/protection-methods': typeof ProtectionMethodsRoute
   '/protection-monitor': typeof ProtectionMonitorRoute
-  '/protection-reviews': typeof ProtectionReviewsRoute
   '/registry': typeof RegistryRoute
   '/reports': typeof ReportsRoute
+  '/role': typeof RoleRoute
   '/termination': typeof TerminationRouteWithChildren
   '/appeal-folder/$caseNo': typeof AppealFolderCaseNoRoute
+  '/coordination/$caseNo': typeof CoordinationCaseNoRoute
   '/dossier/$caseNo': typeof DossierCaseNoRoute
   '/form/$formId': typeof FormFormIdRoute
   '/protection-extension/$caseNo': typeof ProtectionExtensionCaseNoRoute
   '/protection-method/$method': typeof ProtectionMethodMethodRoute
-  '/protection-review/$caseNo': typeof ProtectionReviewCaseNoRoute
   '/queue/$role': typeof QueueRoleRoute
+  '/saraban/$caseNo': typeof SarabanCaseNoRoute
   '/sign/$token': typeof SignTokenRoute
   '/termination/$caseNo': typeof TerminationCaseNoRoute
+  '/saraban/': typeof SarabanIndexRoute
   '/sign/consent/$token': typeof SignConsentTokenRoute
 }
 export interface FileRoutesByTo {
@@ -248,6 +269,7 @@ export interface FileRoutesByTo {
   '/flow-guide': typeof FlowGuideRoute
   '/forms': typeof FormsRoute
   '/intake': typeof IntakeRoute
+  '/login': typeof LoginRoute
   '/mock-state': typeof MockStateRoute
   '/notice': typeof NoticeRoute
   '/notifications': typeof NotificationsRoute
@@ -257,19 +279,21 @@ export interface FileRoutesByTo {
   '/protection-method-work': typeof ProtectionMethodWorkRoute
   '/protection-methods': typeof ProtectionMethodsRoute
   '/protection-monitor': typeof ProtectionMonitorRoute
-  '/protection-reviews': typeof ProtectionReviewsRoute
   '/registry': typeof RegistryRoute
   '/reports': typeof ReportsRoute
+  '/role': typeof RoleRoute
   '/termination': typeof TerminationRouteWithChildren
   '/appeal-folder/$caseNo': typeof AppealFolderCaseNoRoute
+  '/coordination/$caseNo': typeof CoordinationCaseNoRoute
   '/dossier/$caseNo': typeof DossierCaseNoRoute
   '/form/$formId': typeof FormFormIdRoute
   '/protection-extension/$caseNo': typeof ProtectionExtensionCaseNoRoute
   '/protection-method/$method': typeof ProtectionMethodMethodRoute
-  '/protection-review/$caseNo': typeof ProtectionReviewCaseNoRoute
   '/queue/$role': typeof QueueRoleRoute
+  '/saraban/$caseNo': typeof SarabanCaseNoRoute
   '/sign/$token': typeof SignTokenRoute
   '/termination/$caseNo': typeof TerminationCaseNoRoute
+  '/saraban': typeof SarabanIndexRoute
   '/sign/consent/$token': typeof SignConsentTokenRoute
 }
 export interface FileRoutesById {
@@ -283,6 +307,7 @@ export interface FileRoutesById {
   '/flow-guide': typeof FlowGuideRoute
   '/forms': typeof FormsRoute
   '/intake': typeof IntakeRoute
+  '/login': typeof LoginRoute
   '/mock-state': typeof MockStateRoute
   '/notice': typeof NoticeRoute
   '/notifications': typeof NotificationsRoute
@@ -292,19 +317,21 @@ export interface FileRoutesById {
   '/protection-method-work': typeof ProtectionMethodWorkRoute
   '/protection-methods': typeof ProtectionMethodsRoute
   '/protection-monitor': typeof ProtectionMonitorRoute
-  '/protection-reviews': typeof ProtectionReviewsRoute
   '/registry': typeof RegistryRoute
   '/reports': typeof ReportsRoute
+  '/role': typeof RoleRoute
   '/termination': typeof TerminationRouteWithChildren
   '/appeal-folder/$caseNo': typeof AppealFolderCaseNoRoute
+  '/coordination/$caseNo': typeof CoordinationCaseNoRoute
   '/dossier/$caseNo': typeof DossierCaseNoRoute
   '/form/$formId': typeof FormFormIdRoute
   '/protection-extension/$caseNo': typeof ProtectionExtensionCaseNoRoute
   '/protection-method/$method': typeof ProtectionMethodMethodRoute
-  '/protection-review/$caseNo': typeof ProtectionReviewCaseNoRoute
   '/queue/$role': typeof QueueRoleRoute
+  '/saraban/$caseNo': typeof SarabanCaseNoRoute
   '/sign/$token': typeof SignTokenRoute
   '/termination/$caseNo': typeof TerminationCaseNoRoute
+  '/saraban/': typeof SarabanIndexRoute
   '/sign/consent/$token': typeof SignConsentTokenRoute
 }
 export interface FileRouteTypes {
@@ -319,6 +346,7 @@ export interface FileRouteTypes {
     | '/flow-guide'
     | '/forms'
     | '/intake'
+    | '/login'
     | '/mock-state'
     | '/notice'
     | '/notifications'
@@ -328,19 +356,21 @@ export interface FileRouteTypes {
     | '/protection-method-work'
     | '/protection-methods'
     | '/protection-monitor'
-    | '/protection-reviews'
     | '/registry'
     | '/reports'
+    | '/role'
     | '/termination'
     | '/appeal-folder/$caseNo'
+    | '/coordination/$caseNo'
     | '/dossier/$caseNo'
     | '/form/$formId'
     | '/protection-extension/$caseNo'
     | '/protection-method/$method'
-    | '/protection-review/$caseNo'
     | '/queue/$role'
+    | '/saraban/$caseNo'
     | '/sign/$token'
     | '/termination/$caseNo'
+    | '/saraban/'
     | '/sign/consent/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -353,6 +383,7 @@ export interface FileRouteTypes {
     | '/flow-guide'
     | '/forms'
     | '/intake'
+    | '/login'
     | '/mock-state'
     | '/notice'
     | '/notifications'
@@ -362,19 +393,21 @@ export interface FileRouteTypes {
     | '/protection-method-work'
     | '/protection-methods'
     | '/protection-monitor'
-    | '/protection-reviews'
     | '/registry'
     | '/reports'
+    | '/role'
     | '/termination'
     | '/appeal-folder/$caseNo'
+    | '/coordination/$caseNo'
     | '/dossier/$caseNo'
     | '/form/$formId'
     | '/protection-extension/$caseNo'
     | '/protection-method/$method'
-    | '/protection-review/$caseNo'
     | '/queue/$role'
+    | '/saraban/$caseNo'
     | '/sign/$token'
     | '/termination/$caseNo'
+    | '/saraban'
     | '/sign/consent/$token'
   id:
     | '__root__'
@@ -387,6 +420,7 @@ export interface FileRouteTypes {
     | '/flow-guide'
     | '/forms'
     | '/intake'
+    | '/login'
     | '/mock-state'
     | '/notice'
     | '/notifications'
@@ -396,19 +430,21 @@ export interface FileRouteTypes {
     | '/protection-method-work'
     | '/protection-methods'
     | '/protection-monitor'
-    | '/protection-reviews'
     | '/registry'
     | '/reports'
+    | '/role'
     | '/termination'
     | '/appeal-folder/$caseNo'
+    | '/coordination/$caseNo'
     | '/dossier/$caseNo'
     | '/form/$formId'
     | '/protection-extension/$caseNo'
     | '/protection-method/$method'
-    | '/protection-review/$caseNo'
     | '/queue/$role'
+    | '/saraban/$caseNo'
     | '/sign/$token'
     | '/termination/$caseNo'
+    | '/saraban/'
     | '/sign/consent/$token'
   fileRoutesById: FileRoutesById
 }
@@ -422,6 +458,7 @@ export interface RootRouteChildren {
   FlowGuideRoute: typeof FlowGuideRoute
   FormsRoute: typeof FormsRoute
   IntakeRoute: typeof IntakeRoute
+  LoginRoute: typeof LoginRoute
   MockStateRoute: typeof MockStateRoute
   NoticeRoute: typeof NoticeRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -431,18 +468,20 @@ export interface RootRouteChildren {
   ProtectionMethodWorkRoute: typeof ProtectionMethodWorkRoute
   ProtectionMethodsRoute: typeof ProtectionMethodsRoute
   ProtectionMonitorRoute: typeof ProtectionMonitorRoute
-  ProtectionReviewsRoute: typeof ProtectionReviewsRoute
   RegistryRoute: typeof RegistryRoute
   ReportsRoute: typeof ReportsRoute
+  RoleRoute: typeof RoleRoute
   TerminationRoute: typeof TerminationRouteWithChildren
   AppealFolderCaseNoRoute: typeof AppealFolderCaseNoRoute
+  CoordinationCaseNoRoute: typeof CoordinationCaseNoRoute
   DossierCaseNoRoute: typeof DossierCaseNoRoute
   FormFormIdRoute: typeof FormFormIdRoute
   ProtectionExtensionCaseNoRoute: typeof ProtectionExtensionCaseNoRoute
   ProtectionMethodMethodRoute: typeof ProtectionMethodMethodRoute
-  ProtectionReviewCaseNoRoute: typeof ProtectionReviewCaseNoRoute
   QueueRoleRoute: typeof QueueRoleRoute
+  SarabanCaseNoRoute: typeof SarabanCaseNoRoute
   SignTokenRoute: typeof SignTokenRoute
+  SarabanIndexRoute: typeof SarabanIndexRoute
   SignConsentTokenRoute: typeof SignConsentTokenRoute
 }
 
@@ -511,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntakeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mock-state': {
       id: '/mock-state'
       path: '/mock-state'
@@ -574,13 +620,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectionMonitorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/protection-reviews': {
-      id: '/protection-reviews'
-      path: '/protection-reviews'
-      fullPath: '/protection-reviews'
-      preLoaderRoute: typeof ProtectionReviewsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/registry': {
       id: '/registry'
       path: '/registry'
@@ -595,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/role': {
+      id: '/role'
+      path: '/role'
+      fullPath: '/role'
+      preLoaderRoute: typeof RoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/termination': {
       id: '/termination'
       path: '/termination'
@@ -607,6 +653,13 @@ declare module '@tanstack/react-router' {
       path: '/appeal-folder/$caseNo'
       fullPath: '/appeal-folder/$caseNo'
       preLoaderRoute: typeof AppealFolderCaseNoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coordination/$caseNo': {
+      id: '/coordination/$caseNo'
+      path: '/coordination/$caseNo'
+      fullPath: '/coordination/$caseNo'
+      preLoaderRoute: typeof CoordinationCaseNoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dossier/$caseNo': {
@@ -637,18 +690,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectionMethodMethodRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/protection-review/$caseNo': {
-      id: '/protection-review/$caseNo'
-      path: '/protection-review/$caseNo'
-      fullPath: '/protection-review/$caseNo'
-      preLoaderRoute: typeof ProtectionReviewCaseNoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/queue/$role': {
       id: '/queue/$role'
       path: '/queue/$role'
       fullPath: '/queue/$role'
       preLoaderRoute: typeof QueueRoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saraban/': {
+      id: '/saraban/'
+      path: '/saraban'
+      fullPath: '/saraban/'
+      preLoaderRoute: typeof SarabanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saraban/$caseNo': {
+      id: '/saraban/$caseNo'
+      path: '/saraban/$caseNo'
+      fullPath: '/saraban/$caseNo'
+      preLoaderRoute: typeof SarabanCaseNoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign/$token': {
@@ -697,6 +757,7 @@ const rootRouteChildren: RootRouteChildren = {
   FlowGuideRoute: FlowGuideRoute,
   FormsRoute: FormsRoute,
   IntakeRoute: IntakeRoute,
+  LoginRoute: LoginRoute,
   MockStateRoute: MockStateRoute,
   NoticeRoute: NoticeRoute,
   NotificationsRoute: NotificationsRoute,
@@ -706,18 +767,20 @@ const rootRouteChildren: RootRouteChildren = {
   ProtectionMethodWorkRoute: ProtectionMethodWorkRoute,
   ProtectionMethodsRoute: ProtectionMethodsRoute,
   ProtectionMonitorRoute: ProtectionMonitorRoute,
-  ProtectionReviewsRoute: ProtectionReviewsRoute,
   RegistryRoute: RegistryRoute,
   ReportsRoute: ReportsRoute,
+  RoleRoute: RoleRoute,
   TerminationRoute: TerminationRouteWithChildren,
   AppealFolderCaseNoRoute: AppealFolderCaseNoRoute,
+  CoordinationCaseNoRoute: CoordinationCaseNoRoute,
   DossierCaseNoRoute: DossierCaseNoRoute,
   FormFormIdRoute: FormFormIdRoute,
   ProtectionExtensionCaseNoRoute: ProtectionExtensionCaseNoRoute,
   ProtectionMethodMethodRoute: ProtectionMethodMethodRoute,
-  ProtectionReviewCaseNoRoute: ProtectionReviewCaseNoRoute,
   QueueRoleRoute: QueueRoleRoute,
+  SarabanCaseNoRoute: SarabanCaseNoRoute,
   SignTokenRoute: SignTokenRoute,
+  SarabanIndexRoute: SarabanIndexRoute,
   SignConsentTokenRoute: SignConsentTokenRoute,
 }
 export const routeTree = rootRouteImport

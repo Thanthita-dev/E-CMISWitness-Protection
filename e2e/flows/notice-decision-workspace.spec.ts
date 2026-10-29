@@ -3,8 +3,8 @@ import { readCase, seedMockState } from '../helpers/seed'
 import { handoffAction } from '../helpers/postApproval'
 import { choosePreliminaryOutcome, confirmInlineDecision, decisionWorkspace, fillDecisionWorkspace, notificationCount, saveDecisionWorkspace } from '../helpers/noticeDecisionWorkspace'
 
-const NO = 'WP-2569-000501'
-const DOSSIER = `/dossier/${NO}`
+const NO = '0501/2569'
+const DOSSIER = `/dossier/${encodeURIComponent(NO)}`
 const role = (page: Page, value: string) => page.getByLabel('เลือกบทบาทผู้ใช้งาน').selectOption(value)
 const noFinalEffects = async (page: Page, before: Record<string, any> | null, notifications: number) => {
   const after = await readCase(page, NO)
@@ -98,7 +98,7 @@ test('หน้าแบบฟอร์มโดยตรงย้อนกล�
   await expect(decisionWorkspace(page)).toBeVisible()
   await expect(page.getByTestId('notice-decision-reason')).toHaveValue('ร่างที่เปิดจากหน้าแบบฟอร์ม')
   await page.getByTestId('notice-decision-back').click()
-  await expect(page).toHaveURL(new RegExp(`/dossier/${NO}`))
+  await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(NO)}`))
   await expect(decisionWorkspace(page)).toHaveCount(0)
   await expect(page.getByTestId('approve-case-button')).toBeVisible()
   await expect(page.getByTestId('reject-case-button')).toBeVisible()
@@ -152,7 +152,7 @@ for (const destination of ['original_owner', 'got'] as const) {
     const duplicate = await page.evaluate(async () => {
       const path = '/scripts/post-approval-fixture.ts'
       const { useCaseStore } = await import(path)
-      return useCaseStore.getState().confirmPreliminaryDecision('WP-2569-000501', 9)
+      return useCaseStore.getState().confirmPreliminaryDecision('0501/2569', 9)
     })
     expect(duplicate).toBe(false)
     expect((await readCase(page, NO))?.documents).toEqual(signed?.documents)
@@ -223,8 +223,7 @@ test('พื้นที่แบบฟอร์มใช้งานด้ว�
   await choosePreliminaryOutcome(page, 9)
   await page.getByTestId('notice-decision-expand-preview').click()
   await expect(page.getByTestId('notice-decision-expand-preview')).toHaveAttribute('aria-expanded', 'true')
-  await decisionWorkspace(page).getByRole('button', { name: 'หน้า 1', exact: true }).click()
-  await expect(decisionWorkspace(page).getByRole('button', { name: 'หน้า 1', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(decisionWorkspace(page).getByTestId('paper-page-1')).toBeVisible()
   await page.getByTestId('notice-decision-expand-preview').click()
   await expect(page.getByTestId('notice-decision-expand-preview')).toHaveAttribute('aria-expanded', 'false')
   for (const [width, zoom] of [[1440, '1'], [390, '1'], [1440, '2']] as const) {

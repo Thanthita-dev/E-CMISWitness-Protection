@@ -6,8 +6,8 @@ import { readCase } from '../helpers/seed'
  * แต่ละไฟล์ journey ใช้ฟังก์ชันชุดนี้ร่วมกัน ส่วนตัวช่วยที่ใช้เฉพาะเส้นทางเดียวให้ประกาศไว้ในไฟล์ journey นั้น
  */
 
-export const CASE_NO = 'WP-2569-000501'
-export const DOSSIER_URL = `/dossier/${CASE_NO}`
+export const CASE_NO = '0501/2569'
+export const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 
 /** กดยืนยันใน SweetAlert (ไม่ใช่ toast) แล้วรอให้ปิด — ตรวจข้อความในกล่องได้ถ้าระบุ */
 export async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
@@ -57,4 +57,29 @@ export async function expectStage(page: Page, stage: string | RegExp, caseNo = C
   })
   if (typeof stage === 'string') await poll.toBe(stage)
   else await poll.toMatch(stage)
+}
+
+/**
+ * WIT0603 → WIT0604 — ติ๊กวิธีที่ 1 ในแบบ คบ.4 แล้วส่งตรง ผอ. จากส่วนส่งของเส้นทางเร่งด่วนในการ์ดส่งงาน
+ * (GAP-014 — ขั้นนี้ไม่มีปุ่มส่งต่อทั่วไปแล้ว ต้องผ่านด่านเลือกวิธีและเพดาน 180 วัน)
+ */
+export async function submitFastTrackToDirector(page: Page, caseNo: string) {
+  await page.goto(`/form/4?caseNo=${caseNo}`)
+  await page.getByTestId('kb4-method-option-1').click()
+  await fillKb5Period(page, caseNo)
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
+  await expect(page.getByTestId('fast-track-submit-button')).toBeEnabled()
+  await page.getByTestId('fast-track-submit-button').click()
+  await confirmDialog(page, 'ยืนยันส่งตรง ผอ.', 'ไม่ผ่านผู้บังคับบัญชาชั้นต้น')
+}
+
+/**
+ * WIT0603 — ระบุช่วงวันที่คุ้มครองชั่วคราวในร่าง คบ.5 (ปฏิทิน ค.ศ. yyyy-mm-dd)
+ * ระบบนับรวมวันแรกและวันสุดท้ายเป็นจำนวนวันที่ใช้ตรวจเพดานรวม 180 วัน · ค่าตั้งต้น 1–30 ม.ค. 2569 = 30 วัน
+ * หยุดอยู่ที่หน้าแบบ คบ.5 — ผู้เรียกพากลับหน้าแฟ้มเอง
+ */
+export async function fillKb5Period(page: Page, caseNo: string, startIso = '2026-01-01', endIso = '2026-01-30') {
+  await page.goto(`/form/5?caseNo=${caseNo}`)
+  await page.getByTestId('kb5-period-start').fill(startIso)
+  await page.getByTestId('kb5-period-end').fill(endIso)
 }

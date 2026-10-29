@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useCaseStore } from '../store/useCaseStore'
-import { compareKb13Methods, getKb13Progress, kb13DueStatus, lastLockedKb13Round, needsReview, openKb13Round } from './kb13'
+import { compareKb13Methods, getKb13Progress, isExternalRound, isKb13RoundDrafted, isKb13RoundReadyToReceive, kb13DueStatus, lastLockedKb13Round, needsReview, openKb13Round, reportSourceLabel, usesExternalReport } from './kb13'
 import { PROTECTION_TOTAL_CAP_DAYS } from './constants'
 import { addDays } from './utils'
 
@@ -212,5 +212,69 @@ describe('getKb13Progress — ความคืบหน้ารายรอ�
 
     const progress = getKb13Progress(current())
     expect(progress.doneCount).toBe(progress.total)
+  })
+})
+
+describe('หนังสือรายงานจากหน่วยงานภายนอก — helper และ getKb13Progress', () => {
+  const letter = {
+    agency: 'สถานีตำรวจภูธรทดสอบ',
+    letterNo: 'ตช 0001/2569',
+    letterDate: '2026-08-30',
+    receivedAt: '2026-09-01',
+    receiveNo: 'รับ 123',
+    documentName: 'report.pdf',
+    documentUrl: 'blob:report',
+    recordedAt: '1 ก.ย. 2569',
+    recordedBy: 'เจ้าหน้าที่',
+  }
+
+  it('source ว่างถือเป็น คบ.13 และต้องลงนามครบสองช่องจึงพร้อมตรวจรับ', () => {
+    expect(isExternalRound(undefined)).toBe(false)
+    expect(isExternalRound({})).toBe(false)
+    expect(reportSourceLabel({})).toBe('คบ.13')
+    expect(isKb13RoundReadyToReceive({ officerSignedAt: 'x' } as never)).toBe(false)
+    expect(isKb13RoundReadyToReceive({ officerSignedAt: 'x', witnessSignedAt: 'y' } as never)).toBe(true)
+  })
+
+  it('รอบภายนอกพร้อมตรวจรับเมื่อมีหนังสือพร้อมไฟล์ โดยไม่ต้องลงนาม', () => {
+    expect(isExternalRound({ source: 'external' })).toBe(true)
+    expect(reportSourceLabel({ source: 'external' })).toBe('หนังสือรายงานจากหน่วยงานภายนอก')
+    expect(isKb13RoundReadyToReceive({ source: 'external' } as never)).toBe(false)
+    expect(isKb13RoundReadyToReceive({ source: 'external', externalLetter: { ...letter, documentUrl: '' } } as never)).toBe(false)
+    expect(isKb13RoundReadyToReceive({ source: 'external', externalLetter: letter } as never)).toBe(true)
+    expect(isKb13RoundDrafted({ source: 'external' } as never)).toBe(false)
+    expect(isKb13RoundDrafted({ source: 'external', externalLetter: letter } as never)).toBe(true)
+  })
+
+  it('getKb13Progress รอบภายนอก: ข้าม WIT1006/1007 และเดินต่อเมื่อบันทึกหนังสือ', () => {
+    useCaseStore.getState().openKb13Round(CASE_NO, { period: '09/2569', source: 'external' })
+    let p = getKb13Progress(current())
+    const by = (code: string) => p.steps.find((s) => s.code === code)!
+    expect(by('WIT1005').label).toBe('บันทึกรับหนังสือรายงานจากหน่วยงานภายนอก')
+    expect(by('WIT1005').done).toBe(false)
+    expect(by('WIT1006')).toMatchObject({ done: true, skipped: true })
+    expect(by('WIT1007')).toMatchObject({ done: true, skipped: true })
+    const before = p.doneCount
+    expect(p.steps[before].code).toBe('WIT1005')
+
+    useCaseStore.getState().recordExternalReport(CASE_NO, round().id, {
+      agency: letter.agency, letterNo: letter.letterNo, letterDate: letter.letterDate,
+      receivedAt: letter.receivedAt, receiveNo: letter.receiveNo, documentName: letter.documentName, documentUrl: letter.documentUrl,
+    })
+    p = getKb13Progress(current())
+    expect(by('WIT1005').done).toBe(true)
+    expect(p.steps[p.doneCount].code).toBe('WIT1008')
+    expect(p.doneCount).toBeGreaterThan(before + 2)
+    expect(by('WIT1006').skipped).toBe(true)
+  })
+})
+
+describe('usesExternalReport — เคสคุ้มครองโดยหน่วยงานอื่นใช้หนังสือรายงานแทน คบ.13', () => {
+  it('มีวิธีที่ 4 ประสานหน่วยงานอื่น ถือว่าใช้หนังสือรายงานภายนอก', () => {
+    expect(usesExternalReport({ methodTracks: [{ method: 4, status: 'active', coordination: { agency: 'สถานีตำรวจนครบาลคันนายาว' } }] } as never)).toBe(true)
+  })
+  it('ไม่มีวิธีที่ 4 ยังใช้ คบ.13 ตามเดิม', () => {
+    expect(usesExternalReport({ methodTracks: [{ method: 1, status: 'active' }] } as never)).toBe(false)
+    expect(usesExternalReport({})).toBe(false)
   })
 })

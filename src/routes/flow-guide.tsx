@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { PageHeader } from '../components/common/PageHeader'
+import { hasSnapshot, snapshotKey } from '../lib/flowSnapshots'
 import { cn } from '../lib/utils'
 import {
     FLOW_GUIDE,
@@ -11,7 +12,9 @@ import {
     mockStateRole,
     tabShortTitle,
 } from '../lib/flowGuide'
-import { PlayButton, StatusBadge, confirmPlay, roleName } from '../components/flow-guide/playback'
+import { PlayButton, SnapshotPlayButton, StatusBadge, confirmPlay, roleName } from '../components/flow-guide/playback'
+import { FlowDownloadButtons } from '../components/flow-guide/FlowDownloadButtons'
+import { useAuthStore } from '../store/useAuthStore'
 
 interface FlowGuideSearch {
     tab?: string
@@ -30,8 +33,10 @@ function tabStats(tab: FlowGuideTab) {
     return { yes: count('yes'), partial: count('partial'), no: count('no'), system: count('system') }
 }
 
-const StepCard: React.FC<{ step: FlowGuideStep }> = ({ step }) => {
-    const playable = hasMockState(step.mock_state)
+const StepCard: React.FC<{ step: FlowGuideStep; tab: string }> = ({ step, tab }) => {
+    const snapKey = snapshotKey.node(tab, step.code)
+    const snap = hasSnapshot(snapKey)
+    const playable = snap || hasMockState(step.mock_state)
     return (
         <li id={step.code} className="ws-card scroll-mt-24 p-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -99,7 +104,7 @@ const StepCard: React.FC<{ step: FlowGuideStep }> = ({ step }) => {
 
             {playable && (
                 <div className="mt-3">
-                    <PlayButton mockState={step.mock_state!} role={step.role} route={step.route} />
+                    {snap ? <SnapshotPlayButton snapshotKey={snapKey} /> : <PlayButton mockState={step.mock_state!} role={step.role} route={step.route} />}
                 </div>
             )}
         </li>
@@ -107,6 +112,7 @@ const StepCard: React.FC<{ step: FlowGuideStep }> = ({ step }) => {
 }
 
 function FlowGuidePage() {
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
     const { tab: tabParam } = Route.useSearch()
     const navigate = Route.useNavigate()
     const [query, setQuery] = useState('')
@@ -143,6 +149,16 @@ function FlowGuidePage() {
                 }
                 actions={
                     <>
+                    {!isAuthenticated && (
+                        <Link
+                            to="/login"
+                            className="inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy transition hover:bg-slate-50"
+                        >
+                            <i className="fa-solid fa-right-to-bracket" />
+                            เข้าสู่ระบบ
+                        </Link>
+                    )}
+                    <FlowDownloadButtons kind="flow-guide" />
                     <Link
                         to="/flow-chart"
                         className="inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy transition hover:bg-slate-50"
@@ -239,7 +255,7 @@ const Overview: React.FC<{ onPick: (tab: string) => void }> = ({ onPick }) => {
                 <ol className="list-decimal space-y-1 pl-5">
                     <li>เลือก "เส้นทางแนะนำ" ด้านล่าง แล้วกดจุดแวะ (checkpoint) ตามลำดับ — แต่ละจุดโหลดข้อมูลจำลองและสลับบทบาทให้เอง</li>
                     <li>ในแท็บที่เปิดขึ้น ทำตาม "วิธีกด" ของขั้นนั้น ๆ ใช้ช่องเลือกบทบาทมุมขวาบน (TopBar) เมื่อขั้นถัดไปเป็นของคนอื่น</li>
-                    <li>อยากดูทีละแท็บของผัง drawio ให้กดกล่องในหน้าผังภาพรวม เลือกจากเมนูซ้าย หรือค้นหาด้วยเลข WIT</li>
+                    <li>อยากดูทีละแท็บของผัง ให้กดกล่องในหน้าผังภาพรวม เลือกจากเมนูซ้าย หรือค้นหาด้วยเลข WIT</li>
                 </ol>
                 <p className="mt-2 text-[0.8rem] text-muted">
                     ทั้งหมด {all.length} ขั้น · ทำได้ใน UI {count('yes')} · บางส่วน {count('partial')} · ระบบ/นอกระบบ {count('system')} · ยังไม่มี{' '}
@@ -339,7 +355,7 @@ const TabDetail: React.FC<{ tab: FlowGuideTab }> = ({ tab }) => {
             </section>
             <ol className="space-y-3">
                 {tab.steps.map((step) => (
-                    <StepCard key={step.code} step={step} />
+                    <StepCard key={step.code} step={step} tab={tab.tab} />
                 ))}
             </ol>
         </div>

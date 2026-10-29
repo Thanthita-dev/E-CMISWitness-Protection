@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
 import { checkNoticeReady, completeNoticeDetails } from '../helpers/noticeDocuments'
 
 /**
@@ -18,8 +19,8 @@ import { checkNoticeReady, completeNoticeDetails } from '../helpers/noticeDocume
  * 4. WIT0909 ต้องมีปุ่มปิดเรื่อง และโผล่เฉพาะเมื่อพ้นกรอบ 30 วันแล้วเท่านั้น
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const DEPUTY = 'นายพิพัฒน์ ศรีสุวรรณ'
 const SECRETARY = 'นายสุรศักดิ์ ธรรมพิทักษ์'
@@ -151,13 +152,21 @@ test.describe('WIT0904 / WIT0905 — ด่านตรวจครบถ้ว�
     const afterSubmit = await readCase(page, CASE_NO)
     expect(afterSubmit?.nonApprovalStep).toBe(1)
     expect(afterSubmit?.kb10ReadinessCheckedBy).toBe(OFFICER)
-    expect(afterSubmit?.owner).toBe(DEPUTY)
+    // คบ.10 ออกจากหน่วยไปสำนักงานเลขาธิการ ต้องผ่านธุรการหน่วย → ธุรการ สลธ. ก่อนถึงรองเลขาธิการฯ
+    expect(afterSubmit?.owner).not.toBe(DEPUTY)
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver', { afterRole: 'deputy_secretary' })
+    expect((await readCase(page, CASE_NO))?.owner).toBe(DEPUTY)
+    await page.goto(DOSSIER_URL)
 
     // WIT0905 แขนงไม่ผ่าน — รองเลขาธิการฯ พบว่าเนื้อหาไม่ตรงกับผลพิจารณา จึงส่งร่างกลับให้เจ้าหน้าที่แก้
-    await switchRole(page, 'deputy_secretary')
     await page.getByTestId('kb10-deputy-note').fill('สาระสำคัญที่ระบุใน คบ.10 ไม่ตรงกับเหตุผลในผลพิจารณาไม่อนุมัติต้นทาง')
     await page.getByTestId('kb10-deputy-return').click()
     await confirmDialog(page, 'ยืนยันส่งกลับแก้ไข', 'เจ้าหน้าที่ผู้รับผิดชอบ')
+    // ส่งคืนลงหน่วยผ่านธุรการ สลธ. → ธุรการหน่วย ก่อนเจ้าหน้าที่ได้รับ
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver', { afterRole: 'officer' })
+    await page.goto(DOSSIER_URL)
 
     const afterReturn = await readCase(page, CASE_NO)
     expect(afterReturn?.nonApprovalStep).toBe(0)
@@ -336,28 +345,13 @@ test.describe('WIT0908 / WIT0909 — ประสงค์อุทธรณ์�
     expect(((after?.appealFolder as Record<string, any>).intake as Record<string, unknown>).channel).toBe('letter')
     expect(((after?.appealFolder as Record<string, any>).intake as Record<string, unknown>).registryNo).toBe('512/2569')
 
-    // ผังกำหนดว่า "ไม่เปลี่ยนเจ้าของเรื่องอัตโนมัติ" — owner ต้องคงเดิมจนกว่าจะมีการมอบหมายเจ้าหน้าที่อุทธรณ์อย่างชัดเจน
+    // ผังกำหนดว่า "ไม่เปลี่ยนเจ้าของเรื่องอัตโนมัติ" — เจ้าของสำนวนเดิมยังเป็นผู้รับผิดชอบแฟ้มอุทธรณ์
     expect(after?.owner).toBe(ownerBefore)
     expect(after?.owner).not.toBe(APPEAL_OWNER)
 
     // แขนงเสริม: ถ้ายื่นอุทธรณ์แล้วและกรอบ 30 วันพ้นไปด้วย ก็ยังปิดกระบวนการไม่อนุมัติไม่ได้ (ไปเดินเส้น 09B แทน)
     await page.goto(DOSSIER_URL)
     await expect(page.getByTestId('kb10-close')).toHaveCount(0)
-
-    // ผบช.ชั้นต้นมอบหมายเจ้าหน้าที่อุทธรณ์อย่างชัดเจน — จุดเดียวที่เปลี่ยน owner ได้จริง
-    await switchRole(page, 'supervisor')
-    await page.goto(`/appeal-folder/${CASE_NO}`)
-    const assignSection = page.getByTestId('appeal-assign')
-    await expect(assignSection).toBeVisible()
-    await assignSection.getByTestId('appeal-assign-officer').selectOption('APP-001')
-    await assignSection.getByTestId('appeal-assign-submit').click()
-    await confirmDialog(page, 'ยืนยัน')
-
-    const assigned = await readCase(page, CASE_NO)
-    expect(assigned?.owner).toBe(APPEAL_OWNER)
-    expect((assigned?.appealFolder as Record<string, any>).appealOfficer?.name).toBe(APPEAL_OWNER)
-    const history = (assigned?.assignmentHistory || []) as Array<Record<string, unknown>>
-    expect(history.some((h) => String(h.action).includes('มอบหมายเจ้าหน้าที่อุทธรณ์'))).toBe(true)
   })
 })
 

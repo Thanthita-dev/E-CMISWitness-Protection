@@ -1,9 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useCaseStore } from './useCaseStore'
+import { ARTICLE19_REASONS } from '../lib/terminationRules'
+import type { Kb15Report } from '../types/case'
 import { MAIN_CASE_OPTIONS } from '../lib/constants'
 import { PROTECTION_TOTAL_CAP_DAYS } from '../lib/constants'
 import { summarizeEpisode } from '../lib/episode'
 import { isFormFullySigned, pendingKb13Report } from '../lib/formSignature'
+import { useAuthStore } from './useAuthStore'
+import { passSarabanCheckpoint } from '../lib/sarabanTestHelpers'
+
+/** เอกสารข้ามหน่วย ↔ สำนักงานเลขาธิการต้องผ่านธุรการสองจุด (ขาไป/ขากลับ) */
+const passClerkLeg = () => { passSarabanCheckpoint(CASE_NO); passSarabanCheckpoint(CASE_NO) }
 
 const CASE_NO = 'WP-TEST-000001'
 const MAIN_ID = MAIN_CASE_OPTIONS[0].id
@@ -28,6 +35,19 @@ const seed = () => {
 }
 
 const current = () => useCaseStore.getState().getCase(CASE_NO)!
+
+const approvedTerminationReport = (date: string): Kb15Report => ({
+  version: 1, trigger: 'due_or_officer', regulationClause: 4, article19Reason: 1,
+  summary: ARTICLE19_REASONS[0], facts: 'ข้อเท็จจริงตรวจแล้ว', evidenceNote: 'รายงาน.pdf',
+  occurredAt: date, proposedEndAt: date, createdAt: date, createdBy: 'ผู้จัดทำ', status: 'endorsed',
+})
+const seedSubmittedOrder = (effective: string) => {
+  useCaseStore.getState().updateCase(CASE_NO, {
+    stage: 'termination_order', kb15: approvedTerminationReport(effective),
+    terminationApproval: { approved: true, decidedAt: effective, decidedBy: 'เลขาธิการ', note: 'เห็นชอบ' },
+    kb16: { orderNo: '088/2569', reason: ARTICLE19_REASONS[0], issuedAt: effective, effectiveAt: effective, status: 'submitted', kb15Version: 1, regulationClause: 4 },
+  })
+}
 
 beforeEach(seed)
 
@@ -63,56 +83,32 @@ describe('เชื่อมโยงคดีหลัก — บันทึ�
 describe('WIT1130 / WIT1139 — การยุติต้องรอ คบ.16 ลงนามและถึงวันที่มีผล', () => {
   beforeEach(() => {
     useCaseStore.getState().requestTermination(CASE_NO, 'ภัยคุกคามหมดไป')
+    passClerkLeg() // ขาไป: คบ.7 ถึงเลขาธิการ
+    useAuthStore.getState().setRole('secretary') // อำนาจยุติเป็นของเลขาธิการเท่านั้น
   })
 
-  it('เห็นชอบให้ยุติแล้วยังไม่ terminated — ไปขั้นออกคำสั่งเท่านั้น', () => {
+  it('ทางเรียกเดิมห้ามอนุมัติจาก คบ.7 โดยข้ามการพิจารณา คบ.15', () => {
     useCaseStore.getState().decideTermination(CASE_NO, true, 'เห็นชอบ')
-
-    const c = current()
-    expect(c.stage).toBe('termination_order')
-    expect(c.closedAt).toBeUndefined()
+    expect(current().terminationApproval).toBeUndefined()
+    expect(current().kb16).toBeUndefined()
+    expect(current().closedAt).toBeUndefined()
   })
-
-  it('ลงนาม คบ.16 ที่มีผลย้อนไปแล้ว จึงเปลี่ยนเป็น terminated และล็อกฉบับลงนาม', () => {
-    const past = new Date()
-    past.setDate(past.getDate() - 1)
-    const effective = past.toISOString().slice(0, 10)
-
-    useCaseStore.getState().decideTermination(CASE_NO, true, 'เห็นชอบ')
-    useCaseStore.getState().issueKb16(CASE_NO, {
-      orderNo: '088/2569',
-      reason: 'ภัยคุกคามหมดไป',
-      issuedAt: effective,
-      effectiveAt: effective,
-    })
-    expect(current().stage).toBe('termination_order')
-
+  it('ลงนาม คบ.16 ที่ถึงวันที่มีผลแล้วจึงสิ้นสุด โดยงานเอกสารยังไม่ปิด', () => {
+    const date = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+    seedSubmittedOrder(date)
     useCaseStore.getState().signKb16(CASE_NO)
-
-    const c = current()
-    expect(c.stage).toBe('terminated')
-    expect(c.kb16?.locked).toBe(true)
-    expect(c.closedAt).toBeUndefined() // คำสั่งมีผลแล้ว แต่ยังต้องแจ้ง คบ.17 และรอปิดแฟ้ม
+    expect(current().stage).toBe('terminated')
+    expect(current().kb16?.locked).toBe(true)
+    expect(current().closedAt).toBeUndefined()
+    expect(current().terminationDocumentsClosedAt).toBeUndefined()
   })
-
   it('คำสั่งที่ยังไม่ถึงวันที่มีผล ลงนามแล้วก็ยังไม่ยุติ', () => {
-    const future = new Date()
-    future.setDate(future.getDate() + 7)
-    const effective = future.toISOString().slice(0, 10)
-
-    useCaseStore.getState().decideTermination(CASE_NO, true, 'เห็นชอบ')
-    useCaseStore.getState().issueKb16(CASE_NO, {
-      orderNo: '089/2569',
-      reason: 'ครบกำหนด',
-      issuedAt: new Date().toISOString().slice(0, 10),
-      effectiveAt: effective,
-    })
+    const date = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+    seedSubmittedOrder(date)
     useCaseStore.getState().signKb16(CASE_NO)
-
-    const c = current()
-    expect(c.kb16?.signedAt).toBeTruthy()
-    expect(c.stage).toBe('termination_order')
-    expect(c.closedAt).toBeUndefined()
+    expect(current().kb16?.signedAt).toBeTruthy()
+    expect(current().stage).toBe('termination_order')
+    expect(current().closedAt).toBeUndefined()
   })
 })
 
@@ -358,6 +354,7 @@ describe('11B — คบ.14 ขยายระยะเวลา (WIT1114-WIT112
 })
 
 describe('11C/11D — เหตุยุติ ด่านอนุมัติ และอุทธรณ์ (WIT1127/WIT1137/WIT1147)', () => {
+  beforeEach(() => useAuthStore.getState().setRole('officer'))
   it('WIT1127 — หนังสือขอยุติจากภายนอกเข้ากับแฟ้มเดิม ไม่เปิดแฟ้มใหม่', () => {
     useCaseStore.getState().recordTerminationTrigger(CASE_NO, {
       source: 'external_letter',
@@ -400,29 +397,25 @@ describe('11C/11D — เหตุยุติ ด่านอนุมัติ
     expect(c.terminationTrigger?.additionalReasons).toHaveLength(1)
   })
 
-  it('WIT1137 — ไม่อนุมัติให้ยุติ ต้องคุ้มครองต่อและไม่มีคำสั่ง คบ.16', () => {
-    useCaseStore.getState().draftKb15(CASE_NO, {
-      trigger: 'due_or_officer',
-      summary: 'ครบกำหนดและภัยดับลง',
-    })
-    useCaseStore.getState().reviewKb15(CASE_NO, true, 'ครบถ้วน')
-
-    useCaseStore.getState().decideTerminationApproval(CASE_NO, false, 'ยังมีภัยอยู่')
-
-    const c = current()
-    expect(c.terminationApproval?.approved).toBe(false)
-    expect(c.stage).toBe('protection')
-    expect(c.kb16).toBeUndefined()
+  it('WIT1137 — เลขาธิการส่งกลับ คบ.15 แล้วไม่มีคำสั่งยุติ', () => {
+    const report = { ...approvedTerminationReport('2026-10-01'), status: 'submitted' as const, approvalStage: 'secretary' as const }
+    useCaseStore.getState().updateCase(CASE_NO, { kb15: report })
+    useAuthStore.getState().setRole('secretary')
+    useCaseStore.getState().reviewKb15(CASE_NO, false, 'ขอตรวจหลักฐานเพิ่ม')
+    expect(current().kb15?.status).toBe('returned')
+    expect(current().terminationApproval).toBeUndefined()
+    expect(current().kb16).toBeUndefined()
   })
 
   it('WIT1147 — รับอุทธรณ์คำสั่งยุติแล้วผูกกับ คบ.17 เดิม ไม่ปิดงาน', () => {
     useCaseStore.getState().updateCase(CASE_NO, {
+      kb17: { documentName: 'คบ17.pdf', status: 'submitted', signedAt: '2026-10-01', signedBy: 'เลขาธิการ' },
       kb16: { orderNo: 'คำสั่งที่ 1/2569', reason: 'ครบกำหนด', signedAt: '01/09/2569', locked: true },
     })
     useCaseStore.getState().dispatchKb17(CASE_NO, {
       documentName: 'คบ17.pdf',
       registryNo: 'ปปท 0001/2569',
-      registryDate: '2569-09-01',
+      registryDate: '2026-09-01',
     })
     useCaseStore.getState().recordKb17Delivery(CASE_NO, new Date().toISOString(), 'ใบตอบรับ')
 
@@ -437,13 +430,17 @@ describe('11C/11D — เหตุยุติ ด่านอนุมัติ
     expect(c.appealAgainst).toBe('kb17')
     expect(c.stage).toBe('appeal')
     expect(c.closedAt).toBeUndefined()
-    expect(c.appealFolder?.stage).toBe('received')
+    // ตรวจกรอบ 30 วันรวมกับการรับคำอุทธรณ์ — ภายในกรอบเข้าชั้นความเห็นเจ้าหน้าที่ทันที
+    expect(c.appealFolder?.stage).toBe('officer_opinion')
     expect(c.appealFolder?.intake?.channel).toBe('letter')
+    // จัดทำบันทึกเพิ่มเติม (อุทธรณ์) ของ คบ.3/คบ.6 ให้ทันทีตอนรับคำอุทธรณ์
+    expect(c.appealFolder?.addendum?.kb3Version).toBeGreaterThan(0)
+    expect(c.appealFolder?.addendum?.kb6Version).toBeGreaterThan(0)
     // ผังห้ามเปลี่ยนเจ้าของเรื่องอัตโนมัติเมื่อรับคำอุทธรณ์
     expect(c.owner).not.toBe('นางสาววราภรณ์ นิติธรรม')
   })
 
-  it('TC-151 — closeProtectionCase ต้อง no-op เมื่อยังไม่พ้นกรอบอุทธรณ์ 30 วัน', () => {
+  it('TC-151 — ข้อมูลเก่ายังไม่มีฐานเหตุและหลักฐานรับแจ้ง ต้องไม่ปิดงาน', () => {
     useCaseStore.getState().updateCase(CASE_NO, {
       kb16: { orderNo: 'คำสั่งที่ 1/2569', reason: 'ครบกำหนด', signedAt: '01/09/2569', locked: true },
       kb17: {
@@ -481,8 +478,9 @@ describe('11C/11D — เหตุยุติ ด่านอนุมัติ
     expect(c.closedAt).toBeFalsy()
   })
 
-  it('TC-151 — closeProtectionCase ปิดงานได้เมื่อพ้นกรอบอุทธรณ์ 30 วันแล้วและไม่มีงานค้าง', () => {
+  it('TC-151 — ปิดเฉพาะงานเอกสารเมื่อฐานเหตุและหลักฐานรับแจ้งครบ', () => {
     useCaseStore.getState().updateCase(CASE_NO, {
+      kb15: approvedTerminationReport('2026-09-01'),
       kb16: { orderNo: 'คำสั่งที่ 1/2569', reason: 'ครบกำหนด', signedAt: '01/09/2569', locked: true, effectiveAt: '01/09/2569' },
       kb17: {
         documentName: 'คบ17.pdf',
@@ -491,14 +489,105 @@ describe('11C/11D — เหตุยุติ ด่านอนุมัติ
         dispatchedAt: '02/09/2569',
         deliveredAt: new Date(Date.now() - 31 * 86400000).toISOString(),
         appealDueAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+        receiptEvidence: 'ใบรับแจ้ง.pdf',
       },
     })
 
     useCaseStore.getState().closeProtectionCase(CASE_NO, 'พ้นกำหนดอุทธรณ์')
 
     const c = current()
-    expect(c.stage).toBe('terminated')
-    expect(c.closedAt).toBeTruthy()
+    expect(c.terminationDocumentsClosedAt).toBeTruthy()
+    expect(c.closedAt).toBeUndefined()
     expect(c.kb16?.locked).toBe(true)
+  })
+})
+
+describe('Tab 10 — รอบรายงานจากหนังสือหน่วยงานภายนอก', () => {
+  const roundOf = () => current().monthlyReports![0]
+  const letter = {
+    agency: 'สถานีตำรวจภูธรทดสอบ',
+    letterNo: 'ตช 0001/2569',
+    letterDate: '2026-08-30',
+    receivedAt: '2026-09-01',
+    receiveNo: 'รับ 123',
+    documentName: 'report.pdf',
+    documentUrl: 'blob:report',
+  }
+  const status = { riskLevel: 'ปานกลาง' as const, issues: 'ไม่มี', nextProposal: 'คงเดิม' }
+
+  it('เปิดรอบแบบ external เก็บ source และขั้นถัดไปพูดถึงหนังสือรายงาน', () => {
+    useCaseStore.getState().openKb13Round(CASE_NO, { period: '09/2569', source: 'external' })
+    expect(roundOf().source).toBe('external')
+    expect(current().next).toContain('หนังสือรายงาน')
+  })
+
+  it('ตรวจรับไม่ได้ก่อนบันทึกหนังสือ แล้วเดินครบถึงส่งทบทวนโดยไม่ต้องลงนาม', () => {
+    const store = useCaseStore.getState()
+    store.openKb13Round(CASE_NO, { period: '09/2569', source: 'external' })
+    const id = roundOf().id
+
+    store.receiveKb13Round(CASE_NO, id)
+    expect(roundOf().reviewedAt).toBeUndefined()
+
+    const historyBefore = (current().assignmentHistory || []).length
+    store.recordExternalReport(CASE_NO, id, letter, 'เจ้าหน้าที่ทดสอบ')
+    expect(roundOf().externalLetter).toMatchObject({ ...letter, recordedBy: 'เจ้าหน้าที่ทดสอบ' })
+    expect(roundOf().externalLetter?.recordedAt).toBeTruthy()
+    expect(current().assignmentHistory!.length).toBeGreaterThan(historyBefore)
+    expect(current().assignmentHistory!.at(-1)?.action).toContain('บันทึกรับหนังสือรายงาน')
+    expect(roundOf().officerSignedAt).toBeUndefined()
+    expect(roundOf().witnessSignedAt).toBeUndefined()
+
+    store.receiveKb13Round(CASE_NO, id, 'หัวหน้าชุด')
+    expect(roundOf().reviewedAt).toBeTruthy()
+
+    store.recordKb13Status(CASE_NO, id, status)
+    store.lockKb13Round(CASE_NO, id)
+    expect(roundOf().lockedAt).toBeTruthy()
+
+    store.sendToProtectionReview(CASE_NO, 'ทบทวนผล')
+    expect(current().reviewHandoff?.reportSource).toBe('external')
+  })
+
+  it('บันทึกหนังสือซ้ำได้ก่อนตรวจรับ (แทนที่ฉบับเดิม)', () => {
+    const store = useCaseStore.getState()
+    store.openKb13Round(CASE_NO, { period: '09/2569', source: 'external' })
+    const id = roundOf().id
+    store.recordExternalReport(CASE_NO, id, letter)
+    store.recordExternalReport(CASE_NO, id, { ...letter, letterNo: 'ตช 0002/2569' })
+    expect(roundOf().externalLetter?.letterNo).toBe('ตช 0002/2569')
+  })
+
+  it('recordExternalReport ถูกเมินกับรอบ คบ.13', () => {
+    const store = useCaseStore.getState()
+    store.openKb13Round(CASE_NO, { period: '09/2569' })
+    expect(roundOf().source).toBe('kb13')
+    store.recordExternalReport(CASE_NO, roundOf().id, letter)
+    expect(roundOf().externalLetter).toBeUndefined()
+  })
+
+  it('recordExternalReport ถูกเมินหลังตรวจรับแล้ว', () => {
+    const store = useCaseStore.getState()
+    store.openKb13Round(CASE_NO, { period: '09/2569', source: 'external' })
+    const id = roundOf().id
+    store.recordExternalReport(CASE_NO, id, letter)
+    store.receiveKb13Round(CASE_NO, id)
+    store.recordExternalReport(CASE_NO, id, { ...letter, letterNo: 'แก้ภายหลัง' })
+    expect(roundOf().externalLetter?.letterNo).toBe(letter.letterNo)
+  })
+
+  it('คบ.13 เริ่มต้นยังต้องลงนามครบสองช่องก่อนตรวจรับ (regression)', () => {
+    const store = useCaseStore.getState()
+    store.openKb13Round(CASE_NO, { period: '09/2569' })
+    const id = roundOf().id
+    store.submitKb13Round(CASE_NO, id, { orderRef: 'คบ.8', operators: 'ก', summary: 'ปกติ' })
+    store.receiveKb13Round(CASE_NO, id)
+    expect(roundOf().reviewedAt).toBeUndefined()
+    store.signMonthlyReport(CASE_NO, id, 'officer', 'ผู้ปฏิบัติ')
+    store.receiveKb13Round(CASE_NO, id)
+    expect(roundOf().reviewedAt).toBeUndefined()
+    store.signMonthlyReport(CASE_NO, id, 'witness')
+    store.receiveKb13Round(CASE_NO, id)
+    expect(roundOf().reviewedAt).toBeTruthy()
   })
 })

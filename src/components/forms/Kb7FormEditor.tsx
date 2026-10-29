@@ -4,7 +4,8 @@ import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { useCaseStore } from '../../store/useCaseStore'
 import { TERMINATION_REASONS } from '../../lib/constants'
 import { showToast } from '../../lib/swal'
-import { Area, Checks, DocHeaderFields, EditorShell, Field, Grid, Radios, Section, ThaiDateFields } from './fields/FormKit'
+import { Area, Checks, DocHeaderFields, EditorShell, Field, DateField, Grid, Radios, Section, ThaiDateFields } from './fields/FormKit'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface Kb7FormEditorProps {
   onSaved?: () => void
@@ -40,24 +41,24 @@ export const Kb7FormEditor: React.FC<Kb7FormEditorProps> = ({ onSaved, caseNo, t
             type="button"
             onClick={() => {
               if (!caseItem) return showToast('ไม่พบแฟ้มคำร้องที่เปิดอยู่')
-              if (!String(reason).trim()) return showToast('กรุณาระบุเหตุผลในการขอให้ยุติการคุ้มครอง')
+              requestTermination(caseItem.no, String(reason || caseItem.terminationRequest?.reason || ''))
               if (terminationIntake) {
-                showToast('บันทึกแบบ คบ.7 แล้ว กรุณาแนบฉบับที่พยานลงนามเพื่อดำเนินเรื่องยุติต่อ')
+                showToast('บันทึกแบบ คบ.7 แล้ว')
                 onSaved?.()
                 return
               }
-              requestTermination(caseItem.no, reason)
-              showToast('เสนอ คบ.7 ให้เลขาธิการ ป.ป.ท. ลงนามสั่งยุติแล้ว')
+              showToast('บันทึกคำร้อง คบ.7 แล้ว — รับเรื่องยุติและจัดทำ คบ.15 ต่อในแฟ้มเดิม')
               onSaved?.()
             }}
             className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-navy-mid px-6 py-[0.68rem] text-[0.88rem] font-semibold text-white hover:bg-navy transition"
           >
             <i className="fa-solid fa-circle-stop" />
-            {terminationIntake ? 'บันทึก คบ.7 และกลับเรื่องยุติ' : 'เสนอเลขาธิการฯ ลงนามสั่งยุติ'}
+            {terminationIntake ? 'บันทึก คบ.7 และกลับแฟ้มคำร้อง' : 'บันทึกคำร้อง คบ.7'}
           </Button>
         </>
       }
     >
+      <DateField formId={7} name="วันที่ขอให้ยุติ" label="วันที่ขอให้ยุติ (ข้อมูลประกอบคำร้อง)" />
       <Section title="หัวเอกสาร">
         <DocHeaderFields formId={7} />
         <ThaiDateFields formId={7} label="สำนักงาน ป.ป.ท. วันที่" dayKey="วันที่" monthKey="เดือน" yearKey="พ.ศ." />
@@ -146,7 +147,7 @@ export const Kb7FormEditor: React.FC<Kb7FormEditorProps> = ({ onSaved, caseNo, t
               </option>
             ))}
           </select>
-          <textarea
+          <VoiceTextarea
             rows={4}
             value={reason}
             onChange={(e) => updateField(7, 'เหตุผลการยุติ', e.target.value)}

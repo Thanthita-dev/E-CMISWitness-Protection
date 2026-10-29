@@ -85,7 +85,7 @@ describe('คบ.6 ข้อ 7 — หน้าแก้ไข', () => {
 })
 
 describe('คบ.6 ข้อ 7 — หน้ากระดาษ A4', () => {
-  const HEADING = '7. กฎหมาย กฎ ระเบียบที่เกี่ยวข้อง'
+  const HEADING = '๗. กฎหมาย กฎ ระเบียบที่เกี่ยวข้อง'
 
   const renderPage2 = () => {
     useFormDraftStore.setState({ manualPage: 2 })
@@ -95,25 +95,25 @@ describe('คบ.6 ข้อ 7 — หน้ากระดาษ A4', () => {
   it('พิมพ์กฎหมายสามฉบับตามค่าตั้งต้น', () => {
     const { container } = renderPage2()
 
-    expect(container.textContent).toContain(`7.1${NBSP}${KB6_DEFAULT_LEGAL_REFS[0]}`)
-    expect(container.textContent).toContain(`7.2${NBSP}${KB6_DEFAULT_LEGAL_REFS[1]}`)
-    expect(container.textContent).toContain(`7.3${NBSP}${KB6_DEFAULT_LEGAL_REFS[2]}`)
+    expect(container.textContent).toContain(`๗.๑${NBSP}${KB6_DEFAULT_LEGAL_REFS[0]}`)
+    expect(container.textContent).toContain(`๗.๒${NBSP}${KB6_DEFAULT_LEGAL_REFS[1]}`)
+    expect(container.textContent).toContain(`๗.๓${NBSP}${KB6_DEFAULT_LEGAL_REFS[2]}`)
   })
 
   it('พิมพ์ข้อที่ผู้ใช้เพิ่มเข้ามาเป็นข้อ 7.4', () => {
     setRefs([...KB6_DEFAULT_LEGAL_REFS, 'ประกาศ ป.ป.ท. เรื่องหลักเกณฑ์เพิ่มเติม พ.ศ. 2570'])
     const { container } = renderPage2()
 
-    expect(container.textContent).toContain(`7.4${NBSP}ประกาศ ป.ป.ท. เรื่องหลักเกณฑ์เพิ่มเติม พ.ศ. 2570`)
+    expect(container.textContent).toContain(`๗.๔${NBSP}ประกาศ ป.ป.ท. เรื่องหลักเกณฑ์เพิ่มเติม พ.ศ. 2570`)
   })
 
   it('ข้ามข้อที่เว้นว่างและเลื่อนเลขข้อขึ้นให้ต่อเนื่อง', () => {
     setRefs(['พ.ร.บ. ก', '   ', 'ระเบียบ ข'])
     const { container } = renderPage2()
 
-    expect(container.textContent).toContain(`7.1${NBSP}พ.ร.บ. ก`)
-    expect(container.textContent).toContain(`7.2${NBSP}ระเบียบ ข`)
-    expect(container.textContent).not.toContain('7.3')
+    expect(container.textContent).toContain(`๗.๑${NBSP}พ.ร.บ. ก`)
+    expect(container.textContent).toContain(`๗.๒${NBSP}ระเบียบ ข`)
+    expect(container.textContent).not.toContain('๗.๓')
   })
 
   /**
@@ -127,18 +127,33 @@ describe('คบ.6 ข้อ 7 — หน้ากระดาษ A4', () => {
     const { container } = renderPage2()
 
     const marker = Array.from(container.querySelectorAll('span')).find(
-      (el) => el.textContent === `7.1${NBSP}`
+      (el) => el.textContent === `๗.๑${NBSP}`
     )
 
     expect(marker).toBeDefined()
     expect(marker!.className).toContain('inline-block')
   })
 
+  /** FB-025 — บรรทัดที่ตัดคำต้องเริ่มตรงกับข้อความ ไม่ย้อนไปชิดขอบซ้าย */
+  it('กั้นหน้าแบบแขวน ข้อความแยกจากเลขข้อเป็นคอลัมน์ของตัวเอง', () => {
+    setRefs([KB6_DEFAULT_LEGAL_REFS[0]])
+    const { getAllByTestId } = renderPage2()
+
+    const [row] = getAllByTestId('kb6-paper-legal-ref')
+    expect(row.className).toContain('flex')
+    expect(row.className).toContain('pl-[3rem]')
+    expect(row.className).not.toContain('indent-')
+    const [marker, body] = Array.from(row.children)
+    expect(marker.className).toContain('shrink-0')
+    expect(body.className).toContain('flex-1')
+    expect(body.textContent).toBe(KB6_DEFAULT_LEGAL_REFS[0])
+  })
+
   it('ยังอ่านข้อความรวมได้ตามปกติ', () => {
     setRefs(['สั้น'])
     const { container } = renderPage2()
 
-    expect(container.textContent).toContain(`7.1${NBSP}สั้น`)
+    expect(container.textContent).toContain(`๗.๑${NBSP}สั้น`)
   })
 
   it('เหลือเพียงหัวข้อ 7 เมื่อไม่มีกฎหมายเลย', () => {
@@ -146,6 +161,6 @@ describe('คบ.6 ข้อ 7 — หน้ากระดาษ A4', () => {
     const { container } = renderPage2()
 
     expect(container.textContent).toContain(HEADING)
-    expect(container.textContent).not.toContain('7.1')
+    expect(container.textContent).not.toContain('๗.๑')
   })
 })

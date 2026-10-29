@@ -3,6 +3,12 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import type { Page } from '@playwright/test'
 import { shiftMockDates } from '../../src/lib/mockDateShift'
+import { WP_DATA_VERSION, WP_DATA_VERSION_KEY } from '../../src/lib/legacyDataReset'
+import { authStateForAccount, mockStateAccountForRole } from '../../src/lib/mockStateAccounts'
+import { getRoleSet, ROLE_SET_STORAGE_KEY } from '../../src/lib/roleSets'
+import { remapMockStateUserNames, resolveCapturedUsers, type CapturedUsers } from '../../src/lib/mockStateRoleNames'
+import baselineUsers from '../../src/data/mock-state-baseline-users.json' with { type: 'json' }
+import type { UserRole } from '../../src/types/user'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const mockStatesDir = resolve(here, '../../src/mock-states')
@@ -11,6 +17,7 @@ interface MockState {
   name: string
   to: string | null
   capturedAt?: string
+  capturedUsers?: CapturedUsers
   localStorageData: Record<string, string>
 }
 
@@ -30,11 +37,17 @@ export async function seedMockState(
   casePatch?: Record<string, unknown>
 ) {
   const state = loadMockState(name)
-  const data = shiftMockDates({ ...state.localStorageData }, state.capturedAt)
+  const shifted = shiftMockDates({ ...state.localStorageData }, state.capturedAt)
+  // แปลงชื่อผู้ใช้ที่ฝังในข้อมูลตามชุดรายชื่อของ state (เหมือน applyMockState)
+  const data = {
+    ...remapMockStateUserNames(shifted, resolveCapturedUsers(state.capturedUsers, baselineUsers), getRoleSet(state.localStorageData[ROLE_SET_STORAGE_KEY]).users),
+  }
 
   if (role) {
     const auth = JSON.parse(data['ecmis-auth-storage'])
-    auth.state.currentRole = role
+    // เข้าสู่ระบบด้วยบัญชีทดลองของบทบาทเดียวกับที่ mock state ใช้ ให้ผู้ใช้/หน่วยงานตรงกับบทบาท
+    const account = mockStateAccountForRole(role as UserRole)
+    auth.state = account ? authStateForAccount(account, auth.state) : { ...auth.state, currentRole: role }
     data['ecmis-auth-storage'] = JSON.stringify(auth)
   }
 
@@ -48,14 +61,16 @@ export async function seedMockState(
 
   // init script ทำงานทุกครั้งที่โหลดหน้า — seed ครั้งแรกครั้งเดียว
   // ไม่เช่นนั้นการ reload กลางเทสต์จะล้างผลลัพธ์ที่เพิ่งกดไป
-  await page.addInitScript((entries: Record<string, string>) => {
+  await page.addInitScript(({ entries, versionKey, version }: { entries: Record<string, string>; versionKey: string; version: string }) => {
+    // ทำเครื่องหมายรุ่นข้อมูลปัจจุบัน ไม่ให้แอปล้าง state ที่ seed ไว้ว่าเป็นข้อมูลรุ่นเก่า
+    localStorage.setItem(versionKey, version)
     if (localStorage.getItem('__e2e_seeded') === '1') return
     Object.keys(localStorage)
       .filter((k) => k.startsWith('ecmis-'))
       .forEach((k) => localStorage.removeItem(k))
     Object.entries(entries).forEach(([k, v]) => localStorage.setItem(k, v))
     localStorage.setItem('__e2e_seeded', '1')
-  }, data)
+  }, { entries: data, versionKey: WP_DATA_VERSION_KEY, version: WP_DATA_VERSION })
 }
 
 /** อ่านสถานะแฟ้มคำร้องจาก store ที่ persist ไว้ — ใช้ยืนยันผลลัพธ์เชิงกระบวนการ */
@@ -98,10 +113,44 @@ export async function linkMainCaseAsOfficer(page: Page) {
  * คืนเลขคำร้องใหม่ และ (ถ้าอยู่หน้าแบบฟอร์ม) พากลับหน้าแฟ้มเพื่อเดินขั้นตอนถัดไป
  */
 export async function newCaseNoAfterIntake(page: Page, opts: { expectForm?: 1 | 2; backToDossier?: boolean } = {}) {
-  await page.waitForURL(/\/(dossier\/|form\/[12]\?caseNo=)WP-\d{4}-\d{6}/)
+  await page.waitForURL(/\/(dossier\/|form\/[12]\?caseNo=)\d{4}(\/|%2F)\d{4}/)
   const url = page.url()
   if (opts.expectForm && !url.includes(`/form/${opts.expectForm}?caseNo=`)) throw new Error(`คาดว่าจะเปิดแบบ คบ.${opts.expectForm} แต่ได้ ${url}`)
-  const caseNo = url.match(/WP-\d{4}-\d{6}/)![0]
-  if (url.includes('/form/') && opts.backToDossier !== false) await page.goto(`/dossier/${caseNo}`)
+  const caseNo = decodeURIComponent(url.match(/\d{4}(?:\/|%2F)\d{4}/)![0])
+  if (url.includes('/form/') && opts.backToDossier !== false) await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
   return caseNo
+}
+
+/** casePatch สำหรับ mock state ที่เจ้าของสำนวนยังไม่บันทึก คบ.1 (เช่น Case 1.3) — ข้ามไปขั้นเชื่อมโยงคดีหลัก/กลั่นกรองได้ทันที */
+export const KB1_DONE = { kb1CompletedAt: '08/09/2569 11:29' }
+
+/**
+ * ลำดับงานเจ้าของสำนวน: คบ.1 → เชื่อมโยงคดีหลัก → กลั่นกรองความเร่งด่วน → คบ.3
+ * แผงกลั่นกรองอยู่ในการ์ดคดีหลักและแสดงหลังเชื่อมโยงแล้ว — เชื่อมโยงให้ก่อนถ้ายังไม่ได้เชื่อมโยง
+ * ต้องเปิดหน้าแฟ้มอยู่แล้ว และแฟ้มต้องบันทึก คบ.1 แล้ว (ผ่าน UI หรือ casePatch KB1_DONE)
+ */
+export async function screenUrgencyAsOwner(page: Page, urgency: 'normal' | 'urgent') {
+  const link = page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' })
+  if (await link.isVisible()) await linkMainCaseAsOfficer(page)
+  await page
+    .getByRole('button', { name: urgency === 'urgent' ? 'กรณีจำเป็นเร่งด่วน (→ คบ.3 → คบ.4 → คบ.5)' : 'กรณีปกติ (→ คบ.3 → คบ.6)' })
+    .click()
+}
+
+/**
+ * ทางลัดของเทสต์ที่สร้างแฟ้มใหม่ผ่าน /intake: ให้ผู้ใช้ปัจจุบันเป็นเจ้าของสำนวน (staff_review) และบันทึก คบ.1 แล้ว
+ * แทนการเดิน ผอ. มอบหมาย + กรอก คบ.1 ผ่าน UI — ใช้เมื่อเทสต์ต้องการทดสอบขั้นเชื่อมโยงคดีหลัก/กลั่นกรองของแฟ้มนั้น
+ */
+export async function promoteToCaseOwner(page: Page, caseNo: string) {
+  await page.evaluate(({ no, kb1 }: { no: string; kb1: Record<string, string> }) => {
+    const auth = JSON.parse(localStorage.getItem('ecmis-auth-storage') || '{}').state || {}
+    const store = JSON.parse(localStorage.getItem('ecmis-case-storage-v2') || '{}')
+    store.state.cases = store.state.cases.map((c: Record<string, unknown>) =>
+      c.no === no
+        ? { ...c, ...kb1, stage: 'staff_review', assignedOfficerUserId: auth.currentOfficerUserId, assignedOfficer: c.owner }
+        : c
+    )
+    localStorage.setItem('ecmis-case-storage-v2', JSON.stringify(store))
+  }, { no: caseNo, kb1: KB1_DONE })
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
 }

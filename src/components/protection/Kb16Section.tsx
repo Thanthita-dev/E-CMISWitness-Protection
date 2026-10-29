@@ -1,4 +1,6 @@
+import { terminationEffectiveAt } from '../../lib/terminationRules'
 import React, { useState } from 'react'
+import { sarabanInTransit } from '../../lib/saraban'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Button } from '../common/Button'
 import { ThaiDateHint } from '../common/ThaiDateHint'
@@ -27,19 +29,27 @@ export const Kb16Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
   const [decisionNote, setDecisionNote] = useState('')
 
   const isOfficer = ['officer', 'case_owner', 'got_officer', 'admin'].includes(role)
-  const isAuthority = ['secretary', 'director', 'admin'].includes(role)
+  /** อำนาจยุติเป็นของเลขาธิการเท่านั้น (ผ่านธุรการ) — ผอ.หน่วยไม่อนุมัติ/ไม่ลงนาม */
+  const inTransit = sarabanInTransit(caseItem, 'termination')
+  const isAuthority = ['secretary', 'admin'].includes(role) && !inTransit
   const endorsed = caseItem.kb15?.status === 'endorsed'
 
   if (!endorsed && !kb16) return null
 
   const effective = parseAnyDate(/^\d{4}-\d{2}-\d{2}$/.test(kb16?.effectiveAt || '') ? `${kb16?.effectiveAt}T00:00:00+07:00` : kb16?.effectiveAt)
-  const inForce = Boolean(kb16?.signedAt && effective && effective.getTime() <= Date.now())
+  const inForce = Boolean(terminationEffectiveAt(caseItem))
 
   return (
     <SectionCard
       title="คำสั่งยุติการคุ้มครอง · คบ.16"
       hint="จัดทำคำสั่ง → เสนอลงนาม → แจ้งพยานด้วย คบ.17"
     >
+      {inTransit && (
+        <p className="text-[0.8rem] text-amber-700" data-testid="termination-in-transit">
+          <i className="fa-solid fa-route mr-1" />
+          อยู่ระหว่างธุรการลงทะเบียนนำส่ง — ดำเนินการต่อได้เมื่อเอกสารถึงผู้รับ
+        </p>
+      )}
       {/* ---------- WIT1136 — ผู้มีอำนาจพิจารณาก่อน จึงจะร่าง คบ.16 ได้ ---------- */}
       {!approval && isAuthority && (
         <div className="space-y-2 rounded-lg border border-slate-200 p-3">
@@ -143,11 +153,11 @@ export const Kb16Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
               <span className="font-bold text-emerald-700">
                 ลงนามแล้วเมื่อ {kb16.signedAt} โดย {kb16.signedBy}
                 {kb16.locked ? ' · ล็อกฉบับลงนาม' : ''}
-                {!inForce && ' — ยังไม่ถึงวันที่มีผล การคุ้มครองยังดำเนินอยู่'}
+                {!inForce && ' — ตรวจฐานเหตุและวันที่มีผลก่อนบันทึกการสิ้นสุด'}
               </span>
             ) : (
               <span className="font-bold text-amber-700">
-                ยังไม่ลงนาม — การคุ้มครองยังไม่สิ้นสุด
+                {inForce ? 'ยังไม่ลงนาม คบ.16 · การคุ้มครองสิ้นสุดตามฐานเหตุที่ตรวจยืนยันแล้ว งานเอกสารยังดำเนินต่อ' : 'ยังไม่ลงนาม คบ.16 · ตรวจสถานะการคุ้มครองตามฐานเหตุและวันที่มีผลแยกจากงานเอกสาร'}
               </span>
             )}
           </div>
@@ -156,15 +166,20 @@ export const Kb16Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
 
       {kb16 && !kb16.signedAt && kb16.status !== 'submitted' && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-          <span className="text-sm text-muted">ร่าง คบ.16 · ยังไม่เสนอลงนาม</span>
-          {isOfficer && <Button type="button" onClick={() => navigate({ to: '/form/$formId', params: { formId: '16' }, search: { caseNo: caseItem.no, from: 'termination' } })}>แก้ไขและส่ง คบ.16</Button>}
+          <span className="text-sm text-muted">ร่าง คบ.16 · ยังไม่เสนอลงนาม — กด “ส่งให้อนุมัติ” ที่แถว คบ.16 ในแฟ้มคำร้อง</span>
+          {isOfficer && (
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" size="md" onClick={() => navigate({ to: '/form/$formId', params: { formId: '16' }, search: { caseNo: caseItem.no, from: 'termination' } })}>แก้ไข คบ.16</Button>
+              <Button type="button" variant="primary" size="md" onClick={() => navigate({ to: '/dossier/$caseNo', params: { caseNo: caseItem.no } })}>ไปที่แฟ้มคำร้อง</Button>
+            </div>
+          )}
         </div>
       )}
 
       {kb16?.status === 'submitted' && !kb16.signedAt && (
         <p className="text-[0.8rem] text-blue-700">
           <i className="fa-solid fa-paper-plane mr-1" />
-          ส่งให้อนุมัติเมื่อ {kb16.submittedAt} โดย {kb16.submittedBy} — รอผู้มีอำนาจลงนาม
+          ส่งให้อนุมัติเมื่อ {kb16.submittedAt} โดย {kb16.submittedBy} — รอเลขาธิการ ป.ป.ท.ลงนาม
         </p>
       )}
 

@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { readCase, seedMockState } from '../helpers/seed'
+import { chooseKb6IfAsked } from '../helpers/methodChoice'
 
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 test('ค้นหาทะเบียนสถานีตำรวจจริง ไม่มี DSI หรือสถานีเริ่มต้น และบันทึกผู้ประสานงานแยกตามแฟ้ม', async ({ page }) => {
   await seedMockState(page, 'Approved - วิธีที่ 4', undefined, {
     kb11Signed: true, stage: 'method_operation', approvedMethods: [4], orderedMethods: [4],
@@ -10,7 +11,8 @@ test('ค้นหาทะเบียนสถานีตำรวจจร�
     methodTracks: [{ method: 4, status: 'pending', coordination: { agency: 'สำนักงานคุ้มครองพยาน กรมสอบสวนคดีพิเศษ (DSI)' } }], officialLetters: [],
   })
   await page.goto('/protection-methods')
-    await page.getByRole('link', { name: 'เปิดงาน', exact: true }).click()
+  await page.getByRole('link', { name: 'เปิดงาน', exact: true }).click()
+  await chooseKb6IfAsked(page)
   const workspace = page.getByTestId('automatic-method4-workspace')
   const station = workspace.getByTestId('coordination-agency')
   await expect(station).toHaveValue('')
@@ -54,7 +56,7 @@ test('งานที่รอ คบ.9 แสดงงานเอกสาร 
   await expect(page.getByRole('button', { name: /เปิดเส้นทางปฏิบัติตามวิธีที่เลือก/ })).toHaveCount(0)
   await expect(page.getByPlaceholder('เหตุที่พยานไม่ยินยอม')).not.toBeVisible()
   await pending.getByRole('link', { name: 'เปิด คบ.9', exact: true }).click()
-  await expect(page).toHaveURL(`/form/9?caseNo=${NO}`)
+  await expect(page).toHaveURL(`/form/9?caseNo=${encodeURIComponent(NO)}`)
 })
 
 test('เมื่อรับ คบ.9 แล้ว แสดงทางเข้าลงนามในแบบ คบ.11', async ({ page }) => {
@@ -67,7 +69,7 @@ test('เมื่อรับ คบ.9 แล้ว แสดงทางเข
   await expect(pending).toContainText('รอข้อตกลง คบ.11 ลงนามครบ')
   await expect(page.getByTestId('consent-agree')).toHaveCount(0)
   await pending.getByRole('link', { name: 'เปิด คบ.11', exact: true }).click()
-  await expect(page).toHaveURL(`/form/11?caseNo=${NO}`)
+  await expect(page).toHaveURL(`/form/11?caseNo=${encodeURIComponent(NO)}`)
 })
 
 test('เคสอุทธรณ์เดิมกลับไปจัดทำ คบ.6 v2 โดยไม่สร้างเวอร์ชันซ้ำเมื่อโหลดใหม่', async ({ page }) => {
@@ -80,7 +82,7 @@ test('เคสอุทธรณ์เดิมกลับไปจัดท�
   await page.goto(`/protection-method-work?caseNo=${NO}`)
   await expect(page.getByTestId('appeal-kb6-revision-task')).toBeVisible()
   await page.getByRole('link', { name: 'จัดทำ คบ.6 v2', exact: true }).click()
-  await expect(page).toHaveURL(`/form/6?caseNo=${NO}`)
+  await expect(page).toHaveURL(`/form/6?caseNo=${encodeURIComponent(NO)}`)
   await expect.poll(async () => (await readCase(page, NO)).kb6Version).toBe(2)
   const c = await readCase(page, NO)
   expect(c.stage).toBe('staff_review')

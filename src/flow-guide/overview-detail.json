@@ -1,0 +1,1555 @@
+{
+  "tabs": {
+    "10": {
+      "steps": [
+        {
+          "code": "WIT1001",
+          "label": "รับ Episode เข้าช่วงติดตาม",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:10:WIT1001"
+        },
+        {
+          "code": "WIT1003",
+          "label": "แจ้งรอบรายงาน คบ.13",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:10:WIT1003"
+        },
+        {
+          "code": "WIT1011",
+          "label": "ใกล้ครบกำหนดหรือต้องทบทวน?",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:10:WIT1011"
+        },
+        {
+          "code": "WIT1013",
+          "label": "ส่ง คบ.13 เข้าทบทวนผล → แท็บ 11A",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:10:WIT1013"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT1001",
+          "to": "WIT1003",
+          "snapshot": "node:10:WIT1003"
+        },
+        {
+          "from": "WIT1003",
+          "to": "WIT1011",
+          "snapshot": "node:10:WIT1011",
+          "label": "ทำและลงนาม คบ.13"
+        },
+        {
+          "from": "WIT1011",
+          "to": "WIT1013",
+          "snapshot": "edge:10:E015",
+          "label": "ต้องทบทวน"
+        }
+      ]
+    },
+    "02": {
+      "steps": [
+        {
+          "code": "WIT0202",
+          "label": "เลือกช่องทางแจ้งคำขอ (ธุรการ / เข้าพบ / โทรศัพท์)",
+          "col": 0.5,
+          "row": 0,
+          "snapshot": "node:02:WIT0202"
+        },
+        {
+          "code": "WIT0203",
+          "label": "ธุรการบันทึกรับเข้า E-CMIS",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:02:WIT0203"
+        },
+        {
+          "code": "WIT0212",
+          "label": "เจ้าหน้าที่เชื่อมโยงคดีหลัก (หรือ “ไม่พบคดี”)",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:02:WIT0212"
+        },
+        {
+          "code": "WIT0216",
+          "label": "ส่งคำขอให้ ผอ. มอบหมาย",
+          "col": 0.5,
+          "row": 2,
+          "snapshot": "node:02:WIT0216"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0202",
+          "to": "WIT0203",
+          "snapshot": "edge:02:E03",
+          "label": "ธุรการ"
+        },
+        {
+          "from": "WIT0202",
+          "to": "WIT0212",
+          "snapshot": "node:02:WIT0212",
+          "label": "เจ้าหน้าที่รับเอง"
+        },
+        {
+          "from": "WIT0203",
+          "to": "WIT0216",
+          "snapshot": "node:02:WIT0216",
+          "label": "ส่ง ผอ.ทันที"
+        },
+        {
+          "from": "WIT0212",
+          "to": "WIT0216",
+          "snapshot": "node:02:WIT0216",
+          "label": "เชื่อมโยงแล้ว"
+        }
+      ]
+    },
+    "03": {
+      "steps": [
+        {
+          "code": "WIT0303",
+          "label": "ผอ. ตรวจคำขอและเอกสารตั้งต้น",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:03:WIT0303"
+        },
+        {
+          "code": "WIT0304",
+          "label": "ผอ. เลือกผู้รับผิดชอบและมอบหมาย",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:03:WIT0304"
+        },
+        {
+          "code": "WIT0310",
+          "label": "เจ้าหน้าที่ประเมินความเร่งด่วน",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:03:WIT0310"
+        },
+        {
+          "code": "WIT0312",
+          "label": "ส่งไปแท็บ 04 จัดทำ คบ.1",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:03:WIT0312"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0303",
+          "to": "WIT0304",
+          "snapshot": "edge:03:E0303"
+        },
+        {
+          "from": "WIT0304",
+          "to": "WIT0310",
+          "snapshot": "node:03:WIT0310",
+          "label": "แจ้งเจ้าหน้าที่"
+        },
+        {
+          "from": "WIT0310",
+          "to": "WIT0312",
+          "snapshot": "node:03:WIT0312"
+        }
+      ]
+    },
+    "04": {
+      "steps": [
+        {
+          "code": "WIT0413",
+          "label": "เจ้าของสำนวนเชื่อมโยงเลขสำนวนหลัก",
+          "col": 0.5,
+          "row": 0,
+          "snapshot": "node:04:WIT0413"
+        },
+        {
+          "code": "WIT0410",
+          "label": "ผลประเมินความเร่งด่วน?",
+          "col": 0.5,
+          "row": 1,
+          "snapshot": "node:04:WIT0410"
+        },
+        {
+          "code": "WIT0411",
+          "label": "ไม่เร่งด่วน: จัดทำ คบ.6",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:04:WIT0411"
+        },
+        {
+          "code": "WIT0412",
+          "label": "เร่งด่วน: ไปแท็บ 06 (คบ.4/คบ.5)",
+          "col": 1,
+          "row": 2,
+          "snapshot": "node:04:WIT0412"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0413",
+          "to": "WIT0410",
+          "snapshot": "node:04:WIT0410",
+          "label": "จัดทำ คบ.1 / คบ.3"
+        },
+        {
+          "from": "WIT0410",
+          "to": "WIT0411",
+          "snapshot": "edge:04:E0412",
+          "label": "ไม่เร่งด่วน"
+        },
+        {
+          "from": "WIT0410",
+          "to": "WIT0412",
+          "snapshot": "edge:04:E0413",
+          "label": "เร่งด่วน"
+        }
+      ]
+    },
+    "05": {
+      "steps": [
+        {
+          "code": "WIT0502",
+          "label": "เจ้าหน้าที่ส่งชุดเสนอ คบ.1/3/6",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:05:WIT0502"
+        },
+        {
+          "code": "WIT0503",
+          "label": "ผบช.ชั้นต้นตรวจชุดเสนอ",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:05:WIT0503"
+        },
+        {
+          "code": "WIT0508",
+          "label": "ผอ. ตรวจและลงนามความเห็น",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:05:WIT0508"
+        },
+        {
+          "code": "WIT0522",
+          "label": "ผบช.ชั้นต้นแก้เป็นเร่งด่วน → ไปแท็บ 06",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:05:WIT0522"
+        },
+        {
+          "code": "WIT0514",
+          "label": "เสนอเลขาธิการฯ (ผ่านรอง ลธ.)",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:05:WIT0514"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0502",
+          "to": "WIT0503",
+          "snapshot": "edge:05:E0502",
+          "label": "ส่งต่อ"
+        },
+        {
+          "from": "WIT0503",
+          "to": "WIT0508",
+          "snapshot": "node:05:WIT0508",
+          "label": "ครบถ้วน"
+        },
+        {
+          "from": "WIT0503",
+          "to": "WIT0522",
+          "snapshot": "edge:05:E0525",
+          "label": "แก้ผลประเมิน"
+        },
+        {
+          "from": "WIT0508",
+          "to": "WIT0514",
+          "snapshot": "node:05:WIT0514",
+          "label": "ผ่านทุกชั้น"
+        }
+      ]
+    },
+    "06": {
+      "steps": [
+        {
+          "code": "WIT0603",
+          "label": "จัดทำ คบ.4 และร่าง คบ.5",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:06:WIT0603"
+        },
+        {
+          "code": "WIT0615",
+          "label": "ผอ. รับแฟ้มที่ถูกตัดเข้าเร่งด่วน",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:06:WIT0615"
+        },
+        {
+          "code": "WIT0611",
+          "label": "ผอ. อนุมัติและลงนาม คบ.5",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:06:WIT0611"
+        },
+        {
+          "code": "WIT0613",
+          "label": "คำสั่ง คบ.5 พร้อมดำเนินการ",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:06:WIT0613"
+        },
+        {
+          "code": "WIT0614",
+          "label": "เปิดงานตามวิธีแล้ว คำร้องหลักเดินต่อ (คบ.6)",
+          "col": 1,
+          "row": 2,
+          "snapshot": "node:06:WIT0614"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0615",
+          "to": "WIT0603",
+          "snapshot": "edge:06:E0616",
+          "label": "ส่งกลับ"
+        },
+        {
+          "from": "WIT0603",
+          "to": "WIT0611",
+          "snapshot": "node:06:WIT0611",
+          "label": "ส่ง ผอ. พิจารณา"
+        },
+        {
+          "from": "WIT0611",
+          "to": "WIT0613",
+          "snapshot": "node:06:WIT0613",
+          "label": "อนุมัติ"
+        },
+        {
+          "from": "WIT0611",
+          "to": "WIT0614",
+          "snapshot": "node:06:WIT0614"
+        }
+      ]
+    },
+    "07": {
+      "cols": 3,
+      "steps": [
+        {
+          "code": "WIT0704",
+          "label": "เลขาธิการฯ ตัดสินผลพิจารณา",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:07:WIT0704"
+        },
+        {
+          "code": "WIT0707",
+          "label": "ส่งกลับ / ขอข้อมูลเพิ่ม",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:07:WIT0707"
+        },
+        {
+          "code": "WIT0710",
+          "label": "อนุมัติ: ตรวจวิธีตาม คบ.6 (เลือกได้หลายข้อ)",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:07:WIT0710"
+        },
+        {
+          "code": "WIT0711",
+          "label": "ไม่อนุมัติ: ลงนาม คบ.10 → แท็บ 09A",
+          "col": 2,
+          "row": 1,
+          "snapshot": "node:07:WIT0711"
+        },
+        {
+          "code": "A6METHOD1",
+          "label": "ข้อ 1 จัดชุดเจ้าพนักงาน → ลงนาม คบ.9",
+          "col": 0.5,
+          "row": 2,
+          "snapshot": "node:07:A6METHOD1",
+          "displayCode": "วิธีคุ้มครองข้อ 1"
+        },
+        {
+          "code": "A6METHOD2",
+          "label": "ข้อ 2 จัดสถานที่เหมาะสม → ลงนาม คบ.9",
+          "col": 1.5,
+          "row": 2,
+          "snapshot": "node:07:A6METHOD2",
+          "displayCode": "วิธีคุ้มครองข้อ 2"
+        },
+        {
+          "code": "A6METHOD3",
+          "label": "ข้อ 3 ปกปิดข้อมูลพยาน → ลงนาม คบ.9",
+          "col": 0.5,
+          "row": 3,
+          "snapshot": "node:07:A6METHOD3",
+          "displayCode": "วิธีคุ้มครองข้อ 3"
+        },
+        {
+          "code": "A6METHOD4",
+          "label": "ข้อ 4 ประสานหน่วยงาน → คบ.9 + หนังสือประสาน",
+          "col": 1.5,
+          "row": 3,
+          "snapshot": "node:07:A6METHOD4",
+          "displayCode": "วิธีคุ้มครองข้อ 4"
+        },
+        {
+          "code": "A6METHODDONE",
+          "label": "ลงนามครบชุด → แยกผู้ดำเนินการต่อ",
+          "col": 1,
+          "row": 4,
+          "snapshot": "node:07:A6METHODDONE",
+          "displayCode": "ครบชุดเอกสาร"
+        },
+        {
+          "code": "A6OWNER",
+          "label": "อนุมัติ: เจ้าของสำนวนเดิม → 08A",
+          "col": 0,
+          "row": 5,
+          "snapshot": "node:07:A6OWNER"
+        },
+        {
+          "code": "A6GOT",
+          "label": "อนุมัติ: ส่ง กอท. ทำต่อ → 07G",
+          "col": 2,
+          "row": 5,
+          "snapshot": "node:07:A6GOT"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0704",
+          "to": "WIT0707",
+          "snapshot": "edge:07:E0706",
+          "label": "ส่งกลับ"
+        },
+        {
+          "from": "WIT0704",
+          "to": "WIT0710",
+          "snapshot": "node:07:WIT0710",
+          "label": "อนุมัติ"
+        },
+        {
+          "from": "WIT0704",
+          "to": "WIT0711",
+          "snapshot": "node:07:WIT0711",
+          "label": "ไม่อนุมัติ"
+        },
+        {
+          "to": "A6METHOD1",
+          "snapshot": "edge:07:A6METHOD_EDGE_1_1",
+          "from": "WIT0710"
+        },
+        {
+          "to": "A6METHODDONE",
+          "snapshot": "edge:07:A6METHOD_EDGE_1_2",
+          "from": "A6METHOD1"
+        },
+        {
+          "to": "A6METHOD2",
+          "snapshot": "edge:07:A6METHOD_EDGE_2_1",
+          "from": "WIT0710"
+        },
+        {
+          "to": "A6METHODDONE",
+          "snapshot": "edge:07:A6METHOD_EDGE_2_2",
+          "from": "A6METHOD2"
+        },
+        {
+          "to": "A6METHOD3",
+          "snapshot": "edge:07:A6METHOD_EDGE_3_1",
+          "from": "WIT0710"
+        },
+        {
+          "to": "A6METHODDONE",
+          "snapshot": "edge:07:A6METHOD_EDGE_3_2",
+          "from": "A6METHOD3"
+        },
+        {
+          "to": "A6METHOD4",
+          "snapshot": "edge:07:A6METHOD_EDGE_4_1",
+          "from": "WIT0710"
+        },
+        {
+          "to": "A6METHODDONE",
+          "snapshot": "edge:07:A6METHOD_EDGE_4_2",
+          "from": "A6METHOD4"
+        },
+        {
+          "from": "A6METHODDONE",
+          "to": "A6OWNER",
+          "label": "เจ้าของสำนวนเดิม",
+          "snapshot": "edge:07:A6OWNER-DEST"
+        },
+        {
+          "from": "A6METHODDONE",
+          "to": "A6GOT",
+          "label": "กอท.",
+          "snapshot": "edge:07:A6GOT-DEST"
+        }
+      ]
+    },
+    "07G": {
+      "cols": 2,
+      "steps": [
+        {
+          "code": "A6POST01",
+          "label": "อนุมัติให้ กอท. → ลงนาม คบ.9",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:07G:A6POST01"
+        },
+        {
+          "code": "A6POSTSEND",
+          "label": "เลขาธิการกดส่งหลังลงนามครบ",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:07G:A6POSTSEND"
+        },
+        {
+          "code": "A6POST07",
+          "label": "ธุรการ สลธ. ออกเลขส่ง",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:07G:A6POST07"
+        },
+        {
+          "code": "A6POST02",
+          "label": "ธุรการ กอท. ลงเลขรับ",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:07G:A6POST02"
+        },
+        {
+          "code": "A6POST03",
+          "label": "ธุรการเสนอ ผอ. กอท.",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:07G:A6POST03"
+        },
+        {
+          "code": "A6POST04",
+          "label": "ผอ. กอท. มอบหมายเจ้าหน้าที่",
+          "col": 1,
+          "row": 2,
+          "snapshot": "node:07G:A6POST04"
+        },
+        {
+          "code": "A6POST05",
+          "label": "เจ้าหน้าที่ กอท. รับงาน",
+          "col": 0,
+          "row": 3,
+          "snapshot": "node:07G:A6POST05"
+        },
+        {
+          "code": "A6POST06",
+          "label": "แจ้งผลและคุ้มครองต่อ → 08A",
+          "col": 1,
+          "row": 3,
+          "snapshot": "node:07G:A6POST06"
+        }
+      ],
+      "edges": [
+        {
+          "from": "A6POST01",
+          "to": "A6POSTSEND",
+          "snapshot": "edge:07G:GOT-SIGNED"
+        },
+        {
+          "from": "A6POSTSEND",
+          "to": "A6POST07",
+          "snapshot": "edge:07G:GOT-EDGE-0"
+        },
+        {
+          "from": "A6POST07",
+          "to": "A6POST02",
+          "snapshot": "edge:07G:GOT-EDGE-1"
+        },
+        {
+          "from": "A6POST02",
+          "to": "A6POST03",
+          "snapshot": "edge:07G:GOT-EDGE-2"
+        },
+        {
+          "from": "A6POST03",
+          "to": "A6POST04",
+          "snapshot": "edge:07G:GOT-EDGE-3"
+        },
+        {
+          "from": "A6POST04",
+          "to": "A6POST05",
+          "snapshot": "edge:07G:GOT-EDGE-4"
+        },
+        {
+          "from": "A6POST05",
+          "to": "A6POST06",
+          "snapshot": "edge:07G:GOT-EDGE-5"
+        }
+      ]
+    },
+    "08A": {
+      "steps": [
+        {
+          "code": "WIT0804",
+          "label": "รับผลอนุมัติคำร้องหลักจากแท็บ 07",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:08A:WIT0804"
+        },
+        {
+          "code": "WIT0803",
+          "label": "รับ คบ.5 ชั่วคราว (เร่งด่วน)",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:08A:WIT0803"
+        },
+        {
+          "code": "WIT0807",
+          "label": "จัดทำ คบ.11 บันทึกข้อตกลงกับพยาน",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:08A:WIT0807"
+        },
+        {
+          "code": "WIT0813",
+          "label": "เลือกแนวทางแล้วเปิดงานตามวิธี",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:08A:WIT0813"
+        },
+        {
+          "code": "WIT0840",
+          "label": "พยานไม่ยินยอม: ผอ. อนุมัติแนวทาง",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:08A:WIT0840"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0804",
+          "to": "WIT0807",
+          "snapshot": "node:08A:WIT0807",
+          "label": "แจ้งพยาน คบ.9"
+        },
+        {
+          "from": "WIT0803",
+          "to": "WIT0813",
+          "snapshot": "edge:08A:E0803"
+        },
+        {
+          "from": "WIT0807",
+          "to": "WIT0813",
+          "snapshot": "node:08A:WIT0813",
+          "label": "ยินยอม"
+        },
+        {
+          "from": "WIT0807",
+          "to": "WIT0840",
+          "snapshot": "node:08A:WIT0840",
+          "label": "ไม่ยินยอม"
+        }
+      ]
+    },
+    "08A-1": {
+      "steps": [
+        {
+          "code": "WIT0814",
+          "label": "รับงานวิธีที่ 1 จากแท็บ 08A",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:08A-1:WIT0814"
+        },
+        {
+          "code": "WIT0817",
+          "label": "จัดทำร่าง คบ.8 ตั้งชุดคุ้มครอง",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:08A-1:WIT0817"
+        },
+        {
+          "code": "WIT0819",
+          "label": "จัดแผนปฏิบัติ เวร รถ อุปกรณ์",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:08A-1:WIT0819"
+        },
+        {
+          "code": "WIT0820",
+          "label": "ชี้แจงชุดคุ้มครอง เริ่มปฏิบัติจริง",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:08A-1:WIT0820"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0814",
+          "to": "WIT0817",
+          "snapshot": "node:08A-1:WIT0817"
+        },
+        {
+          "from": "WIT0817",
+          "to": "WIT0819",
+          "snapshot": "node:08A-1:WIT0819",
+          "label": "ลงนาม คบ.8"
+        },
+        {
+          "from": "WIT0819",
+          "to": "WIT0820",
+          "snapshot": "edge:08A-1:a1e7"
+        }
+      ]
+    },
+    "08A-2": {
+      "steps": [
+        {
+          "code": "WIT0822",
+          "label": "รับงานวิธีที่ 2 จากแท็บ 08A",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:08A-2:WIT0822"
+        },
+        {
+          "code": "WIT0826",
+          "label": "สถานที่ปลอดภัยเหมาะสมหรือไม่?",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:08A-2:WIT0826"
+        },
+        {
+          "code": "WIT0873",
+          "label": "ไม่เหมาะสม: ให้หน่วยงานภายนอกทำแทน",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:08A-2:WIT0873"
+        },
+        {
+          "code": "WIT0829",
+          "label": "บันทึกพยานเข้าพักแล้ว",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:08A-2:WIT0829"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0822",
+          "to": "WIT0826",
+          "snapshot": "node:08A-2:WIT0826",
+          "label": "ประเมิน"
+        },
+        {
+          "from": "WIT0826",
+          "to": "WIT0873",
+          "snapshot": "edge:08A-2:a2e5b",
+          "label": "ไม่เหมาะสม"
+        },
+        {
+          "from": "WIT0826",
+          "to": "WIT0829",
+          "snapshot": "node:08A-2:WIT0829",
+          "label": "เหมาะสม"
+        }
+      ]
+    },
+    "08A-3": {
+      "steps": [
+        {
+          "code": "WIT0830",
+          "label": "รับงานวิธีที่ 3 จากแท็บ 08A",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:08A-3:WIT0830"
+        },
+        {
+          "code": "WIT0832",
+          "label": "จัดแผนปกปิดและกำหนดสิทธิ",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:08A-3:WIT0832"
+        },
+        {
+          "code": "WIT0834",
+          "label": "ทดสอบสิทธิ์และการรั่วไหล?",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:08A-3:WIT0834"
+        },
+        {
+          "code": "WIT0837",
+          "label": "เปิดใช้มาตรการปกปิดข้อมูล",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:08A-3:WIT0837"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0830",
+          "to": "WIT0832",
+          "snapshot": "node:08A-3:WIT0832"
+        },
+        {
+          "from": "WIT0832",
+          "to": "WIT0834",
+          "snapshot": "node:08A-3:WIT0834",
+          "label": "ตั้งค่าและทดสอบ"
+        },
+        {
+          "from": "WIT0834",
+          "to": "WIT0837",
+          "snapshot": "node:08A-3:WIT0837",
+          "label": "ผ่าน"
+        }
+      ]
+    },
+    "08B": {
+      "steps": [
+        {
+          "code": "WIT0841",
+          "label": "รับงานวิธีที่ 4 จากแท็บ 08A",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:08B:WIT0841"
+        },
+        {
+          "code": "WIT0844",
+          "label": "หน่วยงานตอบกลับหนังสือประสานว่าอย่างไร?",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:08B:WIT0844"
+        },
+        {
+          "code": "WIT0848",
+          "label": "ส่งมอบพยานและลงนาม คบ.12",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:08B:WIT0848"
+        },
+        {
+          "code": "WIT0851",
+          "label": "อัปเดตสถานะวิธี เริ่มปฏิบัติ",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:08B:WIT0851"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0841",
+          "to": "WIT0844",
+          "snapshot": "node:08B:WIT0844",
+          "label": "ส่งหนังสือ"
+        },
+        {
+          "from": "WIT0844",
+          "to": "WIT0848",
+          "snapshot": "node:08B:WIT0848",
+          "label": "ตอบรับ"
+        },
+        {
+          "from": "WIT0848",
+          "to": "WIT0851",
+          "snapshot": "node:08B:WIT0851",
+          "label": "เริ่มปฏิบัติ"
+        }
+      ]
+    },
+    "08C": {
+      "steps": [
+        {
+          "code": "WIT0852",
+          "label": "รับกรณีข้อ 14 (หลายทางเข้า)",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:08C:WIT0852"
+        },
+        {
+          "code": "WIT0854",
+          "label": "จัดทำเรื่องเสนอข้อ 14 ตามลำดับชั้น",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:08C:WIT0854"
+        },
+        {
+          "code": "WIT0857",
+          "label": "มติคณะกรรมการ (เสนอก่อนครบ 6 เดือน)",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:08C:WIT0857"
+        },
+        {
+          "code": "WIT0856",
+          "label": "เลขาธิการเห็นชอบ ส่งคืนเจ้าหน้าที่",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:08C:WIT0856"
+        },
+        {
+          "code": "WIT0858",
+          "label": "ไม่เห็นชอบ: ใช้คำสั่งเดิม → แท็บ 11C",
+          "col": 0,
+          "row": 3,
+          "snapshot": "node:08C:WIT0858"
+        },
+        {
+          "code": "WIT0859",
+          "label": "ส่งหนังสือถึงกรมและส่งมอบ",
+          "col": 1,
+          "row": 2,
+          "snapshot": "node:08C:WIT0859"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0852",
+          "to": "WIT0854",
+          "snapshot": "edge:08C:E8C01"
+        },
+        {
+          "from": "WIT0854",
+          "to": "WIT0856",
+          "snapshot": "node:08C:WIT0856",
+          "label": "เสนอตามลำดับชั้น"
+        },
+        {
+          "from": "WIT0856",
+          "to": "WIT0859",
+          "snapshot": "node:08C:WIT0859",
+          "label": "ใกล้/ครบเพดาน"
+        },
+        {
+          "from": "WIT0856",
+          "to": "WIT0857",
+          "snapshot": "node:08C:WIT0857",
+          "label": "ส่งคณะกรรมการ"
+        },
+        {
+          "from": "WIT0857",
+          "to": "WIT0858",
+          "snapshot": "edge:08C:E8C20",
+          "label": "ไม่เห็นชอบ"
+        }
+      ]
+    },
+    "09A": {
+      "steps": [
+        {
+          "code": "WIT0901",
+          "label": "รับผลไม่อนุมัติและ คบ.10",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:09A:WIT0901"
+        },
+        {
+          "code": "WIT0906",
+          "label": "นำส่ง คบ.10 ถึงพยาน",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:09A:WIT0906"
+        },
+        {
+          "code": "WIT0908",
+          "label": "พยานประสงค์อุทธรณ์หรือไม่?",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:09A:WIT0908"
+        },
+        {
+          "code": "WIT0910",
+          "label": "ประสงค์อุทธรณ์ → แท็บ 09B",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:09A:WIT0910"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0901",
+          "to": "WIT0906",
+          "snapshot": "node:09A:WIT0906",
+          "label": "ส่ง คบ.10"
+        },
+        {
+          "from": "WIT0906",
+          "to": "WIT0908",
+          "snapshot": "node:09A:WIT0908",
+          "label": "พยานรับ"
+        },
+        {
+          "from": "WIT0908",
+          "to": "WIT0910",
+          "snapshot": "edge:09A:E9A12",
+          "label": "อุทธรณ์"
+        }
+      ]
+    },
+    "09B": {
+      "steps": [
+        {
+          "code": "WIT0911",
+          "label": "รับความประสงค์อุทธรณ์",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:09B:WIT0911"
+        },
+        {
+          "code": "WIT0920",
+          "label": "คณะกรรมการวินิจฉัย: มติ?",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:09B:WIT0920"
+        },
+        {
+          "code": "WIT0921",
+          "label": "ยกคำร้อง: แจ้งผลอุทธรณ์",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:09B:WIT0921"
+        },
+        {
+          "code": "WIT0935",
+          "label": "เปลี่ยนคำสั่ง: จัดทำ คบ.6 v2 → แท็บ 05",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:09B:WIT0935"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT0911",
+          "to": "WIT0920",
+          "snapshot": "node:09B:WIT0920",
+          "label": "เสนอ"
+        },
+        {
+          "from": "WIT0920",
+          "to": "WIT0921",
+          "snapshot": "node:09B:WIT0921",
+          "label": "ยกคำร้อง"
+        },
+        {
+          "from": "WIT0920",
+          "to": "WIT0935",
+          "snapshot": "node:09B:WIT0935",
+          "label": "เปลี่ยนคำสั่ง"
+        }
+      ]
+    },
+    "11A": {
+      "steps": [
+        {
+          "code": "WIT1107",
+          "label": "เลือกแนวทางหลังทบทวนผล",
+          "col": 0.5,
+          "row": 0,
+          "snapshot": "node:11A:WIT1107"
+        },
+        {
+          "code": "WIT1108",
+          "label": "คุ้มครองต่อ → แท็บ 10",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:11A:WIT1108"
+        },
+        {
+          "code": "WIT1109",
+          "label": "ขยายเวลา → แท็บ 11B",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:11A:WIT1109"
+        },
+        {
+          "code": "WIT1110",
+          "label": "เปลี่ยนวิธี/เงื่อนไข → แท็บ 08A",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:11A:WIT1110"
+        },
+        {
+          "code": "WIT1111",
+          "label": "ยุติ → แท็บ 11C",
+          "col": 1,
+          "row": 2,
+          "snapshot": "node:11A:WIT1111"
+        },
+        {
+          "code": "WIT1149",
+          "label": "ครบ 6 เดือนยังมีภัย → แท็บ 08C",
+          "col": 0.5,
+          "row": 3,
+          "snapshot": "node:11A:WIT1149"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT1107",
+          "to": "WIT1108",
+          "snapshot": "edge:11A:E005",
+          "label": "ต่อคำสั่ง"
+        },
+        {
+          "from": "WIT1107",
+          "to": "WIT1109",
+          "snapshot": "edge:11A:E006",
+          "label": "ขยายเวลา"
+        },
+        {
+          "from": "WIT1107",
+          "to": "WIT1110",
+          "snapshot": "edge:11A:E007",
+          "label": "เปลี่ยนวิธี"
+        },
+        {
+          "from": "WIT1107",
+          "to": "WIT1111",
+          "snapshot": "edge:11A:E008",
+          "label": "ยุติ"
+        },
+        {
+          "from": "WIT1107",
+          "to": "WIT1149",
+          "snapshot": "edge:11A:E009",
+          "label": "ครบเพดาน"
+        }
+      ]
+    },
+    "11B": {
+      "steps": [
+        {
+          "code": "WIT1112",
+          "label": "รับผลขยายเวลาจากแท็บ 11A",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:11B:WIT1112"
+        },
+        {
+          "code": "WIT1114",
+          "label": "จัดทำ คบ.14 ขอขยายเวลา",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:11B:WIT1114"
+        },
+        {
+          "code": "WIT1121",
+          "label": "เลขาธิการฯ อนุมัติขยายเวลา?",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:11B:WIT1121"
+        },
+        {
+          "code": "WIT1122",
+          "label": "อนุมัติ: เพิ่มช่วงคุ้มครอง",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:11B:WIT1122"
+        },
+        {
+          "code": "WIT1123",
+          "label": "ไม่อนุมัติ: คงคำสั่งเดิมถึงวันสิ้นสุด",
+          "col": 1,
+          "row": 2,
+          "snapshot": "node:11B:WIT1123"
+        },
+        {
+          "code": "WIT1150",
+          "label": "ครบเพดาน: ขอ คบ.14 ไม่ได้",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:11B:WIT1150"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT1112",
+          "to": "WIT1114",
+          "snapshot": "node:11B:WIT1114",
+          "label": "ทำ คบ.14"
+        },
+        {
+          "from": "WIT1114",
+          "to": "WIT1121",
+          "snapshot": "node:11B:WIT1121",
+          "label": "เสนอตามลำดับชั้น"
+        },
+        {
+          "from": "WIT1121",
+          "to": "WIT1122",
+          "snapshot": "edge:11B:E021",
+          "label": "อนุมัติ"
+        },
+        {
+          "from": "WIT1121",
+          "to": "WIT1123",
+          "snapshot": "edge:11B:E022",
+          "label": "ไม่อนุมัติ"
+        },
+        {
+          "from": "WIT1114",
+          "to": "WIT1150",
+          "snapshot": "node:11B:WIT1150",
+          "label": "ครบเพดาน"
+        }
+      ]
+    },
+    "11C": {
+      "steps": [
+        {
+          "code": "WIT1124",
+          "label": "รับงานยุติ / เหตุเริ่มยุติ",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:11C:WIT1124"
+        },
+        {
+          "code": "WIT1129",
+          "label": "จัดทำ คบ.15 แล้วส่งตรวจ",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:11C:WIT1129"
+        },
+        {
+          "code": "WIT1134",
+          "label": "ผอ.สำนัก/กอง เห็นชอบ · ส่งรองเลขาธิการ",
+          "col": 1,
+          "row": 1,
+          "snapshot": "node:11C:WIT1134"
+        },
+        {
+          "code": "WIT1163",
+          "label": "รองเลขาธิการ เห็นชอบ · ส่งเลขาธิการ",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:11C:WIT1163"
+        },
+        {
+          "code": "WIT1162",
+          "label": "เลขาธิการลงนาม คบ.15 → แท็บ 11D",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:11C:WIT1162"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT1124",
+          "to": "WIT1129",
+          "snapshot": "node:11C:WIT1129",
+          "label": "ทำ คบ.15"
+        },
+        {
+          "from": "WIT1129",
+          "to": "WIT1134",
+          "snapshot": "node:11C:WIT1134",
+          "label": "ส่งตรวจ"
+        },
+        {
+          "from": "WIT1134",
+          "to": "WIT1163",
+          "snapshot": "node:11C:WIT1163",
+          "label": "ผ่านธุรการขาไป"
+        },
+        {
+          "from": "WIT1163",
+          "to": "WIT1162",
+          "snapshot": "edge:11C:E1162",
+          "label": "เห็นชอบ"
+        },
+        {
+          "from": "WIT1163",
+          "to": "WIT1129",
+          "snapshot": "edge:11C:E1163",
+          "label": "ส่งคืนแก้ไข"
+        }
+      ]
+    },
+    "11D": {
+      "steps": [
+        {
+          "code": "WIT1136",
+          "label": "เลขาธิการฯ อนุมัติให้ยุติ?",
+          "col": 0,
+          "row": 0,
+          "snapshot": "node:11D:WIT1136"
+        },
+        {
+          "code": "WIT1137",
+          "label": "ไม่อนุมัติ: คุ้มครองต่อ → แท็บ 10",
+          "col": 1,
+          "row": 0,
+          "snapshot": "node:11D:WIT1137"
+        },
+        {
+          "code": "WIT1139",
+          "label": "ลงนาม คบ.16 คำสั่งยุติ",
+          "col": 0,
+          "row": 1,
+          "snapshot": "node:11D:WIT1139"
+        },
+        {
+          "code": "WIT1147",
+          "label": "พยานยื่นอุทธรณ์ภายใน 30 วัน → แท็บ 09B",
+          "col": 0,
+          "row": 2,
+          "snapshot": "node:11D:WIT1147"
+        },
+        {
+          "code": "WIT1179",
+          "label": "มติอุทธรณ์จากแท็บ 09B",
+          "col": 1,
+          "row": 2,
+          "snapshot": "node:11D:WIT1179"
+        }
+      ],
+      "edges": [
+        {
+          "from": "WIT1136",
+          "to": "WIT1137",
+          "snapshot": "edge:11D:E1137",
+          "label": "ไม่อนุมัติ"
+        },
+        {
+          "from": "WIT1136",
+          "to": "WIT1139",
+          "snapshot": "node:11D:WIT1139",
+          "label": "อนุมัติ"
+        },
+        {
+          "from": "WIT1139",
+          "to": "WIT1147",
+          "snapshot": "node:11D:WIT1147",
+          "label": "แจ้งผลด้วย คบ.17"
+        },
+        {
+          "from": "WIT1147",
+          "to": "WIT1179",
+          "snapshot": "edge:11D:E1148",
+          "label": "มติ 09B"
+        }
+      ]
+    }
+  },
+  "cross": {
+    "02>03": {
+      "from": "WIT0216",
+      "to": "WIT0303",
+      "snapshot": "overview:02>03"
+    },
+    "03>04": {
+      "from": "WIT0312",
+      "to": "WIT0413",
+      "snapshot": "overview:03>04"
+    },
+    "04>05": {
+      "from": "WIT0411",
+      "to": "WIT0502",
+      "snapshot": "overview:04>05"
+    },
+    "04>06": {
+      "from": "WIT0412",
+      "to": "WIT0603",
+      "snapshot": "overview:04>06"
+    },
+    "05>06": {
+      "from": "WIT0522",
+      "to": "WIT0615",
+      "snapshot": "overview:05>06"
+    },
+    "06>05": {
+      "from": "WIT0614",
+      "to": "WIT0502",
+      "snapshot": "overview:06>05"
+    },
+    "06>08A": {
+      "from": "WIT0613",
+      "to": "WIT0803",
+      "snapshot": "overview:06>08A"
+    },
+    "05>07": {
+      "from": "WIT0514",
+      "to": "WIT0704",
+      "snapshot": "overview:05>07"
+    },
+    "07>05": {
+      "from": "WIT0707",
+      "to": "WIT0502",
+      "snapshot": "overview:07>05"
+    },
+    "07>08A": {
+      "from": "A6OWNER",
+      "to": "WIT0804",
+      "snapshot": "overview:07>08A"
+    },
+    "07>07G": {
+      "from": "A6GOT",
+      "to": "A6POSTSEND",
+      "snapshot": "overview:07>07G"
+    },
+    "07G>08A": {
+      "from": "A6POST06",
+      "to": "WIT0804",
+      "snapshot": "overview:07G>08A"
+    },
+    "07>09A": {
+      "from": "WIT0711",
+      "to": "WIT0901",
+      "snapshot": "overview:07>09A"
+    },
+    "08A>08A-1": {
+      "from": "WIT0813",
+      "to": "WIT0814",
+      "snapshot": "overview:08A>08A-1"
+    },
+    "08A>08A-2": {
+      "from": "WIT0813",
+      "to": "WIT0822",
+      "snapshot": "overview:08A>08A-2"
+    },
+    "08A>08A-3": {
+      "from": "WIT0813",
+      "to": "WIT0830",
+      "snapshot": "overview:08A>08A-3"
+    },
+    "08A>08B": {
+      "from": "WIT0813",
+      "to": "WIT0841",
+      "snapshot": "overview:08A>08B"
+    },
+    "08A-2>08B": {
+      "from": "WIT0873",
+      "to": "WIT0841",
+      "snapshot": "overview:08A-2>08B"
+    },
+    "08A>11A": {
+      "from": "WIT0840",
+      "to": "WIT1107",
+      "snapshot": "overview:08A>11A"
+    },
+    "08A>11C": {
+      "from": "WIT0840",
+      "to": "WIT1124",
+      "snapshot": "overview:08A>11C"
+    },
+    "08A-1>10": {
+      "from": "WIT0820",
+      "to": "WIT1001",
+      "snapshot": "overview:08A-1>10"
+    },
+    "08A-2>10": {
+      "from": "WIT0829",
+      "to": "WIT1001",
+      "snapshot": "overview:08A-2>10"
+    },
+    "08A-3>10": {
+      "from": "WIT0837",
+      "to": "WIT1001",
+      "snapshot": "overview:08A-3>10"
+    },
+    "08B>10": {
+      "from": "WIT0851",
+      "to": "WIT1001",
+      "snapshot": "overview:08B>10"
+    },
+    "09A>09B": {
+      "from": "WIT0910",
+      "to": "WIT0911",
+      "snapshot": "overview:09A>09B"
+    },
+    "09B>05": {
+      "from": "WIT0935",
+      "to": "WIT0502",
+      "snapshot": "overview:09B>05"
+    },
+    "09B>11D": {
+      "from": "WIT0921",
+      "to": "WIT1179",
+      "snapshot": "overview:09B>11D"
+    },
+    "08C>11C": {
+      "from": "WIT0858",
+      "to": "WIT1124",
+      "snapshot": "overview:08C>11C"
+    },
+    "10>11A": {
+      "from": "WIT1013",
+      "to": "WIT1107",
+      "snapshot": "overview:10>11A"
+    },
+    "11A>10": {
+      "from": "WIT1108",
+      "to": "WIT1003",
+      "snapshot": "overview:11A>10"
+    },
+    "11A>11B": {
+      "from": "WIT1109",
+      "to": "WIT1112",
+      "snapshot": "overview:11A>11B"
+    },
+    "11A>08A": {
+      "from": "WIT1110",
+      "to": "WIT0807",
+      "snapshot": "overview:11A>08A"
+    },
+    "11A>11C": {
+      "from": "WIT1111",
+      "to": "WIT1124",
+      "snapshot": "overview:11A>11C"
+    },
+    "11A>08C": {
+      "from": "WIT1149",
+      "to": "WIT0852",
+      "snapshot": "overview:11A>08C"
+    },
+    "10>08C": {
+      "from": "WIT1011",
+      "to": "WIT0852",
+      "snapshot": "overview:10>08C"
+    },
+    "11B>08C": {
+      "from": "WIT1150",
+      "to": "WIT0852",
+      "snapshot": "overview:11B>08C"
+    },
+    "11B>10": {
+      "from": "WIT1122",
+      "to": "WIT1003",
+      "snapshot": "overview:11B>10"
+    },
+    "11B>11B": {
+      "from": "WIT1122",
+      "to": "WIT1114",
+      "snapshot": "overview:11B>11B"
+    },
+    "11B>11C": {
+      "from": "WIT1123",
+      "to": "WIT1124",
+      "snapshot": "overview:11B>11C"
+    },
+    "11C>11D": {
+      "from": "WIT1162",
+      "to": "WIT1136",
+      "snapshot": "overview:11C>11D"
+    },
+    "11D>10": {
+      "from": "WIT1137",
+      "to": "WIT1003",
+      "snapshot": "overview:11D>10"
+    },
+    "11D>09B": {
+      "from": "WIT1147",
+      "to": "WIT0911",
+      "snapshot": "overview:11D>09B"
+    }
+  }
+}

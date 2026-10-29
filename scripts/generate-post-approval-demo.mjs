@@ -59,7 +59,7 @@ try {
     }, demo)
     const snapshot = {
       name: demo.name, group: 'ส่งงานหลังอนุมัติ · เจ้าของสำนวนเดิม / กอท.', description: demo.description,
-      to: demo.kind === 'pending' ? '/dossier/WP-2569-000501' : `/queue/${demo.role}`,
+      to: demo.kind === 'pending' ? '/dossier/0501%2F2569' : `/queue/${demo.role}`,
       capturedAt: new Date().toISOString(), localStorageData,
     }
     await writeFile(new URL(`../src/mock-states/${demo.name}.json`, import.meta.url), JSON.stringify(snapshot, null, 2) + '\n')

@@ -5,8 +5,8 @@ import { completeNoticeDetails, checkNoticeReady } from '../helpers/noticeDocume
 import { handoffAction } from '../helpers/postApproval'
 import { fieldAfterLabel, formRow, signInModal } from '../journeys/journey-helpers'
 
-const NO = 'WP-2569-000501'
-const DOSSIER = `/dossier/${NO}`
+const NO = '0501/2569'
+const DOSSIER = `/dossier/${encodeURIComponent(NO)}`
 const role = (page: Page, value: string) => page.getByLabel('เลือกบทบาทผู้ใช้งาน').selectOption(value)
 const assertSecretaryNoticeOnly = async (page: Page) => {
   const c = await readCase(page, NO)
@@ -34,7 +34,7 @@ for (const destination of ['original_owner', 'got'] as const) {
     const duplicate = await page.evaluate(async () => {
       const path = '/scripts/post-approval-fixture.ts'
       const { useCaseStore } = await import(path)
-      return useCaseStore.getState().confirmPreliminaryDecision('WP-2569-000501', 9)
+      return useCaseStore.getState().confirmPreliminaryDecision('0501/2569', 9)
     })
     expect(duplicate).toBe(false)
     expect((await readCase(page, NO))?.documents).toEqual(signed.documents)

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { loadMockState, readCase, seedMockState, switchRole } from '../helpers/seed'
+import { termDownLeg, termUpLeg } from '../helpers/termination'
 import { CASE_NO, DOSSIER_URL, confirmDialog, expectStage, formRow } from './journey-helpers'
 
 /**
@@ -9,14 +10,14 @@ import { CASE_NO, DOSSIER_URL, confirmDialog, expectStage, formRow } from './jou
  *
  * ทางแยก:
  *   J13-A  ผบช.ชั้นต้นส่งคืน คบ.15 (WIT1133) → แก้เป็นเวอร์ชัน 2 → เห็นชอบ (WIT1134) → ผู้มีอำนาจ "ไม่อนุมัติ" ยุติ (WIT1136/1137) → คุ้มครองต่อ กลับแท็บ 10
- *   J13-B  พยานยื่น คบ.7 ขอยุติ (WIT1125/1126) → คบ.15 → เห็นชอบ → อนุมัติ → คบ.16 → คบ.17 → พยานรับ → ยื่นอุทธรณ์ภายใน 30 วัน (WIT1147) → แท็บ 09B ไม่ปิดงาน
+ *   J13-B  พยานยื่น คบ.7 ขอยุติ (WIT1125/1126) → คบ.15 ข้อ 18 (1) → เห็นชอบ → อนุมัติ → คบ.16 → คบ.17 (ไม่มีสิทธิอุทธรณ์ — FB-029) → ปิดงานได้ทันทีหลังนำส่ง
  *   J13-C  ส่ง คบ.17 ไม่สำเร็จ 2 ครั้ง (WIT1144) → บันทึกวันที่ถือว่าได้รับ → เริ่มนับกรอบอุทธรณ์ → ยังปิดงานไม่ได้ (WIT1148)
  *   J13-D  ครบเพดานสะสม 180 วัน: ปิดแขนงขยายเวลา (WIT1150) → เลือก "ยุติ" (WIT1111) → 11C: บันทึกเหตุ ครบกำหนด → คบ.15 → เห็นชอบ
  *   J13-E  ปิดงาน (WIT1148) แล้วแฟ้มถูกล็อกทั้งแฟ้ม แก้ไขไม่ได้ (TC-065) หลังพ้นกำหนดอุทธรณ์
  */
 
-const TERM_URL = `/termination/${CASE_NO}`
-const REVIEW_URL = `/protection-review/${CASE_NO}`
+const TERM_URL = `/termination/${encodeURIComponent(CASE_NO)}`
+const REVIEW_URL = `/protection-review/${encodeURIComponent(CASE_NO)}`
 const MONITOR_URL = `/protection-monitor?caseNo=${CASE_NO}`
 
 type Rec = Record<string, unknown>
@@ -51,6 +52,8 @@ async function supervisorEndorsesKb15(page: Page) {
   await page.goto(TERM_URL)
   await page.getByRole('button', { name: 'ครบถ้วน · เสนอผู้มีอำนาจ', exact: true }).click()
   await confirmDialog(page, 'ยืนยันครบถ้วน', 'เสนอผู้มีอำนาจพิจารณาออกคำสั่งยุติ')
+  // ขาไป: ธุรการหน่วย → ธุรการสำนักงานเลขาธิการ → เลขาธิการ
+  await termUpLeg(page, CASE_NO)
 }
 
 /** ผู้มีอำนาจอนุมัติให้ยุติ (WIT1136) */
@@ -60,6 +63,7 @@ async function directorApproves(page: Page, role = 'secretary') {
   await page.getByPlaceholder('ความเห็นประกอบผลพิจารณา').fill('อนุมัติให้ยุติตามที่เสนอ')
   await page.getByRole('button', { name: 'อนุมัติให้ยุติ' }).click()
   await expect(page.locator('.swal2-toast')).toContainText('อนุมัติให้ยุติ')
+  await termDownLeg(page, CASE_NO)
 }
 
 /** ตั้งต้น 11A — Episode สะสม `days` วัน วิธีที่ 1 */
@@ -157,14 +161,19 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       await expect(page.getByText(/ไม่อนุมัติให้ยุติเมื่อ/)).toBeVisible()
     })
 
+    await test.step('ผลไม่อนุมัติกลับหน่วยผ่านธุรการ (สำนักงานเลขาธิการ → ธุรการหน่วย) ถึงเจ้าของสำนวน', async () => {
+      await termDownLeg(page, CASE_NO)
+      await page.goto(TERM_URL)
+    })
+
     await test.step('เชื่อมกลับแท็บ 10 · ติดตามต่อ', async () => {
       await page.getByRole('link', { name: /กลับไปรายงานผลการคุ้มครอง/ }).click()
-      await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO.replace('/', '(?:/|%2F)')}`))
       await expectStage(page, 'protection')
     })
   })
 
-  test('J13-B · [ทางแยก] พยานขอยุติ (คบ.7) → คบ.15 → อนุมัติ → คบ.16 → คบ.17 → พยานยื่นอุทธรณ์ภายใน 30 วัน → แท็บ 09B', async ({ page }) => {
+  test('J13-B · [ทางแยก] พยานขอยุติ (คบ.7) → คบ.15 ข้อ 18 (1) → อนุมัติ → คบ.16 → คบ.17 ไม่มีสิทธิอุทธรณ์ → ปิดงานทันที (FB-029)', async ({ page }) => {
     test.setTimeout(300_000)
     await seedMockState(page, 'Case 1.13', 'officer')
 
@@ -187,6 +196,8 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       await expect(page.locator('.swal2-toast')).toContainText('จัดทำ คบ.15')
       const c = await readCase(page, CASE_NO)
       expect((c?.kb15 as Rec).trigger).toBe('witness_kb7')
+      // FB-029 — พยานขอยุติเป็นค่าตั้งต้นข้อ 18 (1) ไม่มีสิทธิอุทธรณ์
+      expect((c?.kb15 as Rec).regulationClause).toBe(1)
       // ผังบอกว่ายังคุ้มครองอยู่ — prototype ย้าย stage เป็น termination_review แต่ยังไม่ยุติ (closedAt/kb16 ว่าง)
       expect(c?.stage).toBe('termination_review')
       expect(c?.closedAt).toBeFalsy()
@@ -206,6 +217,7 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       await page.getByRole('button', { name: 'อนุมัติให้ยุติ' }).click()
       await expect(page.locator('.swal2-toast')).toContainText('อนุมัติให้ยุติ')
       expect(((await readCase(page, CASE_NO))?.terminationApproval as Rec).approved).toBe(true)
+      await termDownLeg(page, CASE_NO) // ผลอนุมัติกลับหน่วยผ่านธุรการ
     })
 
     await test.step('WIT1138 · เจ้าหน้าที่ร่างคำสั่ง คบ.16 แล้วกรอกในแฟ้มและกด "ส่งให้อนุมัติ"', async () => {
@@ -215,7 +227,7 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       await page.getByLabel('วันที่ออกคำสั่ง').fill(todayIso())
       await page.getByLabel('วันที่คำสั่งมีผล').fill(isoDaysFromToday(10)) // วันที่มีผลเป็นอนาคต — ถ้ามีผลวันนี้ระบบจะปิดแฟ้มทันทีหลังลงนามและล็อกทุกปุ่ม
       await page.getByRole('button', { name: 'เปิดแฟ้มคดี' }).click()
-      await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
       expect(((await readCase(page, CASE_NO))?.kb16 as Rec).status).toBe('draft')
 
       await page.goto(`/form/16?caseNo=${CASE_NO}`)
@@ -225,6 +237,7 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       await page.getByRole('button', { name: /ส่งให้ผู้มีอำนาจอนุมัติ|ส่งให้อนุมัติ|ส่งคำสั่ง/ }).first().click()
       await confirmDialog(page, 'ส่งให้อนุมัติ')
       expect(((await readCase(page, CASE_NO))?.kb16 as Rec).status).toBe('submitted')
+      await termUpLeg(page, CASE_NO) // ขาไป: เสนอลงนามผ่านธุรการ
     })
 
     await test.step('WIT1139 · เลขาธิการฯ ลงนามคำสั่ง คบ.16 (มีผลอีก 10 วัน — ยังคุ้มครองอยู่)', async () => {
@@ -236,6 +249,7 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       expect(kb16.signedAt).toBeTruthy()
       expect(kb16.locked).toBe(true)
       expect((await readCase(page, CASE_NO))?.stage).not.toBe('terminated') // ยังไม่ถึงวันที่มีผล (WIT1130)
+      await termDownLeg(page, CASE_NO) // ขากลับ: คำสั่งที่ลงนามแล้วถึงเจ้าของสำนวนผ่านธุรการ
     })
 
     await test.step('WIT1140 · เจ้าหน้าที่บันทึกวันหยุดปฏิบัติจริง', async () => {
@@ -250,17 +264,19 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
     await test.step('WIT1141 · เจ้าหน้าที่ร่าง คบ.17 ในแฟ้มและกด "ส่งให้ลงนาม"; เลขาธิการฯ ลงนาม', async () => {
       await page.getByPlaceholder('ชื่อไฟล์หนังสือ').fill('คบ17_แจ้งคำสั่งยุติ.pdf')
       await page.getByRole('button', { name: 'เปิดแฟ้มคดี' }).click()
-      await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
       expect(((await readCase(page, CASE_NO))?.kb17 as Rec).status).toBe('draft')
 
       await formRow(page, 'คบ.17').getByRole('button', { name: /ส่งให้ลงนาม|ส่งให้ผู้มีอำนาจ|ส่งให้อนุมัติ/ }).click()
       await confirmDialog(page, 'ส่งให้ลงนาม')
       expect(((await readCase(page, CASE_NO))?.kb17 as Rec).status).toBe('submitted')
+      await termUpLeg(page, CASE_NO)
 
-      await switchRole(page, 'secretary')
       await page.goto(TERM_URL)
       await page.getByRole('button', { name: 'ลงนาม คบ.17' }).click()
       await expect(page.locator('.swal2-toast')).toContainText('ลงนาม คบ.17')
+      await termDownLeg(page, CASE_NO)
+      await page.goto(TERM_URL)
     })
 
     await test.step('WIT1142 · ออกเลขและนำส่ง คบ.17 ผ่านสารบรรณเดิม', async () => {
@@ -270,41 +286,18 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       expect(((await readCase(page, CASE_NO))?.kb17 as Rec).registryNo).toBe('สลข.999/2569')
     })
 
-    // WIT1143 (อัปโหลดฉบับที่ส่งจริง) / WIT1144 (พยานรับหนังสือนอกระบบ) — ไม่บังคับในเส้นทางนี้ ต่อที่การบันทึกวันที่รับ
-
-    await test.step('WIT1145 · บันทึกวันที่พยานได้รับ เริ่มนับกรอบอุทธรณ์ 30 วัน', async () => {
+    await test.step('FB-029 · ข้อ 18 (1) ไม่มีสิทธิอุทธรณ์ — ไม่มีขั้นบันทึกวันรับ/ฟอร์มอุทธรณ์ ปิดงานได้ทันทีหลังนำส่ง', async () => {
       await switchRole(page, 'officer')
       await page.goto(TERM_URL)
-      await page.getByLabel('วันที่พยานได้รับจริง').fill(isoDaysFromToday(-5))
-      await page.getByRole('button', { name: 'บันทึกวันที่พยานได้รับ' }).click()
-      await expect(page.locator('.swal2-toast')).toContainText('เริ่มนับอุทธรณ์')
-      await expect(page.getByText(/ครบกำหนดอุทธรณ์.*\(เหลือ \d+ วัน\)/)).toBeVisible()
-    })
-
-    await test.step('WIT1146 · ยังอยู่ในกรอบ 30 วัน — ปิดงานไม่ได้ ต้องเลือกทางอุทธรณ์', async () => {
-      await expect(page.getByRole('button', { name: CLOSE_BUTTON })).toBeDisabled()
-      expect((await readCase(page, CASE_NO))?.stage).not.toBe('terminated')
-    })
-
-    await test.step('WIT1147 · พยานยื่นอุทธรณ์ภายใน 30 วัน → รับคำอุทธรณ์ ส่งไปแท็บ 09B', async () => {
-      const intake = page.getByTestId('appeal-intake-form')
-      await intake.getByTestId('appeal-intake-reason').fill('ยังมีเหตุอันตรายอยู่ ขอให้ทบทวนคำสั่งยุติ')
-      await intake.getByTestId('appeal-intake-channel-letter').click()
-      await intake.getByTestId('appeal-intake-registry-no').fill('ปปท 0007/5501')
-      await intake.getByTestId('appeal-intake-evidence-file').setInputFiles({
-        name: 'คำร้องอุทธรณ์คำสั่งยุติ.pdf',
-        mimeType: 'application/pdf',
-        buffer: Buffer.from('%PDF-1.4 mock'),
-      })
-      await intake.getByRole('button', { name: /มีอุทธรณ์ภายในกำหนด$/ }).click()
-      await confirmDialog(page, 'ยืนยัน')
-      await expect(page.locator('.swal2-toast')).toContainText('รับคำอุทธรณ์คำสั่งยุติ')
+      const noAppeal = page.getByTestId('kb17-no-appeal')
+      await expect(noAppeal).toContainText('ไม่มีสิทธิอุทธรณ์')
+      await expect(page.getByLabel('วันที่พยานได้รับจริง')).toHaveCount(0)
+      await expect(page.getByTestId('appeal-intake-form')).toHaveCount(0)
+      await noAppeal.getByRole('button', { name: 'ปิดงาน (ไม่มีสิทธิอุทธรณ์)' }).click()
+      await expect(page.locator('.swal2-toast')).toContainText('ปิดงานคุ้มครอง')
       const c = await readCase(page, CASE_NO)
-      expect(c?.appealAgainst).toBe('kb17')
-      expect(c?.stage).toBe('appeal')
-      expect(c?.no).toBe(CASE_NO) // ไม่สร้าง คบ.1 ใหม่
-      expect(c?.closedAt).toBeFalsy()
-      await expect(page.getByRole('link', { name: 'ไปหน้าอุทธรณ์' })).toBeVisible()
+      expect(c?.stage).toBe('terminated')
+      expect(c?.appealAgainst).toBeFalsy()
     })
   })
 
@@ -392,7 +385,7 @@ test.describe('J13 · ทางแยกการยุติการคุ้�
       expect(c?.stage).toBe('termination_review')
       expect(c?.status).toBe('เข้าสู่กระบวนการยุติการคุ้มครอง')
       await page.getByTestId('review-goto-11c').click()
-      await expect(page).toHaveURL(new RegExp(`/termination/${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/termination/${encodeURIComponent(CASE_NO)}`))
     })
 
     await test.step('WIT1124 + WIT1128 + WIT1129 · 11C บันทึกเหตุ "ครบกำหนด" และจัดทำ คบ.15', async () => {

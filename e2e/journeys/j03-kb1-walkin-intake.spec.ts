@@ -1,18 +1,18 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
 import { newCaseNoAfterIntake } from '../helpers/seed'
-import { areaField, confirmDialog, expectStage, formRow } from './journey-helpers'
+import { areaField, confirmDialog, expectStage, formRow, submitFastTrackToDirector } from './journey-helpers'
 
 /**
  * J03 · รับเรื่องใหม่จากทะเบียน (เข้าพบ คบ.1 / ธุรการรับคำร้อง) → ผอ. มอบหมาย → จัดทำ คบ.1 / คบ.3 / คบ.6 → ผบช.ชั้นต้น
  *
- * เส้นทางหลัก: เจ้าหน้าที่ ป.ป.ท. กด "รับคำร้องใหม่" จาก /registry เลือก คบ.1 (เข้าพบ) → เชื่อมโยงเลขสำนวน → ส่ง ผอ.
- * → ผอ. มอบหมาย (แท็บ 03) → เจ้าของสำนวนจัดทำ คบ.1 / "ไม่ข้าม" คบ.3 (WIT0407 → WIT0408) / คบ.6 (แท็บ 04)
+ * เส้นทางหลัก: เจ้าหน้าที่ ป.ป.ท. กด "รับคำร้องใหม่" จาก /registry เลือก คบ.1 (เข้าพบ) บันทึก คบ.1 → เชื่อมโยงเลขสำนวน → ส่ง ผอ.
+ * → ผอ. มอบหมาย (แท็บ 03) → เจ้าของสำนวนกลั่นกรองความเร่งด่วน → "ไม่ข้าม" คบ.3 (WIT0407 → WIT0408) / คบ.6 (แท็บ 04)
  * → ส่งผู้บังคับบัญชาชั้นต้นเห็นชุดเสนอที่มี คบ.3 (scenario `kb3-prepared`: Case 1.3 → 6.3)
  *
  * ทางแยก (◇) ในแท็บ 02 / 03 / 04:
- *   J03-a  ธุรการรับคำร้อง (WIT0203/0206 แนบไฟล์) → เจ้าของสำนวนประเมินปกติ (WIT0310) → ข้าม คบ.3 (WIT0409)
- *   J03-b  กลั่นกรองเป็นเร่งด่วนตั้งแต่ /intake → เข้าเส้นทางเร่งด่วน (แท็บ 06)
+ *   J03-a  ธุรการรับคำร้อง (WIT0203/0206 แนบไฟล์) → เจ้าของสำนวนจัดทำ คบ.1 → เชื่อมโยง → กลั่นกรองปกติ (WIT0310) → ข้าม คบ.3 (WIT0409)
+ *   J03-b  รับ คบ.1 → เจ้าของสำนวนกลั่นกรองเป็นเร่งด่วน → เข้าเส้นทางเร่งด่วน (แท็บ 06)
  *   J03-c  ธุรการรับคำร้อง → เจ้าของสำนวนประเมินเป็นเร่งด่วน (WIT0310/0410) → เข้าเส้นทางเร่งด่วน (แท็บ 06)
  *   J03-d  ข้าม คบ.3 แล้วเปลี่ยนใจกู้คืนและจัดทำ คบ.3 (WIT0407 สองทางในแฟ้มเดียว)
  *
@@ -36,13 +36,19 @@ async function openIntakeFromRegistry(page: Page) {
   await expect(page).toHaveURL(/\/intake$/)
 }
 
-/** เจ้าหน้าที่กลั่นกรองความเร่งด่วนบน /intake (WIT0207/0208) */
+/**
+ * เจ้าของสำนวนกลั่นกรองความเร่งด่วน (WIT0207/0208/0310) — แผงอยู่ในการ์ดคดีหลัก
+ * แสดงหลังบันทึก คบ.1 และเชื่อมโยงคดีหลักแล้ว
+ */
 async function screenUrgency(page: Page, kind: 'normal' | 'urgent', reason: string) {
-  await page.getByRole('radio', { name: kind === 'normal' ? /^กรณีปกติ/ : /^กรณีจำเป็นเร่งด่วน/ }).click()
-  await page.locator('#intakeScreeningNote').fill(reason)
+  const panel = page.getByTestId('urgency-screening-panel')
+  await expect(panel).toBeVisible()
+  await panel.getByRole('textbox').fill(reason)
+  await page.getByRole('button', { name: kind === 'normal' ? NORMAL_BTN : URGENT_BTN }).click()
+  await expect(page.getByText(/ผลการประเมิน:/)).toBeVisible()
 }
 
-/** เชื่อมโยงเลขสำนวนหลัก (WIT0212-0214) — ทำได้เฉพาะเจ้าของสำนวนที่ ผอ. มอบหมาย หรือเจ้าหน้าที่ที่รับคำร้องเอง */
+/** เชื่อมโยงเลขสำนวนหลัก (WIT0212-0214) — เจ้าหน้าที่ผู้รับเรื่องก่อนส่ง ผอ. หรือเจ้าของสำนวนหลังบันทึก คบ.1 (เรื่องที่ธุรการรับ) */
 async function linkMainCaseAsOwner(page: Page, caseNo: string) {
   await expect(page.getByText('คดีหลักและการประเมินภัย')).toBeVisible()
   await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
@@ -51,23 +57,25 @@ async function linkMainCaseAsOwner(page: Page, caseNo: string) {
 }
 
 /**
- * ส่ง ผอ. มอบหมาย (WIT0216) — ธุรการไม่เห็นการ์ดเชื่อมโยง ส่งต่อได้เลยโดยยังไม่เชื่อมโยง
- * ส่วนเจ้าหน้าที่ผู้รับเรื่องเอง (officer-receiver) เชื่อมโยงก่อนส่งได้
+ * ส่ง ผอ. มอบหมาย (WIT0216) — เจ้าหน้าที่ผู้รับเรื่องเชื่อมโยงคดีหลักก่อน (ยังไม่เชื่อมโยงจะส่งไม่ได้)
+ * ธุรการไม่เห็นการ์ดคดีหลักและส่งต่อได้เลย
  */
-async function linkAndForwardToDirector(page: Page, caseNo: string, opts: { link: boolean } = { link: true }) {
-  if (opts.link) await linkMainCaseAsOwner(page, caseNo)
-  else await expect(page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' })).toHaveCount(0)
+async function forwardToDirector(page: Page, caseNo: string) {
+  if (await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).isVisible()) {
+    await expect(page.getByTestId('forward-case-button')).toBeDisabled()
+    await linkMainCaseAsOwner(page, caseNo)
+  }
   await page.getByTestId('forward-case-button').click()
   await confirmDialog(page, 'ยืนยันส่งต่อ')
   await expectStage(page, 'director_assign', caseNo)
 }
 
 /** ผอ. มอบหมายเจ้าของสำนวนแล้วส่งต่อให้เจ้าหน้าที่ (WIT0301-0306) */
-async function directorAssigns(page: Page, caseNo: string, opts: { linkAfterAssign: boolean } = { linkAfterAssign: false }) {
+async function directorAssigns(page: Page, caseNo: string) {
   await switchRole(page, 'director')
   await page.goto(`/queue/director`)
   await expect(page.getByText(caseNo)).toBeVisible()
-  await page.goto(`/dossier/${caseNo}`)
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
   await page.getByRole('button', { name: 'มอบหมายเจ้าของสำนวน' }).click()
   await expect(page.getByText(/มอบหมายแล้ว:/)).toBeVisible()
   expect((await readCase(page, caseNo))?.assignedOfficerUserId).toBeTruthy()
@@ -75,9 +83,7 @@ async function directorAssigns(page: Page, caseNo: string, opts: { linkAfterAssi
   await confirmDialog(page, 'ยืนยันส่งต่อ')
   await expectStage(page, 'staff_review', caseNo)
   await switchRole(page, 'officer')
-  await page.goto(`/dossier/${caseNo}`)
-  // ธุรการส่งมาโดยไม่เชื่อมโยง — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงต่อ
-  if (opts.linkAfterAssign) await linkMainCaseAsOwner(page, caseNo)
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
 }
 
 /** จัดทำ คบ.1 (WIT0404/0405): กรอกชื่อ-นามสกุลที่ส่วนแรก เดินจนท้ายฟอร์มแล้วบันทึก */
@@ -88,7 +94,7 @@ async function fillKb1(page: Page, caseNo: string) {
   await page.locator('label:text-is("นามสกุล")').locator('xpath=following-sibling::input[1]').fill('บุญรักษา')
   for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'ส่วนถัดไป' }).click()
   await page.getByRole('button', { name: 'บันทึกแบบ คบ.1' }).click()
-  await page.goto(`/dossier/${caseNo}`)
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
 }
 
 /** จัดทำ คบ.3 (WIT0408) */
@@ -98,7 +104,7 @@ async function fillKb3(page: Page, caseNo: string, text: string) {
   await areaField(page, 'ระบุพฤติการณ์แห่งความไม่ปลอดภัยจากการมาเป็นพยานในคดีทุจริตในภาครัฐ').fill(text)
   await page.getByRole('button', { name: 'บันทึกแบบ คบ.3' }).click()
   await expect(page.locator('.swal2-toast')).toContainText('บันทึกแบบ คบ.3 เรียบร้อยแล้ว')
-  await page.goto(`/dossier/${caseNo}`)
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
 }
 
 /** จัดทำ คบ.6 ที่ระดับเจ้าหน้าที่ (WIT0411) */
@@ -108,7 +114,7 @@ async function fillKb6(page: Page, caseNo: string) {
   await page.locator('label:has-text("1.1 ได้รับคำร้อง")').locator('xpath=following-sibling::input[1]').fill('นางสาวกมลชนก บุญรักษา')
   await page.locator('label:has-text("2.2 ชื่อ-สกุล พยาน")').locator('xpath=following-sibling::input[1]').fill('นางสาวกมลชนก บุญรักษา')
   await page.getByRole('button', { name: 'บันทึกแบบ คบ.6' }).click()
-  await expect(page).toHaveURL(new RegExp(`/dossier/${caseNo}`))
+  await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(caseNo)}`))
 }
 
 /** กดข้าม คบ.3 พร้อมเหตุผล (WIT0409) */
@@ -143,20 +149,26 @@ async function receiverIntakesPetition(page: Page): Promise<string> {
   return caseNo
 }
 
-/** เจ้าหน้าที่รับเข้าพบ: เลือกผลกลั่นกรอง + คบ.1 + แนบไฟล์ แล้วบันทึก (WIT0207-0211) */
-async function officerIntakesKb1(page: Page, kind: 'normal' | 'urgent', reason: string): Promise<string> {
+/** เจ้าหน้าที่รับเข้าพบ: เลือก คบ.1 + แนบไฟล์ แล้วกรอกและบันทึก คบ.1 ที่ระบบเปิดให้ต่อทันที (WIT0211/0218) — ไม่กลั่นกรองที่ขั้นรับเรื่อง */
+async function officerIntakesKb1(page: Page): Promise<string> {
   await seedMockState(page, 'Case 1', 'officer')
   await openIntakeFromRegistry(page)
-  await screenUrgency(page, kind, reason)
+  await expect(page.getByTestId('intake-triage')).toHaveCount(0)
   await page.getByLabel('อัปโหลดไฟล์ คบ.1').setInputFiles(pdfFile('kb1-evidence.pdf'))
   await expect(page.getByText('kb1-evidence.pdf')).toBeVisible()
   await page.getByRole('button', { name: 'เจ้าหน้าที่กรอก คบ.1' }).click()
-  const caseNo = await newCaseNoFromUrl(page)
+  const caseNo = await newCaseNoAfterIntake(page, { expectForm: 1, backToDossier: false })
+  await page.locator('label:text-is("ชื่อ")').locator('xpath=following-sibling::input[1]').fill('กมลชนก')
+  await page.locator('label:text-is("นามสกุล")').locator('xpath=following-sibling::input[1]').fill('บุญรักษา')
+  for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'ส่วนถัดไป' }).click()
+  await page.getByRole('button', { name: 'บันทึกแบบ คบ.1' }).click()
+  await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(caseNo)}`))
   const created = await readCase(page, caseNo)
   expect(created?.intakeDocType).toBe('kb1')
   expect(created?.intakeChannel).toBe('walkin')
   expect(created?.pendingIntakeForms).toEqual(['คบ.3'])
-  expect(created?.urgency).toBe(kind)
+  expect(created?.urgency).toBeFalsy()
+  expect(created?.kb1CompletedAt).toBeTruthy()
   return caseNo
 }
 
@@ -164,43 +176,30 @@ test('J03 · เจ้าหน้าที่รับเข้าพบ คบ
   test.setTimeout(240_000)
   let caseNo = ''
 
-  await test.step('WIT0204/0211 · พยานเข้าพบ (นอกระบบ) เจ้าหน้าที่กด "รับคำร้องใหม่" จากทะเบียน กลั่นกรองปกติ เลือก คบ.1 แนบหลักฐาน', async () => {
+  await test.step('WIT0204/0211/0218 · พยานเข้าพบ (นอกระบบ) เจ้าหน้าที่กด "รับคำร้องใหม่" จากทะเบียน เลือก คบ.1 แนบหลักฐาน แล้วบันทึก คบ.1', async () => {
     // WIT0201/0202/0204 ⚙️ นอกระบบ — ช่องทางเข้าพบ = ประเภทเอกสาร คบ.1 (ผังให้พยานเลือกช่องทางเอง)
-    caseNo = await officerIntakesKb1(page, 'normal', 'พยานเข้าพบเอง ไม่พบภัยคุกคามเฉพาะหน้า')
-    // WIT0207/0208 — ผลกลั่นกรองถูกบันทึกพร้อมเหตุผล ผู้ประเมิน และเวลา
-    const created = await readCase(page, caseNo)
-    expect(created?.urgencyAssessedAt).toBeTruthy()
-    expect(created?.urgencyAssessedBy).toBeTruthy()
-    expect(created?.urgencyAssessmentNote).toContain('ไม่พบภัยคุกคามเฉพาะหน้า')
+    caseNo = await officerIntakesKb1(page)
     // WIT0209 ◇ คบ.1 → งานค้างเหลือเพียง คบ.3 ไม่ต้องทำ คบ.1 ซ้ำ
-    expect(created?.kb1SignaturePending).toBeFalsy()
-    // ผังให้กรอกข้อมูลพยานตอนสัมภาษณ์ แต่โปรโตไทป์ไม่มีช่องกรอกในขั้นรับเรื่อง (กรอกที่ /form/1 ภายหลัง)
+    expect((await readCase(page, caseNo))?.kb1SignaturePending).toBeFalsy()
   })
 
-  await test.step('WIT0212/0213/0214 · ค้นและยืนยันเชื่อมโยงเลขสำนวนหลัก (พบคดี)', async () => {
-    await expect(page.getByText('คดีหลักและการประเมินภัย')).toBeVisible()
-    await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
-    await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
-    const linked = await readCase(page, caseNo)
-    expect(linked?.mainCaseStatus).toBe('linked')
-    expect(linked?.linkedMainCaseId).toBeTruthy()
+  await test.step('WIT0212/0213/0214/0216 · เจ้าหน้าที่ผู้รับเรื่องค้นและยืนยันเชื่อมโยงเลขสำนวนหลัก แล้วส่ง ผอ. มอบหมาย', async () => {
+    await expect(page.getByTestId('main-case-link-deferred')).toHaveCount(0)
+    await expect(page.getByTestId('urgency-screening-panel')).toHaveCount(0)
+    await forwardToDirector(page, caseNo)
+    expect((await readCase(page, caseNo))?.linkedMainCaseId).toBeTruthy()
   })
 
-  await test.step('WIT0216 · ส่งคำขอให้ ผอ. มอบหมาย', async () => {
-    await page.getByTestId('forward-case-button').click()
-    await confirmDialog(page, 'ยืนยันส่งต่อ')
-    await expectStage(page, 'director_assign', caseNo)
-  })
-
-  await test.step('WIT0301/0302/0303 · ผอ. รับงานจากคิว ตรวจ Case Link และผลกลั่นกรอง', async () => {
+  await test.step('WIT0301/0302/0303 · ผอ. รับงานจากคิว ตรวจ Case Link และความเร่งด่วน (ยังไม่ประเมิน)', async () => {
     await switchRole(page, 'director')
     await page.goto('/queue/director')
     await expect(page.getByText(caseNo)).toBeVisible()
-    await page.goto(`/dossier/${caseNo}`)
+    await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
     await expect(page.getByText('รอมอบหมายเจ้าของสำนวน')).toBeVisible()
     await expect(page.getByText('ความเร่งด่วน:')).toBeVisible()
-    // ผังให้ ผอ. ตรวจเอกสารตั้งต้นได้ แต่โปรโตไทป์ซ่อนรายการแบบฟอร์ม/ไฟล์แนบก่อนมอบหมาย
-    await expect(page.getByTestId('dossier-forms')).toHaveCount(0)
+    // ผอ. ตรวจแบบฟอร์มและไฟล์แนบได้ก่อนมอบหมาย (ดูอย่างเดียว)
+    await expect(page.getByTestId('dossier-forms')).toBeVisible()
+    await expect(page.getByText('เอกสารหลักฐานและไฟล์แนบ')).toBeVisible()
   })
 
   await test.step('WIT0304/0305 · ผอ. เลือกผู้รับผิดชอบและมอบหมาย (บันทึกผู้มอบหมาย/เวลา)', async () => {
@@ -222,18 +221,28 @@ test('J03 · เจ้าหน้าที่รับเข้าพบ คบ
     await switchRole(page, 'officer')
     await page.goto('/queue/officer')
     await expect(page.getByText(caseNo)).toBeVisible()
-    await page.goto(`/dossier/${caseNo}`)
+    await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
     await expect(formRow(page, 'คบ.1')).toBeVisible()
     await expect(page.getByText('kb1-evidence.pdf')).toBeVisible()
   })
 
-  await test.step('WIT0309 · มีผลประเมินแล้ว (กลั่นกรองตอนรับเรื่อง) — ไม่ต้องประเมินซ้ำ ข้าม WIT0310', async () => {
-    await expect(page.getByText(/ผลการประเมิน:/)).toBeVisible()
-    await expect(page.getByText('ต้องเลือกก่อนจึงจะส่งต่อได้')).toHaveCount(0)
+  await test.step('WIT0311/0313 · เอกสารตั้งต้นเป็น คบ.1 (บันทึกแล้ว) → ต้องจัดทำเพียง คบ.3 และเชื่อมโยงคดีได้ทันที', async () => {
+    await expect(page.getByText('ต้องจัดทำ: คบ.3', { exact: true })).toBeVisible()
+    await expect(page.getByTestId('main-case-link-waiting-kb1')).toHaveCount(0)
   })
 
-  await test.step('WIT0311/0313 · เอกสารตั้งต้นเป็น คบ.1 → ต้องจัดทำเพียง คบ.3 ไปแท็บ 04 ตรวจ คบ.1/คบ.3', async () => {
-    await expect(page.getByText('ต้องจัดทำ: คบ.3', { exact: true })).toBeVisible()
+  await test.step('WIT0212 · คดีหลักเชื่อมโยงไว้แล้วตั้งแต่ขั้นรับเรื่อง — เจ้าของสำนวนไม่ต้องเชื่อมโยงซ้ำ', async () => {
+    await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' })).toHaveCount(0)
+  })
+
+  await test.step('WIT0207/0208/0309/0310 · ยังไม่มีผลกลั่นกรอง → เจ้าของสำนวนกลั่นกรองเป็นกรณีปกติพร้อมเหตุผล', async () => {
+    await expect(page.getByText('ต้องเลือกก่อนจึงจะส่งต่อได้')).toBeVisible()
+    await screenUrgency(page, 'normal', 'พยานเข้าพบเอง ไม่พบภัยคุกคามเฉพาะหน้า')
+    const screened = await readCase(page, caseNo)
+    expect(screened?.urgencyAssessedAt).toBeTruthy()
+    expect(screened?.urgencyAssessedBy).toBeTruthy()
+    expect(screened?.urgencyAssessmentNote).toContain('ไม่พบภัยคุกคามเฉพาะหน้า')
   })
 
   await test.step('WIT0401/0402/0403 · รับงานแท็บ 04 เห็น Case Link ผลประเมิน แบบฟอร์ม; ◇ คบ.1 มีฉบับเดียว ไม่สร้างซ้ำ', async () => {
@@ -287,7 +296,7 @@ test('J03 · เจ้าหน้าที่รับเข้าพบ คบ
     await switchRole(page, 'supervisor')
     await page.goto('/queue/supervisor')
     await expect(page.getByText(caseNo)).toBeVisible()
-    await page.goto(`/dossier/${caseNo}`)
+    await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
     await expect(formRow(page, 'คบ.1')).toBeVisible()
     await expect(formRow(page, 'คบ.3')).toBeVisible()
     await expect(formRow(page, 'คบ.6')).toBeVisible()
@@ -299,7 +308,7 @@ test('J03 · เจ้าหน้าที่รับเข้าพบ คบ
   })
 })
 
-test('J03-a · [ทางแยก] ธุรการรับคำร้อง (แนบไฟล์สแกน) → เจ้าของสำนวนประเมินปกติ → ข้าม คบ.3 พร้อมเหตุผล → ผบช.ชั้นต้น', async ({ page }) => {
+test('J03-a · [ทางแยก] ธุรการรับคำร้อง (แนบไฟล์สแกน) → เจ้าของสำนวนจัดทำ คบ.1 เชื่อมโยง กลั่นกรองปกติ → ข้าม คบ.3 พร้อมเหตุผล → ผบช.ชั้นต้น', async ({ page }) => {
   test.setTimeout(240_000)
 
   let caseNo = ''
@@ -308,36 +317,38 @@ test('J03-a · [ทางแยก] ธุรการรับคำร้อ�
   })
 
   await test.step('WIT0216 · ธุรการส่ง ผอ. โดยไม่เชื่อมโยง (ธุรการไม่เห็นการ์ดคดีหลัก)', async () => {
-    await linkAndForwardToDirector(page, caseNo, { link: false })
+    await forwardToDirector(page, caseNo)
   })
 
-  await test.step('WIT0301-0306 · ผอ. มอบหมายและส่งต่อเจ้าของสำนวน แล้วเจ้าของสำนวนเชื่อมโยงคดีหลัก', async () => {
-    await directorAssigns(page, caseNo, { linkAfterAssign: true })
+  await test.step('WIT0301-0306 · ผอ. มอบหมายและส่งต่อเจ้าของสำนวน', async () => {
+    await directorAssigns(page, caseNo)
   })
 
-  await test.step('WIT0309 ◇ · ยังไม่มีผลประเมิน (ธุรการไม่ได้กลั่นกรอง) → บังคับให้เจ้าของสำนวนประเมิน', async () => {
-    await expect(page.getByText('ต้องเลือกก่อนจึงจะส่งต่อได้')).toBeVisible()
+  await test.step('WIT0309/0311/0312 ◇ · ยังไม่มีผลกลั่นกรองและเอกสารตั้งต้นเป็นคำร้อง → ต้องจัดทำ คบ.1 ก่อน', async () => {
+    await expect(page.getByText(/ต้องจัดทำ.*คบ\.1.*คบ\.3/)).toBeVisible()
+    await expect(page.getByTestId('main-case-link-waiting-kb1')).toBeVisible()
     await expect(page.getByTestId('forward-case-button')).toBeDisabled()
   })
 
-  await test.step('WIT0310 · เจ้าของสำนวนประเมินเป็น "กรณีปกติ" (ไม่สร้างเลขแบบ คบ. ใด ๆ)', async () => {
+  await test.step('WIT0404/0405 · จัดทำ คบ.1', async () => {
+    await fillKb1(page, caseNo)
+    expect((await readCase(page, caseNo))?.kb1CompletedAt).toBeTruthy()
+  })
+
+  await test.step('WIT0413 · เจ้าของสำนวนเชื่อมโยงคดีหลักหลังจัดทำ คบ.1', async () => {
+    await linkMainCaseAsOwner(page, caseNo)
+  })
+
+  await test.step('WIT0310 · เจ้าของสำนวนกลั่นกรองเป็น "กรณีปกติ" (ไม่สร้างเลขแบบ คบ. ใด ๆ)', async () => {
     const before = await readCase(page, caseNo)
-    await page.getByRole('button', { name: NORMAL_BTN }).click()
-    await expect(page.getByText(/ผลการประเมิน:/)).toBeVisible()
+    await expect(page.getByText('ต้องเลือกก่อนจึงจะส่งต่อได้')).toBeVisible()
+    await screenUrgency(page, 'normal', 'ยังไม่พบภัยเฉพาะหน้าจากข้อมูลใน คบ.1')
     const after = await readCase(page, caseNo)
     expect(after?.urgency).toBe('normal')
     expect(after?.urgencyAssessedAt).toBeTruthy()
     expect(after?.urgencyAssessedBy).toBeTruthy()
     expect(after?.stage).toBe('staff_review')
     expect(after?.form).toBe(before?.form)
-  })
-
-  await test.step('WIT0311/0312 · เอกสารตั้งต้นเป็นคำร้อง → ต้องจัดทำ คบ.1 + คบ.3 (แท็บ 04)', async () => {
-    await expect(page.getByText(/ต้องจัดทำ.*คบ\.1.*คบ\.3/)).toBeVisible()
-  })
-
-  await test.step('WIT0404/0405 · จัดทำ คบ.1', async () => {
-    await fillKb1(page, caseNo)
   })
 
   await test.step('WIT0407 ◇ → WIT0409 · เลือกข้าม คบ.3 (ต้องระบุเหตุผล, Skip Record เก็บผู้บันทึกและเวลา)', async () => {
@@ -369,53 +380,50 @@ test('J03-a · [ทางแยก] ธุรการรับคำร้อ�
     await expectStage(page, 'supervisor_review', caseNo)
 
     await switchRole(page, 'supervisor')
-    await page.goto(`/dossier/${caseNo}`)
+    await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
     await expect(page.getByText(/ข้าม คบ\.3 แล้ว/)).toBeVisible()
     expect((await readCase(page, caseNo))?.owner).toBe(SUPERVISOR)
   })
 })
 
-test('J03-b · [ทางแยก] เจ้าหน้าที่กลั่นกรองเป็นเร่งด่วนตั้งแต่ /intake → เข้าเส้นทางเร่งด่วน (แท็บ 06) ผ่าน ผอ.', async ({ page }) => {
+test('J03-b · [ทางแยก] รับ คบ.1 → ผอ. มอบหมาย → เจ้าของสำนวนกลั่นกรองเป็นเร่งด่วน → เข้าเส้นทางเร่งด่วน (แท็บ 06) ผ่าน ผอ.', async ({ page }) => {
   test.setTimeout(240_000)
   let caseNo = ''
 
-  await test.step('WIT0207/0208 · กลั่นกรอง "กรณีจำเป็นเร่งด่วน" พร้อมเหตุผล แล้วรับ คบ.1 (WIT0211)', async () => {
-    caseNo = await officerIntakesKb1(page, 'urgent', 'ถูกข่มขู่คุกคามถึงชีวิต')
-    const created = await readCase(page, caseNo)
-    expect(created?.risk).toBe('วิกฤต')
-    expect(created?.urgent).toBe(true)
-    expect(created?.urgencyAssessmentNote).toContain('ข่มขู่คุกคามถึงชีวิต')
+  await test.step('WIT0211 · รับ คบ.1 แล้วบันทึก (ไม่กลั่นกรองที่ขั้นรับเรื่อง) และส่ง ผอ.', async () => {
+    caseNo = await officerIntakesKb1(page)
+    await forwardToDirector(page, caseNo)
   })
 
-  await test.step('WIT0212-0216 · เชื่อมโยงเลขสำนวนหลักและส่ง ผอ.', async () => {
-    await linkAndForwardToDirector(page, caseNo)
-  })
-
-  await test.step('WIT0301-0306 · ผอ. มอบหมาย (ผอ. เห็นผลกลั่นกรองเร่งด่วนที่สรุปข้อมูลแฟ้ม)', async () => {
-    await switchRole(page, 'director')
-    await page.goto(`/dossier/${caseNo}`)
-    await expect(page.locator('span.text-slate-500', { hasText: 'ความเร่งด่วน:' }).locator('xpath=following-sibling::*[1]')).toContainText('เร่งด่วน')
+  await test.step('WIT0301-0306 · ผอ. มอบหมาย (ยังไม่มีผลกลั่นกรอง)', async () => {
     await directorAssigns(page, caseNo)
   })
 
-  await test.step('WIT0309 ◇ มีผลประเมินแล้ว (เร่งด่วน) → ไม่ต้องประเมินซ้ำ; WIT0410 ◇ → WIT0412 เส้นทางเร่งด่วน', async () => {
-    await expect(page.getByText(/ผลการประเมิน:/)).toBeVisible()
+  await test.step('WIT0207/0208/0310 · คดีหลักเชื่อมโยงไว้ตั้งแต่ขั้นรับเรื่อง เจ้าของสำนวนกลั่นกรอง "กรณีจำเป็นเร่งด่วน" พร้อมเหตุผล', async () => {
+    await screenUrgency(page, 'urgent', 'ถูกข่มขู่คุกคามถึงชีวิต')
+    const screened = await readCase(page, caseNo)
+    expect(screened?.risk).toBe('วิกฤต')
+    expect(screened?.urgent).toBe(true)
+    expect(screened?.urgencyAssessmentNote).toContain('ข่มขู่คุกคามถึงชีวิต')
+  })
+
+  await test.step('WIT0410 ◇ → WIT0412 เส้นทางเร่งด่วน', async () => {
     await expect(page.getByText(/กรณีจำเป็นเร่งด่วน — คบ\.3 → คบ\.4 → คบ\.5/)).toBeVisible()
-    // เส้นทางเร่งด่วนไม่บังคับ คบ.6 ก่อนส่ง
-    await expect(page.getByTestId('forward-case-button')).toBeEnabled()
+    // เส้นทางเร่งด่วนไม่บังคับ คบ.6 ก่อนส่ง — ส่งผ่านส่วนส่งเส้นทางเร่งด่วนแทนปุ่มส่งต่อทั่วไป
+    await expect(page.getByTestId('fast-track-submit-panel')).toBeVisible()
   })
 
   await test.step('WIT0412 · ส่งตรงถึง ผอ.สำนัก/กอง ข้าม ผบช.ชั้นต้น → การ์ด Fast Track (แท็บ 06)', async () => {
-    await page.getByTestId('forward-case-button').click()
-    await confirmDialog(page, 'ยืนยันส่งต่อ', 'ผอ.สำนัก/กอง')
+    await submitFastTrackToDirector(page, caseNo)
     await expectStage(page, 'director_review', caseNo)
     const after = await readCase(page, caseNo)
     expect(after?.owner).toBe(DIRECTOR)
     expect(after?.fastTracked).toBe(true)
-    await expect(page.getByTestId('fast-track-card')).toBeVisible()
+    // ส่งแล้วแฟ้มอยู่กับ ผอ. — เจ้าหน้าที่ไม่มีส่วนส่งเส้นทางเร่งด่วนให้กดซ้ำ
+    await expect(page.getByTestId('fast-track-submit-panel')).toHaveCount(0)
 
     await switchRole(page, 'director')
-    await page.goto(`/dossier/${caseNo}`)
+    await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
     await expect(page.getByTestId('fast-track-card')).toBeVisible()
   })
 })
@@ -425,15 +433,17 @@ test('J03-c · [ทางแยก] ธุรการรับคำร้อ�
 
   const caseNo = await receiverIntakesPetition(page)
   await test.step('WIT0216 · ธุรการส่ง ผอ. โดยไม่เชื่อมโยง (ธุรการไม่เห็นการ์ดคดีหลัก)', async () => {
-    await linkAndForwardToDirector(page, caseNo, { link: false })
+    await forwardToDirector(page, caseNo)
   })
-  await test.step('WIT0301-0306 · ผอ. มอบหมายและส่งต่อเจ้าของสำนวน แล้วเจ้าของสำนวนเชื่อมโยงคดีหลัก', async () => {
-    await directorAssigns(page, caseNo, { linkAfterAssign: true })
+  await test.step('WIT0301-0306 · ผอ. มอบหมายและส่งต่อเจ้าของสำนวน แล้วเจ้าของสำนวนจัดทำ คบ.1 และเชื่อมโยงคดีหลัก', async () => {
+    await directorAssigns(page, caseNo)
+    await fillKb1(page, caseNo)
+    await linkMainCaseAsOwner(page, caseNo)
   })
 
   await test.step('WIT0309 ◇ ไม่มีผลประเมิน → WIT0310 เจ้าของสำนวนเลือก "กรณีจำเป็นเร่งด่วน"', async () => {
     await expect(page.getByText('ต้องเลือกก่อนจึงจะส่งต่อได้')).toBeVisible()
-    await page.getByRole('button', { name: URGENT_BTN }).click()
+    await screenUrgency(page, 'urgent', 'พบภัยคุกคามเฉพาะหน้าจากข้อมูลใน คบ.1')
     await expect(page.getByText(/กรณีจำเป็นเร่งด่วน — คบ\.3 → คบ\.4 → คบ\.5/)).toBeVisible()
     const after = await readCase(page, caseNo)
     expect(after?.urgency).toBe('urgent')
@@ -444,22 +454,24 @@ test('J03-c · [ทางแยก] ธุรการรับคำร้อ�
 
   await test.step('WIT0410 ◇ → WIT0412 · ส่งตรง ผอ. (Fast Track) ไปแท็บ 06', async () => {
     await expect(formRow(page, 'คบ.4')).toBeVisible()
-    await page.getByTestId('forward-case-button').click()
-    await confirmDialog(page, 'ยืนยันส่งต่อ', 'ผอ.สำนัก/กอง')
+    await submitFastTrackToDirector(page, caseNo)
     await expectStage(page, 'director_review', caseNo)
     const after = await readCase(page, caseNo)
     expect(after?.fastTracked).toBe(true)
     expect(after?.owner).toBe(DIRECTOR)
-    await expect(page.getByTestId('fast-track-card')).toBeVisible()
+    // ส่งแล้วแฟ้มอยู่กับ ผอ. — เจ้าหน้าที่ไม่มีส่วนส่งเส้นทางเร่งด่วนให้กดซ้ำ
+    await expect(page.getByTestId('fast-track-submit-panel')).toHaveCount(0)
   })
 })
 
 test('J03-d · [ทางแยก] ข้าม คบ.3 แล้วกู้คืน จัดทำ คบ.3 แทน (WIT0409 → WIT0407 → WIT0408)', async ({ page }) => {
   test.setTimeout(240_000)
 
-  const caseNo = await officerIntakesKb1(page, 'normal', 'พยานเข้าพบเอง กรณีปกติ')
-  await linkAndForwardToDirector(page, caseNo)
+  const caseNo = await officerIntakesKb1(page)
+  await forwardToDirector(page, caseNo)
   await directorAssigns(page, caseNo)
+  // คบ.3 เปิด/กดข้ามได้หลังกลั่นกรองแล้ว (คดีหลักเชื่อมโยงไว้ตั้งแต่ขั้นรับเรื่อง)
+  await screenUrgency(page, 'normal', 'พยานเข้าพบเอง กรณีปกติ')
 
   await test.step('WIT0409 · ข้าม คบ.3 พร้อมเหตุผล', async () => {
     await skipKb3(page, 'เห็นว่า คบ.1 ครบถ้วนแล้ว')

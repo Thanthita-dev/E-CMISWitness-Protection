@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
 
 /**
  * Sheet 09B · WIT0911 → WIT0922 — รับอุทธรณ์ กลั่นกรอง และเสนอคณะกรรมการ (TC-108 .. TC-116)
@@ -9,7 +10,7 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  *      **ไม่ปัดตกอัตโนมัติ**) → **WIT0915** เจ้าหน้าที่บันทึกความเห็น → **WIT0916** ผบช.ชั้นต้นลงนามเสนอ
  *      → **WIT0917** รองเลขาธิการฯ กลั่นกรอง → **WIT0918** เลขาธิการฯ ส่งเสนอคณะกรรมการ
  *      → WIT0919 บรรจุวาระ → **WIT0920 คณะกรรมการวินิจฉัย**
- *          "ยืนคำสั่งเดิม" → **WIT0921** หนังสือแจ้งผล + เก็บหลักฐานรับ + ปิดขั้นอุทธรณ์
+ *          "ยกคำร้อง" → **WIT0921** หนังสือแจ้งผล + เก็บหลักฐานรับ + ปิดขั้นอุทธรณ์
  *          "เปลี่ยนคำสั่ง" → **WIT0922** หนังสือแจ้งผล + กลับ 08A ไม่สร้าง คบ.1 ใหม่
  *
  * จุดที่เทสต์ในไฟล์นี้กัน:
@@ -22,9 +23,9 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  *    ให้ทันที ผูกกับแฟ้มเดิม และเดินลำดับชั้น WIT0915-919 ต่อได้จริง
  */
 
-const CASE_NO = 'WP-2569-000501'
-const APPEAL_URL = `/appeal-folder/${CASE_NO}`
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const APPEAL_URL = `/appeal-folder/${encodeURIComponent(CASE_NO)}`
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'
 const DEPUTY = 'นายพิพัฒน์ ศรีสุวรรณ'
@@ -139,6 +140,14 @@ async function giveOpinion(page: Page, role: string, note: string, expectedText?
   await page.getByTestId('appeal-opinion-note').fill(note)
   await page.getByTestId('appeal-opinion-submit').click()
   await confirmDialog(page, 'ยืนยัน', expectedText)
+  /** ผอ.ลงนามเสนอออกจากหน่วย → ธุรการหน่วยออกเลขส่ง → ธุรการ สลธ. ลงเลขรับ ก่อนถึงรองเลขาธิการฯ */
+  if (role === 'director') await passAppealClerks(page, ['receiver', 'secretary_receiver'])
+}
+
+/** ผ่านธุรการตามลำดับ แล้วกลับมาหน้าแฟ้มอุทธรณ์ */
+async function passAppealClerks(page: Page, order: Array<'receiver' | 'secretary_receiver'>) {
+  for (const clerk of order) await passSarabanCheckpoint(page, CASE_NO, clerk)
+  await page.goto(APPEAL_URL)
 }
 
 test.describe('WIT0911 / WIT0912 / WIT0913 — รับความประสงค์อุทธรณ์และผูกกับแฟ้มเดิม', () => {
@@ -412,7 +421,7 @@ test.describe('WIT0915 → WIT0919 — ลำดับชั้นแฟ้ม�
 })
 
 test.describe('WIT0921 / WIT0922 — หนังสือแจ้งผลอุทธรณ์และหลักฐานการรับ', () => {
-  test('TC-111 · [Happy] คณะกรรมการยืนคำสั่งเดิม — บันทึกมติแล้วยังต้องแจ้งผลอย่างเป็นทางการ จึงปิดขั้นอุทธรณ์สมบูรณ์', async ({
+  test('TC-111 · [Happy] คณะกรรมการยกคำร้อง — บันทึกมติแล้วยังต้องแจ้งผลอย่างเป็นทางการ จึงปิดขั้นอุทธรณ์สมบูรณ์', async ({
     page,
   }) => {
     await seedMockState(page, 'Case 1.8', 'committee', AT_AGENDA)
@@ -426,7 +435,9 @@ test.describe('WIT0921 / WIT0922 — หนังสือแจ้งผลอ�
     expect((await readCase(page, CASE_NO))?.appealResolution).toBeFalsy()
 
     await page.getByTestId('appeal-resolution-uphold').click()
-    await confirmDialog(page, 'ยืนยันมติยืนคำสั่งเดิม', 'เป็นที่สุด')
+    await confirmDialog(page, 'ยืนยันมติยกคำร้อง', 'เป็นที่สุด')
+    // มติลงหน่วย: ธุรการ สลธ. ออกเลขส่ง → ธุรการหน่วยลงเลขรับ ก่อนเจ้าหน้าที่แจ้งผล
+    await passAppealClerks(page, ['secretary_receiver', 'receiver'])
 
     const resolved = await readCase(page, CASE_NO)
     expect((resolved?.appealResolution as Record<string, unknown>).outcome).toBe('uphold')
@@ -473,6 +484,7 @@ test.describe('WIT0921 / WIT0922 — หนังสือแจ้งผลอ�
     await page.getByTestId('appeal-resolution-note').fill('พยานหลักฐานใหม่รับฟังได้ ให้เปลี่ยนแปลงคำสั่งเดิม')
     await page.getByTestId('appeal-resolution-overturn').click()
     await confirmDialog(page, 'ยืนยันมติเปลี่ยนแปลงคำสั่ง', 'ไม่สร้าง คบ.1 ใหม่')
+    await passAppealClerks(page, ['secretary_receiver', 'receiver'])
 
     const resolved = await readCase(page, CASE_NO)
     expect((resolved?.appealResolution as Record<string, unknown>).outcome).toBe('overturn')
@@ -501,7 +513,7 @@ test.describe('WIT1145-WIT1147 — อุทธรณ์คำสั่งยุ
     page,
   }) => {
     await seedMockState(page, 'Case 1.13', 'officer', KB17_APPEAL_READY)
-    await page.goto(`/termination/${CASE_NO}`)
+    await page.goto(`/termination/${encodeURIComponent(CASE_NO)}`)
 
     const casesBefore = await page.evaluate(
       () => (JSON.parse(localStorage.getItem('ecmis-case-storage-v2') || '{}').state?.cases || []).length

@@ -5,24 +5,22 @@ import { PageHeader } from '../components/common/PageHeader'
 import { StatCard, StatGrid } from '../components/common/StatCard'
 import { FilterCard } from '../components/common/FilterCard'
 import { Badge } from '../components/common/Badge'
+import { LegacySourceBadge } from '../components/common/LegacySourceBadge'
 import { AdvancedFilter } from '../components/common/AdvancedFilter'
-import { useCaseStore } from '../store/useCaseStore'
+import { useVisibleCases } from '../hooks/useVisibleCases'
 import { useAuthStore } from '../store/useAuthStore'
 import { canCreateIntake } from '../lib/permissions'
 import { isPrivacyBlocked, privacyBlockedMessage } from '../lib/privacyGuard'
 import { useAuditStore } from '../store/useAuditStore'
 import { formatThaiDate } from '../lib/utils'
-import { canViewHandoffCase } from '../lib/protectionHandoff'
 
 export const Route = createFileRoute('/registry')({
     component: RegistryPage,
 })
 
 function RegistryPage() {
-    const allCases = useCaseStore((state) => state.cases)
+    const cases = useVisibleCases()
     const currentRole = useAuthStore((state) => state.currentRole)
-    const currentOfficerUserId = useAuthStore((state) => state.currentOfficerUserId)
-    const cases = React.useMemo(() => allCases.filter((c) => canViewHandoffCase(currentRole, c, currentOfficerUserId)), [allCases, currentRole, currentOfficerUserId])
     const navigate = useNavigate()
 
     const [searchQuery, setSearchQuery] = useState('')
@@ -206,7 +204,7 @@ function RegistryPage() {
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="ค้นหาเลขคำร้อง (WP-...), ชื่อผู้ยื่น, หรือเลขคดีหลัก..."
+                        placeholder="ค้นหาเลขคำร้อง (เช่น 0501/2569), ชื่อผู้ยื่น, หรือเลขคดีหลัก..."
                         className="ws-input w-full"
                     />
                 </div>
@@ -225,6 +223,8 @@ function RegistryPage() {
                         <option value="รอตรวจคำร้อง">รอตรวจคำร้อง</option>
                         <option value="supervisor_review">รอกลั่นกรอง (ผบช.ต้น)</option>
                         <option value="director_review">รอ ผอ.พิจารณา</option>
+                        <option value="director_outgoing_registry">รอธุรการสำนัก/กอง ออกเลขส่ง</option>
+                        <option value="secretary_incoming_registry">รอธุรการสำนักงานเลขาธิการ ลงเลขรับ</option>
                         <option value="deputy_review">รอรองเลขาธิการฯ กลั่นกรอง</option>
                         <option value="external_pending">รอผลกิจกรรมที่ 7</option>
                         <option value="protection">กำลังคุ้มครอง</option>
@@ -316,7 +316,7 @@ function RegistryPage() {
                                                         เร่งด่วน
                                                     </Badge>
                                                 ) : (
-                                                    <span className="text-[0.8rem] text-muted">กรณีปกติ</span>
+                                                    <span className="text-[0.8rem] text-muted">{c.legacySource ? '—' : 'กรณีปกติ'}</span>
                                                 )}
                                                 {c.returned && (
                                                     <Badge variant="danger" icon="fa-rotate-left">
@@ -328,11 +328,18 @@ function RegistryPage() {
 
                                         {/* Person / Source */}
                                         <td>
-                                            <strong className="block text-ink font-semibold">{c.person}</strong>
-                                            <span className="text-[0.8rem] text-muted flex items-center gap-1 mt-0.5">
-                                                <i className="fa-solid fa-mobile-screen text-xs text-muted" />
-                                                {c.source || 'เจ้าหน้าที่บันทึกรับเรื่อง'}
-                                            </span>
+                                            {c.legacySource && !c.person?.trim() ? (
+                                                <strong className="block font-normal text-muted">ไม่มีข้อมูลในระบบเดิม</strong>
+                                            ) : (
+                                                <strong className="block text-ink font-semibold">{c.person}</strong>
+                                            )}
+                                            {c.legacySource && <LegacySourceBadge legacySource={c.legacySource} className="mt-1" />}
+                                            {!(c.legacySource && !c.source) && (
+                                                <span className="text-[0.8rem] text-muted flex items-center gap-1 mt-0.5">
+                                                    <i className="fa-solid fa-mobile-screen text-xs text-muted" />
+                                                    {c.source || 'เจ้าหน้าที่บันทึกรับเรื่อง'}
+                                                </span>
+                                            )}
                                         </td>
 
                                         {/* Status & Risk */}

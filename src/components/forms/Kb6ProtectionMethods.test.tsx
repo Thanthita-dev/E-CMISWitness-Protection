@@ -18,7 +18,7 @@ const OPTION_TEXT: Record<number, RegExp> = {
   1: /จัดเจ้าพนักงานเป็นชุดคุ้มครองความปลอดภัย/,
   2: /จัดให้พยานอยู่ในสถานที่เหมาะสม/,
   3: /ปกปิด และรักษาความลับเกี่ยวกับชื่อตัว/,
-  4: /ประสานงานกับหน่วยงานอื่นให้การคุ้มครองพยาน/,
+  4: /4\. ประสานงานหน่วยงานอื่น/,
 }
 
 const option = (n: number) => screen.getByRole('button', { name: OPTION_TEXT[n] })
@@ -32,21 +32,21 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('คบ.6 8.2 — กลุ่มรูปแบบการคุ้มครอง', () => {
-  it('เลือกข้อใดข้อหนึ่งใน 1-3 แล้วติ๊กครบทั้งสามข้อ', () => {
+  it('เลือกข้อ 1-3 ได้เป็นรายข้อ', () => {
     render(<Kb6FormEditor />)
 
     fireEvent.click(option(2))
 
-    expect(selected()).toEqual([1, 2, 3])
+    expect(selected()).toEqual([2])
   })
 
-  it('กดซ้ำในกลุ่ม 1-3 ขณะเลือกอยู่ แล้วล้างทั้งกลุ่ม', () => {
+  it('กดข้อ 1 ซ้ำ ยกเลิกเฉพาะข้อ 1 โดยคงข้อ 2-3', () => {
     setSelected([1, 2, 3])
     render(<Kb6FormEditor />)
 
     fireEvent.click(option(1))
 
-    expect(selected()).toEqual([])
+    expect(selected()).toEqual([2, 3])
   })
 
   it('เลือกข้อ 4 แล้วได้เฉพาะข้อ 4', () => {
@@ -66,22 +66,20 @@ describe('คบ.6 8.2 — กลุ่มรูปแบบการคุ้�
     expect(selected()).toEqual([])
   })
 
-  it('ปิดข้อ 4 เมื่อเลือกกลุ่ม 1-3 อยู่', () => {
+  it('สลับไปข้อ 4 แล้วนำข้อ 1-3 ออก', () => {
     setSelected([1, 2, 3])
     render(<Kb6FormEditor />)
 
-    expect(option(4)).toBeDisabled()
-    expect(option(1)).toBeEnabled()
+    fireEvent.click(option(4))
+    expect(selected()).toEqual([4])
   })
 
-  it('ปิดข้อ 1-3 เมื่อเลือกข้อ 4 อยู่', () => {
+  it('สลับไปข้อ 1 แล้วนำข้อ 4 ออก', () => {
     setSelected([4])
     render(<Kb6FormEditor />)
 
-    expect(option(1)).toBeDisabled()
-    expect(option(2)).toBeDisabled()
-    expect(option(3)).toBeDisabled()
-    expect(option(4)).toBeEnabled()
+    fireEvent.click(option(1))
+    expect(selected()).toEqual([1])
   })
 
   it('เปิดทุกข้อเมื่อยังไม่ได้เลือกอะไร', () => {
@@ -157,13 +155,29 @@ describe('คบ.6 หน้ากระดาษ A4 — หน้า 2', () => 
     expect(container.textContent).toContain(HEADING_8_1)
   })
 
-  it('พิมพ์ข้อ 8.2 ครบทั้งสี่ข้อเสมอ ไม่ว่าจะเลือกอะไร', () => {
+  const printedMethods = () => screen.queryAllByTestId('paper-protection-method').map((e) => e.textContent)
+
+  it('ข้อ 8.2 พิมพ์เฉพาะข้อ 4 เมื่อเลือกข้อ 4 และเรียงเลขเป็น ๑.', () => {
     setSelected([4])
+    renderPage2()
+
+    // FB-014 — ข้อ 4 ของ คบ.6 พิมพ์ชื่อ "ประสานงานหน่วยงานอื่น" แทนชื่อเดิม
+    expect(printedMethods()).toEqual(['๑. ประสานงานหน่วยงานอื่น'])
+  })
+
+  it('ข้อ 8.2 พิมพ์เฉพาะข้อที่เลือกในกลุ่ม 1-3 และเรียงเลขใหม่', () => {
+    setSelected([2, 3])
+    renderPage2()
+
+    const [, two, three] = PROTECTION_METHOD_OPTIONS
+    expect(printedMethods()).toEqual([`๑. ${two.label}`, `๒. ${three.label}`])
+  })
+
+  it('ข้อ 8.2 ไม่พิมพ์รูปแบบใดเลยเมื่อยังไม่ได้เลือก', () => {
     const { container } = renderPage2()
 
-    PROTECTION_METHOD_OPTIONS.filter((o) => o.n !== 5).forEach((o) => {
-      expect(container.textContent).toContain(o.label)
-    })
+    expect(printedMethods()).toEqual([])
+    expect(container.textContent).not.toContain(PROTECTION_METHOD_OPTIONS[0].label)
   })
 
   it('ไม่มีช่องกาเครื่องหมายในข้อ 8.2 — พิมพ์เป็นข้อความล้วนตามต้นฉบับ', () => {
@@ -178,5 +192,38 @@ describe('คบ.6 หน้ากระดาษ A4 — หน้า 2', () => 
     const { container } = renderPage2()
 
     expect(container.querySelectorAll('.official-box')).toHaveLength(0)
+  })
+})
+
+describe('คบ.6 8.2 — ต้องเลือกรูปแบบการคุ้มครองก่อนส่งต่อ', () => {
+  const warning = () => screen.queryByTestId('method-option-required')
+
+  it('เตือนเมื่อยังไม่ได้เลือกรูปแบบใด', () => {
+    render(<Kb6FormEditor />)
+
+    expect(warning()).toHaveTextContent('ยังไม่ได้เลือกรูปแบบการคุ้มครอง — ต้องเลือกก่อนส่งต่อ')
+  })
+
+  it('เตือนเมื่อเลือกข้อ 4 แต่ยังไม่ได้เลือก 4.1–4.4', () => {
+    setSelected([4])
+    render(<Kb6FormEditor />)
+
+    expect(warning()).toHaveTextContent('เลือกข้อ 4 แล้วแต่ยังไม่ได้เลือกตัวเลือกย่อย (4.1–4.4)')
+  })
+
+  it('ไม่เตือนเมื่อเลือกข้อ 4 พร้อมตัวเลือกย่อยแล้ว', () => {
+    setSelected([4])
+    render(<Kb6FormEditor />)
+
+    fireEvent.click(screen.getByTestId('method-option-4-sub-2'))
+
+    expect(warning()).toBeNull()
+  })
+
+  it('ไม่เตือนเมื่อเลือกกลุ่ม 1-3', () => {
+    setSelected([1, 2, 3])
+    render(<Kb6FormEditor />)
+
+    expect(warning()).toBeNull()
   })
 })

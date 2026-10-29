@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { captureEvidence } from '../helpers/evidence'
-import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
+import { KB1_DONE, readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../helpers/seed'
 
 /**
  * ผลทดสอบ 28 ก.ย. — แท็บ 04 (จัดทำเอกสาร) / 05 (ลำดับชั้น) / 06 (เร่งด่วน) / เมนูแบบฟอร์ม
@@ -12,12 +12,12 @@ import { readCase, seedMockState, switchRole, linkMainCaseAsOfficer } from '../h
  *  GAP-010           ร่างแบบ/ลายมือชื่อ คบ.3/4/5/6 แยกตามแฟ้ม ไม่รั่วข้ามแฟ้ม
  *  TC-053            แบบฟอร์มที่เปิดจากเมนู แบบฟอร์ม คบ. ต้องกลับรายการแบบฟอร์ม
  *
- * ทุก mock state ใช้เลขคำร้องเดียวกันคือ WP-2569-000501
+ * ทุก mock state ใช้เลขคำร้องเดียวกันคือ 0501/2569
  */
 
-const CASE_NO = 'WP-2569-000501'
-const OTHER_CASE_NO = 'WP-2569-000999'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const OTHER_CASE_NO = '0999/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const FORM6_URL = `/form/6?caseNo=${CASE_NO}`
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
@@ -99,7 +99,7 @@ test.describe('BUG-001 · TC-010 — บันทึก คบ.6 โดยเว
   test('TC-010 · [Demo] เว้นช่อง 1.1 และ 2.2 แล้วกดบันทึก — บันทึกได้ ระบบเติมชื่อจากแฟ้มให้ และนับว่าจัดทำ คบ.6 แล้ว', async ({
     page,
   }) => {
-    await seedMockState(page, 'Case 1.3', 'officer')
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
     // Case 1.3 ตั้งต้นยังไม่เชื่อมโยงคดีหลัก — เจ้าของสำนวนที่ได้รับมอบหมายเชื่อมโยงก่อนจึงจะผ่านด่านส่งต่อ
     await linkMainCaseAsOfficer(page)
@@ -116,7 +116,7 @@ test.describe('BUG-001 · TC-010 — บันทึก คบ.6 โดยเว
     await page.getByRole('button', { name: 'บันทึกแบบ คบ.6' }).click()
 
     // บันทึกได้และกลับแฟ้ม — ช่องชื่อที่ว่างถูกเติมจากแฟ้มให้ และปลดล็อกปุ่มส่ง
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
     expect((await readCase(page, CASE_NO))?.kb6PreparedAt).toBeTruthy()
     await expect(page.getByTestId('forward-case-button')).toBeEnabled()
     await page.goto(`/form/6?caseNo=${CASE_NO}`)
@@ -296,7 +296,7 @@ test.describe('GAP-010 — ร่างแบบและลายมือช�
 
     // ด่านตรวจของแฟ้ม B อ่านสถานะของแฟ้ม B — ผบช.ชั้นต้นยังไม่ได้ลงนามข้อ 10 ของแฟ้มนี้ จึงส่งต่อไม่ได้
     // (โหมดสาธิตไม่บังคับกรอกความเห็นก่อนลงนามแล้ว แต่ต้องลงนามของแฟ้มตัวเอง ไม่ใช้ของแฟ้ม A)
-    await page.goto(`/dossier/${OTHER_CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(OTHER_CASE_NO)}`)
     const forwardButton = page.getByTestId('forward-case-button')
     await expect(forwardButton).toBeDisabled()
     await expect(forwardButton).toHaveAttribute('title', /ยังไม่ได้ลงนามความเห็นใน คบ\.6/)
@@ -331,6 +331,6 @@ test.describe('TC-053 — ปุ่มกลับจากแบบฟอร์
     await expect(back).toBeVisible()
     await captureEvidence(page, 'TC-053-b', back, 'เปิดจากแฟ้ม ยังมีปุ่ม "กลับแฟ้มคำร้อง" ตามเดิม')
     await back.click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
   })
 })

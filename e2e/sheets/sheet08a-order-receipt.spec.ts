@@ -12,7 +12,7 @@ import { readCase, seedMockState } from '../helpers/seed'
  * `e2e/sheets/sheet08a-consent-decline.spec.ts` (`describe('WIT0812 ...')`) — ไม่ทำซ้ำที่นี่ ดู notes ใน 08A.json
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const METHODS_URL = '/protection-methods'
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
@@ -28,7 +28,7 @@ async function confirmDialog(page: Page, buttonName: string, expectedText?: stri
  * ในสถานะที่ใช้ทดสอบ (Case 1.11) มีเฉพาะ คบ.11 เท่านั้นที่ถึงคิวลงนาม จึงระบุปุ่ม "ลงนาม" เดี่ยวได้ตรง ๆ
  */
 async function openKb11SignModal(page: Page) {
-  await page.goto(`/dossier/${CASE_NO}`)
+  await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
   await page.getByRole('button', { name: 'ลงนาม' }).click()
 }
 
@@ -60,7 +60,7 @@ test.describe('08A · WIT0801-0813 — รับคำสั่งและแ�
     // และ คบ.6 เสนอวิธีที่ 1 ไว้ (รูปแบบคุ้มครองที่เลือก=[1]) — เหลือแค่ลงนาม คบ.11
     await seedMockState(page, 'Case 1.11', 'officer')
 
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     const before = await readCase(page, CASE_NO)
     expect(before?.kb9Signed).toBe(true)
     expect(before?.deliveredAt).toBeTruthy()
@@ -194,7 +194,7 @@ test.describe('08A · WIT0801-0813 — รับคำสั่งและแ�
     // Case 1.10: คบ.9 ลงนามแล้ว ยังไม่ได้นำส่ง — บันทึกช่องทางที่ 1 (ไปรษณีย์) ก่อน แล้วสมมติว่าตีกลับ
     await seedMockState(page, 'Case 1.10', 'officer')
 
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     const dispatchSection = page.locator('div.rounded-xl.border.border-slate-200.bg-white.p-4', {
       hasText: 'การนำส่งหนังสือและวันที่พยานได้รับ',
     })

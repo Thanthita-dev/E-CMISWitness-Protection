@@ -1,16 +1,17 @@
+import { addendumLabel } from '../../lib/formSignature'
 import { legacyMonthLabel, monthLabel, protectionMonths } from '../../lib/protectionMonths'
 import React from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { SectionCard } from './SectionCard'
 import { CaseItem, ExtensionRequest } from '../../types/case'
 import { deriveEpisode, summarizeEpisode } from '../../lib/episode'
 import { formatThaiDate } from '../../lib/utils'
-import { Kb14DecisionActions } from './Kb14DecisionActions'
+import { useCaseStore } from '../../store/useCaseStore'
 
 const STATUS_LABEL: Record<ExtensionRequest['status'], string> = {
   submitted: 'รอผู้ตรวจตรวจเอกสาร',
   returned: 'ส่งคืนแก้ไข',
-  pending: 'เสนอตามลำดับชั้น · รอผู้มีอำนาจอนุมัติ',
+  pending: 'เสนอตามลำดับชั้น · รอเลขาธิการ ป.ป.ท.อนุมัติ',
   approved: 'อนุมัติแล้ว',
   rejected: 'ไม่อนุมัติ',
 }
@@ -24,6 +25,8 @@ const STATUS_LABEL: Record<ExtensionRequest['status'], string> = {
  *  - แก้ไขคือสร้างเวอร์ชันใหม่ ห้ามแก้ทับฉบับเดิม (WIT1119)
  */
 export const Kb14Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ caseItem, role }) => {
+  const startExtensionDocs = useCaseStore((s) => s.startExtensionDocs)
+  const navigate = useNavigate()
   const episode = caseItem.episode || deriveEpisode(caseItem)
   const summary = summarizeEpisode(episode)
 
@@ -37,6 +40,40 @@ export const Kb14Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
     <SectionCard
       title="ระยะเวลาและเหตุผลที่ขอ"
     >
+      {/* ---------- ผลพิจารณาล่าสุด แสดงเด่นบนสุดของหน้า ---------- */}
+      {latest?.status === 'approved' && (
+        <div className="mb-5 rounded-xl border-2 border-emerald-400 bg-emerald-50 p-5 text-emerald-950" role="status" aria-label="ขยายระยะเวลาคุ้มครองแล้ว">
+          <div className="flex flex-wrap items-start gap-4">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-emerald-600 text-2xl text-white"><i className="fa-solid fa-check" /></span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-2xl font-bold text-emerald-800">ขยายระยะเวลาคุ้มครองแล้ว</h3>
+              <p className="mt-1 text-[0.85rem] text-emerald-900">คบ.14 ครั้งที่ {requests.filter((r) => r.status === 'approved').length} · อนุมัติโดย {latest.decidedBy || 'เลขาธิการ ป.ป.ท.'}{latest.decidedAt ? ` · ${latest.decidedAt}` : ''}</p>
+            </div>
+          </div>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg bg-white/80 p-3"><dt className="text-[0.78rem] text-emerald-800">ขยายเพิ่ม</dt><dd className="text-xl font-bold">{latest.durationMonths ? monthLabel(latest.durationMonths) : legacyMonthLabel(latest.durationDays)}</dd></div>
+            <div className="rounded-lg bg-white/80 p-3"><dt className="text-[0.78rem] text-emerald-800">ช่วงที่ขยาย</dt><dd className="text-lg font-bold">{latest.periodFrom ? `${formatThaiDate(latest.periodFrom)} – ${formatThaiDate(latest.periodTo)}` : '-'}</dd></div>
+            <div className="rounded-lg bg-white/80 p-3"><dt className="text-[0.78rem] text-emerald-800">คุ้มครองถึง</dt><dd className="text-xl font-bold">{formatThaiDate(caseItem.protectionEndAt)}</dd></div>
+          </dl>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {!summary.atCap && <button type="button" onClick={() => { startExtensionDocs(caseItem.no); navigate({ to: '/dossier/$caseNo', params: { caseNo: caseItem.no } }) }} className="inline-flex min-h-[44px] items-center rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white hover:bg-emerald-800">ขอขยายครั้งถัดไป (คบ.14)</button>}
+            <Link to="/protection-monitor" search={{ caseNo: caseItem.no }} className="inline-flex min-h-[44px] items-center rounded-lg border border-emerald-400 bg-white px-4 py-2 font-semibold text-emerald-800 hover:bg-emerald-50">รายงานผลการคุ้มครอง · รอบ คบ.13 ถัดไป</Link>
+          </div>
+          {summary.atCap && <p className="mt-3 text-[0.8rem]">ครบเพดานการคุ้มครองรวม 6 เดือนแล้ว ขอขยายเพิ่มไม่ได้</p>}
+        </div>
+      )}
+      {latest?.status === 'rejected' && (
+        <div className="mb-5 rounded-xl border-2 border-rose-400 bg-rose-50 p-5 text-rose-950" role="status" aria-label="ไม่อนุมัติขยายระยะเวลาคุ้มครอง">
+          <div className="flex flex-wrap items-start gap-4">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-rose-600 text-2xl text-white"><i className="fa-solid fa-xmark" /></span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-2xl font-bold text-rose-800">ไม่อนุมัติขยายระยะเวลาคุ้มครอง</h3>
+              <p className="mt-1 text-[0.85rem]">{latest.decidedBy || 'เลขาธิการ ป.ป.ท.'}{latest.decidedAt ? ` · ${latest.decidedAt}` : ''} · คงคำสั่งเดิมถึง {formatThaiDate(caseItem.protectionEndAt)}</p>
+              {latest.decisionNote && <p className="mt-2 text-[0.85rem]">ความเห็น: {latest.decisionNote}</p>}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <span className="font-semibold text-navy">คบ.14 · หนังสือขยายระยะเวลาการคุ้มครองพยาน</span>
         <Link to="/form/$formId" params={{ formId: '14' }} search={{ caseNo: caseItem.no }} className="inline-flex min-h-[44px] items-center rounded-lg bg-navy px-5 py-2 font-semibold text-white">เปิดแบบฟอร์ม คบ.14</Link>
@@ -87,7 +124,7 @@ export const Kb14Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
       {latest && (
         <div className="rounded-lg border border-line bg-soft p-3 text-[0.8rem] text-slate-700 space-y-1">
           <div>
-            <strong>คบ.14 ฉบับที่ {latest.version || 1}</strong> · ขอขยาย {latest.durationMonths ? monthLabel(latest.durationMonths) : legacyMonthLabel(latest.durationDays)}
+            <strong>คบ.14 {addendumLabel(requests.length)}{(latest.version || 1) > 1 ? ` · แก้ไขครั้งที่ ${(latest.version || 1) - 1}` : ''}</strong> · ขอขยาย {latest.durationMonths ? monthLabel(latest.durationMonths) : legacyMonthLabel(latest.durationDays)}
             {latest.periodFrom ? ` (${formatThaiDate(latest.periodFrom)} — ${formatThaiDate(latest.periodTo)})` : ''}
             {latest.locked && <span className="ml-1.5 text-emerald-700 font-bold">· ล็อกฉบับลงนาม</span>}
           </div>
@@ -122,27 +159,7 @@ export const Kb14Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
         </div>
       )}
 
-      {/* ---------- WIT1117-WIT1123 — ผู้ตรวจตรวจเอกสาร / ผู้มีอำนาจพิจารณา ---------- */}
-      {latest && (latest.status === 'submitted' || latest.status === 'pending') && (
-        <Kb14DecisionActions caseItem={caseItem} proposal={latest} role={role} />
-      )}
-
-      {/* ---------- WIT1122 — อนุมัติแล้ว กลับแท็บ 10 ---------- */}
-      {latest?.status === 'approved' && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50/70 p-3 text-[0.8rem] text-emerald-900">
-          <span>
-            <i className="fa-solid fa-circle-check mr-1.5" />
-            อนุมัติขยายเวลา {latest.durationMonths ? monthLabel(latest.durationMonths) : legacyMonthLabel(latest.durationDays)}แล้ว · คุ้มครองถึง {formatThaiDate(caseItem.protectionEndAt)}
-          </span>
-          <Link
-            to="/protection-monitor"
-            search={{ caseNo: caseItem.no }}
-            className="rounded-lg border border-emerald-300 bg-white px-4 py-1.5 text-[0.8rem] font-bold text-emerald-800 hover:bg-emerald-50 transition"
-          >
-            กลับไปรายงานผลการคุ้มครอง · กำหนดรอบ คบ.13 ถัดไป
-          </Link>
-        </div>
-      )}
+      {/* WIT1117-WIT1123 — ปุ่มส่ง/ตรวจ/พิจารณาอยู่ที่ footer ใต้การ์ดนี้ (Kb14ForwardFooter) */}
     </SectionCard>
   )
 }

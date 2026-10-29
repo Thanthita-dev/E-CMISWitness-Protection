@@ -1,0 +1,9 @@
+{
+  "id": "legacy-migration",
+  "label": "ข้อมูลย้ายจากระบบเดิม (สำนวน 9125/2567)",
+  "users": {
+    "OWN-REG4": { "name": "วีระพงษ์ ขยันยิ่ง" },
+    "REC-REG4": { "name": "ปวีณา บันทึกไว" }
+  },
+  "mockStateAccounts": { "case_owner": "reg4.caseowner", "receiver": "reg4.receiver" }
+}

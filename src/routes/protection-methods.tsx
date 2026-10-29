@@ -7,19 +7,17 @@ import { SegmentedTabs } from '../components/common/SegmentedTabs'
 import { useAuthStore } from '../store/useAuthStore'
 import { CaseItem, ProtectionMethodNo } from '../types/case'
 import { METHOD_LABELS, METHOD_STATUS_LABELS, hasConsent, summarizeEpisode } from '../lib/episode'
-import { PROTECTION_METHOD_OPTIONS, protectionMethodSwitchNotice, toggleProtectionMethod } from '../lib/constants'
 import { confirmBody, showConfirmAlert, showToast } from '../lib/swal'
 import { ConsentDeclineCard, latestDeclineProposal } from '../components/protection/ConsentDeclineCard'
 import { MethodPanel } from '../components/protection/MethodPanels'
+import { MethodChoicePanel } from '../components/protection/MethodChoicePanel'
 import { kb11Gate } from '../lib/formSignature'
+import { methodWorkOpened } from '../lib/methodProgress'
 import { visibleOperationCase } from '../lib/protectionHandoff'
 
 export const Route = createFileRoute('/protection-methods')({
   component: ProtectionMethodsPage,
 })
-
-/** วิธีที่เปิดเป็นเส้นทางปฏิบัติได้จริงคือ 1-4 (ข้อ 5 เป็นมาตรการเสริมใน คบ.4 ไม่ใช่เส้นทางแยก) */
-const ROUTABLE_METHODS: ProtectionMethodNo[] = [1, 2, 3, 4]
 
 const STATUS_TONE: Record<string, string> = {
   pending: 'bg-slate-100 text-slate-700',
@@ -75,15 +73,15 @@ function ProtectionMethodsPage() {
 }
 
 export const CaseMethodPanel: React.FC<{ caseItem: CaseItem; readOnly?: boolean }> = ({ caseItem, readOnly }) => {
-  const { setApprovedMethods, recordConsent } = useCaseStore()
-  const [selected, setSelected] = useState<ProtectionMethodNo[]>(caseItem.approvedMethods || [])
+  const { recordConsent } = useCaseStore()
 
   const episode = summarizeEpisode(caseItem.episode)
   /** กรณีเร่งด่วนใช้ความยินยอมใน คบ.5 แทน คบ.11 ได้ (note0801) */
   const consentRef = caseItem.urgent && !caseItem.kb11Signed ? 'kb5' : 'kb11'
   const consented = hasConsent(caseItem, consentRef)
-  const orderBase = caseItem.urgent && caseItem.kb5Approved ? 'คบ.5 (คำสั่งชั่วคราว)' : 'ผลอนุมัติคำร้องหลัก'
-  const isUrgentPath = Boolean(caseItem.urgent && caseItem.kb5Approved)
+  /** แยกงานชั่วคราวออกแล้ว (temporaryProtection) = งานในหน้านี้เป็นของคำร้องหลัก ใช้ประตูเส้นทางปกติ */
+  const isUrgentPath = Boolean(caseItem.urgent && caseItem.kb5Approved && !caseItem.temporaryProtection)
+  const orderBase = isUrgentPath ? 'คบ.5 (คำสั่งชั่วคราว)' : 'ผลอนุมัติคำร้องหลัก'
   /**
    * TC-062 — เส้นทางคำร้องหลักต้องมี คบ.9 และ คบ.11 ลงนามครบก่อนเปิดเส้นทางปฏิบัติ
    * ความยินยอมอย่างเดียว (consented) ไม่พอ เพราะ ณ จุดนี้ยังไม่มีหลักฐานว่าแจ้งผล (คบ.9)
@@ -102,72 +100,11 @@ export const CaseMethodPanel: React.FC<{ caseItem: CaseItem; readOnly?: boolean 
   const declineProposal = latestDeclineProposal(caseItem)
   const declinePending = declineProposal?.stage === 'supervisor' || declineProposal?.stage === 'director'
 
-  /** TC-063 — จำกัดตัวเลือกวิธีให้ตรงกับ orderedMethods (ถ้าคำสั่งระบุไว้) ตัดกับ ROUTABLE_METHODS เสมอ */
-  const availableMethods =
-    caseItem.orderedMethods && caseItem.orderedMethods.length > 0
-      ? ROUTABLE_METHODS.filter((m) => caseItem.orderedMethods!.includes(m))
-      : ROUTABLE_METHODS
-
-  const toggle = (n: ProtectionMethodNo) => {
-    const notice = protectionMethodSwitchNotice(selected, n)
-    if (notice) showToast(notice, 'warning')
-    setSelected(toggleProtectionMethod(selected, n))
-  }
-
-  const handleOpenRoutes = () => {
-    if (selected.length === 0) {
-      showToast('เลือกอย่างน้อยหนึ่งวิธีตามที่ได้รับอนุมัติ', 'warning')
-      return
-    }
-    /**
-     * WIT0612 / WIT0809 — ห้ามเริ่มปฏิบัติก่อนมีหลักฐานรับทราบและยินยอมของพยาน
-     * เคสเร่งด่วนใช้ความยินยอมใน คบ.5 แทน คบ.11 แต่เงื่อนไข "ต้องยินยอมก่อน" เหมือนกัน
-     */
-    if (!consented) {
-      showToast(
-        `ต้องมีหลักฐานการรับทราบและความยินยอมของพยานตาม ${
-          consentRef === 'kb11' ? 'คบ.11' : 'คบ.5'
-        } ก่อนจึงจะเปิดเส้นทางปฏิบัติได้`,
-        'warning'
-      )
-      return
-    }
-    /** TC-062 — เส้นทางคำร้องหลักต้องมี คบ.9/คบ.11 ลงนามครบด้วย ไม่ใช่แค่ความยินยอม */
-    if (orderGateBlocked) {
-      showToast(orderGateReason as string, 'warning')
-      return
-    }
-    /** TC-063 — ห้ามเปิดวิธีที่ไม่อยู่ในคำสั่ง (orderedMethods) */
-    if (caseItem.orderedMethods && caseItem.orderedMethods.length > 0) {
-      const outOfOrder = selected.filter((m) => !caseItem.orderedMethods!.includes(m))
-      if (outOfOrder.length > 0) {
-        showToast(
-          `วิธีที่ ${outOfOrder.join(', ')} ไม่ได้รับอนุมัติตามคำสั่ง — เปิดเส้นทางปฏิบัติไม่ได้`,
-          'warning'
-        )
-        return
-      }
-    }
-    showConfirmAlert({
-      icon: 'question',
-      title: 'เปิดเส้นทางปฏิบัติตามวิธีที่เลือก?',
-      html: confirmBody(
-        'เปิดเส้นทางปฏิบัติแยกรายวิธีตามที่ได้รับอนุมัติ',
-        [
-          ['ฐานคำสั่ง', orderBase],
-          ['วิธีที่เลือก', selected.map((m) => `วิธีที่ ${m}`).join(' · ')],
-        ],
-        'เปิดหน้าปฏิบัติของแต่ละวิธีที่เลือกพร้อมกัน — แต่ละวิธีเดินงานแยกกันได้'
-      ),
-      showCancelButton: true,
-      confirmButtonText: 'ยืนยันเปิดเส้นทางปฏิบัติ',
-      cancelButtonText: 'ยกเลิก',
-    }).then((res) => {
-      if (!res.isConfirmed) return
-      setApprovedMethods(caseItem.no, selected)
-      showToast(`เปิดเส้นทางปฏิบัติ ${selected.length} วิธีเรียบร้อยแล้ว`)
-    })
-  }
+  /**
+   * เจ้าหน้าที่ กอท. เลือกแนวทางตอนเปิดงาน (ตาม คบ.6 หรือเลือกใหม่) ก่อนเข้าหน้าปฏิบัติรายวิธี
+   * เคสที่เริ่มทำงานในวิธีใดไปแล้วก่อนมีขั้นนี้ ถือว่าเลือกแล้ว ไม่ต้องเลือกซ้ำ
+   */
+  const choiceDone = methodWorkOpened(caseItem)
 
   /** WIT0809 แขนง "ยินยอม" → WIT0810/WIT0811 ลงนามและเก็บฉบับลงนาม */
   const handleConsent = () => {
@@ -222,8 +159,13 @@ export const CaseMethodPanel: React.FC<{ caseItem: CaseItem; readOnly?: boolean 
     </section>
   }
 
+  if (!readOnly && !choiceDone && consented && !orderGateBlocked && !declinePending) {
+    return <MethodChoicePanel caseItem={caseItem} orderBase={orderBase} />
+  }
+
   const method4Track = caseItem.methodTracks?.find((track) => track.method === 4)
-  if (!readOnly && availableMethods.length === 1 && availableMethods[0] === 4 && method4Track && consented &&
+  const onlyMethod4 = caseItem.approvedMethods?.length === 1 && caseItem.approvedMethods[0] === 4
+  if (!readOnly && choiceDone && onlyMethod4 && method4Track && consented &&
       (isUrgentPath || (caseItem.kb11Signed && kb11Gate(caseItem).unlocked))) {
     return <section className="ws-card p-5 space-y-4" data-testid="automatic-method4-workspace">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
@@ -246,6 +188,7 @@ export const CaseMethodPanel: React.FC<{ caseItem: CaseItem; readOnly?: boolean 
             ฐานคำสั่ง: {orderBase}
             {caseItem.decisionNumber ? ` · เลขที่ ${caseItem.decisionNumber}` : ''}
             {episode.phaseKind ? ` · Phase ${episode.phaseKind}` : ''}
+            {caseItem.methodChoice ? ` · แนวทาง: ${caseItem.methodChoice.mode === 'new' ? 'เลือกใหม่' : `ดำเนินการตาม ${caseItem.methodChoice.mode === 'kb4' ? 'คบ.4' : 'คบ.6'}`}` : ''}
           </p>
         </div>
         <Link
@@ -288,52 +231,11 @@ export const CaseMethodPanel: React.FC<{ caseItem: CaseItem; readOnly?: boolean 
         <div className="mt-3"><ConsentDeclineCard caseItem={caseItem} consentRef={consentRef} /></div>
       </details>}
 
-      {/* เลือกวิธีที่ได้รับอนุมัติ — อิสระ เลือกได้มากกว่าหนึ่ง */}
-      {!readOnly && !declinePending && (
-        <div className="space-y-2">
-          <div className="text-[0.8rem] font-bold text-slate-700">วิธีที่ได้รับอนุมัติ (วิธีที่ 1–3 เลือกร่วมกันได้ · วิธีที่ 4 เลือกเดี่ยว)</div>
-          {caseItem.orderedMethods && caseItem.orderedMethods.length > 0 && (
-            <p className="text-[0.8rem] text-muted">
-              วิธีที่ได้รับอนุมัติตามคำสั่ง: {caseItem.orderedMethods.map((m) => `วิธีที่ ${m}`).join(' · ')}
-            </p>
-          )}
-          <div className="grid gap-2 sm:grid-cols-2">
-            {PROTECTION_METHOD_OPTIONS.filter((o) => availableMethods.includes(o.n as ProtectionMethodNo)).map((o) => {
-              const n = o.n as ProtectionMethodNo
-              const on = selected.includes(n)
-              return (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => toggle(n)}
-                  className={`rounded-xl border p-3 text-left text-sm leading-relaxed transition ${
-                    on ? 'border-blue bg-blue-50/70 text-blue-900' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="font-bold">({n}) </span>
-                  {o.label}
-                </button>
-              )
-            })}
-          </div>
-          <Button
-            type="button"
-            onClick={handleOpenRoutes}
-            disabled={orderGateBlocked}
-            className={`inline-flex min-h-[44px] items-center rounded-lg px-5 py-2.5 text-[0.88rem] font-semibold transition ${
-              orderGateBlocked ? 'bg-slate-200 text-slate-600 cursor-not-allowed' : 'bg-navy text-white hover:bg-blue'
-            }`}
-          >
-            <i className="fa-solid fa-diagram-project mr-1.5" />
-            เปิดเส้นทางปฏิบัติตามวิธีที่เลือก
-          </Button>
-          {orderGateBlocked && (
-            <p className="flex items-start gap-1.5 text-[0.8rem] font-bold text-warning">
-              <i className="fa-solid fa-lock mt-0.5" />
-              <span>{orderGateReason}</span>
-            </p>
-          )}
-        </div>
+      {orderGateBlocked && (
+        <p className="flex items-start gap-1.5 text-[0.8rem] font-bold text-warning">
+          <i className="fa-solid fa-lock mt-0.5" />
+          <span>{orderGateReason}</span>
+        </p>
       )}
 
       {/* เส้นทางที่เปิดอยู่ */}

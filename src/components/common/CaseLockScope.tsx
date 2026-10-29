@@ -1,6 +1,6 @@
 import React from 'react'
 import { CaseItem } from '../../types/case'
-import { isCaseClosed } from '../../lib/permissions'
+import { isCaseClosed, isLegacyCase } from '../../lib/permissions'
 import { CaseClosedBanner } from '../forms/FormCaseScope'
 import { useAuthStore } from '../../store/useAuthStore'
 import { canViewHandoffCase, handoffBlocksOperations } from '../../lib/protectionHandoff'
@@ -11,7 +11,7 @@ import { canViewHandoffCase, handoffBlocksOperations } from '../../lib/protectio
  * `className` คือคลาสของกล่องเนื้อหา (เช่น space-y-6) ซึ่งใช้กับ fieldset แทนเมื่อถูกล็อก เพื่อให้ระยะห่างเท่าเดิม
  */
 export const CaseLockScope: React.FC<{
-  caseItem?: Pick<CaseItem, 'closedAt' | 'stage' | 'protectionHandoff'> | null
+  caseItem?: Pick<CaseItem, 'closedAt' | 'stage' | 'protectionHandoff' | 'legacySource'> & Partial<Pick<CaseItem, 'assignedOfficerUserId' | 'receivedByUserId'>> | null
   className?: string
   children: React.ReactNode
 }> = ({ caseItem, className, children }) => {
@@ -28,7 +28,7 @@ export const CaseLockScope: React.FC<{
   if (!isCaseClosed(caseItem)) return className ? <div className={className}>{children}</div> : <>{children}</>
   return (
     <div className={className}>
-      <CaseClosedBanner />
+      <CaseClosedBanner legacy={isLegacyCase(caseItem)} />
       <fieldset disabled data-testid="case-lock-scope" className={`m-0 min-w-0 border-0 p-0 ${className || ''}`}>
         {children}
       </fieldset>

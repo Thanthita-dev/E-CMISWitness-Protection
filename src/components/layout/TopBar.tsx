@@ -1,29 +1,59 @@
 import { Button } from "../common/Button"
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '../../store/useAuthStore'
 import { filterNotificationsForUser, useNotificationStore } from '../../store/useNotificationStore'
 import { ECMIS_USER_DIRECTORY, ORG_UNITS } from '../../lib/constants'
-import { showToast } from '../../lib/swal'
+import { showConfirmAlert, showToast } from '../../lib/swal'
 import { UserRole } from '../../types/user'
 import { FontSizeControls } from '../common/FontSizeControls'
+import { RoleSwitchModal } from './RoleSwitchModal'
 
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-    { value: 'got_receiver', label: 'ธุรการคดี กอท.' },
-    { value: 'got_director', label: 'ผอ. กอท.' },
-    { value: 'got_officer', label: 'ผู้รับผิดชอบคุ้มครอง กอท.' },
-    { value: 'receiver', label: 'ธุรการสำนัก/กอง' },
-    { value: 'officer', label: 'เจ้าหน้าที่ ป.ป.ท.' },
-    { value: 'case_owner', label: 'เจ้าของสำนวน' },
-    { value: 'supervisor', label: 'ผู้บังคับบัญชาชั้นต้น' },
-    { value: 'director', label: 'ผอ.สำนัก/กอง' },
-    { value: 'deputy_secretary', label: 'รองเลขาธิการ ป.ป.ท.' },
-    { value: 'secretary', label: 'เลขาธิการ ป.ป.ท.' },
-    { value: 'committee', label: 'ฝ่ายเลขานุการคณะกรรมการ ป.ป.ท.' },
-    { value: 'protection', label: 'ชุดคุ้มครอง' },
-    { value: 'appeal', label: 'เจ้าหน้าที่อุทธรณ์' },
-    { value: 'admin', label: 'Super Admin' },
+// รายการบทบาทที่ไม่ซ้ำ (หนึ่งรายการต่อหนึ่งบทบาท) ใช้เป็นป้ายชื่อ/ตัวเลือกบทบาท
+// บัญชีเข้าสู่ระบบจริงแยกตามหน่วยงานอยู่ใน lib/loginAccounts.ts (บทบาทเดียวกันมีได้หลายบัญชี)
+const ROLE_GROUPS: { label: string; roles: { value: UserRole; label: string }[] }[] = [
+    {
+        label: 'กองคุ้มครองพยาน (กอท.)',
+        roles: [
+            { value: 'got_receiver', label: 'ธุรการคดี กอท.' },
+            { value: 'got_officer', label: 'ผู้รับผิดชอบคุ้มครอง กอท.' },
+            { value: 'got_supervisor', label: 'ผู้บังคับบัญชาชั้นต้น กอท.' },
+            { value: 'got_director', label: 'ผอ. กอท.' },
+        ],
+    },
+    {
+        label: 'สำนัก/กองเจ้าของเรื่อง',
+        roles: [
+            { value: 'receiver', label: 'ธุรการสำนัก/กอง' },
+            { value: 'officer', label: 'เจ้าหน้าที่ ป.ป.ท.' },
+            { value: 'case_owner', label: 'เจ้าของสำนวน' },
+            { value: 'supervisor', label: 'ผู้บังคับบัญชาชั้นต้น' },
+            { value: 'director', label: 'ผอ.สำนัก/กอง' },
+        ],
+    },
+    {
+        label: 'ผู้บริหารและคณะกรรมการ',
+        roles: [
+            { value: 'secretary_receiver', label: 'ธุรการ สำนักงานเลขาธิการ' },
+            { value: 'deputy_secretary', label: 'รองเลขาธิการ ป.ป.ท.' },
+            { value: 'secretary', label: 'เลขาธิการ ป.ป.ท.' },
+            { value: 'committee', label: 'ฝ่ายเลขานุการคณะกรรมการ ป.ป.ท.' },
+        ],
+    },
+    {
+        label: 'หน่วยปฏิบัติการ',
+        roles: [
+            { value: 'protection', label: 'ชุดคุ้มครอง' },
+            { value: 'appeal', label: 'เจ้าหน้าที่อุทธรณ์' },
+        ],
+    },
+    {
+        label: 'ผู้ดูแลระบบ',
+        roles: [{ value: 'admin', label: 'Super Admin' }],
+    },
 ]
+
+const ROLE_OPTIONS = ROLE_GROUPS.flatMap((group) => group.roles)
 
 interface TopBarProps {
     /** เมนู off-canvas (<= 900px) เปิดอยู่หรือไม่ และตัวสลับ — AppLayout เป็นเจ้าของ state */
@@ -37,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({ mobileNavOpen = false, onMobileN
         currentOfficerUserId,
         currentDirectorUserId,
         currentOrgUnitId,
-        setRole,
+        logout,
         setOfficerUserId,
         setOrgUnitId,
         toggleSidebar,
@@ -59,6 +89,13 @@ export const TopBar: React.FC<TopBarProps> = ({ mobileNavOpen = false, onMobileN
         [notifications, currentOfficerUserId, currentDirectorUserId, currentRole]
     )
     const [isOnline, setIsOnline] = useState(navigator.onLine)
+    const [roleSwitchOpen, setRoleSwitchOpen] = useState(false)
+    const roleSwitchButtonRef = useRef<HTMLButtonElement>(null)
+    // ปิดหน้าต่างแล้วคืนโฟกัสให้ปุ่มที่เปิด
+    const closeRoleSwitch = useCallback(() => {
+        setRoleSwitchOpen(false)
+        roleSwitchButtonRef.current?.focus()
+    }, [])
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true)
@@ -74,10 +111,18 @@ export const TopBar: React.FC<TopBarProps> = ({ mobileNavOpen = false, onMobileN
     const availableOrgUnits = getOrgUnitsForRole()
     const officerList = ECMIS_USER_DIRECTORY.filter((u) => u.active && (currentRole === 'got_officer' ? u.roles.includes('got_officer') : u.roles.includes('officer') || u.roles.includes('case_owner')))
 
-    const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newRole = e.target.value as UserRole
-        setRole(newRole)
-        showToast(`เปลี่ยนบทบาทเป็น: ${e.target.selectedOptions[0].text}`)
+    const handleLogout = async () => {
+        const result = await showConfirmAlert({
+            icon: 'question',
+            title: 'ออกจากระบบ?',
+            text: 'ต้องเข้าสู่ระบบใหม่เพื่อสลับบทบาทการทำงาน',
+            showCancelButton: true,
+            confirmButtonText: 'ออกจากระบบ',
+            cancelButtonText: 'ยกเลิก',
+        })
+        if (!result.isConfirmed) return
+        logout()
+        navigate({ to: '/login' })
     }
 
     const handleOfficerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -94,6 +139,7 @@ export const TopBar: React.FC<TopBarProps> = ({ mobileNavOpen = false, onMobileN
     const selectedOfficer = officerList.find((off) => off.id === currentOfficerUserId)
     const selectedOfficerLabel = selectedOfficer ? `${selectedOfficer.name} (${selectedOfficer.unit})` : ''
     const selectedRoleLabel = ROLE_OPTIONS.find((role) => role.value === currentRole)?.label ?? ''
+    const currentUserName = getCurrentUserAccount()?.name ?? (currentRole === 'admin' ? 'ผู้ดูแลระบบ' : selectedRoleLabel)
     const showOfficerSelect = currentRole === 'officer' || currentRole === 'case_owner' || currentRole === 'got_officer'
 
     return (
@@ -177,22 +223,16 @@ export const TopBar: React.FC<TopBarProps> = ({ mobileNavOpen = false, onMobileN
                     </div>
                 )}
 
-                {/* Role Selector */}
-                <div className="ws-topbar-field w-[11rem] max-md:w-auto max-md:flex-1" title={selectedRoleLabel}>
-                    <label htmlFor="topbar-role-select">สิทธิ์การทำงาน</label>
-                    <select
-                        id="topbar-role-select"
-                        value={currentRole}
-                        onChange={handleRoleChange}
-                        aria-label="เลือกบทบาทผู้ใช้งาน"
-                    >
-                        {ROLE_OPTIONS.map((role) => (
-                            <option key={role.value} value={role.value}>
-                                {role.label}
-                            </option>
-                        ))}
-                    </select>
-                    <i className="fa-solid fa-chevron-down" aria-hidden="true" />
+                {/* ผู้ใช้ที่ล็อกอินอยู่ (อ่านอย่างเดียว) — เปลี่ยนบทบาทได้โดยออกจากระบบแล้วเข้าใหม่ */}
+                <div
+                    className="ws-topbar-field flex min-h-[44px] w-[13rem] flex-col justify-end px-3 pb-[0.3rem] pt-[1.15rem] max-md:w-auto max-md:flex-1"
+                    title={`${currentUserName} — ${selectedRoleLabel}`}
+                    data-testid="topbar-current-user"
+                >
+                    <span className="pointer-events-none absolute left-3 top-[0.32rem] whitespace-nowrap text-[0.66rem] font-medium leading-tight text-[#b9cadb]">
+                        {selectedRoleLabel}
+                    </span>
+                    <span className="truncate text-[0.8125rem] font-semibold leading-snug text-white">{currentUserName}</span>
                 </div>
             </div>
 
@@ -225,6 +265,31 @@ export const TopBar: React.FC<TopBarProps> = ({ mobileNavOpen = false, onMobileN
                         </span>
                     )}
                 </Link>
+
+                {/* ทดสอบหลายบทบาทโดยไม่ต้องออกจากระบบ */}
+                <Button
+                    ref={roleSwitchButtonRef}
+                    onClick={() => setRoleSwitchOpen(true)}
+                    className="ws-topbar-icon border border-white/25 md:w-auto md:gap-2 md:px-3"
+                    aria-label="สลับบทบาท"
+                    aria-haspopup="dialog"
+                    aria-expanded={roleSwitchOpen}
+                    data-testid="topbar-switch-role"
+                >
+                    <i className="fa-solid fa-people-arrows text-sm" aria-hidden="true" />
+                    <span className="hidden text-[0.8125rem] font-semibold md:inline">สลับบทบาท</span>
+                </Button>
+                <RoleSwitchModal isOpen={roleSwitchOpen} onClose={closeRoleSwitch} />
+
+                <Button
+                    onClick={handleLogout}
+                    className="ws-topbar-icon border border-white/25 md:w-auto md:gap-2 md:px-3"
+                    aria-label="ออกจากระบบ"
+                    data-testid="topbar-logout"
+                >
+                    <i className="fa-solid fa-right-from-bracket text-sm" aria-hidden="true" />
+                    <span className="hidden text-[0.8125rem] font-semibold md:inline">ออกจากระบบ</span>
+                </Button>
             </div>
         </header>
     )

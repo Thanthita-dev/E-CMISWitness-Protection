@@ -14,8 +14,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * 3. วิธีใหม่รวมวิธีที่ 1 ต้องบังคับจัดทำ/แก้ คบ.8 ให้ลงนามก่อน จึงเริ่มปฏิบัติได้ (คบ.5 เดิมข้ามไม่ได้)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const REVIEW_URL = `/protection-review/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const REVIEW_URL = `/protection-review/${encodeURIComponent(CASE_NO)}`
 const METHOD1_URL = `/protection-method/1?caseNo=${CASE_NO}`
 
 /** ตั้งต้นที่ WIT1104 — แฟ้มถูกส่งเข้าทบทวนแล้ว ปัจจุบันคุ้มครองด้วยวิธีที่ 1 และลงนาม คบ.11 / คบ.8 แล้ว */

@@ -1,4 +1,6 @@
+import { showKb17AppealNotice } from '../../lib/terminationRules'
 import React, { useState } from 'react'
+import { sarabanInTransit } from '../../lib/saraban'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Button } from '../common/Button'
 import { ThaiDateHint } from '../common/ThaiDateHint'
@@ -7,7 +9,7 @@ import { useCaseStore } from '../../store/useCaseStore'
 import { CaseItem } from '../../types/case'
 import { APPEAL_WINDOW_DAYS } from '../../lib/constants'
 import { daysUntil, formatThaiDate } from '../../lib/utils'
-import { evaluateCloseGuard } from '../../lib/terminationProgress'
+import { evaluateCloseGuard, isTerminationAppealable, terminationClauseLabel } from '../../lib/terminationProgress'
 import { showToast } from '../../lib/swal'
 import { AppealIntakeForm } from '../appeal/AppealIntakeForm'
 import { AppealIntakeInput } from '../../store/useCaseStore'
@@ -52,6 +54,7 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
     registryDate: todayIso(),
   })
   const [sentDoc, setSentDoc] = useState('คบ17_ฉบับส่ง_ลงเลขแล้ว.pdf')
+  const [receiptEvidence, setReceiptEvidence] = useState('')
   const [deliveredAt, setDeliveredAt] = useState(todayIso())
   const [attemptForm, setAttemptForm] = useState({
     channel: DELIVERY_CHANNELS[0].value,
@@ -63,7 +66,9 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
 
   if (!caseItem.kb16?.signedAt) return null
 
-  const isAuthority = ['secretary', 'director', 'admin'].includes(role)
+  /** อำนาจลงนามเป็นของเลขาธิการเท่านั้น (ผ่านธุรการ) */
+  const inTransit = sarabanInTransit(caseItem, 'termination')
+  const isAuthority = ['secretary', 'admin'].includes(role) && !inTransit
   /** WIT1141 — ยังไม่มีร่าง คบ.17 ในแฟ้ม: กรอกชื่อไฟล์หนังสือแล้วเปิดแฟ้มไปกรอกแบบต่อ */
   const draftReady = Boolean(form.documentName.trim())
   /** WIT1142 — ออกเลขสารบรรณได้ต่อเมื่อลงนามแล้ว และต้องมีเลขที่กับวันที่ครบ */
@@ -71,23 +76,33 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
 
   const daysLeft = kb17?.appealDueAt ? daysUntil(kb17.appealDueAt) : null
   const windowClosed = daysLeft !== null && daysLeft < 0
-  const closed = Boolean(caseItem.closedAt) && caseItem.stage === 'terminated'
+  const closed = Boolean(caseItem.terminationDocumentsClosedAt)
   const appealOpened = caseItem.stage === 'appeal' && caseItem.appealAgainst === 'kb17'
   const attempts = kb17?.deliveryAttempts || []
   const hasFailedAttempt = attempts.some((a) => a.result === 'failed')
   /** TC-151/TC-153 — เงื่อนไขปิดงานเดียวกับที่บังคับใน closeProtectionCase ของ store */
   const closeGuard = evaluateCloseGuard(caseItem)
+  /** เปิดรับคำอุทธรณ์แยกจากการแสดงข้อความแจ้งสิทธิ */
+  const appealable = true
+  const noticeAppeal = showKb17AppealNotice(caseItem)
+  const clauseLabel = terminationClauseLabel(caseItem.kb15?.regulationClause)
 
   return (
     <SectionCard
-      title="แจ้งคำสั่งยุติ (คบ.17) อุทธรณ์ และปิดงาน"
-      hint={`ออกเลขและนำส่งผ่านระบบสารบรรณเดิม · เริ่มนับสิทธิอุทธรณ์ ${APPEAL_WINDOW_DAYS} วันจากวันที่พยานได้รับจริง`}
+      title="แจ้งคำสั่งยุติ (คบ.17) และติดตามการรับแจ้ง"
+      hint="ออกเลขและนำส่งผ่านระบบสารบรรณเดิม · บันทึกวันรับแจ้งจริงพร้อมหลักฐาน"
     >
+      {inTransit && (
+        <p className="text-[0.8rem] text-amber-700" data-testid="termination-in-transit">
+          <i className="fa-solid fa-route mr-1" />
+          อยู่ระหว่างธุรการลงทะเบียนนำส่ง — ดำเนินการต่อได้เมื่อเอกสารถึงผู้รับ
+        </p>
+      )}
       {/* ---------- WIT1141 — เปิดร่าง คบ.17 เข้าแฟ้มให้เจ้าหน้าที่กรอก ---------- */}
       {!kb17?.status && !kb17?.dispatchedAt && (
         <div className="space-y-2">
           <p className="text-[0.8rem] text-muted">
-            จัดทำ คบ.17 แจ้งคำสั่งยุติและสิทธิอุทธรณ์ · เปิดแฟ้มเพื่อกรอกแบบ คบ.17 แล้วเสนอเลขาธิการ ป.ป.ท.
+            จัดทำ คบ.17 แจ้งคำสั่งยุติ · เปิดแฟ้มเพื่อกรอกแบบ คบ.17 แล้วเสนอเลขาธิการ ป.ป.ท.
             ลงนาม ก่อนออกเลขและนำส่งผ่านสารบรรณเดิม
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -240,7 +255,7 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
       )}
 
       {/* ---------- WIT1144 / WIT1145 — พยานรับจริง แล้วเริ่มนับอุทธรณ์ ---------- */}
-      {kb17?.dispatchedAt && !kb17.deliveredAt && (
+      {appealable && kb17?.dispatchedAt && !kb17.deliveredAt && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end gap-2">
             <label className="block w-44">
@@ -253,15 +268,18 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
               />
               <ThaiDateHint value={deliveredAt} testId="kb17-delivered-be" />
             </label>
+            <label className="block flex-1"><span className="ws-label">หลักฐานการรับแจ้งจริง</span><input className="ws-input w-full" value={receiptEvidence} onChange={e => setReceiptEvidence(e.target.value)} placeholder="เลขอ้างอิงหรือชื่อหลักฐานการรับแจ้ง" /></label>
             <Button
               type="button"
+              disabled={!receiptEvidence.trim() || !deliveredAt}
               onClick={() => {
-                recordKb17Delivery(caseItem.no, new Date(deliveredAt).toISOString(), 'ใบตอบรับการนำส่ง')
-                showToast(`บันทึกวันที่รับจริง — เริ่มนับอุทธรณ์ ${APPEAL_WINDOW_DAYS} วัน`)
+                recordKb17Delivery(caseItem.no, deliveredAt, receiptEvidence)
+                if (useCaseStore.getState().getCase(caseItem.no)?.kb17?.deliveredAt) showToast('บันทึกการรับแจ้งแล้ว')
+                else showToast('กรุณาตรวจวันที่รับแจ้งและหลักฐาน โดยวันที่ต้องไม่ก่อนนำส่งหรืออยู่ในอนาคต', 'warning')
               }}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-[0.8rem] font-bold text-white hover:bg-emerald-700 transition"
             >
-              บันทึกวันที่พยานได้รับ
+              บันทึกการรับแจ้ง
             </Button>
           </div>
 
@@ -331,7 +349,7 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
                     note: attemptForm.note || undefined,
                     evidence: attemptForm.evidence || undefined,
                   })
-                  showToast(`บันทึกผลการส่งสำเร็จ — เริ่มนับอุทธรณ์ ${APPEAL_WINDOW_DAYS} วัน`)
+                  showToast(useCaseStore.getState().getCase(caseItem.no)?.kb17?.deliveredAt ? 'บันทึกการรับแจ้งแล้ว' : 'กรุณาตรวจวันรับแจ้งและหลักฐาน', useCaseStore.getState().getCase(caseItem.no)?.kb17?.deliveredAt ? 'success' : 'warning')
                 }}
                 className="rounded-lg border border-emerald-300 bg-white px-4 py-2 text-[0.8rem] font-bold text-emerald-700 hover:bg-emerald-50 transition"
               >
@@ -394,7 +412,7 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
                       new Date(deemedAt).toISOString(),
                       'แจ้งโดยวิธีตามระเบียบ (ปิดประกาศ/ไปรษณีย์ลงทะเบียนตอบรับ)'
                     )
-                    showToast(`บันทึกวันที่ถือว่าได้รับตามระเบียบแล้ว — เริ่มนับอุทธรณ์ ${APPEAL_WINDOW_DAYS} วัน`)
+                    showToast('บันทึกหลักฐานแล้ว — ยังไม่ใช่วันรับแจ้งจริง')
                   }}
                   className="min-h-[44px] rounded-lg bg-amber-600 px-4 py-2 text-[0.88rem] font-semibold text-white hover:bg-amber-700 transition"
                 >
@@ -413,22 +431,22 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
             <Button
               type="button"
               disabled
-              title="ยังไม่เริ่มนับกรอบอุทธรณ์ — ต้องมีวันที่พยานได้รับจริงหรือวันที่ถือว่าได้รับตามระเบียบก่อน"
+              title="ต้องบันทึกวันรับแจ้งจริงและหลักฐานก่อนปิดงานเอกสาร"
               className="rounded-lg bg-navy-deep px-4 py-1.5 text-[0.8rem] font-bold text-white opacity-60 transition disabled:cursor-not-allowed"
             >
-              ไม่มีอุทธรณ์ / พ้นกำหนด — ปิดงาน
+              ปิดงานเอกสารสิ้นสุด
             </Button>
           </div>
         </div>
       )}
 
       {/* ---------- WIT1146 / WIT1147 / WIT1148 — มีอุทธรณ์ภายในกำหนดหรือไม่ ---------- */}
-      {kb17?.deliveredAt && (
+      {appealable && kb17?.deliveredAt && (
         <div className="rounded-lg border border-line bg-soft p-3 text-[0.8rem] text-slate-700 space-y-2">
           <div>
             พยานได้รับ คบ.17 เมื่อ {formatThaiDate(kb17.deliveredAt)}
-            {kb17.deliveryMethod === 'deemed' ? ' (ถือว่าได้รับตามระเบียบ)' : ''} · ครบกำหนดอุทธรณ์{' '}
-            {formatThaiDate(kb17.appealDueAt)}
+            {kb17.deliveryMethod === 'deemed' ? ' (การแจ้งโดยวิธีอื่น)' : ''}
+            {noticeAppeal && kb17.appealDueAt && <> · ครบกำหนดอุทธรณ์ {formatThaiDate(kb17.appealDueAt)}</>}
             {daysLeft !== null && (daysLeft >= 0 ? ` (เหลือ ${daysLeft} วัน)` : ' (พ้นกำหนดแล้ว)')}
           </div>
 
@@ -445,25 +463,26 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
                 ไปหน้าอุทธรณ์
               </Link>
             </div>
-          ) : closed ? (
-            <div className="rounded-lg border border-emerald-300 bg-emerald-50/70 p-2.5 text-[0.8rem] text-emerald-900">
-              <i className="fa-solid fa-lock mr-1.5" />
-              ปิดงานคุ้มครองแล้วเมื่อ {formatThaiDate(caseItem.closedAt)} · เอกสารฉบับลงนามถูกล็อก และคง
-              Audit Trail ไว้ในแฟ้ม
-            </div>
           ) : (
             <div className="space-y-3 pt-1">
-              {!windowClosed && (
+              {(
                 <AppealIntakeForm
                   caseItem={caseItem}
-                  submitLabel="มีอุทธรณ์ภายในกำหนด"
-                  onSubmit={(reason: string, intake: AppealIntakeInput) => {
-                    openKb17Appeal(caseItem.no, reason, intake)
+                  submitLabel="รับคำอุทธรณ์"
+                  onSubmit={(reason: string, intake: AppealIntakeInput, lateReason?: string) => {
+                    openKb17Appeal(caseItem.no, reason, intake, undefined, lateReason)
                     showToast('รับคำอุทธรณ์คำสั่งยุติ — ผูกกับ คบ.17 เดิมแล้ว')
                   }}
                 />
               )}
 
+
+            </div>
+          )}
+        </div>
+      )}
+      {kb17?.deliveredAt && <div className="space-y-2">
+        {closed && <p className="text-[0.85rem] text-success">ปิดงานเอกสารสิ้นสุดแล้วเมื่อ {formatThaiDate(caseItem.terminationDocumentsClosedAt)} · ติดตามส่งต่อและอุทธรณ์ต่อได้</p>}
               {/* ---------- TC-151 — ปุ่มปิดงานผูกกับเงื่อนไข evaluateCloseGuard เดียวกับที่บังคับในสโตร์ ---------- */}
               {!closeGuard.allowed && (
                 <p className="text-[0.8rem] font-bold text-rose-700">
@@ -474,21 +493,18 @@ export const Kb17Section: React.FC<{ caseItem: CaseItem; role: string }> = ({ ca
               <div className="flex justify-end pt-1">
                 <Button
                   type="button"
-                  disabled={!closeGuard.allowed}
-                  title={closeGuard.allowed ? 'ปิดงานคุ้มครองพยาน' : closeGuard.reasons.join(' · ')}
+                  disabled={closed || !closeGuard.allowed}
+                  title={closeGuard.allowed ? 'ปิดเฉพาะงานเอกสารสิ้นสุด' : closeGuard.reasons.join(' · ')}
                   onClick={() => {
-                    closeProtectionCase(caseItem.no, windowClosed ? 'พ้นกำหนดอุทธรณ์' : 'ไม่มีอุทธรณ์')
-                    showToast('ปิดงานคุ้มครองและล็อกเอกสารลงนามแล้ว')
+                    closeProtectionCase(caseItem.no, 'บันทึกเอกสารและการรับแจ้งครบแล้ว')
+                    if (useCaseStore.getState().getCase(caseItem.no)?.terminationDocumentsClosedAt) showToast('ปิดงานเอกสารแล้ว ติดตามส่งต่อและอุทธรณ์ต่อได้')
                   }}
                   className="rounded-lg bg-navy-deep px-4 py-1.5 text-[0.8rem] font-bold text-white hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40"
                 >
-                  ไม่มีอุทธรณ์ / พ้นกำหนด — ปิดงาน
+                  ปิดงานเอกสารสิ้นสุด
                 </Button>
               </div>
-            </div>
-          )}
-        </div>
-      )}
+      </div>}
     </SectionCard>
   )
 }

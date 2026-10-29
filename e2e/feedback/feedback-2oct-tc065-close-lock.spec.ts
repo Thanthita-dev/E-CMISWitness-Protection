@@ -12,9 +12,9 @@ import { readCase, seedMockState } from '../helpers/seed'
  *   - มีป้ายแจ้งว่าแฟ้มถูกล็อกที่หน้าแฟ้ม หน้าแบบฟอร์ม และหน้ายุติการคุ้มครอง
  */
 
-const CASE_NO = 'WP-2569-000501'
-const TERM_URL = `/termination/${CASE_NO}`
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const TERM_URL = `/termination/${encodeURIComponent(CASE_NO)}`
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const KB6_URL = `/form/6?caseNo=${CASE_NO}`
 const CLOSE_BUTTON = 'ไม่มีอุทธรณ์ / พ้นกำหนด — ปิดงาน'
 

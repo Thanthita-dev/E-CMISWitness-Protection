@@ -9,10 +9,7 @@ import { Kb16Section } from '../../components/protection/Kb16Section'
 import { Kb17Section } from '../../components/protection/Kb17Section'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import { deriveEpisode, summarizeEpisode } from '../../lib/episode'
 import { getTerminationProgress } from '../../lib/terminationProgress'
-import { formatThaiDate } from '../../lib/utils'
-import { monthLabel } from '../../lib/protectionMonths'
 import { CaseLockScope } from '../../components/common/CaseLockScope'
 
 export const Route = createFileRoute('/termination/$caseNo')({
@@ -41,7 +38,6 @@ function TerminationCasePage() {
     )
   }
 
-  const summary = summarizeEpisode(caseItem.episode || deriveEpisode(caseItem))
   const progress = getTerminationProgress(caseItem)
   const currentStep = progress.steps[progress.doneCount]
   const termSteps: StepperStep[] = progress.steps.map((st, i) => ({
@@ -59,50 +55,43 @@ function TerminationCasePage() {
         kicker="ยุติการคุ้มครองและปิดงาน"
         refNo={caseItem.no}
         title={`ยุติการคุ้มครองและปิดงาน — ${caseItem.person}`}
-        meta={['จัดทำ คบ.15 ออกคำสั่ง คบ.16 แจ้ง คบ.17 และปิดงานเมื่อพ้นกรอบอุทธรณ์']}
         status={<span className="ws-status">{caseItem.status}</span>}
         owner={`ผู้รับผิดชอบ: ${caseItem.owner}`}
+        actions={
+          <Link
+            to="/dossier/$caseNo"
+            params={{ caseNo: caseItem.no }}
+            className="inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy transition hover:bg-slate-50"
+          >
+            <i className="fa-solid fa-folder-open" />
+            เปิดแฟ้ม
+          </Link>
+        }
       />
 
       {/* ขั้นตอนที่สำนวนเดินมาถึงตลอดเส้น 11C → 11D — อ่านอย่างเดียว กดไม่ได้ */}
       <CurrentStepCard
-        current={currentStep?.label ?? 'ปิดงานคุ้มครองแล้ว'}
+        current={currentStep?.label ?? 'ปิดงานเอกสารสิ้นสุดแล้ว'}
         next={progress.steps[progress.doneCount + 1]?.label}
         index={Math.min(progress.doneCount + 1, progress.total)}
         total={progress.total}
-        caption={[
-          `ความคืบหน้าการยุติการคุ้มครอง · ${progress.doneCount}/${progress.total} ขั้น`,
-          progress.blockedReason,
-        ]}
+        caption={[progress.blockedReason]}
       >
         <NumberedStepper steps={termSteps} ariaLabel="ความคืบหน้าการยุติการคุ้มครอง" />
       </CurrentStepCard>
 
-      {/* WIT1124 — ฐานข้อมูลของสำนวนที่รับเข้ากระบวนการยุติ */}
-      <div className="rounded-lg border border-line bg-soft p-3 text-[0.8rem] leading-relaxed text-slate-600">
-        สถานะ {caseItem.status} · สะสม {monthLabel(summary.atCap ? 6 : Math.min(6, summary.cumulative / summary.cap * 6))} / 6 เดือน
-        {summary.remaining > 0 ? ` · คงเหลือ ${monthLabel(summary.remaining / summary.cap * 6)}` : ' · ครบเพดานแล้ว'} · คำสั่งเดิมสิ้นสุด{' '}
-        {formatThaiDate(caseItem.protectionEndAt)}
-      </div>
-
       <Kb15Section caseItem={caseItem} role={currentRole} initialSource={source} />
+
       <Kb16Section caseItem={caseItem} role={currentRole} />
       <Kb17Section caseItem={caseItem} role={currentRole} />
 
       <div className="flex flex-wrap gap-4">
         <Link
-          to="/protection-review/$caseNo"
-          params={{ caseNo: caseItem.no }}
+          to="/protection-duration"
+          search={{ caseNo: caseItem.no }}
           className="text-[0.8rem] font-semibold text-blue hover:underline"
         >
-          ทบทวนผลการคุ้มครอง
-        </Link>
-        <Link
-          to="/dossier/$caseNo"
-          params={{ caseNo: caseItem.no }}
-          className="text-[0.8rem] font-semibold text-blue hover:underline"
-        >
-          เปิดแฟ้ม {caseItem.no}
+          ดูระยะเวลาคุ้มครอง
         </Link>
       </div>
     </CaseLockScope>

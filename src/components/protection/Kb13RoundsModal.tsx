@@ -3,6 +3,7 @@ import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
 import { CaseItem, MonthlyReport } from '../../types/case'
 import { METHOD_LABELS } from '../../lib/episode'
+import { isExternalRound, reportSourceLabel } from '../../lib/kb13'
 import { formatThaiDate, thaiMonthName } from '../../lib/utils'
 
 interface Kb13RoundsModalProps {
@@ -66,7 +67,10 @@ export const Kb13RoundsModal: React.FC<Kb13RoundsModalProps> = ({ caseItem, open
 }
 
 /** รายละเอียดหนึ่งรอบ — ครบทุกช่องที่กรอกไว้ตอนจัดทำ (WIT1005-WIT1012) โดยไม่มีปุ่มแก้ไข */
-const Kb13RoundRow: React.FC<{ round: MonthlyReport }> = ({ round }) => (
+const Kb13RoundRow: React.FC<{ round: MonthlyReport }> = ({ round }) => {
+  const external = isExternalRound(round)
+  const letter = round.externalLetter
+  return (
   <li className="space-y-2 rounded-xl border border-slate-200 bg-white p-4">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <strong className="text-[0.8rem] font-bold text-navy-deep">
@@ -75,12 +79,17 @@ const Kb13RoundRow: React.FC<{ round: MonthlyReport }> = ({ round }) => (
           ? ` · ${formatThaiDate(round.periodFrom)}–${formatThaiDate(round.periodTo)}`
           : ''}
       </strong>
-      <Badge variant={round.lockedAt ? 'success' : 'warning'}>
-        {round.lockedAt ? 'ปิดรอบแล้ว' : 'กำลังดำเนินการ'}
-      </Badge>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge variant="neutral">{reportSourceLabel(round)}</Badge>
+        <Badge variant={round.lockedAt ? 'success' : 'warning'}>
+          {round.lockedAt ? 'ปิดรอบแล้ว' : 'กำลังดำเนินการ'}
+        </Badge>
+      </div>
     </div>
 
-    <p className="text-[0.8rem] leading-relaxed text-slate-600">{round.summary || 'ยังไม่ได้จัดทำเนื้อรายงาน'}</p>
+    {!external && (
+      <p className="text-[0.8rem] leading-relaxed text-slate-600">{round.summary || 'ยังไม่ได้จัดทำเนื้อรายงาน'}</p>
+    )}
 
     <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-[0.8rem] text-slate-600 sm:grid-cols-2">
       <Field label="คำสั่งที่อ้าง" value={round.orderRef} />
@@ -94,14 +103,26 @@ const Kb13RoundRow: React.FC<{ round: MonthlyReport }> = ({ round }) => (
       <Field label="เหตุสำคัญในรอบ" value={`${round.incidentCount ?? 0} รายการ`} />
       <Field label="ปัญหา/อุปสรรค" value={round.issues} />
       <Field label="ข้อเสนอรอบถัดไป" value={round.nextProposal} />
-      <Field
-        label="เจ้าหน้าที่ลงนาม"
-        value={round.officerSignedAt ? `${round.officerSignedBy || '-'} · ${round.officerSignedAt}` : undefined}
-      />
-      <Field
-        label="พยานลงนามรับรอง"
-        value={round.witnessSignedAt ? `${round.witnessSignedBy || '-'} · ${round.witnessSignedAt}` : undefined}
-      />
+      {external ? (
+        <>
+          <Field label="หน่วยงานผู้ส่ง" value={letter?.agency} />
+          <Field label="หนังสือเลขที่" value={letter?.letterNo} />
+          <Field label="ลงวันที่" value={letter?.letterDate ? formatThaiDate(letter.letterDate) : undefined} />
+          <Field label="วันที่รับ" value={letter?.receivedAt ? formatThaiDate(letter.receivedAt) : undefined} />
+          <Field label="เลขรับ" value={letter?.receiveNo} />
+        </>
+      ) : (
+        <>
+          <Field
+            label="เจ้าหน้าที่ลงนาม"
+            value={round.officerSignedAt ? `${round.officerSignedBy || '-'} · ${round.officerSignedAt}` : undefined}
+          />
+          <Field
+            label="พยานลงนามรับรอง"
+            value={round.witnessSignedAt ? `${round.witnessSignedBy || '-'} · ${round.witnessSignedAt}` : undefined}
+          />
+        </>
+      )}
       <Field
         label="ตรวจรับรายงาน"
         value={round.reviewedAt ? `${round.reviewedBy || '-'} · ${round.reviewedAt}` : undefined}
@@ -110,6 +131,18 @@ const Kb13RoundRow: React.FC<{ round: MonthlyReport }> = ({ round }) => (
       <Field label="กำหนดรอบถัดไป" value={round.nextDueAt ? formatThaiDate(round.nextDueAt) : undefined} />
       <Field label="ส่งรายงานโดย" value={round.submittedBy ? `${round.submittedBy} · ${round.submittedAt}` : undefined} />
     </dl>
+
+    {external && letter?.documentUrl && (
+      <a
+        href={letter.documentUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center border-t border-slate-100 pt-2 text-[0.8rem] font-semibold text-blue hover:underline"
+      >
+        <i className="fa-solid fa-paperclip mr-1.5" />
+        เปิดไฟล์หนังสือ{letter.documentName ? ` (${letter.documentName})` : ''}
+      </a>
+    )}
 
     {Boolean(round.evidenceRefs?.length) && (
       <div className="flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
@@ -122,7 +155,8 @@ const Kb13RoundRow: React.FC<{ round: MonthlyReport }> = ({ round }) => (
       </div>
     )}
   </li>
-)
+  )
+}
 
 /** ช่องที่ยังไม่ได้กรอกไม่ต้องแสดง — รายการจะได้ไม่เต็มไปด้วยขีดกลาง */
 const Field: React.FC<{ label: string; value?: string | number }> = ({ label, value }) =>

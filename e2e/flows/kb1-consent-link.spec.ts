@@ -8,7 +8,7 @@ import { drawSignature, openKb1Signatures, sendConsentLink, witnessSigns } from 
  * ใช้ Case 6.2 (รับแจ้งทางโทรศัพท์ คบ.2 · รอพยานลงนาม คบ.1 · ยังไม่ส่งลิงก์)
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 
 test.describe('ลงชื่อยินยอม คบ.1 ผ่านลิงก์', () => {
   test('ส่งลิงก์ → พยานอ่านและลงชื่อ → สถานะและเอกสารฝั่งเจ้าหน้าที่อัปเดต', async ({ page }) => {
@@ -78,7 +78,6 @@ test.describe('ลงชื่อยินยอม คบ.1 ผ่านลิ�
     await expect(history).toContainText('ผู้ขอคุ้มครองลงชื่อ')
 
     // ลายมือชื่ออยู่ในช่อง "ผู้ยื่นคำร้อง" ของกระดาษ พร้อมวันเวลาและรุ่นเอกสาร
-    await page.getByRole('button', { name: 'หน้า 4', exact: true }).first().click()
     await expect(page.getByTestId('sign-slot-note').first()).toContainText('คบ.1 ฉบับที่ 1')
   })
 
@@ -130,7 +129,7 @@ test.describe('ลงชื่อยินยอม คบ.1 ผ่านลิ�
     await unitField.fill('สำนักงานตัวอย่าง (สมมติ)')
 
     // ด่านส่งงานในแฟ้มกลับมาล็อกจนกว่าจะลงชื่อฉบับใหม่
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await expect(page.getByText('คบ.1 ถูกแก้ไขหลังผู้ขอคุ้มครองลงชื่อ — ต้องลงชื่อฉบับใหม่')).toBeVisible()
 
     await page.goto(`/form/1?caseNo=${CASE_NO}`)
@@ -160,13 +159,13 @@ test.describe('ลงชื่อยินยอม คบ.1 ผ่านลิ�
       urgencyAssessedAt: '10/09/2569 09:00',
       urgencyAssessedBy: 'นางสาวอรุณี ใจมั่น',
     })
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await expect(page.getByText('พยานยังไม่ได้ลงนามยินยอมในแบบ คบ.1').first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'พยานลงนามตอนนี้' })).toHaveCount(0)
     const url = await sendConsentLink(page)
     await witnessSigns(page, url)
-    await page.goto(`/dossier/${CASE_NO}`)
-    await expect(page.getByText('ลายมือชื่อยินยอมในแบบ คบ.1 ครบถ้วน')).toBeVisible()
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
+    await expect(page.getByText('พยานยังไม่ได้ลงนามยินยอมในแบบ คบ.1')).toHaveCount(0)
   })
 })
 

@@ -1,8 +1,10 @@
+import { terminationSignatures } from '../../lib/terminationDraft'
 import React, { useState } from 'react'
 import { Button } from '../common/Button'
 import { useCaseStore } from '../../store/useCaseStore'
 import { CaseItem } from '../../types/case'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
+import { kb15PendingStage, kb15StageLabel } from '../../lib/protectionHandoff'
 
 /** ค่า default เมื่อไม่ระบุความเห็น — single source of truth ให้ทุกจุดที่เรียก reviewKb15 ใช้ค่าเดียวกัน */
 export const KB15_DEFAULT_REVIEW_NOTE = 'เอกสารครบถ้วน'
@@ -15,7 +17,7 @@ interface Kb15ReviewActionsProps {
 }
 
 /**
- * WIT1131-WIT1134 — จุดตัดสินใจตรวจ คบ.15 หนึ่งเดียว
+ * WIT1131-WIT1134 (ผอ.) → WIT1161 ธุรการ → WIT1163 รองเลขาธิการ → WIT1162 เลขาธิการ — จุดตัดสินใจตรวจ คบ.15 หนึ่งเดียว
  *
  * ใช้ร่วมกันโดย Kb15Section (แท็บ 11C แบบ inline) และ Kb15ReviewModal (จากแถวแบบฟอร์มในแฟ้ม)
  * เพื่อไม่ให้ default ความเห็นเพี้ยนไปคนละทาง
@@ -24,36 +26,48 @@ export const Kb15ReviewActions: React.FC<Kb15ReviewActionsProps> = ({ caseItem, 
   const reviewKb15 = useCaseStore((s) => s.reviewKb15)
   const [note, setNote] = useState('')
   const kb15 = caseItem.kb15
+  const stage = kb15PendingStage(caseItem)
 
-  if (!kb15 || kb15.status !== 'submitted') return null
+  if (!kb15 || !stage) return null
+  const label = kb15StageLabel(stage, caseItem)
+  /** เลขาธิการลงนาม คบ.15 แล้วจึงพิจารณาอนุมัติยุติเป็นอีกขั้น */
+  const isSecretary = stage === 'secretary'
+  const endorseText = stage === 'director' ? 'เห็นชอบ · ส่งธุรการกอง → ธุรการเลขา → รองเลขาธิการ' : isSecretary ? 'เห็นชอบและลงนาม คบ.15' : `เห็นชอบ · ส่ง${kb15StageLabel(stage === 'supervisor' ? 'director' : 'secretary', caseItem)}`
 
   const handleReview = (endorse: boolean) => {
+    if (endorse && !terminationSignatures(caseItem, 15)[`kb15-${stage}`]?.signed) {
+      showToast('กรุณาเปิด คบ.15 และลงนามในช่องของท่านก่อนส่งพิจารณาต่อ', 'warning')
+      return
+    }
     if (!endorse && !note.trim()) {
       showToast('กรุณาระบุเหตุผลที่ส่งคืน', 'warning')
       return
     }
     showConfirmAlert({
       icon: endorse ? 'question' : 'warning',
-      title: endorse ? 'ยืนยันเอกสารครบถ้วน?' : 'ยืนยันส่งคืนแก้ไข?',
+      title: endorse ? (isSecretary ? 'ยืนยันลงนาม คบ.15?' : 'ยืนยันเห็นชอบและลงนาม คบ.15?') : 'ยืนยันส่งคืนแก้ไข?',
       html: confirmBody(
-        `ตรวจ คบ.15 ฉบับที่ ${kb15.version} ของแฟ้ม ${caseItem.no}`,
+        `${label}ตรวจ คบ.15 ฉบับที่ ${kb15.version} ของแฟ้ม ${caseItem.no}`,
         [
           ['เหตุแห่งการยุติ', kb15.summary || '-'],
           ['ความเห็น', note.trim() || (endorse ? KB15_DEFAULT_REVIEW_NOTE : '-')],
         ],
         endorse
-          ? 'เห็นชอบและเสนอผู้มีอำนาจพิจารณาออกคำสั่งยุติ (คบ.16) ต่อไป'
-          : 'แฟ้มกลับไปให้เจ้าหน้าที่จัดทำ คบ.15 เวอร์ชันใหม่ โดยไม่แก้ทับฉบับเดิม'
+          ? isSecretary
+            ? 'บันทึกผลเห็นชอบและลงนาม คบ.15 ในครั้งเดียว แล้วจัดทำ คบ.16 เพื่อลงนามคำสั่งแยกต่างหาก'
+            : `${endorseText} ตามลำดับชั้น`
+          : 'แฟ้มกลับไปให้เจ้าหน้าที่จัดทำ คบ.15 เวอร์ชันใหม่ โดยไม่แก้ทับฉบับเดิม และเริ่มเสนอตามลำดับชั้นใหม่'
       ),
       showCancelButton: true,
-      confirmButtonText: endorse ? 'ยืนยันครบถ้วน' : 'ยืนยันส่งคืน',
+      confirmButtonText: endorse ? (isSecretary ? 'ยืนยันลงนาม' : 'ยืนยันครบถ้วน') : 'ยืนยันส่งคืน',
       cancelButtonText: 'ยกเลิก',
     }).then((res) => {
       if (!res.isConfirmed) return
       reviewKb15(caseItem.no, endorse, note.trim() || KB15_DEFAULT_REVIEW_NOTE)
+      if (useCaseStore.getState().getCase(caseItem.no)?.kb15?.approvalHistory?.length === kb15.approvalHistory?.length) return
       setNote('')
       showToast(
-        endorse ? 'เห็นชอบ คบ.15 และเสนอผู้มีอำนาจพิจารณาออกคำสั่งยุติแล้ว' : 'ส่งคืนแก้ไข คบ.15 แล้ว'
+        endorse ? (isSecretary ? 'พิจารณาและลงนาม คบ.15 แล้ว · จัดทำ คบ.16 ต่อได้' : `${endorseText} แล้ว`) : 'ส่งคืนแก้ไข คบ.15 แล้ว'
       )
       onDone?.(endorse)
     })
@@ -62,7 +76,7 @@ export const Kb15ReviewActions: React.FC<Kb15ReviewActionsProps> = ({ caseItem, 
   return (
     <div className={className ?? 'space-y-2 border-t border-slate-200 pt-3'}>
       <p className="text-[0.8rem] text-muted">
-        ตรวจ คบ.15 เหตุผลและเอกสารประกอบ พร้อมบันทึกความเห็นตามลำดับชั้น
+        {label}ตรวจ คบ.15 เหตุผลและเอกสารประกอบ พร้อมบันทึกความเห็นตามลำดับชั้น
       </p>
       <input
         value={note}
@@ -76,7 +90,7 @@ export const Kb15ReviewActions: React.FC<Kb15ReviewActionsProps> = ({ caseItem, 
           onClick={() => handleReview(true)}
           className="rounded-lg bg-emerald-600 px-4 py-2 text-[0.8rem] font-bold text-white hover:bg-emerald-700 transition"
         >
-          ครบถ้วน · เสนอผู้มีอำนาจ
+          {endorseText}
         </Button>
         <Button
           type="button"

@@ -5,6 +5,7 @@ import { useCaseStore } from '../../store/useCaseStore'
 import { EXTERNAL_TRANSFER_AGENCIES, PROTECTION_MAX_DAYS } from '../../lib/constants'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
 import { DocHeaderFields, EditorShell, Field, Grid, Section, ThaiDateFields, useField } from './fields/FormKit'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface Kb12FormEditorProps {
   onSaved?: () => void
@@ -185,7 +186,7 @@ export const Kb12FormEditor: React.FC<Kb12FormEditorProps> = ({ onSaved, context
           <label className="ws-label">
             เหตุผลและความจำเป็นในการส่งต่อ
           </label>
-          <textarea
+          <VoiceTextarea
             rows={3}
             value={f.get('เหตุผลการส่งต่อ')}
             onChange={(e) => updateField(12, 'เหตุผลการส่งต่อ', e.target.value)}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { DocActions } from './EditorView'
 import { protectionResponsibleName } from '../../lib/protectionHandoff'
 import { Button } from '../common/Button'
 import { SignatureModal } from '../common/SignatureModal'
@@ -7,11 +8,13 @@ import { useCaseStore } from '../../store/useCaseStore'
 import { useSignatureLinkStore } from '../../store/useSignatureLinkStore'
 import { showToast, showLinkDialog } from '../../lib/swal'
 import { KB11_SIGN_SLOTS, kb11Gate } from '../../lib/formSignature'
+import { PaperSignRegistration } from './paper/paperSign'
 import { readRoutableProtectionMethods } from '../../lib/constants'
 import { METHOD_LABELS } from '../../lib/episode'
 import { ProtectionMethodNo } from '../../types/case'
 
 interface Kb11SignatureActionsProps {
+  paperOnly?: boolean
   /** เลขคำร้องของแฟ้มที่เปิดแบบ คบ.11 นี้ */
   caseNo?: string
   /** เรียกหลังบันทึกข้อตกลงเสร็จ เพื่อปิดโมดัลกลับไปที่แฟ้ม */
@@ -19,10 +22,10 @@ interface Kb11SignatureActionsProps {
 }
 
 /**
- * ลายมือชื่อท้ายบันทึกข้อตกลง คบ.11 — พยาน เจ้าพนักงาน และพยานในการทำข้อตกลงอีกสองคน
+ * ลายมือชื่อท้ายบันทึกข้อตกลง คบ.11 — พยานและเจ้าพนักงาน
  * ลงนามจากรายการแบบฟอร์มในแฟ้มที่เดียว เช่นเดียวกับ คบ.6 และหนังสือส่งออก
  */
-export const Kb11SignatureActions: React.FC<Kb11SignatureActionsProps> = ({ caseNo, onSaved }) => {
+export const Kb11SignatureActions: React.FC<Kb11SignatureActionsProps> = ({ caseNo, onSaved, paperOnly = false }) => {
   const { getDraft, signatures, signDocument, lockForm } = useFormDraftStore()
   const { getCase, updateCase, logHistory, setApprovedMethods, recordConsent } = useCaseStore()
   const createSignatureLink = useSignatureLinkStore((s) => s.createLink)
@@ -39,11 +42,22 @@ export const Kb11SignatureActions: React.FC<Kb11SignatureActionsProps> = ({ case
     )
   }
 
-  /** TC-065 — ต้องลงนามครบทุกช่องตามแบบ คบ.11 (พยาน/เจ้าพนักงาน/พยานในการทำข้อตกลง 2 คน) จึงบันทึกข้อตกลงได้ */
+  /** TC-065 — ต้องลงนามครบทุกช่องตามแบบ คบ.11 (พยาน/เจ้าพนักงาน) จึงบันทึกข้อตกลงได้ */
   const allSigned = KB11_SIGN_SLOTS.every((s) => signatures[s.key]?.signed)
   const someSigned = KB11_SIGN_SLOTS.some((s) => signatures[s.key]?.signed)
   const incompleteSignatures = someSigned && !allSigned
   const agreementSaved = Boolean(caseItem.kb11Signed)
+  const shareWitnessLink = () => {
+    const gate = kb11Gate(caseItem)
+    if (!gate.unlocked) { showToast(gate.reason || 'กรุณาบันทึกการรับ คบ.9 ก่อนลงนาม', 'warning'); return }
+    const token = createSignatureLink({
+      title: 'ลงลายมือชื่อพยานผู้รับการคุ้มครอง (คบ.11)',
+      signerRole: 'พยานผู้รับการคุ้มครอง',
+      defaultSignerName: draft['ชื่อพยาน'] || caseItem.person,
+      target: { kind: 'formDraft', key: 'kb11-witness', caseNo: caseItem.no },
+    })
+    void showLinkDialog('แชร์ลิงก์ให้พยานลงนาม คบ.11', `${window.location.origin}/sign/${token}`)
+  }
 
   /** วิธีที่เสนอไว้ในข้อ 8.2 ของ คบ.6 — เปิดเป็นเส้นทาง 08A-1/08A-2/08A-3/08B ทันทีที่พยานลงนาม */
   const kb6Methods = readRoutableProtectionMethods(getDraft(6)) as ProtectionMethodNo[]
@@ -95,13 +109,14 @@ export const Kb11SignatureActions: React.FC<Kb11SignatureActionsProps> = ({ case
 
   return (
     <div className="space-y-2.5">
-      <div className="rounded-lg border border-line bg-blue-soft p-3 text-[0.88rem] leading-relaxed text-navy">
+      <div hidden={paperOnly} className="rounded-lg border border-line bg-blue-soft p-3 text-[0.88rem] leading-relaxed text-navy">
         <i className="fa-solid fa-file-signature mr-1.5" />
-        ลายมือชื่อท้ายบันทึกข้อตกลงลงนามที่รายการแบบฟอร์มในแฟ้มนี้ — แฟ้ม {caseItem.no}{' '}
+        แชร์ลิงก์ให้พยานลงนาม และเจ้าหน้าที่ลงนามในบัญชีของตนเอง — แฟ้ม {caseItem.no}{' '}
         จะบันทึกข้อตกลงได้เมื่อทั้งพยานและเจ้าพนักงานลงลายมือชื่อครบ
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {KB11_SIGN_SLOTS.map((s) => <PaperSignRegistration key={s.key} signKey={s.key} handler={agreementSaved || (s.key === 'kb11-witness' && signatures[s.key]?.signed) ? null : s.key === 'kb11-witness' ? { onSign: shareWitnessLink, label: 'แชร์ลิงก์ลงนาม' } : { onSign: () => { const gate = kb11Gate(caseItem); if (!gate.unlocked) { showToast(gate.reason || 'กรุณาบันทึกการรับ คบ.9 ก่อนลงนาม', 'warning'); return }; setActiveSignKey(s.key) } }} />)}
+      <div hidden={paperOnly} className={paperOnly ? 'hidden' : 'grid grid-cols-1 sm:grid-cols-2 gap-3'}>
         {KB11_SIGN_SLOTS.map((s) => {
           const sign = signatures[s.key]
           return (
@@ -121,33 +136,34 @@ export const Kb11SignatureActions: React.FC<Kb11SignatureActionsProps> = ({ case
               </div>
               <Button
                 type="button"
-                disabled={agreementSaved}
-                onClick={() => setActiveSignKey(s.key)}
+                disabled={agreementSaved || (s.key === 'kb11-witness' && Boolean(sign?.signed))}
+                onClick={() => s.key === 'kb11-witness' ? shareWitnessLink() : setActiveSignKey(s.key)}
                 title={agreementSaved ? 'บันทึกข้อตกลงและล็อกฉบับแล้ว — ลงนามซ้ำไม่ได้' : undefined}
                 className={`w-full flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg px-4 py-[0.68rem] text-[0.88rem] font-semibold text-white transition ${
                   agreementSaved ? 'bg-muted cursor-not-allowed' : 'bg-navy hover:bg-blue'
                 }`}
               >
                 <i className="fa-solid fa-pen-nib" />
-                {sign?.signed ? 'ลงนามใหม่' : 'ลงลายมือชื่อ'}
+                {s.key === 'kb11-witness' ? sign?.signed ? 'พยานลงนามแล้ว' : 'แชร์ลิงก์ให้พยานลงนาม' : sign?.signed ? 'ลงนามใหม่' : 'ลงลายมือชื่อ'}
               </Button>
             </div>
           )
         })}
       </div>
 
-      {incompleteSignatures && !agreementSaved && (
+      {!paperOnly && incompleteSignatures && !agreementSaved && (
         <p
           data-testid="kb11-incomplete-signatures"
           className="flex items-start gap-1.5 ws-callout text-[0.88rem] font-semibold"
         >
           <i className="fa-solid fa-triangle-exclamation mt-0.5" />
-          <span>ลายมือชื่อยังไม่ครบตามแบบ คบ.11 (ต้องมีพยาน เจ้าพนักงาน และพยานในการทำข้อตกลงอีก 2 คน) —
+          <span>ลายมือชื่อยังไม่ครบตามแบบ คบ.11 (ต้องมีพยานและเจ้าพนักงาน) —
             ยังบันทึกและล็อกข้อตกลงฉบับนี้ไม่ได้</span>
         </p>
       )}
 
-      <div className="flex justify-end">
+      {paperOnly && <DocActions><Button type="button" variant="primary" size="md" data-testid="kb11-save-agreement" disabled={!allSigned || agreementSaved} onClick={handleSaveAgreement}>{agreementSaved ? 'บันทึกข้อตกลงแล้ว' : 'บันทึกข้อตกลง คบ.11'}</Button></DocActions>}
+      <div hidden={paperOnly} className={paperOnly ? 'hidden' : 'flex justify-end'}>
         <Button
           type="button"
           disabled={!allSigned || agreementSaved}
@@ -183,7 +199,7 @@ export const Kb11SignatureActions: React.FC<Kb11SignatureActionsProps> = ({ case
             defaultSignerName={signMeta.defaultSignerName}
             onClose={() => setActiveSignKey(null)}
             onConfirm={(name, img) => {
-              signDocument(activeSignKey, name, img)
+              signDocument(activeSignKey, name, img, caseItem.no)
               setActiveSignKey(null)
               showToast('บันทึกลายมือชื่ออิเล็กทรอนิกส์แล้ว')
             }}
@@ -192,7 +208,7 @@ export const Kb11SignatureActions: React.FC<Kb11SignatureActionsProps> = ({ case
                 title: signMeta.title,
                 signerRole: signMeta.signerRole,
                 defaultSignerName: signMeta.defaultSignerName,
-                target: { kind: 'formDraft', key: activeSignKey },
+                target: { kind: 'formDraft', key: activeSignKey, caseNo: caseItem.no },
               })
               setActiveSignKey(null)
               showLinkDialog('สร้างลิงก์เซ็นทางไกลสำเร็จ', `${window.location.origin}/sign/${token}`)

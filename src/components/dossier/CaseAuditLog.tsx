@@ -3,6 +3,7 @@ import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
 import { CaseItem } from '../../types/case'
 import { useAuditStore } from '../../store/useAuditStore'
+import { caseNoFileSafe } from '../../lib/utils'
 import { AUDIT_CATEGORY_LABELS, AuditCategory, buildAuditCsv, buildUnifiedAuditTimeline } from '../../lib/auditTrail'
 
 interface CaseAuditLogProps {
@@ -52,7 +53,7 @@ export const CaseAuditLog: React.FC<CaseAuditLogProps> = ({
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = `audit-log-${caseItem.no}.csv`
+        link.download = `audit-log-${caseNoFileSafe(caseItem.no)}.csv`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)

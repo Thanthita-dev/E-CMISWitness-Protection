@@ -2,11 +2,13 @@ import React, { useMemo } from 'react'
 import diagramData from '../../flow-guide/flow-diagram.json'
 import { cn } from '../../lib/utils'
 import { FLOW_GUIDE, FlowGuideStep, StepStatus, formsInText, stepForms } from '../../lib/flowGuide'
-import { FormChips, ROLE_SHORT, formsTitle } from './FlowOverviewChart'
+import { snapshotKey, hasSnapshot } from '../../lib/flowSnapshots'
+import { FormChips, OVERVIEW_EDGES, ROLE_SHORT, edgeKey, formsTitle } from './FlowOverviewChart'
 import type { MinimapItem } from './ZoomViewport'
+import { PlayMark } from './playback'
 
 /**
- * ผังรายขั้น WIT ของหนึ่งแท็บ — ตำแหน่งกล่อง เส้น และ swimlane ยกจากผัง drawio ตรง ๆ
+ * ผังรายขั้น WIT ของหนึ่งแท็บ — ตำแหน่งกล่อง เส้น และ swimlane ตั้งต้นจากผัง drawio แล้วปรับให้ตรงกับ code ปัจจุบัน (อย่ารัน docs/extract-flow-diagram.py ทับ)
  * (src/flow-guide/flow-diagram.json สร้างด้วย docs/extract-flow-diagram.py)
  * แต่สีกล่องเปลี่ยนเป็นสถานะใน prototype และมีป้ายบทบาทที่ต้องใช้จริง
  */
@@ -24,7 +26,7 @@ export interface DiagramNode {
     h: number
 }
 
-interface DiagramEdge {
+export interface DiagramEdge {
     id: string
     source: string | null
     target: string | null
@@ -55,6 +57,22 @@ export interface TabDiagram {
 }
 
 export const TAB_DIAGRAMS = (diagramData as unknown as { tabs: Record<string, TabDiagram> }).tabs
+
+/** เส้นที่เลือกได้และมี snapshot ตรงกับ build-flow-snapshots: ต้นทาง/ปลายทางเป็นกล่องในผังที่ไม่ใช่หมายเหตุ */
+export const isSnapshotEdge = (diagram: TabDiagram, e: DiagramEdge) => {
+    const s = diagram.nodes.find((n) => n.id === e.source)
+    const t = diagram.nodes.find((n) => n.id === e.target)
+    return !!s && !!t && s.kind !== 'note' && t.kind !== 'note'
+}
+
+/** key ของทุกกล่อง/เส้นที่ควรมี snapshot (กล่อง เส้นรายขั้น เส้นภาพรวม) — ใช้คำนวณความครอบคลุม */
+export const ALL_SNAPSHOT_KEYS: string[] = [
+    ...Object.entries(TAB_DIAGRAMS).flatMap(([tab, d]) => [
+        ...d.nodes.filter((n) => n.kind !== 'note').map((n) => snapshotKey.node(tab, n.id)),
+        ...d.edges.filter((e) => isSnapshotEdge(d, e)).map((e) => snapshotKey.edge(tab, e.id)),
+    ]),
+    ...OVERVIEW_EDGES.map((e) => snapshotKey.overview(edgeKey(e))),
+]
 
 const STEP_BY_CODE = new Map(FLOW_GUIDE.tabs.flatMap((t) => t.steps.map((s) => [s.code, s] as const)))
 export const stepByCode = (code: string | null): FlowGuideStep | undefined => (code ? STEP_BY_CODE.get(code) : undefined)
@@ -169,14 +187,26 @@ function midpoint(pts: Pt[]): Pt {
 
 interface TabStepDiagramProps {
     diagram: TabDiagram
+    /** แท็บของผังนี้ — ใช้หา snapshot ของกล่อง/เส้น */
+    tab: string
     selected: string | null
     onSelect: (node: DiagramNode) => void
+    /** เส้นที่เลือกอยู่ (id ในผัง) */
+    selectedEdge?: string | null
+    onSelectEdge?: (edge: DiagramEdge) => void
 }
 
-export const TabStepDiagram: React.FC<TabStepDiagramProps> = ({ diagram, selected, onSelect }) => {
+export const TabStepDiagram: React.FC<TabStepDiagramProps> = ({ diagram, tab, selected, onSelect, selectedEdge = null, onSelectEdge }) => {
     const nodeMap = useMemo(() => new Map(diagram.nodes.map((n) => [n.id, n])), [diagram])
     const routes = useMemo(() => diagram.edges.map((e) => ({ edge: e, ...routeEdge(e, nodeMap) })), [diagram, nodeMap])
-    const linked = (e: DiagramEdge) => !!selected && (e.source === selected || e.target === selected)
+    const linked = (e: DiagramEdge) => (selectedEdge ? e.id === selectedEdge : !!selected && (e.source === selected || e.target === selected))
+    const anyFocus = !!selected || !!selectedEdge
+    const edgeName = (e: DiagramEdge) => {
+        const s = nodeMap.get(e.source ?? '')
+        const t = nodeMap.get(e.target ?? '')
+        return `เส้น ${s?.code ?? s?.text ?? ''} ไป ${t?.code ?? t?.text ?? ''}${e.label ? ` ${e.label}` : ''}`
+    }
+    const pick = (e: DiagramEdge) => onSelectEdge?.(e)
     const laneRight = diagram.width - 20
 
     return (
@@ -207,11 +237,38 @@ export const TabStepDiagram: React.FC<TabStepDiagramProps> = ({ diagram, selecte
                             strokeWidth={hl ? 2.5 : 1.5}
                             strokeDasharray={edge.dashed ? '6 4' : undefined}
                             strokeLinejoin="round"
-                            opacity={selected && !hl ? 0.35 : 1}
+                            opacity={anyFocus && !hl ? 0.35 : 1}
                             markerEnd={edge.target || edge.targetPoint ? (hl ? 'url(#td-arrow-hl)' : 'url(#td-arrow)') : undefined}
                         />
                     )
                 })}
+            </svg>
+
+            {/* เส้นโปร่งใสหนา ๆ ให้ชี้/กดโดนง่าย — เส้นที่ไม่มีป้ายเลือกด้วย keyboard ได้ที่เส้นนี้เอง */}
+            <svg className="pointer-events-none absolute inset-0 z-[5]" width={diagram.width} height={diagram.height}>
+                {routes.map(({ edge, d }) => (
+                    <path
+                        key={`hit-${edge.id}`}
+                        d={d}
+                        fill="none"
+                        stroke="transparent"
+                        strokeWidth={14}
+                        pointerEvents="stroke"
+                        className="cursor-pointer focus:outline-none [&:focus-visible]:stroke-blue/30"
+                        role="button"
+                        tabIndex={edge.label || hasSnapshot(snapshotKey.edge(tab, edge.id)) ? -1 : 0}
+                        aria-label={edgeName(edge)}
+                        onClick={() => pick(edge)}
+                        onKeyDown={(ev) => {
+                            if (ev.key === 'Enter' || ev.key === ' ') {
+                                ev.preventDefault()
+                                pick(edge)
+                            }
+                        }}
+                    >
+                        <title>{edgeName(edge)}</title>
+                    </path>
+                ))}
             </svg>
 
             {diagram.lanes.map((l) => (
@@ -225,32 +282,48 @@ export const TabStepDiagram: React.FC<TabStepDiagramProps> = ({ diagram, selecte
             ))}
 
             {routes
-                .filter(({ edge }) => edge.label)
-                .map(({ edge, mid }) => (
-                    <span
-                        key={`elabel-${edge.id}`}
-                        className={cn(
-                            'pointer-events-none absolute z-10 max-w-[140px] -translate-x-1/2 -translate-y-1/2 rounded border px-1 text-center text-[10px] leading-tight',
-                            linked(edge) ? 'border-blue bg-blue text-white' : 'border-slate-200 bg-white text-slate-600',
-                            selected && !linked(edge) && 'opacity-40'
-                        )}
-                        style={{ left: mid[0], top: mid[1] }}
-                    >
-                        {edge.label}
-                    </span>
-                ))}
+                .filter(({ edge }) => edge.label || hasSnapshot(snapshotKey.edge(tab, edge.id)))
+                .map(({ edge, mid }) => {
+                    const marked = hasSnapshot(snapshotKey.edge(tab, edge.id))
+                    return (
+                        <button
+                            type="button"
+                            key={`elabel-${edge.id}`}
+                            onClick={() => pick(edge)}
+                            aria-label={edgeName(edge)}
+                            className={cn(
+                                'absolute z-10 flex max-w-[140px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-0.5 rounded border text-center text-[10px] leading-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-blue',
+                                edge.label ? 'px-1' : 'h-4 w-4 rounded-full p-0',
+                                linked(edge) ? 'border-blue bg-blue text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-blue',
+                                anyFocus && !linked(edge) && 'opacity-40'
+                            )}
+                            style={{ left: mid[0], top: mid[1] }}
+                        >
+                            {marked && <i className={cn('fa-solid fa-play text-[7px]', linked(edge) ? 'text-white' : 'text-success')} aria-hidden="true" />}
+                            {edge.label}
+                        </button>
+                    )
+                })}
 
             {diagram.nodes.map((n) => (
-                <DiagramNodeBox key={n.id} node={n} selected={selected === n.id} dim={!!selected && selected !== n.id} onSelect={onSelect} />
+                <DiagramNodeBox
+                    key={n.id}
+                    node={n}
+                    selected={selected === n.id}
+                    dim={anyFocus && selected !== n.id}
+                    marked={hasSnapshot(snapshotKey.node(tab, n.id))}
+                    onSelect={onSelect}
+                />
             ))}
         </div>
     )
 }
 
-const DiagramNodeBox: React.FC<{ node: DiagramNode; selected: boolean; dim: boolean; onSelect: (n: DiagramNode) => void }> = ({
+const DiagramNodeBox: React.FC<{ node: DiagramNode; selected: boolean; dim: boolean; marked: boolean; onSelect: (n: DiagramNode) => void }> = ({
     node: n,
     selected,
     dim,
+    marked,
     onSelect,
 }) => {
     const step = stepByCode(n.code)
@@ -261,7 +334,16 @@ const DiagramNodeBox: React.FC<{ node: DiagramNode; selected: boolean; dim: bool
 
     // จุดเริ่ม (วงกลมไม่มีข้อความ)
     if (n.kind === 'terminal' && !n.text) {
-        return <span className={cn(common, 'rounded-full bg-navy-deep')} style={style} aria-hidden="true" />
+        if (!marked) return <span className={cn(common, 'rounded-full bg-navy-deep')} style={style} aria-hidden="true" />
+        return (
+            <button
+                type="button"
+                onClick={() => onSelect(n)}
+                aria-label="จุดเริ่ม — มี snapshot"
+                className={cn(common, 'rounded-full bg-navy-deep', selected && 'ring-2 ring-blue ring-offset-1')}
+                style={style}
+            />
+        )
     }
 
     if (n.kind === 'note') {
@@ -292,6 +374,7 @@ const DiagramNodeBox: React.FC<{ node: DiagramNode; selected: boolean; dim: bool
             className={cn('absolute -bottom-2 z-10 flex-nowrap drop-shadow-sm', n.kind === 'decision' ? 'left-1/2 -translate-x-1/2' : 'left-1')}
         />
     )
+    const playMark = marked && <PlayMark className={cn('absolute z-10', n.kind === 'decision' ? 'left-1/2 top-0 -translate-x-1/2' : '-left-1.5 -top-2')} />
     const roleChip = role && (
         <span className="absolute -top-2 right-1 z-10 whitespace-nowrap rounded-full bg-blue px-1.5 text-[9px] font-semibold leading-4 text-white shadow">
             {role}
@@ -312,6 +395,7 @@ const DiagramNodeBox: React.FC<{ node: DiagramNode; selected: boolean; dim: bool
                 <span className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden px-[18%] py-[14%] text-center">{label}</span>
                 {roleChip}
                 {formChips}
+                {playMark}
             </button>
         )
     }
@@ -333,6 +417,7 @@ const DiagramNodeBox: React.FC<{ node: DiagramNode; selected: boolean; dim: bool
             <span className="overflow-hidden">{label}</span>
             {roleChip}
             {formChips}
+            {playMark}
         </button>
     )
 }

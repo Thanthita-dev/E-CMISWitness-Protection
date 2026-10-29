@@ -1,9 +1,10 @@
+import { REFERRAL_DOCUMENTS, referralFormNo, isRightsReferral } from '../../lib/referralDocumentIdentity'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from './Button'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { useCaseStore } from '../../store/useCaseStore'
 import { FORMS_CATALOG } from '../../lib/constants'
-import { nowDisplay, getCaseFormNumbers } from '../../lib/utils'
+import { nowDisplay, getCaseFormNumbers, isPetitionAwaitingAssignment, legacyFormNo } from '../../lib/utils'
 import { showConfirmAlert, showToast } from '../../lib/swal'
 import { ATTACHMENT_ACCEPT, filterValidAttachments } from '../../lib/fileValidation'
 import { AttachmentSet } from '../../types/case'
@@ -19,6 +20,7 @@ import { isCaseClosed } from '../../lib/permissions'
  *   แฟ้ม <เลขสำนวน>
  *     ├── 📁 คบ.1 ─── 📁 ชุดเอกสาร ─── 📄 ไฟล์
  *     ├── 📁 คบ.3 ─── ...
+ *     ├── 📁 อุทธรณ์ ─── 📄 เอกสารประกอบคำอุทธรณ์ (case.documents · แสดงเมื่อมีแฟ้มอุทธรณ์)
  *     └── 📄 ไฟล์แฟ้มที่ไม่ผูกกับ คบ. (case.documents)
  *
  * scope='form'   เปิดจากแท็บในแบบ คบ. — จำกัดอยู่ในโฟลเดอร์ คบ. นั้นฉบับเดียว
@@ -41,7 +43,7 @@ type ViewMode = 'list' | 'grid'
 
 interface FolderNode {
   id: string
-  kind: 'form' | 'set'
+  kind: 'form' | 'set' | 'appeal'
   name: string
   subtitle?: string
   formId: number
@@ -63,6 +65,11 @@ interface FileNode {
   location: string
   origin: FileOrigin
 }
+
+/** โฟลเดอร์อุทธรณ์ (09B) — ไม่ผูกกับแบบ คบ. จึงใช้ formId ที่ไม่มีจริง */
+const APPEAL_FOLDER_ID = 'appeal'
+const APPEAL_FOLDER_FORM_ID = -1
+const APPEAL_REFERENCES = ['คำร้องอุทธรณ์', 'เอกสารประกอบคำอุทธรณ์']
 
 /** ชุดเอกสารที่ไม่ระบุ formId เป็นข้อมูลเดิมของ คบ.1 */
 const setFormId = (set: AttachmentSet) => set.formId ?? 1
@@ -159,12 +166,32 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
   const inputRef = useRef<HTMLInputElement>(null)
 
   /** อยู่ในขอบเขต คบ. ฉบับเดียว → ตัดชุดเอกสารของแบบอื่นออกทั้งหมด */
-  const scopedSets = useMemo(
-    () => (rootId ? attachmentSets.filter((s) => setFormId(s) === formId) : attachmentSets),
-    [attachmentSets, rootId, formId]
-  )
+  const legacySource = caseItem?.legacySource
+  /** คำร้องดิบที่ ผอ. ยังไม่มอบหมาย — แฟ้มยังไม่มีโฟลเดอร์แบบ คบ. จึงซ่อนโฟลเดอร์และชุดเอกสารข้างใน */
+  const petitionAwaitingAssignment = !rootId && Boolean(caseItem && isPetitionAwaitingAssignment(caseItem))
+  const scopedSets = useMemo(() => {
+    if (petitionAwaitingAssignment) return []
+    /** เรื่องจากระบบเดิม — ใช้เฉพาะไฟล์ที่ถ่ายโอนมาจริง ไม่ใช้ชุดเอกสารตัวอย่างของ store */
+    /** id ติดลบสังเคราะห์ขึ้นเอง ปลอดภัยเพราะเรื่องจากระบบเดิมเป็นแบบอ่านอย่างเดียว (ไม่มีการแก้/ลบ/ย้ายชุดเอกสาร) */
+    const pool: AttachmentSet[] = legacySource
+      ? (legacySource.migratedFiles || []).flatMap((f, i) => {
+          const fNo = legacyFormNo(f.docCategory)
+          if (fNo === undefined) return [] // จัดหมวดเป็นแบบ คบ. ไม่ได้ → ไม่แสดง (สอดคล้อง getCaseFormNumbers)
+          return [{
+            id: -(i + 1),
+            formId: fNo,
+            category: f.docLabel || f.docCategory,
+            description: f.fileName,
+            files: [{ name: f.fileName, size: 0, type: f.mimeType || guessType(f.fileName), uploadedAt: f.fileMtime || '', uploadedBy: legacySource.system }],
+          }]
+        })
+      : attachmentSets
+    return rootId ? pool.filter((s) => setFormId(s) === formId) : pool
+  }, [attachmentSets, rootId, formId, legacySource, petitionAwaitingAssignment])
 
   const currentId = path[path.length - 1] || null
+  /** แฟ้มที่รับคำอุทธรณ์แล้ว — เอกสารอุทธรณ์อยู่ในโฟลเดอร์ "อุทธรณ์" แยกจากไฟล์ที่รากแฟ้ม */
+  const showAppealFolder = !rootId && Boolean(caseItem?.appealFolder)
 
   /** โฟลเดอร์ทั้งหมดในขอบเขตนี้ ใช้ทั้งการเดินโฟลเดอร์และเป็นปลายทางอัปโหลด/ย้าย */
   const allFolders = useMemo<FolderNode[]>(() => {
@@ -174,7 +201,7 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
       forms.set(n, [...(forms.get(n) || []), s])
     })
     /** ขอบเขตทั้งแฟ้ม — สร้างโฟลเดอร์ให้ครบทุกแบบ คบ. ของสำนวนนี้ แม้ยังไม่มีไฟล์แนบ ให้ตรงกับส่วน "แบบฟอร์ม คบ. ในแฟ้มนี้" */
-    if (!rootId && caseItem) {
+    if (!rootId && caseItem && !petitionAwaitingAssignment) {
       getCaseFormNumbers(caseItem).forEach((n) => {
         if (!forms.has(n)) forms.set(n, [])
       })
@@ -186,8 +213,8 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
         nodes.push({
           id: `form-${n}`,
           kind: 'form',
-          name: formCode(n),
-          subtitle: formTitle(n),
+          name: caseItem && (n === 19 || n === 20 || (n === 18 && isRightsReferral(caseItem))) ? (n === 19 ? 'บันทึกเสนอประธานลงนาม' : 'หนังสือถึงกรมคุ้มครองสิทธิฯ') : formCode(n),
+          subtitle: caseItem && (n === 19 || n === 20 || (n === 18 && isRightsReferral(caseItem))) ? REFERRAL_DOCUMENTS[n === 19 ? 0 : 1].title : formTitle(n),
           formId: n,
           fileCount: sets.reduce((sum, s) => sum + s.files.length, 0),
         })
@@ -203,8 +230,18 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
           })
         )
       })
+    if (showAppealFolder) {
+      nodes.push({
+        id: APPEAL_FOLDER_ID,
+        kind: 'appeal',
+        name: 'อุทธรณ์',
+        subtitle: 'เอกสารประกอบคำอุทธรณ์',
+        formId: APPEAL_FOLDER_FORM_ID,
+        fileCount: (caseItem?.documents || []).filter((doc) => !doc.deleted && APPEAL_REFERENCES.includes(doc.reference || '')).length,
+      })
+    }
     return nodes
-  }, [scopedSets, rootId, caseItem])
+  }, [scopedSets, rootId, caseItem, petitionAwaitingAssignment, showAppealFolder])
 
   const folderById = useMemo(() => new Map(allFolders.map((f) => [f.id, f])), [allFolders])
 
@@ -232,9 +269,11 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
 
     /** ไฟล์แฟ้มที่ไม่ผูกกับ คบ. อยู่ที่รากของแฟ้ม — ไม่แสดงในมุมมองที่จำกัดเป็น คบ. ฉบับเดียว */
     if (!rootId) {
+      const migratedIds = new Set((legacySource?.migratedFiles || []).map((f) => f.fileId))
       ;(caseItem?.documents || [])
-        .filter((doc) => !doc.deleted)
+        .filter((doc) => !doc.deleted && !migratedIds.has(doc.id))
         .forEach((doc) => {
+          const inAppeal = showAppealFolder && APPEAL_REFERENCES.includes(doc.reference || '')
           items.push({
             key: `case-${doc.id}`,
             name: doc.name,
@@ -242,25 +281,29 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
             type: guessType(doc.name),
             uploadedAt: doc.uploadedAt || '',
             uploadedBy: doc.uploadedBy || '—',
-            previewUrl: doc.previewUrl,
-            location: rootLabel,
+            previewUrl: doc.previewUrl || (inAppeal && doc.name === caseItem?.appealDocumentName
+              ? caseItem?.appealFolder?.intake?.channel === 'letter'
+                ? caseItem.appealFolder.intake.evidenceDataUrl
+                : caseItem?.appealFolder?.intake?.signedRecordDataUrl
+              : undefined),
+            location: inAppeal ? `${rootLabel} › อุทธรณ์` : rootLabel,
             origin: { kind: 'case', docId: doc.id },
-            parentId: null,
+            parentId: inAppeal ? APPEAL_FOLDER_ID : null,
           })
         })
     }
 
     return items
-  }, [scopedSets, caseItem?.documents, rootId, rootLabel])
+  }, [scopedSets, caseItem?.documents, legacySource, rootId, rootLabel, showAppealFolder])
 
   const searching = query.trim().length > 0
 
   /** เนื้อหาที่แสดง: ค้นหา = ทุกไฟล์ในขอบเขต, ไม่ค้นหา = เฉพาะลูกของโฟลเดอร์ปัจจุบัน */
   const visibleFolders = useMemo(() => {
     if (searching) return []
-    if (!currentId) return allFolders.filter((f) => f.kind === 'form')
+    if (!currentId) return allFolders.filter((f) => f.kind === 'form' || f.kind === 'appeal')
     const current = folderById.get(currentId)
-    if (!current || current.kind === 'set') return []
+    if (!current || current.kind !== 'form') return []
     return allFolders.filter((f) => f.kind === 'set' && f.formId === current.formId)
   }, [searching, currentId, allFolders, folderById])
 
@@ -338,6 +381,23 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
       return
     }
 
+    if (destination === APPEAL_FOLDER_ID) {
+      if (!caseItem) return
+      files.forEach((file) => {
+        addCaseDocument(caseItem.no, {
+          id: `DOC-APPEAL-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          category: 'official',
+          name: file.name,
+          reference: 'เอกสารประกอบคำอุทธรณ์',
+          uploadedBy: caseItem.owner,
+          uploadedAt: nowDisplay(),
+          previewUrl: URL.createObjectURL(file),
+        })
+      })
+      showToast(`อัปโหลดเอกสารประกอบคำอุทธรณ์ ${files.length} รายการแล้ว`)
+      return
+    }
+
     /** 'set-<id>' ลงชุดนั้นตรง ๆ, 'form-<n>' ลงชุดเริ่มต้นของแบบนั้น */
     let setId: number
     if (destination.startsWith('set-')) {
@@ -405,6 +465,10 @@ export const FileManager: React.FC<FileManagerProps> = ({ scope, formId, caseNo,
   }
 
   const handleNewFolder = () => {
+    if (currentFolder?.kind === 'appeal') {
+      showToast('โฟลเดอร์อุทธรณ์สร้างชุดเอกสารย่อยไม่ได้ — อัปโหลดไฟล์ลงโฟลเดอร์นี้ได้เลย')
+      return
+    }
     const targetForm = currentFolder?.formId ?? (rootId ? (formId as number) : null)
     if (targetForm === null) {
       showToast('เปิดโฟลเดอร์ของแบบ คบ. ก่อน จึงจะสร้างชุดเอกสารใหม่ได้')

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { termDownLeg } from '../helpers/termination'
 
 /**
  * Sheet 11D · WIT1135 → WIT1148 — คำสั่งยุติ (คบ.16) แจ้งผล (คบ.17) อุทธรณ์ และปิดงาน
@@ -15,8 +16,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * (เขียน localStorage โดยตรงแล้ว reload) แทนขั้น "ส่งให้อนุมัติ/ส่งให้ลงนาม" ที่อยู่ในแฟ้มคดีเท่านั้น
  */
 
-const CASE_NO = 'WP-2569-000501'
-const TERM_URL = `/termination/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const TERM_URL = `/termination/${encodeURIComponent(CASE_NO)}`
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const isoDaysFromToday = (n: number) => {
@@ -91,15 +92,16 @@ test.describe('Sheet 11D · คำสั่งยุติ (คบ.16) แจ้
     await page.getByPlaceholder('ความเห็นประกอบผลพิจารณา').fill('อนุมัติให้ยุติตามที่เสนอ')
     await page.getByRole('button', { name: 'อนุมัติให้ยุติ' }).click()
     await expect(page.locator('.swal2-toast')).toContainText('อนุมัติให้ยุติ')
+    // ผลพิจารณากลับหน่วยผ่านธุรการสำนักงานเลขาธิการ → ธุรการหน่วย
+    await termDownLeg(page, CASE_NO)
 
     // WIT1138 — เจ้าหน้าที่ร่างคำสั่ง คบ.16 (วันที่มีผลเป็นอนาคต กันไม่ให้ปิดสถานะก่อนเวลา)
-    await switchRole(page, 'officer')
     await page.goto(TERM_URL)
     await page.getByPlaceholder('คำสั่งที่').fill('123/2569')
     await page.getByLabel('วันที่ออกคำสั่ง').fill(todayIso())
     await page.getByLabel('วันที่คำสั่งมีผล').fill(isoDaysFromToday(10))
     await page.getByRole('button', { name: 'เปิดแฟ้มคดี' }).click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 
     let after = await readCase(page, CASE_NO)
     const kb16Draft = after?.kb16 as Record<string, unknown>
@@ -123,13 +125,13 @@ test.describe('Sheet 11D · คำสั่งยุติ (คบ.16) แจ้
     expect(kb16Signed.locked).toBe(true)
     // วันที่มีผลยังไม่ถึง — ยังไม่ยุติจริง (WIT1130/WIT1139)
     expect(after?.stage).not.toBe('terminated')
+    await termDownLeg(page, CASE_NO) // คำสั่งที่ลงนามแล้วกลับหน่วยผ่านธุรการ
 
     // WIT1141 — จัดทำร่าง คบ.17
-    await switchRole(page, 'officer')
     await page.goto(TERM_URL)
     await page.getByPlaceholder('ชื่อไฟล์หนังสือ').fill('คบ17_แจ้งคำสั่งยุติ.pdf')
     await page.getByRole('button', { name: 'เปิดแฟ้มคดี' }).click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 
     after = await readCase(page, CASE_NO)
     const kb17Draft = after?.kb17 as Record<string, unknown>
@@ -145,6 +147,8 @@ test.describe('Sheet 11D · คำสั่งยุติ (คบ.16) แจ้
     await page.goto(TERM_URL)
     await page.getByRole('button', { name: 'ลงนาม คบ.17' }).click()
     await expect(page.locator('.swal2-toast')).toContainText('ลงนาม คบ.17')
+    await termDownLeg(page, CASE_NO)
+    await page.goto(TERM_URL)
 
     // WIT1142 — ออกเลขและนำส่งผ่านสารบรรณเดิม
     await page.getByPlaceholder('เลขที่หนังสือ (สารบรรณเดิม)').fill('สลข.999/2569')
@@ -191,9 +195,15 @@ test.describe('Sheet 11D · คำสั่งยุติ (คบ.16) แจ้
     await expect(page.getByRole('link', { name: /กลับไปรายงานผลการคุ้มครอง/ })).toBeVisible()
   })
 
-  test('TC-147 · [Happy] พยานยื่นอุทธรณ์ภายใน 30 วัน ส่งไปแท็บ 09B', async ({ page }) => {
+  test('TC-147 · [Happy] พยานยื่นอุทธรณ์ภายใน 30 วัน ส่งไปแท็บ 09B (เหตุข้อ 18 (4) — FB-029)', async ({ page }) => {
     await seedMockState(page, 'Case 1.13', 'secretary', {
       ...AT_KB15_ENDORSED,
+      /** FB-029 — อุทธรณ์ได้เฉพาะเหตุข้อ 18 (4) เลขาธิการสั่งยุติตามข้อ 19 */
+      kb15: {
+        ...AT_KB15_ENDORSED.kb15,
+        summary: 'พยานไม่ปฏิบัติตามข้อตกลงและเงื่อนไขการคุ้มครอง (คบ.11)',
+        regulationClause: 4,
+      },
       terminationApproval: { decidedAt: '10/09/2569', decidedBy: 'นายสุรศักดิ์ ธรรมพิทักษ์', approved: true, note: 'อนุมัติ' },
       kb16: {
         orderNo: '123/2569',
@@ -244,6 +254,49 @@ test.describe('Sheet 11D · คำสั่งยุติ (คบ.16) แจ้
     await expect(page.getByRole('link', { name: 'ไปหน้าอุทธรณ์' })).toBeVisible()
   })
 
+  test('TC-147B · [FB-029] เหตุข้อ 18 (2) ครบกำหนด — ไม่มีสิทธิอุทธรณ์ ปิดงานได้ทันทีหลังนำส่ง คบ.17', async ({ page }) => {
+    await seedMockState(page, 'Case 1.13', 'officer', {
+      ...AT_KB15_ENDORSED,
+      kb15: { ...AT_KB15_ENDORSED.kb15, regulationClause: 2 },
+      terminationApproval: { decidedAt: '10/09/2569', decidedBy: 'นายสุรศักดิ์ ธรรมพิทักษ์', approved: true, note: 'อนุมัติ' },
+      kb16: {
+        orderNo: '124/2569',
+        reason: 'ครบกำหนดระยะเวลาคุ้มครองตามคำสั่ง',
+        status: 'submitted',
+        issuedAt: todayIso(),
+        effectiveAt: todayIso(),
+        signedAt: 'test',
+        signedBy: 'นายสุรศักดิ์ ธรรมพิทักษ์',
+        locked: true,
+      },
+      kb17: {
+        documentName: 'คบ17.pdf',
+        status: 'submitted',
+        signedAt: 'test',
+        signedBy: 'นายสุรศักดิ์ ธรรมพิทักษ์',
+        locked: true,
+        registryNo: 'สลข.101/2569',
+        registryDate: todayIso(),
+        dispatchedAt: 'test',
+      },
+    })
+    await page.goto(TERM_URL)
+
+    const noAppeal = page.getByTestId('kb17-no-appeal')
+    await expect(noAppeal).toContainText('ข้อ 18 (2)')
+    await expect(noAppeal).toContainText('ไม่มีสิทธิอุทธรณ์')
+    // ไม่มีขั้นบันทึกวันรับเพื่อนับกรอบอุทธรณ์ และไม่มีฟอร์มรับอุทธรณ์
+    await expect(page.getByLabel('วันที่พยานได้รับจริง')).toHaveCount(0)
+    await expect(page.getByTestId('appeal-intake-form')).toHaveCount(0)
+
+    await noAppeal.getByRole('button', { name: 'ปิดงาน (ไม่มีสิทธิอุทธรณ์)' }).click()
+    await expect(page.locator('.swal2-toast')).toContainText('ปิดงานคุ้มครอง')
+
+    const after = await readCase(page, CASE_NO)
+    expect(after?.stage).toBe('terminated')
+    expect(after?.appealAgainst).toBeFalsy()
+  })
+
   test('TC-148 · [Negative] ตั้งสถานะยุติก่อน คบ.16 ลงนาม', async ({ page }) => {
     await seedMockState(page, 'Case 1.13', 'officer', {
       ...AT_KB15_ENDORSED,
@@ -292,7 +345,7 @@ test.describe('Sheet 11D · คำสั่งยุติ (คบ.16) แจ้
     await expect(submit).toBeEnabled()
 
     await submit.click()
-    await expect(page).toHaveURL(new RegExp(`/dossier/${CASE_NO}`))
+    await expect(page).toHaveURL(new RegExp(`/dossier/${encodeURIComponent(CASE_NO)}`))
 
     const after = await readCase(page, CASE_NO)
     const kb16 = after?.kb16 as Record<string, unknown>

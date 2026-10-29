@@ -1,8 +1,10 @@
+import { gotAssignableOfficers } from '../../lib/protectionHandoff'
 import React, { useState } from 'react'
 import { Button } from '../common/Button'
 import { CaseItem } from '../../types/case'
 import { useCaseStore } from '../../store/useCaseStore'
 import { showToast, MySwal } from '../../lib/swal'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface ReturnRevisionAssignmentCardProps {
     caseItem: CaseItem
@@ -14,11 +16,13 @@ const AssignModalBody: React.FC<{
     reason?: string
     round: number
     officer: string
+    toGot: boolean
     initialInstruction: string
     onCancel: () => void
-    onConfirm: (instruction: string) => void
-}> = ({ issue, reason, round, officer, initialInstruction, onCancel, onConfirm }) => {
+    onConfirm: (instruction: string, assigneeUserId?: string) => void
+}> = ({ issue, reason, round, officer, toGot, initialInstruction, onCancel, onConfirm }) => {
     const [instruction, setInstruction] = useState(initialInstruction)
+    const [assigneeUserId, setAssigneeUserId] = useState('')
 
     return (
         <div className="space-y-3 text-left">
@@ -41,9 +45,16 @@ const AssignModalBody: React.FC<{
                 </div>
             </div>
 
+            {toGot && <label className="block">
+                <span className="ws-label">เจ้าหน้าที่ กอท. ผู้รับผิดชอบ</span>
+                <select className="ws-input w-full" value={assigneeUserId} onChange={(event) => setAssigneeUserId(event.target.value)}>
+                    <option value="">เลือกเจ้าหน้าที่</option>
+                    {gotAssignableOfficers().map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
+                </select>
+            </label>}
             <div>
-                <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">ข้อสั่งการถึงเจ้าหน้าที่ผู้รับผิดชอบ *</label>
-                <textarea
+                <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">ข้อสั่งการถึงเจ้าหน้าที่ผู้รับผิดชอบ <span className="text-danger">*</span></label>
+                <VoiceTextarea
                     rows={4}
                     value={instruction}
                     data-testid="revision-instruction-input"
@@ -53,7 +64,7 @@ const AssignModalBody: React.FC<{
             </div>
 
             <p className="text-[0.88rem] leading-relaxed text-muted">
-                เมื่อแก้ครบแล้ว ฉบับแก้ต้องเสนอผ่าน <strong>ผู้บังคับบัญชาชั้นต้น → ผอ.สำนัก/กอง → รองเลขาธิการฯ → เลขาธิการฯ</strong>
+                เมื่อแก้ครบแล้ว ฉบับแก้ต้องเสนอผ่าน <strong>{toGot ? 'ผบช.ต้น กอท. → ผอ. กอท.' : 'ผู้บังคับบัญชาชั้นต้น → ผอ.สำนัก/กอง'} → รองเลขาธิการฯ → เลขาธิการฯ</strong>
                 {' '}ตามลำดับเดิมทุกขั้น <strong>ห้ามส่งข้ามลำดับชั้น</strong>
             </p>
 
@@ -69,7 +80,8 @@ const AssignModalBody: React.FC<{
                 <Button
                     type="button"
                     data-testid="assign-revision-confirm-button"
-                    onClick={() => onConfirm(instruction)}
+                    disabled={toGot && !assigneeUserId}
+                    onClick={() => onConfirm(instruction, assigneeUserId)}
                     variant="primary"
                     size="md"
                 >
@@ -90,7 +102,8 @@ const AssignModalBody: React.FC<{
 export const ReturnRevisionAssignmentCard: React.FC<ReturnRevisionAssignmentCardProps> = ({ caseItem, onAssigned }) => {
     const assignReturnRevision = useCaseStore((s) => s.assignReturnRevision)
 
-    const officer = caseItem.assignedOfficer || 'เจ้าหน้าที่ผู้รับผิดชอบ'
+    const toGot = caseItem.returnDestination === 'got' && Boolean(caseItem.gotRevision)
+    const officer = toGot ? 'รอ ผอ. กอท. เลือกผู้รับผิดชอบ' : caseItem.assignedOfficer || 'เจ้าหน้าที่ผู้รับผิดชอบ'
     const round = (caseItem.revisionRound || 0) + 1
     const defaultInstruction =
         caseItem.returnNote || 'แก้ไขเอกสารตามข้อสั่งการของเลขาธิการ ป.ป.ท. และแนบเอกสารประกอบเพิ่มเติมให้ครบถ้วน'
@@ -104,16 +117,21 @@ export const ReturnRevisionAssignmentCard: React.FC<ReturnRevisionAssignmentCard
                     reason={caseItem.returnNote}
                     round={round}
                     officer={officer}
+                    toGot={toGot}
                     initialInstruction={defaultInstruction}
                     onCancel={() => MySwal.close()}
-                    onConfirm={(instruction) => {
+                    onConfirm={(instruction, assigneeUserId) => {
                         if (!instruction.trim()) {
                             showToast('กรุณาระบุข้อสั่งการถึงเจ้าหน้าที่ผู้รับผิดชอบ')
                             return
                         }
-                        assignReturnRevision(caseItem.no, instruction.trim())
+                        assignReturnRevision(caseItem.no, instruction.trim(), assigneeUserId)
+                        if (!useCaseStore.getState().getCase(caseItem.no)?.revisionAssignedAt) {
+                            showToast('ยังมอบหมายไม่ได้ กรุณาตรวจสิทธิ์และสถานะรับเรื่อง')
+                            return
+                        }
                         MySwal.close()
-                        showToast(`มอบหมายให้ ${officer} แก้เป็น Revision ครั้งที่ ${round} แล้ว`)
+                        showToast(`มอบหมายให้ ${toGot ? gotAssignableOfficers().find((user) => user.id === assigneeUserId)?.name || 'เจ้าหน้าที่ กอท.' : officer} แก้เป็น Revision ครั้งที่ ${round} แล้ว`)
                         onAssigned?.()
                     }}
                 />
@@ -139,7 +157,7 @@ export const ReturnRevisionAssignmentCard: React.FC<ReturnRevisionAssignmentCard
                         เลขาธิการ ป.ป.ท. ส่งกลับ / ขอข้อมูลเพิ่ม — มอบหมายแก้ไข
                     </h2>
                     <p className="text-[0.8rem] text-muted">
-                        งานยังค้างอยู่ที่ ผอ.สำนัก/กอง จนกว่าจะมอบหมายให้เจ้าหน้าที่ผู้รับผิดชอบแก้เป็นฉบับใหม่
+                        งานยังค้างอยู่ที่ {toGot ? 'ผอ. กอท.' : 'ผอ.สำนัก/กอง'} จนกว่าจะมอบหมายให้เจ้าหน้าที่ผู้รับผิดชอบแก้เป็นฉบับใหม่
                     </p>
                 </div>
             </div>

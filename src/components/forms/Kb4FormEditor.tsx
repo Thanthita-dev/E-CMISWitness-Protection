@@ -2,16 +2,36 @@ import { Button } from '../common/Button'
 import React from 'react'
 import { showToast } from '../../lib/swal'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
-import { KB4_PROTECTION_METHOD_FIELD } from '../../lib/constants'
+import {
+  KB4_PROTECTION_METHOD_FIELD,
+  KB6_METHOD_LABELS,
+  KB6_METHOD_SUBITEMS,
+  KB6_METHOD_SUBITEM_FIELDS,
+  readMethodSubitems,
+} from '../../lib/constants'
 import { Area, DateField, EditorShell, Field, Grid, OfficerRosterFields, ProtectionMethodChecks, Section } from './fields/FormKit'
+import { VoiceTextarea } from '../common/VoiceTextarea'
+import { useAuthStore } from '../../store/useAuthStore'
+import { useCaseStore } from '../../store/useCaseStore'
+import { FAST_TRACK_SIGNERS, fastTrackSignerTurn } from '../../lib/fastTrack'
+import { FastTrackSignatureActions } from './FastTrackSignatureActions'
 
 interface Kb4FormEditorProps {
   onSaved?: () => void
+  caseNo?: string
 }
 
+const KB4_DIRECTOR_SIGNER = FAST_TRACK_SIGNERS.find((s) => s.key === 'kb4-director')!
+
 /** คบ.4 — บันทึกข้อความ (ด่วนที่สุด) ขอคุ้มครองพยานชั่วคราว กรณีจำเป็นเร่งด่วน */
-export const Kb4FormEditor: React.FC<Kb4FormEditorProps> = ({ onSaved }) => {
-  const { getDraft, updateField } = useFormDraftStore()
+export const Kb4FormEditor: React.FC<Kb4FormEditorProps> = ({ onSaved, caseNo }) => {
+  const { getDraft, updateField, updateSignedField, signatures } = useFormDraftStore()
+  const currentRole = useAuthStore((s) => s.currentRole)
+  const caseItem = useCaseStore((s) => (caseNo ? s.getCase(caseNo) : undefined))
+  /** ข้อ 13 — แก้ได้เฉพาะ ผอ. ตอนถึงคิวลงนาม และยังไม่ได้ลงนาม (แบบเดียวกับข้อ 10–13 ของ คบ.6) */
+  const directorSign = signatures[KB4_DIRECTOR_SIGNER.key]
+  const opinionEditable =
+    Boolean(caseItem) && !directorSign?.signed && fastTrackSignerTurn(KB4_DIRECTOR_SIGNER, caseItem!, currentRole)
   const methods: number[] = Array.isArray(getDraft(4)[KB4_PROTECTION_METHOD_FIELD])
     ? getDraft(4)[KB4_PROTECTION_METHOD_FIELD]
     : []
@@ -20,9 +40,11 @@ export const Kb4FormEditor: React.FC<Kb4FormEditorProps> = ({ onSaved }) => {
   <EditorShell
     code="คบ.4"
     formId={4}
+    caseNo={caseNo}
     title="บันทึกข้อความ การขอคุ้มครองพยานชั่วคราว กรณีจำเป็นเร่งด่วน"
     hint="เจ้าพนักงานเสนอผู้อำนวยการสำนัก/กอง/ศูนย์ พิจารณาอนุมัติมาตรการชั่วคราวทันที"
     footer={
+      <>
       <Button
         type="button"
         onClick={() => {
@@ -34,6 +56,9 @@ export const Kb4FormEditor: React.FC<Kb4FormEditorProps> = ({ onSaved }) => {
         <i className="fa-solid fa-check" />
         บันทึกแบบ คบ.4
       </Button>
+      {/* ปุ่มลงนามผู้เสนอ / ผอ. ข้อ 13 อยู่ที่นี่ที่เดียว ข้าง "บันทึกแบบ คบ.4" (เช่นเดียวกับ คบ.6) */}
+      <FastTrackSignatureActions formId={4} caseNo={caseNo} />
+      </>
     }
   >
     <Section title="หัวบันทึกข้อความ">
@@ -85,14 +110,17 @@ export const Kb4FormEditor: React.FC<Kb4FormEditorProps> = ({ onSaved }) => {
         * ไม่ใช่แค่ข้อความบนเอกสาร — การ์ดเส้นทางเร่งด่วนในแฟ้มอ่านค่าจากช่องนี้โดยตรง
         */}
       <ProtectionMethodChecks
-        withFifth
         selected={methods}
         testIdPrefix="kb4-method-option"
         onChange={(next) => updateField(4, KB4_PROTECTION_METHOD_FIELD, next)}
+        labels={KB6_METHOD_LABELS}
+        subitems={KB6_METHOD_SUBITEMS}
+        subitemSelected={readMethodSubitems(getDraft(4))}
+        onSubitemChange={(n, text) => updateField(4, KB6_METHOD_SUBITEM_FIELDS[n], text)}
       />
       <p className="rounded-lg border border-line bg-blue-soft p-3 text-[0.88rem] leading-relaxed text-navy">
         <i className="fa-solid fa-circle-info mr-1.5" />
-        ข้อ 1–4 เปิดเป็นเส้นทางปฏิบัติที่หน้าดำเนินการตามวิธีคุ้มครองได้เมื่อ ผอ. อนุมัติคำสั่ง คบ.5 · ข้อ 5 เป็นมาตรการเสริมที่ไม่เปิดเส้นทางแยก
+        ข้อ 1–4 เปิดเป็นเส้นทางปฏิบัติที่หน้าดำเนินการตามวิธีคุ้มครองได้เมื่อ ผอ. อนุมัติคำสั่ง คบ.5
       </p>
       <Grid cols={3}>
         <Field formId={4} name="พื้นที่คุ้มครอง" label="ในพื้นที่" />
@@ -111,13 +139,31 @@ export const Kb4FormEditor: React.FC<Kb4FormEditorProps> = ({ onSaved }) => {
         <Field formId={4} name="ผู้เสนอ" label="ผู้เสนอ (นักสืบสวนสอบสวนชำนาญการ)" />
         <Field formId={4} name="ผู้อำนวยการ" label="ผู้อำนวยการสำนัก/กอง/ศูนย์" />
       </Grid>
-      <Area
-        formId={4}
-        name="ความเห็นผู้อำนวยการ"
-        label="13. ความเห็นผู้อำนวยการสำนัก"
-        rows={3}
-        placeholder="เห็นชอบ / อนุมัติ ..."
-      />
+      <div>
+        <label className="ws-label">13. ความเห็นผู้อำนวยการสำนัก</label>
+        <VoiceTextarea
+          rows={3}
+          value={String(getDraft(4)[KB4_DIRECTOR_SIGNER.opinionField!] ?? '')}
+          placeholder="เห็นชอบ / อนุมัติ ..."
+          disabled={!opinionEditable}
+          data-testid="kb4-director-opinion"
+          title={
+            directorSign?.signed
+              ? 'ลงนามแล้ว — แก้ไขไม่ได้'
+              : !opinionEditable
+                ? `ยังไม่ถึงลำดับชั้นนี้ — ช่องนี้สำหรับ${KB4_DIRECTOR_SIGNER.signerRole}เท่านั้น`
+                : undefined
+          }
+          onChange={(e) => {
+            if (opinionEditable) updateSignedField(4, KB4_DIRECTOR_SIGNER.opinionField!, e.target.value)
+          }}
+          className={`ws-input${!opinionEditable ? ' cursor-not-allowed' : ''}`}
+        />
+      </div>
+      <p className="ws-readonly text-[0.88rem] leading-relaxed text-muted">
+        <i className="fa-solid fa-circle-info mr-1.5" />
+        ผู้เสนอกดปุ่ม "ลงนาม" ท้ายหน้านี้ก่อนส่งตรง ผอ. · ผอ. กรอกความเห็นข้อ 13 เมื่อถึงคิว แล้วกด "ลงนาม" เพื่อยืนยันด้วยลายมือชื่ออิเล็กทรอนิกส์
+      </p>
     </Section>
   </EditorShell>
   )

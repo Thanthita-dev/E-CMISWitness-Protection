@@ -56,6 +56,8 @@ export const MethodProgressStepper: React.FC<MethodProgressStepperProps> = ({
              * (เช่น track.status === 'active') ซึ่งอาจเป็นจริงก่อนที่ step ก่อนหน้าจะถูกปลดล็อก ทำให้ปุ่มถูกติ๊กข้ามขั้นได้
              * ถ้าไม่ clamp ตรงนี้จะเห็นขั้นท้ายเป็นสีเขียวทั้งที่ขั้นก่อนหน้ายังเป็นขั้นปัจจุบันอยู่ */
             const isDone = idx < doneCount
+            /** ขั้นที่ข้ามได้ (เช่นลงนาม คบ.13 ในรอบหนังสือภายนอก) — ใช้หมุดเส้นประและไอคอนขีด ไม่ใช่ติ๊กเขียว */
+            const isSkipped = isDone && Boolean(s.skipped)
             const isClickable = Boolean(onStepClick) && !isBlocked && idx <= doneCount
 
             return (
@@ -82,6 +84,8 @@ export const MethodProgressStepper: React.FC<MethodProgressStepperProps> = ({
                   } ${
                     isBlocked
                       ? 'border-2 border-rose-400 bg-rose-100 text-rose-700 ring-4 ring-rose-200/50'
+                      : isSkipped
+                      ? 'border border-dashed border-slate-400 bg-white text-slate-500'
                       : isDone
                       ? 'bg-emerald-600 text-white'
                       : isCurrent
@@ -91,6 +95,8 @@ export const MethodProgressStepper: React.FC<MethodProgressStepperProps> = ({
                 >
                   {isBlocked ? (
                     <i className="fa-solid fa-hand text-[9px]" />
+                  ) : isSkipped ? (
+                    <i className="fa-solid fa-minus text-[9px]" aria-label="ไม่ต้องดำเนินการ" />
                   ) : isDone ? (
                     <i className="fa-solid fa-check text-[9px]" />
                   ) : (
@@ -105,6 +111,8 @@ export const MethodProgressStepper: React.FC<MethodProgressStepperProps> = ({
                         ? 'font-bold text-rose-700'
                         : isCurrent
                         ? 'font-bold text-navy-deep'
+                        : isSkipped
+                        ? 'text-muted'
                         : isDone
                         ? 'text-slate-700'
                         : 'text-muted'

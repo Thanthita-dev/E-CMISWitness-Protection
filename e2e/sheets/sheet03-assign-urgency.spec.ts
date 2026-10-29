@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { linkMainCaseAsOfficer, promoteToCaseOwner, readCase, screenUrgencyAsOwner, seedMockState, switchRole } from '../helpers/seed'
 import { newCaseNoAfterIntake } from '../helpers/seed'
 
 /**
@@ -10,8 +10,8 @@ import { newCaseNoAfterIntake } from '../helpers/seed'
  * ต่อแท็บ 04 (WIT0311-0313), สิทธิ์การมอบหมาย/เข้าถึงตาม Role และ Need-to-Know
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const OFFICER_A = 'นางสาวอรุณี ใจมั่น' // OFF-001
 const OFFICER_B = 'นายธนาธิป สุวรรณเวช' // OFF-002
 
@@ -50,14 +50,14 @@ async function readAccessLogs(page: Page, caseNo: string) {
 }
 
 async function advanceToStaffReview(page: Page, caseNo: string) {
-  await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
-  await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
+  // เจ้าหน้าที่ผู้รับเรื่องเชื่อมโยงคดีหลักก่อนส่ง ผอ. (ธุรการไม่เห็นการ์ดคดีหลัก)
+  if ((await readCase(page, caseNo))?.stage === 'officer_intake') await linkMainCaseAsOfficer(page)
   await page.getByTestId('forward-case-button').click()
   await page.getByRole('button', { name: 'ยืนยันส่งต่อ' }).click()
   await expect.poll(async () => (await readCase(page, caseNo))?.stage).toBe('director_assign')
 
   await switchRole(page, 'director')
-  await page.goto(`/dossier/${caseNo}`)
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
   await page.getByRole('button', { name: 'มอบหมายเจ้าของสำนวน' }).click()
   await expect(page.getByText(/มอบหมายแล้ว:/)).toBeVisible()
   await page.getByTestId('forward-case-button').click()
@@ -65,7 +65,7 @@ async function advanceToStaffReview(page: Page, caseNo: string) {
   await expect.poll(async () => (await readCase(page, caseNo))?.stage).toBe('staff_review')
 
   await switchRole(page, 'officer')
-  await page.goto(`/dossier/${caseNo}`)
+  await page.goto(`/dossier/${encodeURIComponent(caseNo)}`)
 }
 
 test.describe('Sheet 03 — มอบหมาย / ประเมินความเร่งด่วน', () => {
@@ -124,15 +124,23 @@ test.describe('Sheet 03 — มอบหมาย / ประเมินคว�
     await expect(officerRoles).toContainText(`ผู้รับผิดชอบงานคุ้มครองพยาน: ${OFFICER_B}`)
   })
 
-  test('TC-014 · [Happy] เจ้าหน้าที่ประเมินความเร่งด่วนเองเมื่อยังไม่มีผลประเมิน', async ({ page }) => {
+  test('TC-014 · [Happy] เจ้าหน้าที่กลั่นกรองความเร่งด่วนหลังจัดทำ คบ.1 และเชื่อมโยงคดีหลัก', async ({ page }) => {
     await seedMockState(page, 'Case 1.3', 'officer')
     await page.goto(DOSSIER_URL)
 
     const before = await readCase(page, CASE_NO)
     expect(before?.urgency).toBeFalsy()
 
+    // ลำดับงาน: ยังไม่ได้จัดทำ คบ.1 — ยังเชื่อมโยงคดีและกลั่นกรองไม่ได้
+    await expect(page.getByTestId('main-case-link-waiting-kb1')).toBeVisible()
+    await expect(page.getByTestId('urgency-screening-panel')).toHaveCount(0)
+    await expect(page.getByTestId('forward-case-button')).toBeDisabled()
+
+    // บันทึก คบ.1 แล้ว → เชื่อมโยงคดีหลัก → แผงกลั่นกรองแสดงในการ์ดเดียวกัน
+    await promoteToCaseOwner(page, CASE_NO)
+    await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
     await expect(page.getByText('ต้องเลือกก่อนจึงจะส่งต่อได้')).toBeVisible()
-    await page.getByRole('button', { name: 'กรณีปกติ (→ คบ.3 → คบ.6)' }).click()
+    await screenUrgencyAsOwner(page, 'normal')
 
     await expect(page.getByText(/ผลการประเมิน:/)).toBeVisible()
     const after = await readCase(page, CASE_NO)
@@ -147,8 +155,6 @@ test.describe('Sheet 03 — มอบหมาย / ประเมินคว�
   test('TC-015 · [Happy] เอกสารตั้งต้นเป็น คบ.2 → ส่งไปจัดทำ คบ.1 ที่แท็บ 04', async ({ page }) => {
     await seedMockState(page, 'Case 1', 'officer')
     await page.goto('/intake')
-    await page.getByRole('radio', { name: /^กรณีปกติ/ }).click()
-    await page.locator('#intakeScreeningNote').fill('กรณีปกติ')
     await page.getByRole('button', { name: 'เจ้าหน้าที่บันทึก คบ.2' }).click()
     const caseNo = await newCaseNoAfterIntake(page, { expectForm: 2 })
 
@@ -156,9 +162,10 @@ test.describe('Sheet 03 — มอบหมาย / ประเมินคว�
     expect(created?.intakeDocType).toBe('kb2')
     expect(created?.pendingIntakeForms).toEqual(expect.arrayContaining(['คบ.1', 'คบ.3']))
 
-    // ส่งงานต่อจนถึงแท็บ 04 (staff_review) — ป้าย "ต้องจัดทำ" ต้องระบุ คบ.1 ให้เห็นชัดในการ์ดส่งงาน
+    // ส่งงานต่อจนถึงแท็บ 04 (staff_review) — ป้าย "ต้องจัดทำ" ระบุ คบ.1 และการ์ดคดีหลักให้จัดทำ คบ.1 ก่อน
     await advanceToStaffReview(page, caseNo)
     await expect(page.getByText(/ต้องจัดทำ.*คบ\.1/)).toBeVisible()
+    await expect(page.getByTestId('main-case-link-waiting-kb1')).toBeVisible()
 
     // ปัจจุบัน: ฟอร์ม คบ.1 แสดงค่า "กมลชนก บุญรักษา" ในช่อง "ชื่อ" เสมอ — นี่คือ DEFAULT_KB1_DRAFT ที่ hardcode
     // ไว้ตายตัวในสโตร์ (ใช้ปนกันทุกแฟ้ม) ไม่ใช่ข้อมูลจาก คบ.2 ของคำขอนี้จริง (คำขอนี้ยังไม่เคยมีใครกรอกชื่อเลย)
@@ -172,8 +179,6 @@ test.describe('Sheet 03 — มอบหมาย / ประเมินคว�
   test('TC-016 · [Happy] เอกสารตั้งต้นเป็น คบ.1 แล้ว → ส่งไปตรวจ คบ.1/คบ.3 โดยไม่บังคับสร้างซ้ำ', async ({ page }) => {
     await seedMockState(page, 'Case 1', 'officer')
     await page.goto('/intake')
-    await page.getByRole('radio', { name: /^กรณีปกติ/ }).click()
-    await page.locator('#intakeScreeningNote').fill('กรณีปกติ')
     await page.getByRole('button', { name: 'เจ้าหน้าที่กรอก คบ.1' }).click()
     const caseNo = await newCaseNoAfterIntake(page, { expectForm: 1 })
 

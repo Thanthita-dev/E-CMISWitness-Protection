@@ -58,7 +58,7 @@ try {
       return Object.fromEntries(Object.keys(localStorage).filter((key) => key.startsWith('ecmis-')).map((key) => [key, localStorage.getItem(key)]))
     }, scenario)
     const snapshot = { name: scenario.name, group: 'หนังสือแจ้งผล คบ.9 / คบ.10 · ลงนามในชุดเสนอ', description: scenario.description,
-      to: '/dossier/WP-2569-000501', capturedAt: new Date().toISOString(), localStorageData }
+      to: '/dossier/0501%2F2569', capturedAt: new Date().toISOString(), localStorageData }
     await writeFile(new URL(`../src/mock-states/${scenario.name}.json`, import.meta.url), JSON.stringify(snapshot, null, 2) + '\n')
     console.log(`${scenario.name}: ${scenario.kind}`)
     await context.close()

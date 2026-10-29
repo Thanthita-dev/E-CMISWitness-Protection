@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { PageHeader } from '../components/common/PageHeader'
 import { Button } from '../components/common/Button'
@@ -11,6 +11,8 @@ import {
     downloadMockState,
     groupMockStates,
 } from '../lib/mockState'
+import { ROLE_SETS, ROLE_SET_STORAGE_KEY, DEFAULT_ROLE_SET_ID, getRoleSet, readActiveRoleSetId } from '../lib/roleSets'
+import { capturedUsersFor } from '../lib/mockStateRoleNames'
 import { useAuthStore } from '../store/useAuthStore'
 import { useCaseStore } from '../store/useCaseStore'
 import { getCurrentStageInfo } from '../components/dossier/DossierStageTracker'
@@ -36,7 +38,7 @@ const SaveStateModalBody: React.FC<{
                 ตั้งชื่อ state นี้ก่อนดาวน์โหลดเป็นไฟล์ JSON เพื่อนำกลับมาโหลดซ้ำหรือแชร์ให้คนอื่นได้ภายหลัง
             </p>
             <div className="ws-field">
-                <label className="ws-label" htmlFor="mockStateName">ชื่อ (name) *</label>
+                <label className="ws-label" htmlFor="mockStateName">ชื่อ (name) <span className="text-danger">*</span></label>
                 <input
                     id="mockStateName"
                     type="text"
@@ -92,6 +94,18 @@ const SaveStateModalBody: React.FC<{
 }
 
 function MockStatePage() {
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+    // ชุดรายชื่อที่ใช้อยู่ตาม localStorage จริง (แท็บอื่นอาจเปลี่ยนไปแล้ว) — อัปเดตเมื่อมี storage event
+    const [roleSetId, setRoleSetId] = useState(() => readActiveRoleSetId())
+    useEffect(() => {
+        const onStorage = () => setRoleSetId(readActiveRoleSetId())
+        window.addEventListener('storage', onStorage)
+        return () => window.removeEventListener('storage', onStorage)
+    }, [])
+    // แสดงเฉพาะ state ที่ผูกกับชุดรายชื่อที่เลือก — ไม่ระบุ ecmis-role-set = ชุดตั้งต้น
+    const visibleStates = MOCK_STATES.filter(
+        (state) => getRoleSet(state.localStorageData[ROLE_SET_STORAGE_KEY]).id === roleSetId
+    )
     const handleLoad = (state: MockState) => {
         MySwal.fire({
             icon: 'question',
@@ -147,6 +161,7 @@ function MockStatePage() {
                             name: name.trim(),
                             description: description.trim(),
                             to,
+                            capturedUsers: capturedUsersFor(getRoleSet(readActiveRoleSetId())),
                             localStorageData: captureCurrentLocalStorageData(),
                         })
                         MySwal.close()
@@ -168,6 +183,15 @@ function MockStatePage() {
                 description="สลับไปยัง flow ต่างๆ ด้วยข้อมูลจำลอง (localStorage) ที่เตรียมไว้ล่วงหน้า หรือบันทึก state ปัจจุบันเป็นไฟล์ JSON เพื่อนำกลับมาใช้ภายหลัง"
                 actions={
                     <>
+                    {!isAuthenticated && (
+                        <Link
+                            to="/login"
+                            className="inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy hover:bg-slate-50"
+                        >
+                            <i className="fa-solid fa-right-to-bracket" />
+                            เข้าสู่ระบบ
+                        </Link>
+                    )}
                     <Link
                         to="/flow-guide"
                         className="inline-flex min-h-[44px] items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy hover:bg-slate-50"
@@ -187,8 +211,34 @@ function MockStatePage() {
                 }
             />
 
+            <div className="ws-card mt-5 flex flex-wrap items-center gap-3 p-4">
+                <label className="ws-label" htmlFor="roleSetSelect">ชุดรายชื่อผู้ใช้</label>
+                <select
+                    id="roleSetSelect"
+                    className="ws-input w-auto"
+                    value={roleSetId}
+                    onChange={(e) => {
+                        try {
+                            if (e.target.value === DEFAULT_ROLE_SET_ID) localStorage.removeItem(ROLE_SET_STORAGE_KEY)
+                            else localStorage.setItem(ROLE_SET_STORAGE_KEY, e.target.value)
+                        } catch {
+                            showToast('เปลี่ยนชุดรายชื่อผู้ใช้ไม่สำเร็จ: เบราว์เซอร์ไม่อนุญาตให้บันทึกข้อมูล')
+                            return
+                        }
+                        window.location.reload()
+                    }}
+                >
+                    {ROLE_SETS.map((set) => (
+                        <option key={set.id} value={set.id}>{set.label}</option>
+                    ))}
+                </select>
+                <p className="text-[0.8rem] text-muted leading-relaxed">
+                    แสดงเฉพาะ state ที่ผูกกับชุดรายชื่อนี้ (state ที่ไม่ได้ระบุชุดรายชื่อนับเป็นรายชื่อตั้งต้น) ชุดที่เลือกใช้กับข้อมูลปัจจุบันและ state ที่บันทึกจากนี้ไปด้วย
+                </p>
+            </div>
+
             <div className="space-y-6 mt-5">
-                {groupMockStates(MOCK_STATES).map(({ group, states }) => (
+                {groupMockStates(visibleStates).map(({ group, states }) => (
                     <section key={group}>
                         <h2 className="mb-3 flex items-center gap-2 text-[1.1rem] font-bold leading-snug text-navy">
                             <i className="fa-solid fa-layer-group text-muted" />
@@ -203,6 +253,12 @@ function MockStatePage() {
                                 >
                                     <div>
                                         <h3 className="text-[0.95rem] font-semibold text-ink">{state.name}</h3>
+                                        {state.localStorageData[ROLE_SET_STORAGE_KEY] && (
+                                            <p className="mt-1 text-[0.8rem] text-muted">
+                                                <i className="fa-solid fa-users mr-1" />
+                                                ชุดรายชื่อ: {getRoleSet(state.localStorageData[ROLE_SET_STORAGE_KEY]).label}
+                                            </p>
+                                        )}
                                         {state.description && (
                                             <p className="mt-1.5 text-[0.8rem] text-muted leading-relaxed">{state.description}</p>
                                         )}
@@ -230,6 +286,9 @@ function MockStatePage() {
                     <p className="text-[0.88rem] text-muted">
                         ยังไม่มีไฟล์ mock state — เพิ่มไฟล์ .json ได้ที่ src/mock-states/
                     </p>
+                )}
+                {MOCK_STATES.length > 0 && visibleStates.length === 0 && (
+                    <p className="text-[0.88rem] text-muted">ยังไม่มี mock state ที่ผูกกับชุดรายชื่อนี้</p>
                 )}
             </div>
         </div>

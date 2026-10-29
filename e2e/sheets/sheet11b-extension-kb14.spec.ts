@@ -11,8 +11,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * แท็บ 11A แขนงข้อ 14 แทน (WIT1149/WIT1150)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const EXT_URL = `/protection-extension/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const EXT_URL = `/protection-extension/${encodeURIComponent(CASE_NO)}`
 
 // ใช้องค์ประกอบวันที่ตามเวลาท้องถิ่นเสมอ (ไม่ใช้ toISOString ซึ่งแปลงเป็น UTC แล้ววันจะเลื่อนในโซน +07)
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -71,7 +71,7 @@ test.describe('Sheet 11B · ขยายระยะเวลาการคุ�
     await switchRole(page, 'supervisor')
     await page.goto(EXT_URL)
     await page.getByRole('button', { name: 'ครบถ้วน · เสนอตามลำดับชั้น' }).click()
-    await confirmDialog(page, 'ยืนยันครบถ้วน', 'เสนอตามลำดับชั้นให้ผู้มีอำนาจพิจารณาอนุมัติต่อไป')
+    await confirmDialog(page, 'ยืนยันครบถ้วน', 'เสนอตามลำดับชั้นให้เลขาธิการ ป.ป.ท. พิจารณาอนุมัติต่อไป')
 
     after = await readCase(page, CASE_NO)
     expect((after?.extensionRequests as Array<Record<string, unknown>>)[0].status).toBe('pending')

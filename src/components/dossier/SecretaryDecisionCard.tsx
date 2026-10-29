@@ -1,3 +1,4 @@
+import { finishIndividualApproval } from '../../lib/individualApprovalSigning'
 import { NOTICE_FIELD_LABELS, NOTICE_DETAIL_FIELDS, noticeCanSign } from '../../lib/noticeDocuments'
 import React, { useState } from 'react'
 import { Link } from '@tanstack/react-router'
@@ -10,6 +11,8 @@ import { PROTECTION_DEFAULT_DAYS, readRoutableProtectionMethods } from '../../li
 import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { FormPaperViewer } from '../forms/FormPaperViewer'
 import { useAuthStore } from '../../store/useAuthStore'
+import { caseNoSeq } from '../../lib/utils'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface SecretaryDecisionCardProps {
     caseItem: CaseItem
@@ -18,8 +21,11 @@ interface SecretaryDecisionCardProps {
     onOpenNotice?: (formNo: 9 | 10) => void
 }
 
-/** WIT0704 — ผลพิจารณามี 4 แขนง: อนุมัติ · ไม่อนุมัติ · ส่งกลับ/ขอข้อมูลเพิ่ม · เห็นควรตามข้อ 14 */
-type DecisionMode = 'approve' | 'reject' | 'return' | 'article14'
+/**
+ * WIT0704 — ผลพิจารณามี 3 แขนง: อนุมัติ · ไม่อนุมัติ · ส่งกลับ/ขอข้อมูลเพิ่ม
+ * การส่งต่อกรมคุ้มครองสิทธิฯ ย้ายไปเป็นตัวเลือกย่อยของรูปแบบข้อ 4 ใน คบ.6 แล้ว
+ */
+type DecisionMode = 'approve' | 'reject' | 'return'
 
 /** WIT0703 — เทียบเลขแฟ้มแบบไม่ติดช่องว่าง/ตัวพิมพ์ เพื่อไม่ให้เตือนผิดเพราะรูปแบบการพิมพ์ */
 const normalizeCaseNo = (value: string) => value.trim().replace(/\s+/g, '').toUpperCase()
@@ -131,7 +137,7 @@ const DecisionModalBody: React.FC<{
             {checksCaseNo && (
                 <div>
                     <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">
-                        เลขแฟ้มของผลพิจารณาที่รับเข้ามา (เลขคำร้อง) *
+                        เลขแฟ้มของผลพิจารณาที่รับเข้ามา (เลขคำร้อง) <span className="text-danger">*</span>
                     </label>
                     <input
                         type="text"
@@ -179,7 +185,7 @@ const DecisionModalBody: React.FC<{
             {mode !== 'return' && (
                 <div>
                     <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">
-                        เลขที่คำสั่ง / เลขอ้างอิงผลพิจารณา *
+                        เลขที่คำสั่ง / เลขอ้างอิงผลพิจารณา <span className="text-danger">*</span>
                     </label>
                     <input
                         type="text"
@@ -192,7 +198,7 @@ const DecisionModalBody: React.FC<{
 
             {mode === 'return' && (
                 <div>
-                    <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">ประเด็นที่ต้องแก้ไข *</label>
+                    <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">ประเด็นที่ต้องแก้ไข <span className="text-danger">*</span></label>
                     <select
                         value={returnIssue}
                         onChange={(e) => setReturnIssue(e.target.value)}
@@ -207,8 +213,8 @@ const DecisionModalBody: React.FC<{
             )}
 
             <div>
-                <label htmlFor="decisionReason" className="block text-[0.8rem] font-semibold text-slate-700 mb-1">เหตุผลประกอบและข้อสั่งการ *</label>
-                <textarea
+                <label htmlFor="decisionReason" className="block text-[0.8rem] font-semibold text-slate-700 mb-1">เหตุผลประกอบและข้อสั่งการ <span className="text-danger">*</span></label>
+                <VoiceTextarea
                     id="decisionReason"
                     data-testid="decision-reason-input"
                     rows={4}
@@ -220,7 +226,7 @@ const DecisionModalBody: React.FC<{
             {mode === 'approve' && (
                 <div className="space-y-3">
                     <div className="ws-field">
-                        <label htmlFor="decisionDestination" className="ws-label">ผู้รับผิดชอบดำเนินการต่อ *</label>
+                        <label htmlFor="decisionDestination" className="ws-label">ผู้รับผิดชอบดำเนินการต่อ <span className="text-danger">*</span></label>
                         <select id="decisionDestination" data-testid="decision-destination-select" className="ws-input w-full" value={destination}
                             onChange={(e) => { setDestination(e.target.value as ProtectionHandoffDestination | ''); setError('') }}>
                             <option value="">เลือกผู้รับผิดชอบดำเนินการต่อ</option>
@@ -231,7 +237,7 @@ const DecisionModalBody: React.FC<{
                     </div>
                     <div className="ws-field">
                         <label htmlFor="decisionInstruction" className="ws-label">คำสั่ง / หมายเหตุ</label>
-                        <textarea id="decisionInstruction" data-testid="decision-instruction-input" className="ws-input w-full" rows={3}
+                        <VoiceTextarea id="decisionInstruction" data-testid="decision-instruction-input" className="ws-input w-full" rows={3}
                             value={instruction} onChange={(e) => setInstruction(e.target.value)} />
                     </div>
                 </div>
@@ -274,19 +280,25 @@ const DecisionModalBody: React.FC<{
 }
 
 /**
- * ขั้นที่ 5 — คำสั่งชี้ขาดของเลขาธิการ ป.ป.ท. ในหน้าแฟ้มคำร้อง
+ * ขั้นที่ 5 — การสั่งการของเลขาธิการ ป.ป.ท. ในหน้าแฟ้มคำร้อง
  * อยู่ท้ายแฟ้มคู่กับการ์ดส่งต่อของบทบาทอื่น — ลงนามความเห็นข้อ 13 ที่แบบ คบ.6 ก่อน
  * แล้วจึงสั่งอนุมัติ / ไม่อนุมัติ ได้ที่นี่ (ส่งกลับแก้ไขกดได้ตลอด)
  */
 export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ caseItem, onDecisionComplete, onOpenNotice }) => {
-    const { secretaryApprove, secretaryReject, secretaryReturn, secretaryReferArticle14, logHistory } = useCaseStore()
+    const { secretaryApprove, secretaryReject, secretaryReturn, logHistory } = useCaseStore()
 
+    const [decisionDestination, setDecisionDestination] = useState<ProtectionHandoffDestination | ''>(caseItem.preliminaryDecision?.destination || '')
     const secretarySigned = Boolean(caseItem.kb6SecretarySignedAt)
     /** ผู้กระทำที่บันทึกลง Audit Log ของแฟ้ม — ตรงกับผู้ลงนามความเห็นข้อ 13 ใน คบ.6 ถ้ามี */
     const secretaryLabel = caseItem.kb6SecretarySignedBy || 'เลขาธิการ ป.ป.ท.'
 
     const openNoticeDraft = (outcome: 'approved' | 'rejected') => {
+        if (!decisionDestination) { showToast('กรุณาเลือกหน่วยงานรับดำเนินการต่อ', 'warning'); return }
         if (!useCaseStore.getState().beginPreliminaryDecision(caseItem.no, outcome)) { showToast('ยังเปิดร่างไม่ได้: ตรวจสิทธิและสถานะของแฟ้ม', 'warning'); return }
+        const store = useCaseStore.getState()
+        const selected = store.getCase(caseItem.no)?.preliminaryDecision
+        if (selected) store.savePreliminaryDecision(caseItem.no, selected.formNo, { decisionNo: selected.decisionNo, reason: selected.reason, instruction: selected.instruction || '', durationDays: selected.durationDays || caseItem.protectionDays || 30, fields: {}, destination: decisionDestination })
+        if (outcome === 'approved') finishIndividualApproval(caseItem.no)
         onOpenNotice?.(outcome === 'approved' ? 9 : 10)
     }
 
@@ -303,9 +315,7 @@ export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ ca
                     ? 'ลงนามอนุมัติให้ความคุ้มครองพยาน'
                     : mode === 'reject'
                         ? 'ลงนามคำสั่งไม่อนุมัติ'
-                        : mode === 'article14'
-                            ? 'เห็นควรส่งต่อกรมคุ้มครองสิทธิและเสรีภาพ'
-                            : 'ส่งกลับให้แก้ไขตามข้อสั่งการ',
+                        : 'ส่งกลับให้แก้ไขตามข้อสั่งการ',
             html: (
                 <DecisionModalBody
                     mode={mode}
@@ -313,7 +323,7 @@ export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ ca
                     originalOwnerName={caseItem.assignedOfficer || 'ยังไม่ได้มอบหมายเจ้าของสำนวน'}
                     durationDays={caseItem.protectionDays || PROTECTION_DEFAULT_DAYS}
                     methods={proposedMethods.length > 0 ? proposedMethods : caseItem.orderedMethods || []}
-                    initialDecisionNo={`ลธ.ปปท./${caseItem.no.slice(-6)}/2569`}
+                    initialDecisionNo={`ลธ.ปปท./${caseNoSeq(caseItem.no)}/2569`}
                     initialReason={defaultReason}
                     onCancel={() => MySwal.close()}
                     onConfirm={({ decisionNo, reason, returnIssue, refCaseNo, caseNoMismatch, destination, instruction }) => {
@@ -324,9 +334,6 @@ export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ ca
                             secretaryReject(caseItem.no, decisionNo, reason)
                             if (!useCaseStore.getState().getCase(caseItem.no)?.resultNotices?.[10]?.original) return false
                             showToast('เลขาธิการ ป.ป.ท. ลงนามคำสั่งไม่อนุมัติเรียบร้อยแล้ว')
-                        } else if (mode === 'article14') {
-                            secretaryReferArticle14(caseItem.no, decisionNo, reason)
-                            showToast('บันทึกผล "เห็นควรส่งต่อกรมคุ้มครองสิทธิฯ" และส่งเรื่องไปหน้าส่งต่อกรมคุ้มครองสิทธิฯ แล้ว')
                         } else {
                             secretaryReturn(caseItem.no, returnIssue, reason)
                             showToast('ส่งกลับแก้ไขเรียบร้อยแล้ว')
@@ -358,19 +365,15 @@ export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ ca
     }
 
     return (
-        <section data-testid="secretary-decision-card" className="ws-card border-l-4 border-l-gold p-5 space-y-4">
+        <section data-testid="secretary-decision-card" className="ws-card p-5 sm:p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-blue-100 pb-3">
                 <div className="flex items-center gap-2.5">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue text-white font-bold">
                         <i className="fa-solid fa-stamp text-sm" />
                     </div>
                     <div>
-                        <h2 className="text-[1.1rem] font-bold leading-snug text-navy">คำสั่งชี้ขาดของเลขาธิการ ป.ป.ท.</h2>
-                        <p className="text-[0.8rem] text-muted">
-                            {secretarySigned
-                                ? 'เลือกอนุมัติหรือไม่อนุมัติเพื่อเปิดหนังสือแจ้งผล จากนั้นตรวจและยืนยันลงนามในส่วนแบบฟอร์ม'
-                                : 'ต้องลงนามความเห็นเลขาธิการฯ (ข้อ 13) ใน คบ.6 ก่อนจึงจะสั่งการอนุมัติหรือไม่อนุมัติได้'}
-                        </p>
+                        <h2 className="text-[1.1rem] font-bold leading-snug text-navy">การสั่งการของเลขาธิการ ป.ป.ท.</h2>
+
                     </div>
                 </div>
             </div>
@@ -384,39 +387,16 @@ export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ ca
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-1 border-t border-blue-100">
-                <Button
-                    type="button"
-                    data-testid="secretary-return-button"
-                    onClick={() =>
-                        openDecisionModal('return', 'ข้อเท็จจริงหรือผลประเมินความเสี่ยงยังไม่ครบถ้วนตามหลักเกณฑ์')
-                    }
-                    variant="secondary"
-                    size="md"
-                    className="border-rose-300 text-rose-700 hover:bg-rose-50"
-                >
-                    <i className="fa-solid fa-rotate-left" />
-                    ส่งกลับแก้ไข
-                </Button>
-
-                <Button
-                    type="button"
-                    disabled={!secretarySigned}
-                    data-testid="refer-article14-button"
-                    onClick={() =>
-                        openDecisionModal(
-                            'article14',
-                            'พฤติการณ์ภัยคุกคามเกินขอบเขตมาตรการเบื้องต้นของ ป.ป.ท. เห็นควรส่งต่อกรมคุ้มครองสิทธิและเสรีภาพ'
-                        )
-                    }
-                    variant="secondary"
-                    size="md"
-                    title={secretarySigned ? undefined : 'ต้องลงนามความเห็นข้อ 13 ก่อน'}
-                >
-                    <i className="fa-solid fa-building-columns" />
-                    เห็นควรส่งต่อกรมคุ้มครองสิทธิฯ
-                </Button>
-
+            <div className="space-y-4">
+                <label className="block text-sm font-semibold text-navy">
+                    หน่วยงานรับดำเนินการหลังพิจารณา
+                    <select className="ws-input mt-2 w-full" value={decisionDestination} onChange={(event) => setDecisionDestination(event.target.value as ProtectionHandoffDestination | '')}>
+                        <option value="">เลือกหน่วยงานปลายทาง</option>
+                        <option value="original_owner">กองของเจ้าของสำนวนเดิม</option>
+                        <option value="got">กอท.</option>
+                    </select>
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <Button
                     type="button"
                     disabled={!secretarySigned}
@@ -424,7 +404,8 @@ export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ ca
                     onClick={() =>
                         openNoticeDraft('rejected')
                     }
-                    variant="danger"
+                    variant="secondary"
+                    className="w-full border-rose-200 text-rose-700 hover:bg-rose-50 sm:w-auto"
                     size="md"
                     title={secretarySigned ? undefined : 'ต้องลงนามความเห็นข้อ 13 ก่อน'}
                 >
@@ -440,12 +421,33 @@ export const SecretaryDecisionCard: React.FC<SecretaryDecisionCardProps> = ({ ca
                         openNoticeDraft('approved')
                     }
                     variant="primary"
-                    size="lg"
+                    size="md"
+                    className="w-full sm:w-auto"
                     title={secretarySigned ? undefined : 'ต้องลงนามความเห็นข้อ 13 ก่อน'}
                 >
                     <i className="fa-solid fa-signature" />
                     อนุมัติคุ้มครอง
                 </Button>
+                </div>
+            </div>
+            <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm font-semibold text-muted">การดำเนินการอื่น</span>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                <Button
+                    type="button"
+                    data-testid="secretary-return-button"
+                    onClick={() =>
+                        openDecisionModal('return', 'ข้อเท็จจริงหรือผลประเมินความเสี่ยงยังไม่ครบถ้วนตามหลักเกณฑ์')
+                    }
+                    variant="secondary"
+                    size="md"
+                    className="w-full sm:w-auto"
+                >
+                    <i className="fa-solid fa-rotate-left" />
+                    ส่งกลับแก้ไข
+                </Button>
+
+                </div>
             </div>
         </section>
     )

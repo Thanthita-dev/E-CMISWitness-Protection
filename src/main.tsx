@@ -1,3 +1,5 @@
+// ต้องเป็น import แรก — ล้างข้อมูลรุ่นเก่าก่อน store ใด ๆ อ่าน localStorage
+import './lib/legacyDataReset'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createRouter, RouterProvider } from '@tanstack/react-router'

@@ -4,9 +4,11 @@ import { useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useCaseStore } from '../../store/useCaseStore'
 import { FORMS_CATALOG } from '../../lib/constants'
+import { canViewHandoffCase } from '../../lib/protectionHandoff'
+import { isPrivacyBlocked } from '../../lib/privacyGuard'
 
 export const GlobalSearchModal: React.FC = () => {
-  const { isGlobalSearchOpen, setGlobalSearchOpen } = useAuthStore()
+  const { isGlobalSearchOpen, setGlobalSearchOpen, currentRole, currentOfficerUserId } = useAuthStore()
   const cases = useCaseStore((state) => state.cases)
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -32,10 +34,11 @@ export const GlobalSearchModal: React.FC = () => {
 
   const matchedCases = cases.filter(
     (c) =>
+      canViewHandoffCase(currentRole, c, currentOfficerUserId) && !isPrivacyBlocked(c, currentRole, 'search') && (
       c.no.toLowerCase().includes(cleanQuery) ||
       c.person.toLowerCase().includes(cleanQuery) ||
       (c.mainCaseNo && c.mainCaseNo.toLowerCase().includes(cleanQuery)) ||
-      (c.mainCaseTitle && c.mainCaseTitle.toLowerCase().includes(cleanQuery))
+      (c.mainCaseTitle && c.mainCaseTitle.toLowerCase().includes(cleanQuery)))
   )
 
   const matchedForms = FORMS_CATALOG.filter(
@@ -45,7 +48,7 @@ export const GlobalSearchModal: React.FC = () => {
   const handleSelectCase = (caseNo: string) => {
     setGlobalSearchOpen(false)
     setQuery('')
-    navigate({ to: `/dossier/${caseNo}` })
+    navigate({ to: '/dossier/$caseNo', params: { caseNo } })
   }
 
   const handleSelectForm = (formNo: number) => {
@@ -69,7 +72,7 @@ export const GlobalSearchModal: React.FC = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ค้นหาเลขคำร้อง (WP-...), ชื่อผู้ขอคุ้มครอง, สำนวนคดีหลัก (กบค...), หรือแบบ คบ...."
+            placeholder="ค้นหาเลขคำร้อง (เช่น 0501/2569), ชื่อผู้ขอคุ้มครอง, สำนวนคดีหลัก (กบค...), หรือแบบ คบ...."
             className="min-h-[44px] w-full bg-transparent text-[0.88rem] text-ink placeholder:text-slate-400 focus:outline-none"
             autoFocus
           />
@@ -110,7 +113,7 @@ export const GlobalSearchModal: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <div className="text-[0.8125rem] font-semibold text-ink mt-0.5">{c.person}</div>
+                      <div className="text-[0.8125rem] font-semibold text-ink mt-0.5">{c.person?.trim() ? c.person : c.legacySource ? <span className="font-normal text-muted">ไม่มีข้อมูลในระบบเดิม</span> : c.person}</div>
                       {c.mainCaseNo && (
                         <div className="text-xs text-slate-500">
                           คดีหลัก: {c.mainCaseNo} - {c.mainCaseTitle}

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
 import { confirmSecretaryApproval } from '../helpers/postApproval'
+import { passSarabanCheckpoint } from '../helpers/saraban'
 
 /**
  * Sheet 07 · รับและบันทึกผลการพิจารณา
@@ -12,8 +13,8 @@ import { confirmSecretaryApproval } from '../helpers/postApproval'
  *   WIT0713            แขนงที่ 4 เป็นทางเข้าแท็บ 08C ตั้งแต่ชั้นรับผลพิจารณา
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const SUPERVISOR = 'นายกิตติศักดิ์ ธรรมรักษ์'
 const DIRECTOR = 'นายวีระยุทธ พิทักษ์ธรรม'
@@ -30,6 +31,10 @@ async function secretaryReturnsCase(page: import('@playwright/test').Page, note:
   await page.getByRole('textbox').last().fill(note)
   await page.getByTestId('decision-confirm-button').click()
   await expect.poll(async () => (await readCase(page, CASE_NO))?.activity7State).toBe('returned')
+  // ขากลับลงหน่วย: ธุรการ สลธ. ออกเลขส่ง → ธุรการหน่วยลงเลขรับ จึงถึง ผอ.
+  await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver')
+  await passSarabanCheckpoint(page, CASE_NO, 'receiver')
+  await page.goto(DOSSIER_URL)
 }
 
 test.describe('WIT0707 → WIT0708 — ส่งกลับแล้วงานต้องลงถึงเจ้าหน้าที่ผู้รับผิดชอบ', () => {
@@ -138,82 +143,19 @@ test.describe('WIT0709 → WIT0712 — Revision ต้องเดินตา�
   })
 })
 
-test.describe('WIT0713 — แขนง "เห็นควรตามข้อ 14" เป็นทางเข้าแท็บ 08C ตั้งแต่ชั้นรับผลพิจารณา', () => {
+test.describe('WIT0713 — การส่งต่อกรมคุ้มครองสิทธิฯ ย้ายไปเป็นตัวเลือกย่อยข้อ 4 ใน คบ.6', () => {
   test.beforeEach(async ({ page }) => {
     await seedMockState(page, 'Case 1.7', 'secretary', KB6_SECRETARY_SIGNED)
     await page.goto(DOSSIER_URL)
   })
 
-  test('TC-052 · [Medium] เลขาธิการฯ เลือกข้อ 14 → แฟ้มเข้า 08C ขั้นจัดทำข้อเสนอ โดยไม่ต้องรอครบเพดาน', async ({ page }) => {
-    const before = await readCase(page, CASE_NO)
-    // เคสนี้ยังไม่เคยคุ้มครอง จึงไม่มีทางเข้า 08C ทางเพดาน 180 วัน
-    expect(before?.article14).toBeFalsy()
-
-    await page.getByTestId('refer-article14-button').click()
-    await page
-      .getByRole('textbox')
-      .last()
-      .fill('พฤติการณ์ภัยเกินขอบเขตมาตรการเบื้องต้นของ ป.ป.ท. เห็นควรส่งกรมคุ้มครองสิทธิและเสรีภาพ')
-    await page.getByTestId('decision-confirm-button').click()
-
-    await expect.poll(async () => (await readCase(page, CASE_NO))?.activity7State).toBe('article14')
-
-    const after = await readCase(page, CASE_NO)
-    expect(after?.stage).toBe('article14')
-    expect(after?.owner).toBe(OFFICER)
-    const referral = after?.article14Referral as Record<string, string> | undefined
-    expect(referral?.reason).toContain('เกินขอบเขตมาตรการเบื้องต้น')
-    expect(referral?.decisionNo).toBeTruthy()
-
-    // เจ้าหน้าที่เปิดแท็บ 08C แล้วต้องเห็นเคสนี้ พร้อมป้ายบอกว่ามาจากผลพิจารณา
-    await switchRole(page, 'officer')
-    await page.goto('/article14')
-
-    await expect(page.getByTestId('article14-referral-badge')).toContainText('มาจากผลพิจารณาและคำสั่ง')
-
-    // ขั้นแรกของ 08C คือจัดทำข้อเสนอ — ยังต้องเดินตามลำดับชั้นและมติคณะกรรมการตามเดิม
-    await page.getByRole('textbox').first().fill('ภัยคุกคามยังคงอยู่และเกินขีดความสามารถของมาตรการเบื้องต้น')
-    await page.getByRole('textbox').nth(1).fill('ผลประเมินความเสี่ยงระดับสูง อ้างอิงรายงานของชุดปฏิบัติการ')
-    await page.getByTestId('submit-article14-proposal').click()
-    await page.getByRole('button', { name: 'ยืนยันเสนอ' }).click()
-
-    await expect
-      .poll(async () => ((await readCase(page, CASE_NO))?.article14 as Record<string, string>)?.step)
-      .toBe('supervisor_review')
+  test('TC-052 · [Medium] คำสั่งชี้ขาดของเลขาธิการฯ ไม่มีปุ่ม "เห็นควรส่งต่อกรมคุ้มครองสิทธิฯ" แล้ว', async ({ page }) => {
+    await expect(page.getByTestId('approve-case-button')).toBeEnabled()
+    await expect(page.getByTestId('reject-case-button')).toBeEnabled()
+    await expect(page.getByTestId('secretary-return-button')).toBeEnabled()
+    await expect(page.getByTestId('refer-article14-button')).toHaveCount(0)
   })
 })
-
-/**
- * WIT0704 "อนุมัติ" / "ไม่อนุมัติ" / "ข้อ 14" — กรอกเลขที่คำสั่งและเหตุผลในโมดัลคำสั่งชี้ขาด แล้วยืนยัน
- * ช่อง "เลขแฟ้มของผลพิจารณาที่รับเข้ามา" (WIT0703) prefill เลขคำร้องของแฟ้มปัจจุบันไว้ให้แล้ว
- * ส่ง refCaseNo เข้ามาเมื่อต้องการจำลองผลพิจารณาที่อ้างอิงเลขแฟ้มอื่น
- */
-async function secretaryDecides(
-  page: import('@playwright/test').Page,
-  buttonTestId: string,
-  decisionNo: string,
-  reason: string,
-  refCaseNo?: string
-) {
-  await page.getByTestId(buttonTestId).click()
-  const dialog = page.locator('.swal2-popup:not(.swal2-toast)')
-  await dialog.waitFor()
-  if (refCaseNo !== undefined) {
-    await dialog.getByTestId('decision-ref-case-no-input').fill(refCaseNo)
-  }
-  // ช่องข้อความในโมดัล: [0] เลขแฟ้มของผลพิจารณา · [1] เลขที่คำสั่ง · [2] เหตุผล
-  await dialog.getByRole('textbox').nth(1).fill(decisionNo)
-  await dialog.getByTestId('decision-reason-input').fill(reason)
-  if (buttonTestId === 'approve-case-button') await confirmSecretaryApproval(page)
-  else {
-    await page.getByTestId('decision-confirm-button').click()
-    if (buttonTestId === 'reject-case-button') {
-      await expect(page.getByTestId('decision-review-step')).toBeVisible()
-      await page.getByTestId('decision-confirm-button').click()
-    }
-  }
-  await dialog.waitFor({ state: 'detached' })
-}
 
 test.describe('TC-049 — รับผลอนุมัติและจำแนกวิธีคุ้มครองตามคำสั่ง', () => {
   test('TC-049 · [Happy] เลขาธิการฯ อนุมัติวิธี 15(1) → บันทึก Decision Record ครบ และเปิดทางเข้าแท็บ 08A', async ({
@@ -259,6 +201,9 @@ test.describe('TC-050 — ไม่อนุมัติพร้อมลงน
     await secretaryDecides(page, 'reject-case-button', 'ปปท. 89/2569', 'ข้อเท็จจริงไม่เข้าเกณฑ์ตามระเบียบว่าด้วยการคุ้มครองพยาน')
 
     await expect.poll(async () => (await readCase(page, CASE_NO))?.activity7State).toBe('rejected')
+    // ผลพิจารณา+คบ.10 ลงหน่วยผ่านธุรการ สลธ. → ธุรการหน่วย
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver')
 
     const after = await readCase(page, CASE_NO)
     expect(after?.resultReason).toContain('ข้อเท็จจริงไม่เข้าเกณฑ์')
@@ -318,7 +263,7 @@ test.describe('TC-055 — ผลพิจารณาที่ขาดลาย
     await expect(page.getByText('ต้องลงนามความเห็นเลขาธิการฯ (ข้อ 13) ใน คบ.6 ก่อนจึงจะสั่งการอนุมัติหรือไม่อนุมัติได้')).toBeVisible()
     await expect(page.getByTestId('approve-case-button')).toBeDisabled()
     await expect(page.getByTestId('reject-case-button')).toBeDisabled()
-    await expect(page.getByTestId('refer-article14-button')).toBeDisabled()
+    await expect(page.getByTestId('refer-article14-button')).toHaveCount(0)
 
     // ปุ่ม "ส่งกลับแก้ไข" เท่านั้นที่ยังกดได้ตลอด — ไม่ใช่การบันทึกผลพิจารณาสมบูรณ์
     await expect(page.getByTestId('secretary-return-button')).toBeEnabled()
@@ -372,7 +317,7 @@ test.describe('TC-056 — ผลอนุมัติหลายวิธีพ
 })
 
 test.describe('TC-057 — ผลพิจารณาผูกเลขแฟ้มผิด', () => {
-  const WRONG_CASE_NO = 'WP-2569-999999'
+  const WRONG_CASE_NO = '999999/2569'
   const REASON = 'ตรวจทานข้อเท็จจริงครบถ้วนแล้ว มีเหตุผลสมควรได้รับการคุ้มครองพยาน'
 
   test.beforeEach(async ({ page }) => {

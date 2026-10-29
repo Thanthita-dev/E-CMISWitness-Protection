@@ -1,7 +1,9 @@
+import { canSignTerminationPreparer } from '../lib/terminationDraft'
+import { isKb15StageReviewer, kb15PendingStage } from '../lib/protectionHandoff'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { RelatedPerson, AttachmentSet, AttachmentFile } from '../types/case'
-import { KB6_LEGAL_REFS_FIELD, KB6_DEFAULT_LEGAL_REFS } from '../lib/constants'
+import { KB6_LEGAL_REFS_FIELD, KB6_DEFAULT_LEGAL_REFS, KB6_DURATION_DETAIL_FIELD, userNameById, userPositionById } from '../lib/constants'
 import { KB6_SIGNERS, canEditKb6Opinion } from '../lib/formSignature'
 import { useAuthStore } from './useAuthStore'
 import { isCaseClosed } from '../lib/permissions'
@@ -24,6 +26,7 @@ export interface FormRevision {
   reason: string
   snapshot: Record<string, any>
   signatures?: CaseFormBundle['signatures']
+  caseSnapshot?: import('../types/case').CaseItem
 }
 
 export interface FormLock {
@@ -38,7 +41,33 @@ export interface FormLock {
  * เมื่อเปิดแบบเดียวกันจากอีกแฟ้ม ระบบเก็บของแฟ้มเดิมไว้ใน caseDrafts แล้วสลับของแฟ้มใหม่เข้ามาแทน
  * — ข้อมูลพยานและความเห็นของแฟ้มหนึ่งจึงไม่รั่วไปโผล่ในอีกแฟ้ม และด่านตรวจอ่านจากร่างของแฟ้มที่เปิดอยู่จริง
  */
-export const PER_CASE_FORMS = [3, 4, 5, 6, 7, 9, 10, 11, 14, 16]
+export const PER_CASE_FORMS = [3, 4, 5, 6, 7, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20]
+
+/** แบบที่ลายมือชื่อต้องลงในแฟ้มนั้นจริง (เจ้าพนักงานกดลงนาม / ผู้ยื่นลงชื่อผ่านลิงก์) จึงแสดงบนกระดาษ */
+export const SIGNED_IN_CASE_FORMS = [1, 3, 6]
+
+/** ลายมือชื่อตัวอย่างตั้งต้นของระบบเป็นของแฟ้มสาธิตนี้ */
+export const SAMPLE_SIGNATURE_CASE = '0501/2569'
+
+/**
+ * แบบที่ร่างไม่แยกตามแฟ้ม (เช่น คบ.1) เก็บลายมือชื่อรวมกัน — แสดงเฉพาะลายมือชื่อที่ลงในแฟ้มที่เปิดอยู่
+ * ลายมือชื่อที่ไม่มีแฟ้มกำกับ (ตัวอย่างตั้งต้น/ข้อมูลเดิม) ถือเป็นของแฟ้มสาธิต — แฟ้มอื่นจึงเริ่มจาก "ยังไม่ได้ลงนาม"
+ */
+export const signatureVisibleForCase = (signatureCases: Record<string, string> | undefined, key: string, caseNo?: string): boolean => {
+  if (!caseNo) return true
+  const formMatch = key.match(/^kb(\d+)-/)
+  if (!formMatch) return true
+  const formId = Number(formMatch[1])
+  /** คบ.1 / คบ.3: ต้องเห็นการลงนามจริงในแฟ้มนี้ — ลายมือชื่อตัวอย่างที่ไม่มีแฟ้มกำกับไม่นับว่าลงนามแล้ว */
+  if (SIGNED_IN_CASE_FORMS.includes(formId)) return signatureCases?.[key] === caseNo
+  if (PER_CASE_FORMS.includes(formId)) return true
+  return (signatureCases?.[key] ?? SAMPLE_SIGNATURE_CASE) === caseNo
+}
+
+export const signaturesForCase = <T,>(signatures: Record<string, T>, signatureCases: Record<string, string> | undefined, caseNo?: string): Record<string, T> =>
+  caseNo ? Object.fromEntries(Object.entries(signatures).filter(([key]) => signatureVisibleForCase(signatureCases, key, caseNo))) : signatures
+
+const SIGNATURE_AUTO_LOCK_REASON = 'ล็อกอัตโนมัติเมื่อมีลายมือชื่อในเอกสาร'
 
 /** ข้อมูลของแบบ คบ. ที่แฟ้มหนึ่งเก็บไว้ขณะที่ไม่ได้เป็นแฟ้มที่เปิดอยู่ */
 export interface CaseFormBundle {
@@ -70,6 +99,7 @@ interface FormDraftState {
   legacyNoticeDrafts?: Partial<Record<9 | 10, CaseFormBundle>>
   /** Unowned legacy agreement content/signatures must never be assigned to a new case. */
   legacyKb11Draft?: CaseFormBundle
+  legacyTerminationDrafts?: Record<number, CaseFormBundle>
   /** ประวัติเวอร์ชันของแต่ละแบบ คบ. — index 0 คือฉบับแรกสุด */
   revisions: Record<number, FormRevision[]>
   /** แบบที่ถูกล็อกหลังลงนาม — แก้ไขไม่ได้จนกว่าจะสร้างเวอร์ชันใหม่ */
@@ -77,6 +107,8 @@ interface FormDraftState {
   relatedPersons: RelatedPerson[]
   attachmentSets: AttachmentSet[]
   signatures: Record<string, { signed: boolean; signerName: string; signedAt: string; signatureImage?: string }>
+  /** แฟ้มที่ลายมือชื่อแต่ละช่องลงไว้ — ใช้กับแบบที่ร่างไม่แยกตามแฟ้ม (เช่น คบ.1) ดู signatureVisibleForCase */
+  signatureCases: Record<string, string>
 
   setCurrentFormId: (id: number) => void
   setSection: (section: number) => void
@@ -122,7 +154,8 @@ interface FormDraftState {
   /** ลบหลายไฟล์พร้อมกันด้วย index (ปลอดภัยกว่าเรียก removeFileFromSet ทีละครั้ง) */
   removeFilesFromSet: (setId: number, fileIndexes: number[]) => void
 
-  signDocument: (key: string, signerName: string, signatureImage?: string) => void
+  /** caseNo = แฟ้มที่ลงนาม (บันทึกไว้ให้แบบที่ร่างไม่แยกตามแฟ้มแสดงลายมือชื่อเฉพาะแฟ้มนั้น) */
+  signDocument: (key: string, signerName: string, signatureImage?: string, caseNo?: string) => void
   resetDrafts: () => void
 }
 
@@ -164,7 +197,7 @@ export const selectCaseDraft = (
 ): Record<string, any> => {
   if (!caseNo || !PER_CASE_FORMS.includes(formId)) return s.drafts[formId] || EMPTY_FORM_DRAFT
   const owner = s.draftCaseNo[formId]
-  if ((formId === 9 || formId === 10 || formId === 11) && owner === undefined) return s.caseDrafts?.[caseNo]?.drafts[formId] || EMPTY_FORM_DRAFT
+  if (([7, 9, 10, 11, 15, 16, 17].includes(formId)) && owner === undefined) return s.caseDrafts?.[caseNo]?.drafts[formId] || EMPTY_FORM_DRAFT
   if (owner === undefined || owner === caseNo) return s.drafts[formId] || EMPTY_FORM_DRAFT
   return s.caseDrafts?.[caseNo]?.drafts[formId] || EMPTY_FORM_DRAFT
 }
@@ -232,8 +265,8 @@ export const DEFAULT_KB2_DRAFT: Record<string, any> = {
     'ผู้แจ้งระบุว่าถูกใช้อาวุธปืนยิงข่มขู่บริเวณหน้าบ้านพักเมื่อกลางดึกที่ผ่านมา เนื่องจากเป็นพยานในคดีเรียกรับผลประโยชน์การก่อสร้างเขื่อนกั้นดิน',
   'ช่องทางการสื่อสาร': 'โทรศัพท์สายด่วน 1206',
   'วันเวลารับแจ้ง': '2026-08-05T08:25',
-  'เจ้าหน้าที่ผู้รับแจ้ง': 'นายธนาธิป สุวรรณเวช',
-  'ตำแหน่งผู้รับแจ้ง': 'นักสืบสวนสอบสวนชำนาญการ',
+  'เจ้าหน้าที่ผู้รับแจ้ง': userNameById('OFF-002'),
+  'ตำแหน่งผู้รับแจ้ง': userPositionById('OFF-002'),
 }
 
 export const DEFAULT_KB3_DRAFT: Record<string, any> = {
@@ -272,11 +305,13 @@ export const DEFAULT_KB6_DRAFT: Record<string, any> = {
   'ผลประเมินภัย':
     'มีความเสี่ยงระดับสูง มีแนวโน้มถูกคุกคามรุนแรงขึ้นหากสำนวนคดีเข้าสู่กระบวนการไต่สวนข้อเท็จจริงเต็มรูปแบบ',
   'รูปแบบการคุ้มครอง': 'จัดเจ้าพนักงานเป็นชุดคุ้มครองความปลอดภัย',
+  [KB6_DURATION_DETAIL_FIELD]:
+    'ตามระเบียบฯ ข้อ ๑๕ จัดเจ้าพนักงานเป็นชุดคุ้มครองความปลอดภัย ในระหว่างวันที่ ... ถึงวันที่ ... รวมเป็นเวลา ๒ เดือน',
   'มาตรการทั่วไป':
     '1. จัดเจ้าหน้าที่ร่วมสังเกตการณ์บริเวณที่พักอาศัย\n2. กำหนดสายด่วนประสานงานฉุกเฉินตลอด 24 ชั่วโมง\n3. จัดระบบเดินทางไป-กลับที่ทำงาน',
   // ข้อ 10 ไม่ตั้งค่าเริ่มต้น — ผู้บังคับบัญชาชั้นต้นเป็นผู้เขียนความเห็นของตนเองในขั้นตอนของตน
   'ความเห็นผู้อำนวยการ': 'เห็นชอบ เสนอรองเลขาธิการ ป.ป.ท. กลั่นกรองก่อนเสนอเลขาธิการ ป.ป.ท. เพื่อโปรดพิจารณาอนุมัติต่อไป',
-  'ชุดชื่อ1': 'ร.ต.อ. อนุชา กล้าหาญ',
+  'ชุดชื่อ1': userNameById('PROT-001'),
   'ชุดตำแหน่ง1': 'หัวหน้าชุดปฏิบัติการ',
   'ชุดชื่อ2': 'ส.ต.อ. ธนกฤต มั่นใจ',
   'ชุดตำแหน่ง2': 'เจ้าหน้าที่คุ้มครอง',
@@ -304,6 +339,7 @@ export const useFormDraftStore = create<FormDraftState>()(
       draftCaseNo: {},
       draftTouched: {},
       caseDrafts: {},
+      signatureCases: {},
       legacyNoticeDrafts: {},
       revisions: {},
       locks: {},
@@ -333,12 +369,12 @@ export const useFormDraftStore = create<FormDraftState>()(
       ],
       signatures: {
         'kb1-applicant': { signed: true, signerName: 'นางสาวกมลชนก บุญรักษา', signedAt: '04/08/2569 09:30' },
-        'kb1-officer': { signed: true, signerName: 'นางสาวอรุณี ใจมั่น', signedAt: '04/08/2569 09:35' },
+        'kb1-officer': { signed: true, signerName: userNameById('OFF-001'), signedAt: '04/08/2569 09:35' },
         'kb3-witness': { signed: true, signerName: 'นางสาวกมลชนก บุญรักษา', signedAt: '04/08/2569 10:15' },
-        'kb3-officer': { signed: true, signerName: 'นางสาวอรุณี ใจมั่น', signedAt: '04/08/2569 10:20' },
-        'kb6-officer': { signed: true, signerName: 'นางสาวอรุณี ใจมั่น', signedAt: '04/08/2569 11:00' },
-        'kb6-supervisor': { signed: false, signerName: 'นายกิตติศักดิ์ ธรรมรักษ์', signedAt: '' },
-        'kb6-director': { signed: false, signerName: 'นายวีระยุทธ พิทักษ์ธรรม', signedAt: '' },
+        'kb3-officer': { signed: true, signerName: userNameById('OFF-001'), signedAt: '04/08/2569 10:20' },
+        'kb6-officer': { signed: true, signerName: userNameById('OFF-001'), signedAt: '04/08/2569 11:00' },
+        'kb6-supervisor': { signed: false, signerName: userNameById('SUP-001'), signedAt: '' },
+        'kb6-director': { signed: false, signerName: userNameById('DIR-001'), signedAt: '' },
       },
 
       setCurrentFormId: (id) => set({ currentFormId: id, section: 0, manualPage: null }),
@@ -354,6 +390,10 @@ export const useFormDraftStore = create<FormDraftState>()(
       updateField: (formId, field, value) => {
         const caseNo = get().draftCaseNo[formId]
         if ((formId === 9 || formId === 10) && caseNo && useCaseStore.getState().getCase(caseNo)?.resultNotices?.[formId]?.original) return
+        const caseItem = caseNo ? useCaseStore.getState().getCase(caseNo) : undefined
+        if (formId === 15 && caseItem?.kb15 && !['draft', 'returned'].includes(caseItem.kb15.status)) return
+        if (formId === 16 && (caseItem?.kb16?.signedAt || caseItem?.kb16?.status === 'submitted')) return
+        if (formId === 17 && (caseItem?.kb17?.signedAt || caseItem?.kb17?.status === 'submitted')) return
         if (get().locks[formId]) return
         if (formBelongsToClosedCase(get().draftCaseNo, formId)) return
         if (formId === 6 && KB6_OPINION_FIELDS.has(field)) {
@@ -378,6 +418,7 @@ export const useFormDraftStore = create<FormDraftState>()(
       },
 
       updateSignedField: (formId, field, value) => {
+        if ([15, 16, 17].includes(formId)) return // ความเห็นใช้กระบวนงานตามบทบาท ไม่เปิดช่องข้ามล็อกเอกสาร
         if (formId === 9 || formId === 10) return
         if (formBelongsToClosedCase(get().draftCaseNo, formId)) return
         set((state) => ({
@@ -423,7 +464,22 @@ export const useFormDraftStore = create<FormDraftState>()(
             })
             return
           }
-          if (owner === undefined && (formId === 7 || formId === 16)) {
+          if (owner === undefined && [7, 15, 16, 17].includes(formId)) {
+            const prefix = `kb${formId}-`
+            const legacy: CaseFormBundle = { drafts: { [formId]: state.drafts[formId] || {} }, touched: { [formId]: Boolean(state.draftTouched[formId]) }, locks: state.locks[formId] ? { [formId]: state.locks[formId] } : {}, revisions: state.revisions[formId] ? { [formId]: state.revisions[formId] } : {}, signatures: Object.fromEntries(Object.entries(state.signatures).filter(([key]) => key.startsWith(prefix))) }
+            const incoming = state.caseDrafts[caseNo]
+            set({
+              legacyTerminationDrafts: { ...state.legacyTerminationDrafts, [formId]: state.legacyTerminationDrafts?.[formId] || structuredClone(legacy) },
+              drafts: { ...state.drafts, [formId]: incoming?.drafts[formId] || { ...seed } },
+              draftCaseNo: { ...state.draftCaseNo, [formId]: caseNo },
+              draftTouched: { ...state.draftTouched, [formId]: Boolean(incoming?.touched[formId]) },
+              locks: incoming?.locks[formId] ? { ...state.locks, [formId]: incoming.locks[formId] } : withoutKey(state.locks, formId),
+              revisions: incoming?.revisions[formId] ? { ...state.revisions, [formId]: incoming.revisions[formId] } : withoutKey(state.revisions, formId),
+              signatures: { ...withoutPrefix(state.signatures, prefix), ...Object.fromEntries(Object.entries(incoming?.signatures || {}).filter(([key]) => key.startsWith(prefix))) },
+            })
+            return
+          }
+          if (owner === undefined && (formId === 19 || formId === 20)) {
             set({ drafts: { ...state.drafts, [formId]: { ...seed } }, draftCaseNo: { ...state.draftCaseNo, [formId]: caseNo }, draftTouched: { ...state.draftTouched, [formId]: false } })
             return
           }
@@ -487,8 +543,35 @@ export const useFormDraftStore = create<FormDraftState>()(
 
       getFormLock: (formId) => get().locks[formId],
 
-      reviseForm: (formId, by, reason) => {
+      reviseForm: (formId: number, by: string, reason: string): number => {
         const caseNo = get().draftCaseNo[formId]
+        if ([15, 16, 17].includes(formId) && caseNo) {
+          const c = useCaseStore.getState().getCase(caseNo)
+          const auth = useAuthStore.getState()
+          if (!c || !reason.trim() || !['officer', 'case_owner', 'got_officer', 'admin'].includes(auth.currentRole) || c.sarabanDispatch) return get().getFormVersion(formId)
+          const affected = [15, 16, 17].filter(id => id >= formId)
+          for (const id of affected) get().ensureDraftForCase(id, caseNo, {})
+          const before = get()
+          const revisions = { ...before.revisions }
+          for (const id of affected) {
+            const doc = id === 15 ? c.kb15 : id === 16 ? c.kb16 : c.kb17
+            if (id !== formId && !doc) continue
+            const history = revisions[id] || []
+            const fields = doc?.formSnapshot || before.drafts[id] || {}
+            const signatures = Object.fromEntries(Object.entries(before.signatures).filter(([key]) => key.startsWith(`kb${id}-`)))
+            if (id === 15 && c.kb15?.headSignature) signatures['kb15-officer'] = c.kb15.headSignature
+            if (id === 16 && c.kb16?.signedAt) signatures['kb16-authority'] = { signed: true, signerName: c.kb16.signedBy || '', signedAt: c.kb16.signedAt }
+            if (id === 17 && c.kb17?.signedAt) signatures['kb17-signer'] = { signed: true, signerName: c.kb17.signedBy || '', signedAt: c.kb17.signedAt }
+            revisions[id] = [...history, { version: history.length + 1, at: new Date().toISOString(), by: auth.getCurrentUserAccount()?.name || by, reason, snapshot: structuredClone(fields), signatures: structuredClone(signatures), caseSnapshot: structuredClone(c) }]
+          }
+          set({ revisions })
+          if (!useCaseStore.getState().reviseTerminationDocument(caseNo, formId, reason)) { set({ revisions: before.revisions }); return before.getFormVersion(formId) }
+          set({
+            locks: Object.fromEntries(Object.entries(before.locks).filter(([key]) => !affected.includes(Number(key)))),
+            signatures: Object.fromEntries(Object.entries(before.signatures).filter(([key]) => !affected.some(id => key.startsWith(`kb${id}-`)))),
+          })
+          return revisions[formId].length + 1
+        }
         if ((formId === 9 || formId === 10) && caseNo && useCaseStore.getState().getCase(caseNo)?.resultNotices?.[formId]?.original) return 1
         const state = get()
         /** แฟ้มปิดงานคุ้มครองแล้วสร้างเวอร์ชันใหม่ไม่ได้ — คืนเลขเวอร์ชันปัจจุบันโดยไม่เปลี่ยนอะไร */
@@ -510,6 +593,8 @@ export const useFormDraftStore = create<FormDraftState>()(
               },
             ],
           },
+          // คบ.7 ฉบับแก้ไขต้องลงนามใหม่ ลายมือชื่อฉบับเดิมเก็บใน revision ข้างต้น
+          ...(formId === 7 ? { signatures: Object.fromEntries(Object.entries(state.signatures).filter(([key]) => !key.startsWith('kb7-'))) } : {}),
           /** ปลดล็อกเพื่อให้แก้ไขเป็นเวอร์ชันใหม่ ฉบับเดิมยังอยู่ใน revisions */
           locks: Object.fromEntries(Object.entries(state.locks).filter(([k]) => Number(k) !== formId)),
         })
@@ -625,12 +710,23 @@ export const useFormDraftStore = create<FormDraftState>()(
        * ลงนามอิเล็กทรอนิกส์ — คีย์รูปแบบ `kb<N>-<role>` จะล็อกแบบ คบ.<N> ไปด้วย
        * เพื่อกันการแก้ทับฉบับลงนาม (WIT0513 / WIT0611 / WIT0811 / WIT1140)
        */
-      signDocument: (key, signerName, signatureImage) => {
+      signDocument: (key, signerName, signatureImage, caseNo) => {
         const formMatch = key.match(/^kb(\d+)-/)
+        if (formMatch && [15, 16, 17].includes(Number(formMatch[1]))) {
+          const c = useCaseStore.getState().getCase(caseNo)
+          const auth = useAuthStore.getState()
+          if (!c || get().draftCaseNo[Number(formMatch[1])] !== caseNo || get().signatures[key]?.signed) return
+          if (key === 'kb15-officer') {
+            if (!canSignTerminationPreparer(c) || signerName !== auth.getCurrentUserAccount()?.name || (c.kb15 && !['draft', 'returned'].includes(c.kb15.status))) return
+          } else if (Number(formMatch[1]) === 15) {
+            if (signerName !== auth.getCurrentUserAccount()?.name || !isKb15StageReviewer(auth.currentRole, c) || key !== `kb15-${kb15PendingStage(c)}`) return
+          } else return // คบ.16/17 ลงนามผ่าน action ของคำสั่ง/หนังสือเท่านั้น
+        }
         if (formMatch && formBelongsToClosedCase(get().draftCaseNo, Number(formMatch[1]))) return
         set((state) => {
           const formId = formMatch ? Number(formMatch[1]) : null
           return {
+            signatureCases: caseNo ? { ...state.signatureCases, [key]: caseNo } : state.signatureCases,
             signatures: {
               ...state.signatures,
               [key]: {
@@ -640,14 +736,17 @@ export const useFormDraftStore = create<FormDraftState>()(
                 signatureImage,
               },
             },
+            // คบ.1/คบ.3: ลงนามอิสระต่อกันและกลับมาแก้ได้ — ล็อกตอนส่งต่อ/รับรองชุดเสนอ (หน้าแฟ้ม, Kb3FormEditor) ไม่ล็อกจากลายมือชื่อ
+            // คบ.4: เจ้าหน้าที่ลงนามก่อนส่ง ผอ. และ ผอ. ลงนามข้อ 13 ภายหลัง — ล็อกตอน ผอ. อนุมัติ (FastTrackPanel)
+            // คบ.6: ผู้เสนอลงนามท้ายข้อ 9 แล้วยังแก้ได้ — ล็อกตอน ผบช.ชั้นต้นลงนามข้อ 10 (WIT0513)
             locks:
-              formId && !state.locks[formId]
+              formId && formId !== 1 && formId !== 3 && formId !== 4 && formId !== 6 && formId !== 11 && !state.locks[formId]
                 ? {
                     ...state.locks,
                     [formId]: {
                       lockedAt: new Date().toISOString(),
                       lockedBy: signerName,
-                      reason: 'ล็อกอัตโนมัติเมื่อมีลายมือชื่อในเอกสาร',
+                      reason: SIGNATURE_AUTO_LOCK_REASON,
                     },
                   }
                 : state.locks,
@@ -657,6 +756,7 @@ export const useFormDraftStore = create<FormDraftState>()(
 
       resetDrafts: () => {
         set({
+          signatureCases: {},
           revisions: {},
           locks: {},
           draftCaseNo: {},
@@ -674,6 +774,21 @@ export const useFormDraftStore = create<FormDraftState>()(
     }),
     {
       name: 'ecmis-form-draft-storage-v2',
+      version: 1,
+      /** v1 — คบ.1/คบ.3 ไม่ล็อกจากลายมือชื่อแล้ว ล้างล็อกอัตโนมัติที่ค้างจากเวอร์ชันเก่า (คบ.1 ไม่แยกตามแฟ้ม จึงค้างไปทุกแฟ้ม) */
+      migrate: (persisted, version) => {
+        if (version >= 1 || !persisted || typeof persisted !== 'object') return persisted as FormDraftState
+        const state = persisted as Partial<FormDraftState>
+        const dropSignatureLocks = (locks: Record<number, FormLock> = {}) =>
+          Object.fromEntries(Object.entries(locks).filter(([k, lock]) =>
+            !((Number(k) === 1 || Number(k) === 3) && lock?.reason === SIGNATURE_AUTO_LOCK_REASON)))
+        return {
+          ...state,
+          locks: dropSignatureLocks(state.locks),
+          caseDrafts: Object.fromEntries(Object.entries(state.caseDrafts || {}).map(([caseNo, bundle]) =>
+            [caseNo, { ...bundle, locks: dropSignatureLocks(bundle.locks) }])),
+        } as FormDraftState
+      },
     }
   )
 )

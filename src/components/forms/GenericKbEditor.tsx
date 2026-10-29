@@ -16,6 +16,7 @@ import {
   ThaiDateFields,
 } from './fields/FormKit'
 import { OutgoingNoticeFormNo } from '../../types/case'
+import { DocAside } from './EditorView'
 
 interface GenericKbEditorProps {
   formId: number
@@ -57,14 +58,14 @@ const Kb8VersionHistory: React.FC<{ caseNo?: string }> = ({ caseNo }) => {
   }))
 
   return (
-    <VersionHistory
+    <DocAside><VersionHistory
       code="kb8"
       currentVersion={version}
       entries={entries}
       locked={Boolean(kb8Lock)}
       lockedBy={kb8SignedBy}
       lockedNote={kb8SignedAt ? `ลงนามคำสั่ง คบ.8 เมื่อ ${kb8SignedAt}` : undefined}
-    />
+    /></DocAside>
   )
 }
 
@@ -207,8 +208,8 @@ const Kb17Fields: React.FC = () => (
       <Area formId={17} name="เหตุยุติ" label="เหตุแห่งการยุติที่แจ้งให้ทราบ" rows={3} />
       <div className="rounded-lg border border-line bg-blue-soft p-3 text-[0.88rem] leading-relaxed text-navy">
         <i className="fa-solid fa-circle-info mr-1.5" />
-        หนังสือฉบับนี้พิมพ์การแจ้งสิทธิอุทธรณ์ภายในสามสิบวันไว้บนกระดาษโดยอัตโนมัติ
-        และเริ่มนับกำหนดจาก <strong>วันที่พยานได้รับจริง</strong> ไม่ใช่วันที่ส่ง
+        กรณีสั่งยุติตามข้อ 19 หนังสือฉบับนี้แสดงข้อความแจ้งสิทธิอุทธรณ์ภายในสามสิบวัน
+        โดยนับจาก <strong>วันที่พยานได้รับแจ้งจริง</strong>
       </div>
     </Section>
   </>
@@ -226,7 +227,7 @@ export const GenericKbEditor: React.FC<GenericKbEditorProps> = ({ formId, onSave
       title={formMeta.t}
       hint={
         formId === 16
-          ? 'กรอกและบันทึกที่นี่ แล้วกด “ส่งให้อนุมัติ” ที่แถว คบ.16 ในแฟ้มคำร้อง เพื่อเสนอผู้มีอำนาจลงนาม'
+          ? 'กรอกและบันทึกที่นี่ แล้วกด “ส่งให้อนุมัติ” ที่แถว คบ.16 ในแฟ้มคำร้อง เพื่อเสนอเลขาธิการ ป.ป.ท.ลงนาม'
           : formId === 17
             ? 'กรอกและบันทึกที่นี่ แล้วกด “ส่งให้ลงนาม” ที่แถว คบ.17 ในแฟ้มคำร้อง — เลขาธิการ ป.ป.ท. ลงนามแล้วจึงออกเลขและนำส่งผ่านสารบรรณเดิม'
             : formMeta.d

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
-import { seedMockState, readCase } from '../helpers/seed'
+import { seedMockState, readCase, switchRole } from '../helpers/seed'
 import { fieldAfterLabel } from '../journeys/journey-helpers'
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 
 test('received KB10 appears in appeal queue and opens intake without creating an appeal automatically', async ({ page }) => {
   await seedMockState(page, 'Approved - วิธีที่ 4', 'officer', {
@@ -16,9 +16,9 @@ test('received KB10 appears in appeal queue and opens intake without creating an
   await expect(row).toContainText('รอรับคำอุทธรณ์')
   expect((await readCase(page, NO)).appealFiledAt).toBeFalsy()
   await row.getByRole('link', { name: 'รับคำอุทธรณ์', exact: true }).click()
-  await expect(page).toHaveURL(`/appeal-folder/${NO}`)
+  await expect(page).toHaveURL(`/appeal-folder/${encodeURIComponent(NO)}`)
   const otherTab = await page.context().newPage()
-  await otherTab.goto(`/appeal-folder/${NO}`)
+  await otherTab.goto(`/appeal-folder/${encodeURIComponent(NO)}`)
   await expect(otherTab.getByTestId('appeal-intake-form')).toBeVisible()
   await expect(page.getByTestId('appeal-intake-document-source')).toHaveValue('appellant_document')
   await page.getByTestId('appeal-intake-document-source').selectOption('agency_form')
@@ -44,7 +44,7 @@ test('received KB10 appears in appeal queue and opens intake without creating an
   const intake = (await readCase(page, NO)).appealFolder.intake
   expect(intake.documentSource).toBe('agency_form')
   expect(intake.evidenceDataUrl).toMatch(/^data:application\/pdf;base64,/)
-  await page.goto(`/appeal-folder/${NO}`)
+  await page.goto(`/appeal-folder/${encodeURIComponent(NO)}`)
   await expect(page.locator('a[download="คำอุทธรณ์.pdf"]')).toHaveAttribute('href', intake.evidenceDataUrl)
   await expect(page.getByTestId('appeal-intake-summary')).toContainText('รับ-512/2569')
   for (const width of [1440, 768, 390]) {
@@ -63,15 +63,14 @@ test('received KB10 appears in appeal queue and opens intake without creating an
   await expect.poll(async () => (await readCase(page, NO)).appealFolder?.stage).toBe('supervisor')
   await expect(page.getByTestId('appeal-folder-stage')).toHaveCount(0)
   for (const [role, next] of [['supervisor', 'director'], ['director', 'deputy'], ['deputy_secretary', 'secretary']] as const) {
-    await page.locator('#topbar-role-select').selectOption(role)
+    await switchRole(page, role)
     await expect(page.getByTestId('appeal-intake-form')).toHaveCount(0)
     await page.getByTestId('appeal-opinion-note').fill(`เห็นควรเสนอพิจารณา (${role})`)
     await page.getByTestId('appeal-opinion-submit').click()
     await page.getByRole('button', { name: 'ยืนยัน', exact: true }).click()
     await expect.poll(async () => (await readCase(page, NO)).appealFolder?.stage).toBe(next)
   }
-  await page.locator('#topbar-role-select').selectOption('secretary')
-  await page.reload()
+  await switchRole(page, 'secretary')
   await expect(page.getByTestId('appeal-intake-form')).toHaveCount(0)
   await expect(page.getByTestId('appeal-opinion-secretary')).toBeVisible()
   await expect(page.getByTestId('appeal-intake-summary')).toContainText('รับ-512/2569')

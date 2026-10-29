@@ -1,17 +1,17 @@
 import { expect, test, type Page } from '@playwright/test'
-import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { KB1_DONE, linkMainCaseAsOfficer, promoteToCaseOwner, readCase, seedMockState, switchRole } from '../helpers/seed'
 import { newCaseNoAfterIntake } from '../helpers/seed'
 
 /**
  * Sheet 02 · รับคำขอ / เชื่อมโยงเลขสำนวน (WIT0202 → WIT0216)
  *
- * ครอบคลุมช่องทางรับเรื่องทั้งสาม (เข้าพบ/โทรศัพท์/หนังสือต้นทาง), การกลั่นกรองความเร่งด่วนก่อน
- * จัดทำแบบ (WIT0207-0208), การเชื่อมโยงเลขสำนวนหลัก (WIT0212-0215 — ห้ามปัดตกแม้เชื่อมโยงไม่ได้),
- * การจัดทำ คบ.1 และการตรวจ Audit Log ของขั้นรับเรื่อง
+ * ครอบคลุมช่องทางรับเรื่องทั้งสาม (เข้าพบ/โทรศัพท์/หนังสือต้นทาง), การจัดทำ คบ.1 และการตรวจ Audit Log ของขั้นรับเรื่อง
+ * ขั้นรับเรื่องไม่กลั่นกรอง — เจ้าหน้าที่ที่รับเรื่องเองเชื่อมโยงคดีหลักก่อนส่ง ผอ. (WIT0212-0215 — ห้ามปัดตกแม้เชื่อมโยงไม่ได้)
+ * เรื่องที่ธุรการรับ เจ้าของสำนวนเชื่อมโยงหลังจัดทำ คบ.1 · กลั่นกรองความเร่งด่วนหลัง คบ.1 เสมอ (WIT0207-0208)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 /** ไฟล์ทดสอบสร้างเป็น buffer ในหน่วยความจำ ไม่พึ่งไฟล์จริงบนเครื่อง */
 const pdfFile = (name: string, bytes = 2 * 1024) => ({
   name,
@@ -33,13 +33,12 @@ async function newCaseNoFromUrl(page: Page): Promise<string> {
 }
 
 test.describe('Sheet 02 — รับคำขอ / เชื่อมโยงเลขสำนวน', () => {
-  test('TC-001 · [Happy] เข้าพบเจ้าหน้าที่ ทำ คบ.1 เชื่อมโยงเลขสำนวน แล้วส่ง ผอ. มอบหมาย', async ({ page }) => {
+  test('TC-001 · [Happy] เข้าพบเจ้าหน้าที่ ทำ คบ.1 เชื่อมโยงคดีหลัก แล้วส่ง ผอ. มอบหมาย', async ({ page }) => {
     await seedMockState(page, 'Case 1', 'officer')
     await page.goto('/intake')
 
-    // WIT0207-0208 — กลั่นกรองความเร่งด่วนก่อนจัดทำแบบ (เจ้าหน้าที่ ป.ป.ท. ไม่ใช่ธุรการ ต้องกลั่นกรอง)
-    await page.getByRole('radio', { name: /^กรณีปกติ/ }).click()
-    await page.locator('#intakeScreeningNote').fill('ไม่มีเหตุอันตรายเร่งด่วน')
+    // ขั้นรับเรื่องไม่มีการกลั่นกรองความเร่งด่วน — เจ้าของสำนวนกลั่นกรองหลังจัดทำ คบ.1
+    await expect(page.getByTestId('intake-triage')).toHaveCount(0)
 
     // WIT0211 — เลือกจัดทำแบบ คบ.1 (ช่องทางเข้าพบเจ้าหน้าที่)
     await page.getByLabel('อัปโหลดไฟล์ คบ.1').setInputFiles(pdfFile('scan.pdf'))
@@ -47,17 +46,19 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
 
     await page.getByRole('button', { name: 'เจ้าหน้าที่กรอก คบ.1' }).click()
     // เลือก คบ.1 = เปิดแบบ คบ.1 ให้กรอกต่อทันที
-    await expect(page).toHaveURL(/\/form\/1\?caseNo=WP-/)
+    await expect(page).toHaveURL(/\/form\/1\?caseNo=\d{4}(\/|%2F)\d{4}/)
     const newCaseNo = await newCaseNoFromUrl(page)
 
-    // WIT0212/0214 — ค้นและเชื่อมโยงเลขสำนวนหลัก แล้วยืนยัน
+    // เจ้าหน้าที่ผู้รับเรื่องเชื่อมโยงคดีหลักก่อนส่ง ผอ. — ยังไม่เชื่อมโยงจะส่งต่อไม่ได้
     await expect(page.getByText('คดีหลักและการประเมินภัย')).toBeVisible()
-    await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
-    await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
-
-    const linked = await readCase(page, newCaseNo)
-    expect(linked?.mainCaseStatus).toBe('linked')
-    expect(linked?.linkedMainCaseId).toBeTruthy()
+    await expect(page.getByTestId('main-case-link-deferred')).toHaveCount(0)
+    await expect(page.getByTestId('forward-case-button')).toBeDisabled()
+    await linkMainCaseAsOfficer(page)
+    const created = await readCase(page, newCaseNo)
+    expect(created?.linkedMainCaseId).toBeTruthy()
+    expect(created?.urgency).toBeFalsy()
+    // ขั้นรับเรื่องไม่มีแผงกลั่นกรอง แม้เชื่อมโยงแล้ว
+    await expect(page.getByTestId('urgency-screening-panel')).toHaveCount(0)
 
     // WIT0216 — ส่งคำขอให้ ผอ. มอบหมาย
     await page.getByTestId('forward-case-button').click()
@@ -75,12 +76,9 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
     await seedMockState(page, 'Case 1', 'officer')
     await page.goto('/intake')
 
-    await page.getByRole('radio', { name: /^กรณีปกติ/ }).click()
-    await page.locator('#intakeScreeningNote').fill('รับแจ้งทางโทรศัพท์ ยังไม่มีเหตุเร่งด่วนชัดเจน')
-
     await page.getByRole('button', { name: 'เจ้าหน้าที่บันทึก คบ.2' }).click()
     // เลือก คบ.2 = เปิดแบบ คบ.2 ให้บันทึกต่อทันที
-    await expect(page).toHaveURL(/\/form\/2\?caseNo=WP-/)
+    await expect(page).toHaveURL(/\/form\/2\?caseNo=\d{4}(\/|%2F)\d{4}/)
     const newCaseNo = await newCaseNoFromUrl(page)
 
     const created = await readCase(page, newCaseNo)
@@ -116,33 +114,38 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
     await expect(page.getByTestId('forward-case-button')).toBeVisible()
   })
 
-  test('TC-004 · [Happy] บันทึกผลการกลั่นกรองเป็นเร่งด่วน พร้อมเหตุผล', async ({ page }) => {
+  test('TC-004 · [Happy] เจ้าหน้าที่รับเรื่องเข้าทะเบียนโดยไม่มีผลกลั่นกรอง — กลั่นกรองหลังจัดทำ คบ.1', async ({ page }) => {
     await seedMockState(page, 'Case 1', 'officer')
     await page.goto('/intake')
 
-    await page.getByRole('radio', { name: /^กรณีจำเป็นเร่งด่วน/ }).click()
-    await page.locator('#intakeScreeningNote').fill('ถูกข่มขู่คุกคามถึงชีวิต')
+    await expect(page.getByTestId('intake-triage')).toHaveCount(0)
     await page.getByPlaceholder('ชื่อบุคคลหรือหน่วยงาน').fill('นางสาวทดสอบ พยาน')
-
     await page.getByRole('button', { name: 'รับเอกสารเข้าทะเบียน' }).click()
     const newCaseNo = await newCaseNoFromUrl(page)
 
-    // สรุปข้อมูลแฟ้มไม่แสดงระดับความเสี่ยงแล้ว — ตรวจผลกระทบที่มองเห็นได้จากช่องความเร่งด่วนแทน
-    await expect(page.getByText('ความเร่งด่วน:')).toBeVisible()
-
     const created = await readCase(page, newCaseNo)
-    expect(created?.risk).toBe('วิกฤต')
-    expect(created?.urgency).toBe('urgent')
-    expect(created?.urgencyAssessedAt).toBeTruthy()
-    expect(created?.urgencyAssessedBy).toBeTruthy()
-    expect(created?.urgencyAssessmentNote).toContain('ข่มขู่คุกคามถึงชีวิต')
+    expect(created?.stage).toBe('officer_intake')
+    expect(created?.risk).toBe('ยังไม่ประเมิน')
+    expect(created?.urgency).toBeFalsy()
+    expect(created?.urgencyAssessedAt).toBeFalsy()
+
+    // เจ้าของสำนวนบันทึก คบ.1 แล้ว → เชื่อมโยงคดีหลัก → กลั่นกรองเป็นเร่งด่วนพร้อมเหตุผล
+    await promoteToCaseOwner(page, newCaseNo)
+    await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
+    await expect(page.getByTestId('urgency-screening-panel')).toBeVisible()
+    await page.getByTestId('urgency-screening-panel').getByRole('textbox').fill('ถูกข่มขู่คุกคามถึงชีวิต')
+    await page.getByRole('button', { name: 'กรณีจำเป็นเร่งด่วน (→ คบ.3 → คบ.4 → คบ.5)' }).click()
+
+    await expect.poll(async () => (await readCase(page, newCaseNo))?.urgency).toBe('urgent')
+    const screened = await readCase(page, newCaseNo)
+    expect(screened?.risk).toBe('วิกฤต')
+    expect(screened?.urgencyAssessedAt).toBeTruthy()
+    expect(screened?.urgencyAssessmentNote).toContain('ข่มขู่คุกคามถึงชีวิต')
   })
 
   test('TC-005 · [Negative] เชื่อมโยงเลขสำนวนหลักไม่ได้ ต้องรับเรื่องต่อ ห้ามปัดตก', async ({ page }) => {
-    await seedMockState(page, 'Case 1', 'officer', {
-      stage: 'officer_intake',
-      receivedByUserId: 'OFF-001',
-    })
+    // เจ้าของสำนวนเชื่อมโยงหลังจัดทำ คบ.1 (Case 1.3 + คบ.1 บันทึกแล้ว)
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
 
     // WIT0215 — ต้องเลือกเหตุผลก่อน ถ้ายังไม่เลือกแล้วกดบันทึก ระบบต้องปฏิเสธและยังไม่เปลี่ยนสถานะ
@@ -175,25 +178,27 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
     // ไม่มีปุ่ม/เส้นทางปัดตกคำขออัตโนมัติ — ไม่มีปุ่มปฏิเสธ/ปัดตกปรากฏในแฟ้มเลย
     await expect(page.getByRole('button', { name: /ปัดตก|ปฏิเสธคำร้อง/ })).toHaveCount(0)
 
-    // ยังต้องส่งคำขอไป ผอ. ได้ตามปกติ
-    await expect(page.getByTestId('forward-case-button')).toBeEnabled()
-    await page.getByTestId('forward-case-button').click()
-    await page.getByRole('button', { name: 'ยืนยันส่งต่อ' }).click()
-    await expect.poll(async () => (await readCase(page, CASE_NO))?.stage).toBe('director_assign')
+    // เดินเรื่องต่อได้ตามปกติ — ขั้นถัดไปคือกลั่นกรองความเร่งด่วนในการ์ดเดียวกัน
+    await expect(page.getByTestId('urgency-screening-panel')).toBeVisible()
   })
 
-  test('TC-006 · [Negative] ส่งคำขอไป ผอ. โดยยังไม่บันทึกผลกลั่นกรอง (ช่องทางบังคับกลั่นกรอง)', async ({ page }) => {
+  test('TC-006 · [Happy] เจ้าหน้าที่รับเรื่องได้ทันทีโดยไม่ต้องกลั่นกรอง แล้วส่ง ผอ. มอบหมาย', async ({ page }) => {
     await seedMockState(page, 'Case 1', 'officer')
     await page.goto('/intake')
 
-    // ข้าม WIT0207-0208 — ไม่เลือกผลกลั่นกรองเลย แล้วกดส่งทันที
-    // ปุ่มรับเข้าทะเบียนทุกการ์ดถูกล็อก พร้อมบอกเหตุผล จนกว่าจะเลือกผลคัดกรอง
-    await expect(page.getByRole('button', { name: 'รับเอกสารเข้าทะเบียน' })).toBeDisabled()
-    await expect(page.getByRole('button', { name: 'เจ้าหน้าที่กรอก คบ.1' })).toBeDisabled()
-    await expect(page.getByRole('button', { name: 'เจ้าหน้าที่บันทึก คบ.2' })).toBeDisabled()
-    await expect(page.getByText('กรุณาเลือกผลคัดกรองความเร่งด่วนเบื้องต้นก่อน (กรณีปกติ / กรณีจำเป็นเร่งด่วน)')).toBeVisible()
-    // ไม่อนุญาตให้ส่งต่อ — ยังอยู่หน้า /intake เดิม ไม่มีคำร้องใหม่ถูกสร้าง
-    await expect(page).toHaveURL(/\/intake$/)
+    // ไม่มีด่านกลั่นกรองที่ขั้นรับเรื่อง — ปุ่มรับเข้าทะเบียนทุกการ์ดกดได้ทันที
+    await expect(page.getByRole('button', { name: 'รับเอกสารเข้าทะเบียน' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: 'เจ้าหน้าที่กรอก คบ.1' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: 'เจ้าหน้าที่บันทึก คบ.2' })).toBeEnabled()
+    await expect(page.getByText('กรุณาเลือกผลคัดกรองความเร่งด่วนเบื้องต้นก่อน (กรณีปกติ / กรณีจำเป็นเร่งด่วน)')).toHaveCount(0)
+
+    await page.getByPlaceholder('ชื่อบุคคลหรือหน่วยงาน').fill('นายทดสอบ ผู้ร้อง')
+    await page.getByRole('button', { name: 'รับเอกสารเข้าทะเบียน' }).click()
+    const newCaseNo = await newCaseNoFromUrl(page)
+    await linkMainCaseAsOfficer(page)
+    await page.getByTestId('forward-case-button').click()
+    await page.getByRole('button', { name: 'ยืนยันส่งต่อ' }).click()
+    await expect.poll(async () => (await readCase(page, newCaseNo))?.stage).toBe('director_assign')
   })
 
   // TC-007 · ข้ามตามที่ตกลงกับผู้ใช้ — แบบ คบ.1 ตั้งใจไม่บังคับฟิลด์เพื่อให้เดโมกรอกข้ามได้เร็ว
@@ -211,23 +216,21 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
     await seedMockState(page, 'Case 1', 'officer')
     await page.goto('/intake')
 
-    // คำขอที่ 1
-    await page.getByRole('radio', { name: /^กรณีปกติ/ }).click()
-    await page.locator('#intakeScreeningNote').fill('กรณีปกติ')
+    // คำขอที่ 1 — รับเรื่องแล้วเจ้าของสำนวนเชื่อมโยงหลังจัดทำ คบ.1
     await page.getByPlaceholder('ชื่อบุคคลหรือหน่วยงาน').fill('พยานที่หนึ่ง')
     await page.getByRole('button', { name: 'รับเอกสารเข้าทะเบียน' }).click()
     const case1 = await newCaseNoFromUrl(page)
+    await promoteToCaseOwner(page, case1)
     await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
     await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
     const linked1 = await readCase(page, case1)
 
     // คำขอที่ 2 ของพยานคนละคน — ผูกเลขสำนวนหลักเดียวกัน
     await page.goto('/intake')
-    await page.getByRole('radio', { name: /^กรณีปกติ/ }).click()
-    await page.locator('#intakeScreeningNote').fill('กรณีปกติ')
     await page.getByPlaceholder('ชื่อบุคคลหรือหน่วยงาน').fill('พยานที่สอง')
     await page.getByRole('button', { name: 'รับเอกสารเข้าทะเบียน' }).click()
     const case2 = await newCaseNoFromUrl(page)
+    await promoteToCaseOwner(page, case2)
     await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
     await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
     const linked2 = await readCase(page, case2)
@@ -244,10 +247,7 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
   })
 
   test('TC-009 · [Edge] เชื่อมโยงเลขสำนวนภายหลังจากที่เคยบันทึกเป็น unlinked', async ({ page }) => {
-    await seedMockState(page, 'Case 1', 'officer', {
-      stage: 'officer_intake',
-      receivedByUserId: 'OFF-001',
-    })
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
 
     await page
@@ -304,19 +304,18 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
   test('TC-011 · [Audit] ตรวจ Audit Log ของการรับคำขอ', async ({ page }) => {
     await seedMockState(page, 'Case 1', 'officer', {
       stage: 'officer_intake',
-      receivedByUserId: 'OFF-001',
+      receivedByUserId: 'OFF-REG1',
     })
     await page.goto(DOSSIER_URL)
 
-    await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
-    await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
+    // ขั้นรับเรื่องส่ง ผอ. ได้ทันทีโดยไม่ต้องเชื่อมโยงคดีหลัก
     await page.getByTestId('forward-case-button').click()
     await page.getByRole('button', { name: 'ยืนยันส่งต่อ' }).click()
     await expect.poll(async () => (await readCase(page, CASE_NO))?.stage).toBe('director_assign')
 
     // เนื้อหา Log มีครบจริงในแฟ้มข้อมูล (ตรวจแบบ secondary ผ่าน store)
     const history = (await readCase(page, CASE_NO))?.assignmentHistory as Array<Record<string, string>> | undefined
-    expect(history?.some((h) => h.action.includes('เชื่อมโยงเลขคดีหลัก'))).toBe(true)
+    expect(history?.some((h) => h.action.includes('รับ'))).toBe(true)
     expect(history?.every((h) => h.actor && h.at)).toBe(true)
 
     // ต้องมีแท็บ "ประวัติ / Audit Log" ที่ผู้ใช้เปิดดูได้จริงในแฟ้มคำร้อง
@@ -335,7 +334,6 @@ test.describe('Sheet 02 — รับคำขอ / เชื่อมโยง�
     expect(rendered.every((t) => t.includes('ผู้กระทำ:'))).toBe(true)
 
     // เนื้อหาสำคัญของขั้นรับคำขอต้องอ่านได้จากหน้าจอ ไม่ใช่มีแค่ใน store
-    await expect(auditLog).toContainText('เชื่อมโยงเลขคดีหลัก')
     await expect(auditLog).toContainText('ส่งต่อ')
   })
 

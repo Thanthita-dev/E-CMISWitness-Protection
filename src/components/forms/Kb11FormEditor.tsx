@@ -116,7 +116,7 @@ export const Kb11FormEditor: React.FC<Kb11FormEditorProps> = ({ onSaved }) => {
       <Section title="ลายมือชื่อท้ายบันทึกข้อตกลง">
         <p className="ws-readonly text-[0.88rem] leading-relaxed text-muted">
           <i className="fa-solid fa-circle-info mr-1.5" />
-          พยาน เจ้าพนักงาน ป.ป.ท. และพยานในการทำข้อตกลง ลงลายมือชื่อและบันทึกข้อตกลงได้จากปุ่ม "ลงนาม"
+          พยานและเจ้าพนักงาน ป.ป.ท. ลงลายมือชื่อและบันทึกข้อตกลงได้จากปุ่ม "ลงนาม"
           ในรายการแบบฟอร์ม คบ. ของแฟ้มคำร้อง
         </p>
       </Section>

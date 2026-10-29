@@ -1,4 +1,4 @@
-import { noticeForCase, noticeWorkerAllowed, missingNoticeFields, NOTICE_FIELD_LABELS } from '../../lib/noticeDocuments'
+import { kb10ClerkAllowed, noticeForCase, noticeWorkerAllowed, missingNoticeFields, NOTICE_FIELD_LABELS } from '../../lib/noticeDocuments'
 import React, { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Button } from '../common/Button'
@@ -55,12 +55,13 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
     const { submitOutgoingForSignature, recordDispatch, recordDelivery, reportDispatchFailure } = useCaseStore()
     const { ensureSetForForm, addFileToSet } = useFormDraftStore()
 
+    const [deliveryComplete, setDeliveryComplete] = useState(false)
     const [channel, setChannel] = useState(CHANNELS[0])
     const [tracking, setTracking] = useState('')
     const [failureReason, setFailureReason] = useState('')
     const [dispatchError, setDispatchError] = useState('')
     const [deliveredDate, setDeliveredDate] = useState((caseItem.deliveredAt || new Date().toISOString()).slice(0, 10))
-    const [recipient, setRecipient] = useState('')
+    const [recipient, setRecipient] = useState(caseItem.deliveryRecipient || caseItem.person)
     const [recipientRelation, setRecipientRelation] = useState(RECIPIENT_RELATIONS[0])
     const [relationDetail, setRelationDetail] = useState('')
     const [ackType, setAckType] = useState(defaultAckType(caseItem.dispatchChannel))
@@ -83,6 +84,7 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
     const isOfficer = isCaseWorkerRole(currentRole) && (!document || noticeWorkerAllowed(currentRole, caseItem, useAuthStore.getState().currentOfficerUserId))
     /** WIT0912 — ธุรการสำนัก/กองรับคำอุทธรณ์ช่องทางหนังสือเข้าแฟ้มเดิมได้ แล้วเรื่องเดินต่อที่เจ้าหน้าที่ตรวจ (WIT0914) */
     const isReceiver = currentRole === 'receiver'
+    const canRecordReceipt = isOfficer || (document?.formNo === 10 && kb10ClerkAllowed(currentRole, caseItem, useAuthStore.getState().currentOrgUnitId))
     const isPostalChannel = channel === CHANNELS[0]
 
     const isApproved = caseItem.activity7State === 'approved'
@@ -131,7 +133,7 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
         })
         const saved = useCaseStore.getState().getCase(caseItem.no)
         if (!saved?.deliveredAt) { showToast('ยังบันทึกการรับหนังสือไม่ได้ กรุณาตรวจข้อมูลและสิทธิ์', 'warning'); return }
-        showToast(isApproved ? 'บันทึกการรับ คบ.9 แล้ว ให้พยานลงนาม คบ.11 ต่อ' : 'บันทึกการรับ คบ.10 แล้ว')
+        showToast(isApproved ? 'บันทึกการรับ คบ.9 แล้ว ให้พยานลงนาม คบ.11 ต่อ' : 'บันทึกการรับ คบ.10 แล้ว · ยื่นอุทธรณ์ได้')
         onActionComplete?.()
     }
 
@@ -178,18 +180,14 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
                     </div>
                     <div>
                         <h2 className="text-[1.1rem] font-bold leading-snug text-navy">{document ? 'นำส่งหนังสือแจ้งผล' : 'ขั้นที่ 5 · จัดทำ ลงนาม และนำส่งหนังสือแจ้งผล'}</h2>
-                        <p className="text-[0.8rem] text-muted">
-                            {isApproved
-                                ? 'ส่ง คบ.9 ให้พยาน แล้วบันทึกการรับแจ้งก่อนลงนาม คบ.11'
-                                : 'คบ.10 หนังสือแจ้งไม่ให้การคุ้มครอง พร้อมสิทธิอุทธรณ์ 30 วัน'}
-                        </p>
+                        {isApproved && <p className="text-[0.8rem] text-muted">ส่ง คบ.9 ให้พยาน แล้วบันทึกการรับแจ้งก่อนลงนาม คบ.11</p>}
                     </div>
                 </div>
             </div>
 
             {/* WIT0904 / WIT0905 / WIT0909 — ด่านก่อนรอบลงนาม คบ.10 และปลายทาง "ไม่อุทธรณ์" */}
             {!document && caseItem.outgoingSignedAt && <p className="ws-readonly">ข้อมูลจากโฟลว์เดิม — ไม่มีฉบับลงนามเดิมและประวัติรุ่นที่ระบบนี้บันทึกไว้ ไม่อ้างว่ามีหลักฐานตรวจสอบลายมือชื่อย้อนหลัง</p>}
-            {isRejected && <Kb10ScreeningCard caseItem={caseItem} />}
+            {isRejected && (!document || Boolean(caseItem.deliveredAt) || Boolean(caseItem.nonApprovalClosedAt)) && <Kb10ScreeningCard caseItem={caseItem} />}
 
             {/* รอบลงนามหนังสือส่งออก — ตัวลงนามจริงอยู่ในหน้าแบบฟอร์มของแต่ละฉบับ */}
             {!document && <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3 text-[0.8rem]">
@@ -255,12 +253,11 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
 
             {/* Dispatch & delivery — เปิดให้นำส่งได้หลังเลขาธิการ ป.ป.ท. ลงนามหนังสือส่งออกครบแล้วเท่านั้น */}
             {(outgoingSigned || (allowPreparation && document?.original)) && (
-                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3 text-[0.8rem]">
-                    <div className="font-bold text-navy">การนำส่งหนังสือและวันที่พยานได้รับ</div>
-                    {!outgoingSigned && <p className="text-warning" data-testid="notice-delivery-not-ready">กรอกรายละเอียดหนังสือด้านล่างให้ครบ แล้วกดบันทึกการนำส่ง ระบบจะตรวจพร้อมส่งให้ในครั้งเดียว</p>}
+                <div className="space-y-4 text-[0.88rem]">
+                    <div className="font-semibold text-navy">ข้อมูลการนำส่ง</div>
 
                     {caseItem.dispatchedAt && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 gap-2">
                             <div className="rounded-lg border border-slate-200 p-2.5">
                                 <span className="block text-[0.8rem] text-muted">ช่องทางนำส่ง</span>
                                 <strong className="text-ink">{caseItem.dispatchChannel}</strong>
@@ -302,10 +299,34 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
 
                     {/* TC-064 — ฟอร์มบันทึกการนำส่งยังต้องเปิดใช้ได้ต่อไปตราบใดที่พยานยังไม่ได้รับจริง
                         (deliveredAt ว่าง) เพื่อให้เปลี่ยนช่องทางเป็น "นำส่งโดยตรง" แล้วส่งใหม่ได้หลังตีกลับ */}
-                    {!caseItem.deliveredAt && isOfficer && (
-                        <div className={`grid grid-cols-1 gap-2 items-end sm:grid-cols-2`}>
+                    {caseItem.dispatchedAt && !caseItem.deliveredAt && isOfficer && document?.formNo !== 10 && <div className="space-y-4" data-testid="notice-delivery-result">
+                        <label className="block"><span className="ws-label">ผลการนำส่ง</span>
+                            <select aria-label="ผลการนำส่ง" className="ws-input w-full" value={deliveryComplete ? 'delivered' : 'pending'} onChange={(e) => setDeliveryComplete(e.target.value === 'delivered')}>
+                                <option value="pending">อยู่ระหว่างจัดส่ง</option>
+                                <option value="delivered">นำส่งสำเร็จ / พยานได้รับหนังสือแล้ว</option>
+                            </select>
+                        </label>
+                        {deliveryComplete && <>
+                            <label className="block"><span className="ws-label">วันที่ได้รับหนังสือ</span><input aria-label="วันที่ได้รับหนังสือ" type="date" className="ws-input w-full" value={deliveredDate} onChange={(e) => setDeliveredDate(e.target.value)} /></label>
+                            <label className="block"><span className="ws-label">ชื่อผู้รับหนังสือ</span><input aria-label="ชื่อผู้รับหนังสือ" className="ws-input w-full" value={recipient} onChange={(e) => setRecipient(e.target.value)} /></label>
+                            <p className="text-sm text-muted">การบันทึกนี้เป็นการยืนยันของเจ้าหน้าที่ว่าผู้รับได้รับหนังสือแล้ว</p>
+                            <Button type="button" className="w-full" disabled={!recipient.trim() || !deliveredDate} onClick={() => {
+                                recordDelivery(caseItem.no, new Date(`${deliveredDate}T12:00:00`).toISOString(), {
+                                    recipient: recipient.trim(), recipientRelation: 'พยานผู้รับการคุ้มครอง',
+                                    ackType: 'เจ้าหน้าที่ยืนยันผลการนำส่ง',
+                                    ackDocument: 'บันทึกยืนยันการรับหนังสือผ่านระบบ',
+                                })
+                                if (!useCaseStore.getState().getCase(caseItem.no)?.deliveredAt) { showToast('บันทึกไม่สำเร็จ กรุณาตรวจสถานะและสิทธิ์', 'warning'); return }
+                                showToast('บันทึกนำส่งสำเร็จแล้ว สามารถลงนาม คบ.11 ต่อได้')
+                                onActionComplete?.()
+                            }}>บันทึกผลนำส่งสำเร็จ</Button>
+                        </>}
+                    </div>}
+                    {caseItem.deliveredAt && isApproved && <Link to="/form/$formId" params={{ formId: '11' }} search={{ caseNo: caseItem.no }} className="inline-flex min-h-[44px] items-center font-semibold text-navy underline">ไปลงนาม คบ.11</Link>}
+                    {!caseItem.deliveredAt && (!caseItem.dispatchedAt || caseItem.dispatchHistory?.at(-1)?.outcome === 'failed') && isOfficer && document?.formNo !== 10 && (
+                        <div className="flex flex-col gap-4">
                             <div className="sm:col-span-full">
-                                <label className="block font-semibold text-slate-700 mb-1">ช่องทางนำส่ง *</label>
+                                <label className="block font-semibold text-slate-700 mb-1">ช่องทางนำส่ง <span className="text-danger">*</span></label>
                                 <select
                                     data-testid="notice-delivery-channel"
                                     aria-label="ช่องทางนำส่ง"
@@ -326,8 +347,10 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
                             </p>}
                             {isPostalChannel && (
                                 <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">เลขติดตามพัสดุ</label>
+                                    <label htmlFor={`notice-tracking-${caseItem.no}`} className="block font-semibold text-slate-700 mb-1">เลขติดตามพัสดุ</label>
                                     <input
+                                        id={`notice-tracking-${caseItem.no}`}
+                                        placeholder="ระบุเลขติดตามพัสดุ"
                                         value={tracking}
                                         onChange={(e) => setTracking(e.target.value)}
                                         className="ws-input w-full"
@@ -367,6 +390,7 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
                                 }}
                                 variant="primary"
                                 size="md"
+                                className="w-full whitespace-nowrap"
                             >
                                 <i className="fa-solid fa-truck-fast" />
                                 บันทึกการนำส่ง
@@ -375,194 +399,7 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
                         </div>
                     )}
 
-                    {/* WIT0806 — ประวัติการนำส่งสะสมทุกครั้ง (ตีกลับแล้วเปลี่ยนช่องทางส่งใหม่ได้หลายรอบ) */}
-                    {(caseItem.dispatchHistory || []).length > 0 && (
-                        <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                            <div className="font-bold text-navy">ประวัติการนำส่ง</div>
-                            {(caseItem.dispatchHistory || []).map((h, idx) => (
-                                <div
-                                    key={h.id}
-                                    data-testid="dispatch-history-item"
-                                    className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-2.5 ${
-                                        h.outcome === 'failed'
-                                            ? 'border-rose-200 bg-rose-50/60'
-                                            : h.outcome === 'delivered'
-                                            ? 'border-emerald-200 bg-emerald-50/60'
-                                            : 'border-slate-200 bg-slate-50'
-                                    }`}
-                                >
-                                    <span className="text-ink">
-                                        ครั้งที่ {idx + 1} · {h.channel}
-                                        {h.tracking ? ` · เลขติดตาม ${h.tracking}` : ''} · {h.dispatchedAt}
-                                    </span>
-                                    <span
-                                        className={`font-bold ${
-                                            h.outcome === 'failed'
-                                                ? 'text-rose-700'
-                                                : h.outcome === 'delivered'
-                                                ? 'text-emerald-700'
-                                                : 'text-muted'
-                                        }`}
-                                    >
-                                        {h.outcome === 'failed'
-                                            ? `ไม่สำเร็จ/ตีกลับ${h.failureReason ? ` — ${h.failureReason}` : ''}`
-                                            : h.outcome === 'delivered'
-                                            ? 'ถึงมือผู้รับแล้ว'
-                                            : 'อยู่ระหว่างจัดส่ง'}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
 
-                    {/* TC-064 — แจ้งว่าการนำส่งครั้งล่าสุดตีกลับ/ไม่สำเร็จ เพื่อเปิดทางเปลี่ยนช่องทางแล้วส่งใหม่ */}
-                    {(caseItem.dispatchHistory || []).length > 0 && !caseItem.deliveredAt && isOfficer && (
-                        <div className="flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3">
-                            <div className="flex-1 min-w-[12rem]">
-                                <label className="block font-semibold text-slate-700 mb-1">เหตุผลที่นำส่งไม่สำเร็จ/ตีกลับ</label>
-                                <input
-                                    value={failureReason}
-                                    onChange={(e) => setFailureReason(e.target.value)}
-                                    placeholder="เช่น ไม่มีผู้รับตามที่อยู่ที่ระบุ"
-                                    className="ws-input w-full"
-                                />
-                            </div>
-                            <Button
-                                type="button"
-                                onClick={handleReportFailure}
-                                variant="danger"
-                                size="md"
-                            >
-                                <i className="fa-solid fa-rotate-left" />
-                                แจ้งว่าส่งไม่สำเร็จ/ตีกลับ
-                            </Button>
-                        </div>
-                    )}
-
-                    {/* WIT0806 — ร่องรอยการรับ: วันรับ · ผู้รับ · หลักฐานการรับทราบ (ปลดล็อก คบ.11) */}
-                    {caseItem.dispatchedAt && (!caseItem.deliveredAt || !caseItem.deliveryAckType) && isOfficer && (
-                        <div className="space-y-2.5 border-t border-slate-100 pt-3">
-                            <div className="font-bold text-navy">
-                                {caseItem.deliveredAt ? 'บันทึกร่องรอยการรับให้ครบ (ผู้รับ · หลักฐานการรับทราบ)' : 'บันทึกการรับหนังสือของพยาน'}
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">
-                                        {caseItem.dispatchChannel === CHANNELS[0] ? 'วันที่ไปรษณีย์ส่งถึงบ้านพยาน *' : 'วันที่พยานได้รับหนังสือ *'}
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={deliveredDate}
-                                        onChange={(e) => setDeliveredDate(e.target.value)}
-                                        className="ws-input w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">ผู้รับหนังสือ *</label>
-                                    <input
-                                        value={recipient}
-                                        onChange={(e) => setRecipient(e.target.value)}
-                                        placeholder={caseItem.person}
-                                        className="ws-input w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">สถานะผู้รับ / ความเกี่ยวข้องกับพยาน *</label>
-                                    <select
-                                        value={recipientRelation}
-                                        onChange={(e) => setRecipientRelation(e.target.value)}
-                                        className="ws-input w-full"
-                                    >
-                                        {RECIPIENT_RELATIONS.map((r) => (
-                                            <option key={r} value={r}>
-                                                {r}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">หลักฐานการรับทราบ *</label>
-                                    <select
-                                        value={ackType}
-                                        onChange={(e) => setAckType(e.target.value)}
-                                        className="ws-input w-full"
-                                    >
-                                        {ACK_TYPES.map((t) => (
-                                            <option key={t} value={t}>
-                                                {t}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                {needsRelationDetail(recipientRelation) && (
-                                    <div className="sm:col-span-2">
-                                        <label className="block font-semibold text-slate-700 mb-1">
-                                            ระบุผู้รับแทน — ชื่อ-สกุล และความสัมพันธ์กับพยาน *
-                                        </label>
-                                        <input
-                                            value={relationDetail}
-                                            onChange={(e) => setRelationDetail(e.target.value)}
-                                            placeholder={
-                                                recipientRelation === RECIPIENT_RELATIONS[1]
-                                                    ? 'เช่น นายสมชาย ใจดี — ทนายความผู้รับมอบอำนาจ'
-                                                    : 'เช่น นางสมหญิง ใจมั่น — มารดาของพยาน'
-                                            }
-                                            className="ws-input w-full"
-                                        />
-                                    </div>
-                                )}
-                                <div className="sm:col-span-2">
-                                    <label className="block font-semibold text-slate-700 mb-1">ไฟล์หลักฐานการรับทราบ *</label>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <label className="flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 min-h-[44px] px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer transition">
-                                            <i className="fa-solid fa-cloud-arrow-up" />
-                                            {ackFile ? 'เปลี่ยนไฟล์' : 'เลือกไฟล์อัปโหลด'}
-                                            <input
-                                                type="file"
-                                                accept={ATTACHMENT_ACCEPT}
-                                                className="hidden"
-                                                onChange={handleAckFileChange}
-                                            />
-                                        </label>
-                                        {ackFile ? (
-                                            <span className="flex items-center gap-1.5 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-slate-700">
-                                                <i className="fa-solid fa-file-pdf text-rose-600" />
-                                                <span className="truncate max-w-[16rem] font-medium">{ackFile.name}</span>
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => setAckFile(null)}
-                                                    variant="icon"
-                                                    size="icon"
-                                                    className="hover:text-rose-600"
-                                                    aria-label="นำไฟล์ออก"
-                                                    title="นำไฟล์ออก"
-                                                >
-                                                    <i className="fa-solid fa-xmark" />
-                                                </Button>
-                                            </span>
-                                        ) : (
-                                            <></>
-                                        )}
-                                    </div>
-                                    <p className="mt-1 text-[0.8rem] text-muted">
-                                        <i className="fa-solid fa-folder-open mr-1" />
-                                        ไฟล์จะถูกเก็บในโฟลเดอร์ คบ.{isRejected ? 10 : 9} ของแฟ้มนี้
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <Button
-                                    type="button"
-                                    onClick={handleRecordDelivery}
-                                    variant="primary"
-                                    size="md"
-                                >
-                                    <i className="fa-solid fa-check" />
-                                    ยืนยันการรับหนังสือ
-                                </Button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
 
@@ -620,7 +457,8 @@ export const NoticeDispatchCard: React.FC<NoticeDispatchCardProps> = ({ caseItem
       )} */}
 
             {/* Appeal window (rejected path) */}
-            {isRejected && caseItem.deliveredAt && (
+            {isRejected && caseItem.appealResolution && <p className="ws-callout">คำวินิจฉัยอุทธรณ์เป็นที่สุด — ไม่สามารถยื่นอุทธรณ์รอบที่ 2 ได้</p>}
+            {isRejected && caseItem.deliveredAt && !caseItem.appealResolution && (
                 <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 space-y-3 text-[0.8rem]">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="font-bold text-rose-900">

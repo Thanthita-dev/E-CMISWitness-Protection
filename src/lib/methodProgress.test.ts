@@ -3,7 +3,7 @@ import { getMethodProgress, method1Gate, wizardSectionCount } from './methodProg
 import { CaseItem, ProtectionMethodTrack } from '../types/case'
 
 /** แฟ้มเปล่าเท่าที่ตัวคำนวณความคืบหน้าใช้จริง — ฟิลด์อื่นของ CaseItem ไม่มีผลต่อการนับขั้น */
-const makeCase = (patch: Partial<CaseItem> = {}) => ({ no: 'WP-2568-001', ...patch }) as CaseItem
+const makeCase = (patch: Partial<CaseItem> = {}) => ({ no: '0001/2568', ...patch }) as CaseItem
 
 const track = (patch: Partial<ProtectionMethodTrack>): ProtectionMethodTrack =>
   ({ method: 1, status: 'pending', ...patch }) as ProtectionMethodTrack

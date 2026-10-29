@@ -3,7 +3,6 @@ import { Link } from '@tanstack/react-router'
 import type { CaseItem } from '../../types/case'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import { canOperateHandoff } from '../../lib/protectionHandoff'
 import { NOTICE_FIELD_LABELS, NOTICE_DETAIL_FIELDS, NOTICE_STATUS_LABELS, noticeForCase, noticeWorkerAllowed } from '../../lib/noticeDocuments'
 import { Button } from '../common/Button'
 import { showToast } from '../../lib/swal'
@@ -16,7 +15,7 @@ export const ResultNoticeCard: React.FC<{ caseItem: CaseItem; onPendingDetailsCh
   const check = useCaseStore((s) => s.checkResultNoticeReady)
   const [patch, setPatch] = useState<Record<string, string>>({})
   React.useEffect(() => { onPendingDetailsChange?.(patch) }, [patch, onPendingDetailsChange])
-  const allowed = noticeWorkerAllowed(auth.currentRole, caseItem, auth.currentOfficerUserId)
+  const allowed = noticeWorkerAllowed(auth.currentRole, caseItem, auth.currentOfficerUserId) && !caseItem.kb10DispatchRequestedAt && !caseItem.dispatchedAt
   if (!document?.original) return null
   return <section className="ws-card p-4 md:p-5 space-y-3" data-testid="result-notice-card">
     <h3 className="font-bold text-navy">เติมรายละเอียดหนังสือแจ้งผลหลังลงนาม · คบ.{document.formNo}</h3>
@@ -30,7 +29,7 @@ export const ResultNoticeCard: React.FC<{ caseItem: CaseItem; onPendingDetailsCh
       <Button data-testid="notice-save-details" onClick={() => { const ok = complete(caseItem.no, document.formNo, patch); showToast(ok ? 'เก็บรุ่นใหม่และประวัติการเติมรายละเอียดแล้ว' : 'ไม่มีการเปลี่ยนแปลงหรือไม่มีสิทธิเติมช่องที่ระบุ', ok ? 'success' : 'warning'); if (ok) setPatch({}) }}>บันทึกการเติมรายละเอียด</Button>
     </>}
     {allowed && document.status === 'completed' && <Button data-testid="notice-check-ready" onClick={() => { const ok = check(caseItem.no); showToast(ok ? 'ตรวจข้อมูลครบ — พร้อมส่งแจ้งผล' : 'ข้อมูลหรือสิทธิยังไม่ครบ', ok ? 'success' : 'warning') }}>ตรวจฉบับที่จะส่งและยืนยันพร้อมส่ง</Button>}
-    {allowed && document.status === 'ready' && <Link to="/dossier/$caseNo" params={{ caseNo: caseItem.no }} hash="notice-dispatch" data-testid="notice-go-dispatch" className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-navy px-4 py-2 text-[0.88rem] font-semibold text-white hover:bg-navy-2">เลือกช่องทางและนำส่ง คบ.{document.formNo}</Link>}
+    {allowed && document.formNo !== 10 && document.status === 'ready' && <Link to="/form/$formId" params={{ formId: String(document.formNo) }} search={{ caseNo: caseItem.no }} hash="notice-dispatch" data-testid="notice-go-dispatch" className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-navy px-4 py-2 text-[0.88rem] font-semibold text-white hover:bg-navy-2">เลือกช่องทางและนำส่ง คบ.{document.formNo}</Link>}
     {!allowed && <p className="text-muted">ดูเอกสารได้ตามสิทธิ แต่ไม่มีสิทธิเติมรายละเอียดหรือยืนยันพร้อมส่ง</p>}
     {document.versions.length > 1 && <p className="text-warning font-semibold" data-testid="notice-post-sign-warning">มีการเติมรายละเอียดหลังลงนาม — ลายมือชื่อเดิมไม่รับรองเนื้อหาที่เติมใหม่</p>}
     <details data-testid="notice-audit-history"><summary className="cursor-pointer font-semibold text-navy">ประวัติการเปลี่ยนแปลง ({document.audit.length}) และการส่ง ({document.dispatches.length})</summary>

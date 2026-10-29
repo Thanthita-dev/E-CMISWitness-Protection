@@ -3,7 +3,7 @@ import { readCase, seedMockState } from '../helpers/seed'
 import { noticeDetails } from '../helpers/noticeDocuments'
 import { fieldAfterLabel, signInModal } from '../journeys/journey-helpers'
 
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 for (const channel of ['ไปรษณีย์ตอบรับด่วน (EMS)', 'ส่งมอบโดยตรงถึงตัวพยาน']) {
   test(`เติม คบ.9 แล้วนำส่ง ${channel} รับแจ้งและลงนาม คบ.11 แยกกัน`, async ({ page }) => {
     await seedMockState(page, 'Approved - วิธีที่ 4')

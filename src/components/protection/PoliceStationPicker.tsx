@@ -24,7 +24,7 @@ export const PoliceStationPicker: React.FC<{
     <label className="block" htmlFor={`${id}-search`}><span className="ws-label">ค้นหาสถานีตำรวจด้วยชื่อหรือคำย่อ สน./สภ.</span>
       <input id={`${id}-search`} data-testid="coordination-station-search" type="search" className="ws-input w-full" placeholder="ค้นหาและเลือกสถานีตำรวจ" value={query} onChange={(e) => setQuery(e.target.value)} />
     </label>
-    <label className="block" htmlFor={`${id}-station`}><span className="ws-label">สถานีตำรวจที่ประสาน *</span>
+    <label className="block" htmlFor={`${id}-station`}><span className="ws-label">สถานีตำรวจที่ประสาน <span className="text-danger">*</span></span>
       <select id={`${id}-station`} data-testid="coordination-agency" className="ws-input w-full" value={stationId} onChange={(e) => onStationChange(e.target.value)}>
         <option value="">ค้นหาและเลือกสถานีตำรวจ</option>{options.map((s) => <option key={s.id} value={s.id}>{s.shortName} · {s.province}</option>)}
       </select>

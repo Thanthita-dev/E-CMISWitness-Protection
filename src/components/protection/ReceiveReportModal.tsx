@@ -3,10 +3,11 @@ import { Button } from '../common/Button'
 import { CaseItem, MonthlyReport } from '../../types/case'
 import { METHOD_LABELS } from '../../lib/episode'
 import { RISK_LEVELS } from '../../lib/constants'
-import { thaiMonthName } from '../../lib/utils'
+import { formatThaiDate, thaiMonthName } from '../../lib/utils'
 import { showToast, showConfirmAlert } from '../../lib/swal'
 import { useCaseStore } from '../../store/useCaseStore'
-import { compareKb13Methods } from '../../lib/kb13'
+import { compareKb13Methods, isExternalRound, isKb13RoundReadyToReceive, reportSourceLabel } from '../../lib/kb13'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface ReceiveReportModalProps {
   caseItem: CaseItem
@@ -17,6 +18,7 @@ interface ReceiveReportModalProps {
 
 /**
  * WIT1008 — รับ คบ.13 ที่ลงนามแล้วและตรวจผลปฏิบัติเทียบวิธีที่อนุมัติ
+ *      (รอบหนังสือภายนอกใช้การบันทึกรับหนังสือพร้อมไฟล์แทนการลงนาม)
  * WIT1009 — บันทึกสถานะล่าสุด ระดับความเสี่ยง ปัญหา และข้อเสนอรอบถัดไป (ทำต่อในโมดัลเดียวกันหลังตรวจรับแล้ว)
  *
  * เปิดจากปุ่ม "ตรวจรับรายงาน" ที่แถวรอบล่าสุดใน "รอบรายงานที่ผ่านมา" (รอบที่กำลังดำเนินการ)
@@ -24,7 +26,11 @@ interface ReceiveReportModalProps {
  */
 export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem, round, open, onClose }) => {
   const { receiveKb13Round, recordKb13Status, lockKb13Round } = useCaseStore()
-  const fullySigned = Boolean(round.officerSignedAt && round.witnessSignedAt)
+  const external = isExternalRound(round)
+  const sourceLabel = reportSourceLabel(round)
+  const letter = round.externalLetter
+  /** คบ.13 = ลงนามครบสองช่อง · หนังสือภายนอก = บันทึกรับพร้อมไฟล์แล้ว */
+  const readyToReceive = isKb13RoundReadyToReceive(round)
   const approved = caseItem.approvedMethods || []
   /** เทียบเฉพาะวิธีที่อนุมัติและเริ่มปฏิบัติจริงแล้ว — วิธีที่อนุมัติแต่ยังไม่ถึงคิวเริ่ม (pending/preparing) ไม่ถือว่าผิดปกติ */
   const startedApproved = approved.filter((m) => {
@@ -71,13 +77,53 @@ export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem
           {/* ---------- WIT1008 — รับรายงานและตรวจผลปฏิบัติ ---------- */}
           <section className="space-y-2">
             <strong className="block text-[0.8rem] text-navy-deep">รับรายงานและตรวจผลปฏิบัติ</strong>
+            {external && (
+              <div className="space-y-0.5 rounded-lg border border-line bg-soft p-3 text-[0.8rem] leading-relaxed text-slate-700">
+                <strong className="block text-navy-deep">
+                  <i className="fa-solid fa-envelope-open-text mr-1.5 text-blue" />
+                  {sourceLabel}
+                </strong>
+                {letter ? (
+                  <>
+                    <span className="block">หน่วยงาน: {letter.agency || '-'}</span>
+                    <span className="block">
+                      เลขที่ {letter.letterNo || '-'} · ลงวันที่ {letter.letterDate ? formatThaiDate(letter.letterDate) : '-'}
+                    </span>
+                    <span className="block">
+                      วันที่รับ {letter.receivedAt ? formatThaiDate(letter.receivedAt) : '-'} · เลขรับ {letter.receiveNo || '-'}
+                    </span>
+                    {letter.documentUrl ? (
+                      <a
+                        href={letter.documentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center font-semibold text-blue hover:underline"
+                      >
+                        <i className="fa-solid fa-paperclip mr-1.5" />
+                        เปิดไฟล์หนังสือ{letter.documentName ? ` (${letter.documentName})` : ''}
+                      </a>
+                    ) : (
+                      <span className="block font-semibold text-rose-800">
+                        <i className="fa-solid fa-triangle-exclamation mr-1.5" />
+                        ยังไม่ได้แนบไฟล์หนังสือ
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="block text-muted">ยังไม่ได้บันทึกรับหนังสือของรอบนี้</span>
+                )}
+              </div>
+            )}
             <p className="text-[0.8rem] text-slate-600">
               วิธีที่ได้รับอนุมัติ: {approved.length > 0 ? approved.map((m) => METHOD_LABELS[m]).join(' · ') : '-'}
             </p>
-            <p className="text-[0.8rem] text-slate-600">
-              วิธีที่รายงานว่าปฏิบัติจริง:{' '}
-              {round.methods?.length ? round.methods.map((m) => METHOD_LABELS[m]).join(' · ') : '-'}
-            </p>
+            {/* หนังสือภายนอกไม่มีช่องวิธีที่ปฏิบัติจริง — เจ้าหน้าที่อ่านเทียบจากเนื้อหาหนังสือเอง */}
+            {!external && (
+              <p className="text-[0.8rem] text-slate-600">
+                วิธีที่รายงานว่าปฏิบัติจริง:{' '}
+                {round.methods?.length ? round.methods.map((m) => METHOD_LABELS[m]).join(' · ') : '-'}
+              </p>
+            )}
 
             {round.reviewedAt ? (
               <p className="text-[0.8rem] font-semibold text-emerald-700">
@@ -86,7 +132,18 @@ export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem
               </p>
             ) : (
               <>
-                {!methodMismatch.matches && (
+                {external && (
+                  <label className="block">
+                    <span className="ws-label">ประเด็นที่พบจากหนังสือเมื่อเทียบกับวิธีที่ได้รับอนุมัติ (ถ้ามี)</span>
+                    <VoiceTextarea
+                      rows={2}
+                      value={mismatchIssue}
+                      onChange={(e) => setMismatchIssue(e.target.value)}
+                      className="ws-input w-full"
+                    />
+                  </label>
+                )}
+                {!external && !methodMismatch.matches && (
                   <div className="space-y-2 rounded-xl border border-rose-300 bg-rose-50/80 p-3">
                     <p className="text-[0.8rem] font-semibold leading-relaxed text-rose-900">
                       <i className="fa-solid fa-triangle-exclamation mr-1.5" />
@@ -110,7 +167,7 @@ export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem
                       <span className="block text-[0.8rem] font-bold text-rose-900 mb-1">
                         บันทึกประเด็น/เหตุสำคัญเพื่อเสนอทบทวนหรือขออนุมัติเปลี่ยนวิธี (จำเป็น)
                       </span>
-                      <textarea
+                      <VoiceTextarea
                         rows={2}
                         value={mismatchIssue}
                         onChange={(e) => setMismatchIssue(e.target.value)}
@@ -121,21 +178,21 @@ export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem
                 )}
                 <Button
                   type="button"
-                  disabled={!fullySigned || (!methodMismatch.matches && !mismatchIssue.trim())}
+                  disabled={!readyToReceive || (!external && !methodMismatch.matches && !mismatchIssue.trim())}
                   onClick={() => {
                     receiveKb13Round(
                       caseItem.no,
                       round.id,
                       undefined,
-                      !methodMismatch.matches ? mismatchIssue.trim() : undefined
+                      external || !methodMismatch.matches ? mismatchIssue.trim() || undefined : undefined
                     )
                     setIssues((prev) => prev || mismatchIssue.trim())
-                    showToast('รับ คบ.13 ที่ลงนามแล้วและตรวจผลปฏิบัติแล้ว')
+                    showToast(external ? `รับ${sourceLabel}และตรวจผลปฏิบัติแล้ว` : 'รับ คบ.13 ที่ลงนามแล้วและตรวจผลปฏิบัติแล้ว')
                   }}
                   className="rounded-lg bg-blue px-5 py-2 text-[0.8rem] font-bold text-white hover:bg-blue-dark transition disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <i className="fa-solid fa-inbox mr-1.5" />
-                  {fullySigned ? 'รับรายงานและตรวจผล' : 'รอลงนามครบทั้งสองช่องก่อน'}
+                  {readyToReceive ? 'รับรายงานและตรวจผล' : external ? 'รอบันทึกรับหนังสือพร้อมแนบไฟล์ก่อน' : 'รอลงนามครบทั้งสองช่องก่อน'}
                 </Button>
               </>
             )}
@@ -176,7 +233,7 @@ export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem
 
                 <label className="block">
                   <span className="ws-label">ปัญหา/อุปสรรคที่พบ</span>
-                  <textarea
+                  <VoiceTextarea
                     rows={2}
                     value={issues}
                     onChange={(e) => setIssues(e.target.value)}
@@ -186,7 +243,7 @@ export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem
 
                 <label className="block">
                   <span className="ws-label">ข้อเสนอสำหรับรอบถัดไป</span>
-                  <textarea
+                  <VoiceTextarea
                     rows={2}
                     value={nextProposal}
                     onChange={(e) => setNextProposal(e.target.value)}
@@ -227,14 +284,14 @@ export const ReceiveReportModal: React.FC<ReceiveReportModalProps> = ({ caseItem
                     showConfirmAlert({
                       icon: 'question',
                       title: 'ยืนยันล็อกเป็นรอบรายงานใหม่?',
-                      text: `เก็บ คบ.13 งวด ${thaiMonthName(round.period)} เป็นรอบรายงานใหม่ ล็อกฉบับลงนาม และแก้ไขไม่ได้อีก`,
+                      text: `เก็บ ${sourceLabel} งวด ${thaiMonthName(round.period)} เป็นรอบรายงานใหม่ — ${external ? 'ล็อกหนังสือที่รับไว้' : 'ล็อกฉบับลงนาม'} และแก้ไขไม่ได้อีก`,
                       showCancelButton: true,
                       confirmButtonText: 'ยืนยัน',
                       cancelButtonText: 'ยกเลิก',
                     }).then((res) => {
                       if (!res.isConfirmed) return
                       lockKb13Round(caseItem.no, round.id)
-                      showToast('ล็อกรอบรายงาน คบ.13 แล้ว')
+                      showToast(`ล็อกรอบรายงาน ${sourceLabel} แล้ว`)
                       onClose()
                     })
                   }}

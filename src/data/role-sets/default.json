@@ -1,0 +1,816 @@
+{
+  "id": "default",
+  "label": "รายชื่อตั้งต้น",
+  "roleNames": {
+    "got_receiver": "ธุรการคดี กอท.",
+    "got_director": "ผอ. กอท.",
+    "got_officer": "ผู้รับผิดชอบคุ้มครอง กอท.",
+    "got_supervisor": "ผู้บังคับบัญชาชั้นต้น กอท.",
+    "receiver": "ธุรการสำนัก/กอง",
+    "officer": "เจ้าหน้าที่ ป.ป.ท.",
+    "case_owner": "เจ้าของสำนวน",
+    "supervisor": "ผู้บังคับบัญชาชั้นต้น",
+    "director": "ผอ.สำนัก/กอง",
+    "secretary_receiver": "ธุรการ สำนักงานเลขาธิการ",
+    "deputy_secretary": "รองเลขาธิการ ป.ป.ท.",
+    "secretary": "เลขาธิการ ป.ป.ท.",
+    "committee": "ฝ่ายเลขานุการคณะกรรมการ ป.ป.ท.",
+    "protection": "ชุดคุ้มครอง",
+    "appeal": "{user:APP-001} (เจ้าหน้าที่อุทธรณ์)",
+    "admin": "Super Admin"
+  },
+  "users": [
+    {
+      "id": "GOT-REC-001",
+      "name": "นายสมบัติ รับสารบรรณ",
+      "position": "เจ้าพนักงานธุรการคดี",
+      "unit": "กองอำนวยการต่อต้านทุจริต (กอท.)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "got_receiver"
+      ],
+      "active": true
+    },
+    {
+      "id": "GOT-DIR-001",
+      "name": "นายวีระยุทธ พิทักษ์ธรรม",
+      "position": "ผู้อำนวยการ กอท.",
+      "unit": "กองอำนวยการต่อต้านทุจริต (กอท.)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "got_director"
+      ],
+      "active": true
+    },
+    {
+      "id": "GOT-OFF-001",
+      "name": "นางสาวอรุณี ใจมั่น",
+      "position": "นักสืบสวนสอบสวนชำนาญการ",
+      "unit": "กองอำนวยการต่อต้านทุจริต (กอท.)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "got_officer",
+        "protection_owner"
+      ],
+      "active": true
+    },
+    {
+      "id": "GOT-OFF-002",
+      "name": "นายธันวา พิทักษ์พยาน",
+      "position": "นักสืบสวนสอบสวนปฏิบัติการ",
+      "unit": "กองอำนวยการต่อต้านทุจริต (กอท.)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "got_officer",
+        "protection_owner"
+      ],
+      "active": true
+    },
+    {
+      "id": "GOT-SUP-001",
+      "name": "นายกิตติศักดิ์ ธรรมรักษ์",
+      "position": "หัวหน้ากลุ่มงานคุ้มครองพยาน กอท.",
+      "unit": "กองอำนวยการต่อต้านทุจริต (กอท.)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "got_supervisor"
+      ],
+      "active": true
+    },
+    {
+      "id": "OFF-001",
+      "name": "นางสาวอรุณี ใจมั่น",
+      "position": "นักสืบสวนสอบสวนชำนาญการ",
+      "unit": "กลุ่มงานคุ้มครองพยาน (ส่วนกลาง)",
+      "orgUnitId": "central-wp",
+      "roles": [
+        "officer",
+        "case_owner",
+        "protection_owner"
+      ],
+      "active": true
+    },
+    {
+      "id": "OFF-002",
+      "name": "นายธนาธิป สุวรรณเวช",
+      "position": "นักสืบสวนสอบสวนชำนาญการ",
+      "unit": "กลุ่มงานคุ้มครองพยาน (ส่วนกลาง)",
+      "orgUnitId": "central-wp",
+      "roles": [
+        "officer",
+        "case_owner",
+        "protection_owner"
+      ],
+      "active": true
+    },
+    {
+      "id": "OFF-REG1",
+      "name": "พ.ต.ต. ณัฐวุฒิ สรรพกิจ",
+      "position": "นักสืบสวนสอบสวนปฏิบัติการ",
+      "unit": "สำนักงาน ป.ป.ท. เขต 1",
+      "orgUnitId": "pacc-reg-1",
+      "roles": [
+        "officer",
+        "case_owner",
+        "protection_owner"
+      ],
+      "active": true
+    },
+    {
+      "id": "OFF-REG2",
+      "name": "พ.ต.ต. ชยพล ปกป้อง",
+      "position": "นักสืบสวนสอบสวนปฏิบัติการ",
+      "unit": "สำนักงาน ป.ป.ท. เขต 2",
+      "orgUnitId": "pacc-reg-2",
+      "roles": [
+        "officer",
+        "case_owner",
+        "protection_owner"
+      ],
+      "active": true
+    },
+    {
+      "id": "SUP-001",
+      "name": "นายกิตติศักดิ์ ธรรมรักษ์",
+      "position": "หัวหน้ากลุ่มงานคุ้มครองพยาน",
+      "unit": "กลุ่มงานคุ้มครองพยาน (ส่วนกลาง)",
+      "orgUnitId": "central-wp",
+      "roles": [
+        "supervisor"
+      ],
+      "active": true
+    },
+    {
+      "id": "SUP-REG1",
+      "name": "พ.ต.ท. เกรียงไกร มั่นคง",
+      "position": "หัวหน้ากลุ่มงานสืบสวน เขต 1",
+      "unit": "สำนักงาน ป.ป.ท. เขต 1",
+      "orgUnitId": "pacc-reg-1",
+      "roles": [
+        "supervisor"
+      ],
+      "active": true
+    },
+    {
+      "id": "SUP-REG2",
+      "name": "พ.ต.ท. สมชาย ตรวจตรา",
+      "position": "หัวหน้ากลุ่มงานสืบสวน เขต 2",
+      "unit": "สำนักงาน ป.ป.ท. เขต 2",
+      "orgUnitId": "pacc-reg-2",
+      "roles": [
+        "supervisor"
+      ],
+      "active": true
+    },
+    {
+      "id": "DIR-001",
+      "name": "นายวีระยุทธ พิทักษ์ธรรม",
+      "position": "ผู้อำนวยการกองบริหารคดี",
+      "unit": "กองบริหารคดี (ส่วนกลาง)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "director"
+      ],
+      "active": true
+    },
+    {
+      "id": "DIR-REG1",
+      "name": "พ.ต.อ. ธนดล ยุติธรรม",
+      "position": "ผู้อำนวยการสำนักงาน ป.ป.ท. เขต 1",
+      "unit": "สำนักงาน ป.ป.ท. เขต 1",
+      "orgUnitId": "pacc-reg-1",
+      "roles": [
+        "director"
+      ],
+      "active": true
+    },
+    {
+      "id": "DIR-REG2",
+      "name": "พ.ต.อ. อภิชาต ธรรมนำ",
+      "position": "ผู้อำนวยการสำนักงาน ป.ป.ท. เขต 2",
+      "unit": "สำนักงาน ป.ป.ท. เขต 2",
+      "orgUnitId": "pacc-reg-2",
+      "roles": [
+        "director"
+      ],
+      "active": true
+    },
+    {
+      "id": "SECREC-001",
+      "name": "นางสาวกนกวรรณ สารบรรณ",
+      "position": "เจ้าพนักงานธุรการชำนาญงาน",
+      "unit": "สำนักงานเลขาธิการ (ส่วนกลาง)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "secretary_receiver"
+      ],
+      "active": true
+    },
+    {
+      "id": "DSEC-001",
+      "name": "นายพิพัฒน์ ศรีสุวรรณ",
+      "position": "รองเลขาธิการคณะกรรมการ ป.ป.ท.",
+      "unit": "สำนักงาน ป.ป.ท. (ส่วนกลาง)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "deputy_secretary"
+      ],
+      "active": true
+    },
+    {
+      "id": "CMT-001",
+      "name": "นางสาวปิยะนุช เลขะกุล",
+      "position": "ฝ่ายเลขานุการคณะกรรมการ ป.ป.ท.",
+      "unit": "สำนักงานเลขานุการคณะกรรมการ ป.ป.ท.",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "committee"
+      ],
+      "active": true
+    },
+    {
+      "id": "SEC-001",
+      "name": "นายสุรศักดิ์ ธรรมพิทักษ์",
+      "position": "เลขาธิการคณะกรรมการ ป.ป.ท.",
+      "unit": "สำนักงาน ป.ป.ท. (ส่วนกลาง)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "secretary"
+      ],
+      "active": true
+    },
+    {
+      "id": "PROT-001",
+      "name": "ร.ต.อ. อนุชา กล้าหาญ",
+      "position": "หัวหน้าชุดปฏิบัติการคุ้มครองพยานพิเศษ",
+      "unit": "ชุดคุ้มครองพยาน (ส่วนกลาง)",
+      "orgUnitId": "central-wp",
+      "roles": [
+        "protection"
+      ],
+      "active": true
+    },
+    {
+      "id": "APP-001",
+      "name": "นางสาววราภรณ์ นิติธรรม",
+      "position": "นิติกรชำนาญการพิเศษ (งานวินิจฉัยอุทธรณ์)",
+      "unit": "กลุ่มงานกฎหมายและอุทธรณ์",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "appeal"
+      ],
+      "active": true
+    },
+    {
+      "id": "REC-001",
+      "name": "นายสมบัติ รับสารบรรณ",
+      "position": "เจ้าพนักงานธุรการชำนาญงาน",
+      "unit": "กองบริหารคดี (ส่วนกลาง)",
+      "orgUnitId": "central-gmc",
+      "roles": [
+        "receiver"
+      ],
+      "active": true
+    },
+    {
+      "id": "REC-REG1",
+      "name": "นายประเสริฐ ลงรับดี",
+      "position": "เจ้าพนักงานธุรการคดี",
+      "unit": "สำนักงาน ป.ป.ท. เขต 1",
+      "orgUnitId": "pacc-reg-1",
+      "roles": [
+        "receiver"
+      ],
+      "active": true
+    },
+    {
+      "id": "REC-REG2",
+      "name": "นางสาวจิราพร สารบรรณกิจ",
+      "position": "เจ้าพนักงานธุรการคดี",
+      "unit": "สำนักงาน ป.ป.ท. เขต 2",
+      "orgUnitId": "pacc-reg-2",
+      "roles": [
+        "receiver"
+      ],
+      "active": true
+    },
+    {
+      "id": "PROT-REG1",
+      "name": "ชุดคุ้มครอง เขต 1",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 1",
+      "orgUnitId": "pacc-reg-1",
+      "active": true
+    },
+    {
+      "id": "OWN-REG2",
+      "name": "เจ้าของสำนวน เขต 2",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 2",
+      "orgUnitId": "pacc-reg-2",
+      "active": true
+    },
+    {
+      "id": "PROT-REG2",
+      "name": "ชุดคุ้มครอง เขต 2",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 2",
+      "orgUnitId": "pacc-reg-2",
+      "active": true
+    },
+    {
+      "id": "REC-REG3",
+      "name": "ธุรการคดี เขต 3",
+      "position": "ธุรการคดี",
+      "roles": [
+        "receiver"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 3",
+      "orgUnitId": "pacc-reg-3",
+      "active": true
+    },
+    {
+      "id": "OFF-REG3",
+      "name": "เจ้าหน้าที่ ป.ป.ท. เขต 3",
+      "position": "เจ้าหน้าที่ ป.ป.ท.",
+      "roles": [
+        "officer",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 3",
+      "orgUnitId": "pacc-reg-3",
+      "active": true
+    },
+    {
+      "id": "OWN-REG3",
+      "name": "เจ้าของสำนวน เขต 3",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 3",
+      "orgUnitId": "pacc-reg-3",
+      "active": true
+    },
+    {
+      "id": "SUP-REG3",
+      "name": "ผู้บังคับบัญชาชั้นต้น เขต 3",
+      "position": "ผู้บังคับบัญชาชั้นต้น",
+      "roles": [
+        "supervisor"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 3",
+      "orgUnitId": "pacc-reg-3",
+      "active": true
+    },
+    {
+      "id": "DIR-REG3",
+      "name": "ผู้อำนวยการ เขต 3",
+      "position": "ผู้อำนวยการ",
+      "roles": [
+        "director"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 3",
+      "orgUnitId": "pacc-reg-3",
+      "active": true
+    },
+    {
+      "id": "PROT-REG3",
+      "name": "ชุดคุ้มครอง เขต 3",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 3",
+      "orgUnitId": "pacc-reg-3",
+      "active": true
+    },
+    {
+      "id": "REC-REG4",
+      "name": "ธุรการคดี เขต 4",
+      "position": "ธุรการคดี",
+      "roles": [
+        "receiver"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 4",
+      "orgUnitId": "pacc-reg-4",
+      "active": true
+    },
+    {
+      "id": "OFF-REG4",
+      "name": "เจ้าหน้าที่ ป.ป.ท. เขต 4",
+      "position": "เจ้าหน้าที่ ป.ป.ท.",
+      "roles": [
+        "officer",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 4",
+      "orgUnitId": "pacc-reg-4",
+      "active": true
+    },
+    {
+      "id": "OWN-REG4",
+      "name": "เจ้าของสำนวน เขต 4",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 4",
+      "orgUnitId": "pacc-reg-4",
+      "active": true
+    },
+    {
+      "id": "SUP-REG4",
+      "name": "ผู้บังคับบัญชาชั้นต้น เขต 4",
+      "position": "ผู้บังคับบัญชาชั้นต้น",
+      "roles": [
+        "supervisor"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 4",
+      "orgUnitId": "pacc-reg-4",
+      "active": true
+    },
+    {
+      "id": "DIR-REG4",
+      "name": "ผู้อำนวยการ เขต 4",
+      "position": "ผู้อำนวยการ",
+      "roles": [
+        "director"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 4",
+      "orgUnitId": "pacc-reg-4",
+      "active": true
+    },
+    {
+      "id": "PROT-REG4",
+      "name": "ชุดคุ้มครอง เขต 4",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 4",
+      "orgUnitId": "pacc-reg-4",
+      "active": true
+    },
+    {
+      "id": "REC-REG5",
+      "name": "ธุรการคดี เขต 5",
+      "position": "ธุรการคดี",
+      "roles": [
+        "receiver"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 5",
+      "orgUnitId": "pacc-reg-5",
+      "active": true
+    },
+    {
+      "id": "OFF-REG5",
+      "name": "เจ้าหน้าที่ ป.ป.ท. เขต 5",
+      "position": "เจ้าหน้าที่ ป.ป.ท.",
+      "roles": [
+        "officer",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 5",
+      "orgUnitId": "pacc-reg-5",
+      "active": true
+    },
+    {
+      "id": "OWN-REG5",
+      "name": "เจ้าของสำนวน เขต 5",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 5",
+      "orgUnitId": "pacc-reg-5",
+      "active": true
+    },
+    {
+      "id": "SUP-REG5",
+      "name": "ผู้บังคับบัญชาชั้นต้น เขต 5",
+      "position": "ผู้บังคับบัญชาชั้นต้น",
+      "roles": [
+        "supervisor"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 5",
+      "orgUnitId": "pacc-reg-5",
+      "active": true
+    },
+    {
+      "id": "DIR-REG5",
+      "name": "ผู้อำนวยการ เขต 5",
+      "position": "ผู้อำนวยการ",
+      "roles": [
+        "director"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 5",
+      "orgUnitId": "pacc-reg-5",
+      "active": true
+    },
+    {
+      "id": "PROT-REG5",
+      "name": "ชุดคุ้มครอง เขต 5",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 5",
+      "orgUnitId": "pacc-reg-5",
+      "active": true
+    },
+    {
+      "id": "REC-REG6",
+      "name": "ธุรการคดี เขต 6",
+      "position": "ธุรการคดี",
+      "roles": [
+        "receiver"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 6",
+      "orgUnitId": "pacc-reg-6",
+      "active": true
+    },
+    {
+      "id": "OFF-REG6",
+      "name": "เจ้าหน้าที่ ป.ป.ท. เขต 6",
+      "position": "เจ้าหน้าที่ ป.ป.ท.",
+      "roles": [
+        "officer",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 6",
+      "orgUnitId": "pacc-reg-6",
+      "active": true
+    },
+    {
+      "id": "OWN-REG6",
+      "name": "เจ้าของสำนวน เขต 6",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 6",
+      "orgUnitId": "pacc-reg-6",
+      "active": true
+    },
+    {
+      "id": "SUP-REG6",
+      "name": "ผู้บังคับบัญชาชั้นต้น เขต 6",
+      "position": "ผู้บังคับบัญชาชั้นต้น",
+      "roles": [
+        "supervisor"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 6",
+      "orgUnitId": "pacc-reg-6",
+      "active": true
+    },
+    {
+      "id": "DIR-REG6",
+      "name": "ผู้อำนวยการ เขต 6",
+      "position": "ผู้อำนวยการ",
+      "roles": [
+        "director"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 6",
+      "orgUnitId": "pacc-reg-6",
+      "active": true
+    },
+    {
+      "id": "PROT-REG6",
+      "name": "ชุดคุ้มครอง เขต 6",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 6",
+      "orgUnitId": "pacc-reg-6",
+      "active": true
+    },
+    {
+      "id": "REC-REG7",
+      "name": "ธุรการคดี เขต 7",
+      "position": "ธุรการคดี",
+      "roles": [
+        "receiver"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 7",
+      "orgUnitId": "pacc-reg-7",
+      "active": true
+    },
+    {
+      "id": "OFF-REG7",
+      "name": "เจ้าหน้าที่ ป.ป.ท. เขต 7",
+      "position": "เจ้าหน้าที่ ป.ป.ท.",
+      "roles": [
+        "officer",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 7",
+      "orgUnitId": "pacc-reg-7",
+      "active": true
+    },
+    {
+      "id": "OWN-REG7",
+      "name": "เจ้าของสำนวน เขต 7",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 7",
+      "orgUnitId": "pacc-reg-7",
+      "active": true
+    },
+    {
+      "id": "SUP-REG7",
+      "name": "ผู้บังคับบัญชาชั้นต้น เขต 7",
+      "position": "ผู้บังคับบัญชาชั้นต้น",
+      "roles": [
+        "supervisor"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 7",
+      "orgUnitId": "pacc-reg-7",
+      "active": true
+    },
+    {
+      "id": "DIR-REG7",
+      "name": "ผู้อำนวยการ เขต 7",
+      "position": "ผู้อำนวยการ",
+      "roles": [
+        "director"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 7",
+      "orgUnitId": "pacc-reg-7",
+      "active": true
+    },
+    {
+      "id": "PROT-REG7",
+      "name": "ชุดคุ้มครอง เขต 7",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 7",
+      "orgUnitId": "pacc-reg-7",
+      "active": true
+    },
+    {
+      "id": "REC-REG8",
+      "name": "ธุรการคดี เขต 8",
+      "position": "ธุรการคดี",
+      "roles": [
+        "receiver"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 8",
+      "orgUnitId": "pacc-reg-8",
+      "active": true
+    },
+    {
+      "id": "OFF-REG8",
+      "name": "เจ้าหน้าที่ ป.ป.ท. เขต 8",
+      "position": "เจ้าหน้าที่ ป.ป.ท.",
+      "roles": [
+        "officer",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 8",
+      "orgUnitId": "pacc-reg-8",
+      "active": true
+    },
+    {
+      "id": "OWN-REG8",
+      "name": "เจ้าของสำนวน เขต 8",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 8",
+      "orgUnitId": "pacc-reg-8",
+      "active": true
+    },
+    {
+      "id": "SUP-REG8",
+      "name": "ผู้บังคับบัญชาชั้นต้น เขต 8",
+      "position": "ผู้บังคับบัญชาชั้นต้น",
+      "roles": [
+        "supervisor"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 8",
+      "orgUnitId": "pacc-reg-8",
+      "active": true
+    },
+    {
+      "id": "DIR-REG8",
+      "name": "ผู้อำนวยการ เขต 8",
+      "position": "ผู้อำนวยการ",
+      "roles": [
+        "director"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 8",
+      "orgUnitId": "pacc-reg-8",
+      "active": true
+    },
+    {
+      "id": "PROT-REG8",
+      "name": "ชุดคุ้มครอง เขต 8",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 8",
+      "orgUnitId": "pacc-reg-8",
+      "active": true
+    },
+    {
+      "id": "REC-REG9",
+      "name": "ธุรการคดี เขต 9",
+      "position": "ธุรการคดี",
+      "roles": [
+        "receiver"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 9",
+      "orgUnitId": "pacc-reg-9",
+      "active": true
+    },
+    {
+      "id": "OFF-REG9",
+      "name": "เจ้าหน้าที่ ป.ป.ท. เขต 9",
+      "position": "เจ้าหน้าที่ ป.ป.ท.",
+      "roles": [
+        "officer",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 9",
+      "orgUnitId": "pacc-reg-9",
+      "active": true
+    },
+    {
+      "id": "OWN-REG9",
+      "name": "เจ้าของสำนวน เขต 9",
+      "position": "เจ้าของสำนวน",
+      "roles": [
+        "case_owner",
+        "protection_owner"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 9",
+      "orgUnitId": "pacc-reg-9",
+      "active": true
+    },
+    {
+      "id": "SUP-REG9",
+      "name": "ผู้บังคับบัญชาชั้นต้น เขต 9",
+      "position": "ผู้บังคับบัญชาชั้นต้น",
+      "roles": [
+        "supervisor"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 9",
+      "orgUnitId": "pacc-reg-9",
+      "active": true
+    },
+    {
+      "id": "DIR-REG9",
+      "name": "ผู้อำนวยการ เขต 9",
+      "position": "ผู้อำนวยการ",
+      "roles": [
+        "director"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 9",
+      "orgUnitId": "pacc-reg-9",
+      "active": true
+    },
+    {
+      "id": "PROT-REG9",
+      "name": "ชุดคุ้มครอง เขต 9",
+      "position": "ชุดคุ้มครอง",
+      "roles": [
+        "protection"
+      ],
+      "unit": "สำนักงาน ป.ป.ท. เขต 9",
+      "orgUnitId": "pacc-reg-9",
+      "active": true
+    }
+  ],
+  "mockStateAccounts": {
+    "receiver": "reg1.receiver",
+    "officer": "reg1.officer",
+    "case_owner": "reg1.caseowner",
+    "supervisor": "reg1.supervisor",
+    "director": "reg1.director",
+    "protection": "wp.protection"
+  }
+}

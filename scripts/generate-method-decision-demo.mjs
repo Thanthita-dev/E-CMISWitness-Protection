@@ -21,7 +21,7 @@ try {
         const { selectCaseDraft } = await import('/src/store/useFormDraftStore.ts')
         const { PROTECTION_METHOD_OPTIONS, readRoutableProtectionMethods } = await import('/src/lib/constants.ts')
         const store = useCaseStore.getState(), auth = useAuthStore.getState()
-        const c = store.getCase('WP-2569-000501')
+        const c = store.getCase('0501/2569')
         auth.setRole('secretary'); activateCaseForms(c)
         const forms = useFormDraftStore.getState()
         forms.updateField(6, 'รูปแบบคุ้มครองที่เลือก', [method])
@@ -51,7 +51,7 @@ try {
       const name = approved ? `Approved - วิธีที่ ${method}` : `Case 1.7 - วิธีที่ ${method}`
       output.push({ name, group: approved ? 'เลขาธิการอนุมัติแล้ว · แยกวิธีคุ้มครอง' : 'เลขาธิการรอพิจารณา · แยกวิธีคุ้มครอง',
         description: `[${approved ? 'เจ้าของสำนวนเดิม' : 'เลขาธิการ ป.ป.ท.'}] วิธีที่ ${method}: ${result.label} · ${approved ? 'อนุมัติและลงนาม คบ.9 แล้ว รอเติมรายละเอียด ยังไม่ส่งหนังสือ' : 'รอเลขาธิการพิจารณา เหมือน Case 1.7'}`,
-        to: '/dossier/WP-2569-000501', capturedAt: new Date().toISOString(), localStorageData: result.localStorageData })
+        to: '/dossier/0501%2F2569', capturedAt: new Date().toISOString(), localStorageData: result.localStorageData })
       await context.close()
     }
   }

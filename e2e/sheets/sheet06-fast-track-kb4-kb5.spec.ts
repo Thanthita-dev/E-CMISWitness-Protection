@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { fillKb5Period } from '../journeys/journey-helpers'
 
 /**
  * Sheet 06 · เส้นทางเร่งด่วน: คบ.4 / คบ.5 (TC-040 .. TC-048)
@@ -10,8 +11,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * คำร้องหลักเดินคู่ขนาน (TC-047) · เพดานรวม 180 วัน (TC-048)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const KB4_FORM_URL = `/form/4?caseNo=${CASE_NO}`
 const KB5_FORM_URL = `/form/5?caseNo=${CASE_NO}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
@@ -103,11 +104,14 @@ test.describe('TC-044 — เส้นทางเร่งด่วนต้อ
 
     await page.goto(KB4_FORM_URL)
     await page.getByTestId('kb4-method-option-1').click()
+    await fillKb5Period(page, CASE_NO)
     await page.goto(DOSSIER_URL)
 
     // ไม่มีตัวเลือกผู้รับเรื่องใด ๆ ในการ์ดเส้นทางเร่งด่วน — มีปุ่มเดียวคือส่งตรง ผอ. ไม่มีปุ่ม/select ให้เลือกส่งผ่านผู้บังคับบัญชาชั้นต้น
-    const card = page.getByTestId('fast-track-card')
+    const card = page.getByTestId('fast-track-submit-panel')
     await expect(card.getByRole('combobox')).toHaveCount(0)
+    // GAP-014 — ขั้นนี้ไม่มีปุ่มส่งต่อทั่วไปที่ข้ามด่านเลือกวิธี/เพดาน 180 วัน
+    await expect(page.getByTestId('forward-case-button')).toHaveCount(0)
     await expect(card.getByRole('button', { name: /ผู้บังคับบัญชาชั้นต้น/ })).toHaveCount(0)
     await expect(page.getByTestId('fast-track-submit-button')).toBeVisible()
     await expect(page.getByTestId('fast-track-submit-button')).toHaveText(/ส่งตรง ผอ\./)
@@ -267,16 +271,22 @@ test.describe('TC-048 — เพดานรวม 180 วัน ต้องผ
     await page.goto(KB4_FORM_URL)
     await page.getByTestId('kb4-method-option-1').click()
 
+    // ยังไม่ระบุช่วงวันที่ในร่าง คบ.5 — ระบบไม่มีจำนวนวันให้ตรวจเพดาน จึงกดส่งไม่ได้
     await page.goto(DOSSIER_URL)
-    const durationInput = page.getByTestId('fast-track-duration-days')
-    await expect(durationInput).toBeVisible()
+    await expect(page.getByTestId('fast-track-period-missing')).toBeVisible()
+    await expect(page.getByTestId('fast-track-submit-button')).toBeDisabled()
 
-    // ค่าตั้งต้นอยู่ในเพดาน — ส่งเสนอได้ตามปกติ
+    // ช่วง 30 วันอยู่ในเพดาน — ส่งเสนอได้ตามปกติ
+    await fillKb5Period(page, CASE_NO, '2026-01-01', '2026-01-30')
+    await page.goto(DOSSIER_URL)
+    await expect(page.getByTestId('fast-track-period')).toContainText('รวม 30 วัน')
     await expect(page.getByTestId('fast-track-duration-warning')).toHaveCount(0)
     await expect(page.getByTestId('fast-track-submit-button')).toBeEnabled()
 
-    // ระบุ 200 วัน ทำให้ยอดสะสมเกินเพดานรวม 180 วัน ต้องเตือนทันทีและกดส่งไม่ได้
-    await durationInput.fill('200')
+    // ช่วงวันที่ใน คบ.5 รวม 200 วัน ทำให้ยอดสะสมเกินเพดานรวม 180 วัน ต้องเตือนทันทีและกดส่งไม่ได้
+    await fillKb5Period(page, CASE_NO, '2026-01-01', '2026-07-19')
+    await page.goto(DOSSIER_URL)
+    await expect(page.getByTestId('fast-track-period')).toContainText('รวม 200 วัน')
     await expect(page.getByTestId('fast-track-duration-warning')).toContainText('ไม่เกิน 180 วัน')
     await expect(page.getByTestId('fast-track-submit-button')).toBeDisabled()
 
@@ -285,8 +295,9 @@ test.describe('TC-048 — เพดานรวม 180 วัน ต้องผ
     expect(stuck?.stage).toBe('staff_review')
     expect((stuck?.fastTrack as Record<string, unknown>)?.submittedAt).toBeUndefined()
 
-    // ลดเหลือ 180 วันพอดี — ผ่านเพดานพอดีจึงส่งเสนอได้ และระยะเวลาถูกเก็บไว้ในแฟ้ม
-    await durationInput.fill('180')
+    // แก้ช่วงใน คบ.5 เหลือ 180 วันพอดี — ผ่านเพดานพอดีจึงส่งเสนอได้ และระยะเวลาถูกเก็บไว้ในแฟ้ม
+    await fillKb5Period(page, CASE_NO, '2026-01-01', '2026-06-29')
+    await page.goto(DOSSIER_URL)
     await expect(page.getByTestId('fast-track-duration-warning')).toHaveCount(0)
     await page.getByTestId('fast-track-submit-button').click()
     await confirmDialog(page, 'ยืนยันส่งตรง ผอ.', '180 วัน')

@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Button } from '../common/Button'
-import { CaseItem } from '../../types/case'
+import { CaseItem, MonthlyReportSource } from '../../types/case'
 import { useCaseStore } from '../../store/useCaseStore'
 import { addDays, currentReportPeriod, thaiMonthName } from '../../lib/utils'
 import { showToast } from '../../lib/swal'
+import { EXTERNAL_REPORT_LABEL, usesExternalReport } from '../../lib/kb13'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface OpenRoundModalProps {
   caseItem: CaseItem
@@ -25,6 +27,7 @@ export const OpenRoundModal: React.FC<OpenRoundModalProps> = ({ caseItem, open, 
   const [from, setFrom] = useState(addDays(todayIso(), -30).slice(0, 10))
   const [to, setTo] = useState(todayIso())
   const [evidence, setEvidence] = useState('')
+  const [source, setSource] = useState<MonthlyReportSource>(() => (usesExternalReport(caseItem) ? 'external' : 'kb13'))
 
   if (!open) return null
 
@@ -33,6 +36,7 @@ export const OpenRoundModal: React.FC<OpenRoundModalProps> = ({ caseItem, open, 
   const handleSubmit = () => {
     openKb13Round(caseItem.no, {
       period,
+      source,
       periodFrom: from,
       periodTo: to,
       evidenceRefs: evidence
@@ -40,7 +44,11 @@ export const OpenRoundModal: React.FC<OpenRoundModalProps> = ({ caseItem, open, 
         .map((s) => s.trim())
         .filter(Boolean),
     })
-    showToast(`เปิดรอบรายงาน คบ.13 งวด ${thaiMonthName(period)} แล้ว`)
+    showToast(
+      source === 'external'
+        ? `เปิดรอบรายงานงวด ${thaiMonthName(period)} แล้ว — ใช้${EXTERNAL_REPORT_LABEL}แทน คบ.13`
+        : `เปิดรอบรายงาน คบ.13 งวด ${thaiMonthName(period)} แล้ว`
+    )
     onClose()
   }
 
@@ -69,6 +77,28 @@ export const OpenRoundModal: React.FC<OpenRoundModalProps> = ({ caseItem, open, 
         </div>
 
         <div className="space-y-4 overflow-y-auto p-5">
+          <fieldset className="space-y-2">
+            <legend className="ws-label">แบบรายงานของรอบนี้</legend>
+            {(
+              [
+                ['kb13', 'คบ.13 (เจ้าหน้าที่จัดทำและลงนามกับพยาน)'],
+                ['external', `${EXTERNAL_REPORT_LABEL} (บันทึกรับและแนบไฟล์แทน คบ.13)`],
+              ] as [MonthlyReportSource, string][]
+            ).map(([value, label]) => (
+              <label key={value} className="flex items-start gap-2 text-[0.88rem] text-ink">
+                <input
+                  type="radio"
+                  name="report-source"
+                  value={value}
+                  checked={source === value}
+                  onChange={() => setSource(value)}
+                  className="mt-1 h-[18px] w-[18px]"
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </fieldset>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="ws-label">ช่วงรายงาน — ตั้งแต่</span>
@@ -94,7 +124,7 @@ export const OpenRoundModal: React.FC<OpenRoundModalProps> = ({ caseItem, open, 
             <span className="ws-label">
               หลักฐาน/บันทึกที่รวบรวมได้ (บรรทัดละรายการ)
             </span>
-            <textarea
+            <VoiceTextarea
               rows={4}
               value={evidence}
               onChange={(e) => setEvidence(e.target.value)}

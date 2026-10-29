@@ -1,11 +1,14 @@
+import { isReferralCommitteeTask } from '../../lib/referralCommittee'
 import React from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useCaseStore } from '../../store/useCaseStore'
+import { isSarabanQueueCase } from '../../lib/saraban'
+import { isLetterNumberingQueueCase } from '../../lib/coordinationLetterNumbering'
 import { ROLE_NAMES } from '../../lib/constants'
 import { showToast } from '../../lib/swal'
-import { getNavTreeForRole, isMyQueueCase, type NavItem, type NavSectionKey } from '../../lib/permissions'
-import { isHandoffQueueCase } from '../../lib/protectionHandoff'
+import { getNavTreeForRole, isAppealFolderStageReviewer, isMyQueueCase, type NavItem, type NavSectionKey } from '../../lib/permissions'
+import { gotDutyOf, isGotReviewCase, isHandoffQueueCase, isKb14StageReviewer, isKb15StageReviewer, isOwnIntakeCase } from '../../lib/protectionHandoff'
 
 /** ความกว้างที่ sidebar เปลี่ยนเป็น off-canvas (ตรงกับ ecmis-sidebar.css) */
 const MOBILE_QUERY = '(max-width: 900px)'
@@ -36,41 +39,71 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
   const isMobile = useIsMobileViewport()
   /** ย่อเมนูได้เฉพาะ desktop — บนมือถือแสดงเมนูเต็มเสมอเมื่อเปิด */
   const sidebarCollapsed = storedCollapsed && !isMobile
+  const currentOrgUnitId = useAuthStore((state) => state.currentOrgUnitId) ?? undefined
   const allCases = useCaseStore((state) => state.cases)
   /** นับเฉพาะงานที่เป็นของผู้ใช้คนนี้จริง ให้ตรงกับรายการในหน้าคิวงาน /queue/$role */
+  /** ชุดนำส่งที่ค้างอยู่ที่ธุรการนับเฉพาะในคิวธุรการของจุดนั้น ผู้รับยังไม่นับจนกว่าจะลงเลขรับครบ */
   const cases = React.useMemo(
-    () => allCases.filter((c) => isMyQueueCase(currentRole, c, currentOfficerUserId)),
+    () => allCases.filter((c) => !c.sarabanDispatch && isMyQueueCase(currentRole, c, currentOfficerUserId)),
     [allCases, currentRole, currentOfficerUserId]
+  )
+  const transitWork = React.useMemo(
+    /** งานออกเลขหนังสือประสาน (วิธีที่ 4) ของธุรการหน่วยเจ้าของเรื่อง นับรวมกับชุดนำส่ง */
+    () => allCases.filter((c) => ((c.sarabanDispatch || currentRole === 'got_receiver') && isSarabanQueueCase(currentRole, c, currentOrgUnitId)) || isLetterNumberingQueueCase(currentRole, c, currentOrgUnitId)).length,
+    [allCases, currentRole, currentOrgUnitId]
   )
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
 
   // Calculate "My Work" count based on role
   const myWorkCount = React.useMemo(() => {
-    if (currentRole.startsWith('got_')) return cases.filter((c) => isHandoffQueueCase(currentRole, c, currentOfficerUserId)).length
+    /** ตำแหน่งของ กอท. นับงานรับมอบหลังอนุมัติรวมกับงานปกติของบทบาท */
+    const handoffWork = !currentRole.startsWith('got_') && gotDutyOf(currentRole)
+      ? cases.filter((c) => isHandoffQueueCase(currentRole, c, currentOfficerUserId)).length : 0
+    return transitWork + handoffWork + baseWorkCount()
+    /** คบ.14 ที่ถึงขั้นของบทบาทนี้ — แฟ้ม กอท. ขั้น ผบช.ต้น/ผอ. เป็นของ ผบช.ต้น กอท./ผอ. กอท. */
+    function kb14AtStage(c: (typeof cases)[number]): boolean {
+      const r = c.extensionRequests?.at(-1)
+      return Boolean(r?.formSnapshot && ['submitted', 'pending'].includes(r.status) && isKb14StageReviewer(currentRole, r.approvalStage || 'supervisor', c))
+    }
+    /** คบ.15 ที่รอชั้นนี้ลงนาม */
+    function kb15AtStage(c: (typeof cases)[number]): boolean {
+      return isKb15StageReviewer(currentRole, c)
+    }
+    function baseWorkCount(): number {
+    if (currentRole === 'committee') return cases.filter(c => isReferralCommitteeTask(c) || isAppealFolderStageReviewer('committee', c)).length
+    if (currentRole === 'got_supervisor') return cases.filter((c) => kb15AtStage(c) || isGotReviewCase(c, 'supervisor') || isHandoffQueueCase(currentRole, c, currentOfficerUserId)).length
+    if (currentRole === 'got_director') return cases.filter((c) => isHandoffQueueCase(currentRole, c, currentOfficerUserId) || isGotReviewCase(c, 'director') || kb15AtStage(c)).length
+    if (currentRole.startsWith('got_')) return cases.filter((c) => isHandoffQueueCase(currentRole, c, currentOfficerUserId) || kb14AtStage(c) ||
+      (c.stage === 'receiver_intake' && isOwnIntakeCase(currentRole, c, currentOfficerUserId))).length
     if (currentRole === 'receiver') {
-      return cases.filter((c) => c.stage === 'receiver_intake').length
+      return cases.filter((c) => c.stage === 'receiver_intake' || isSarabanQueueCase('receiver', c, currentOrgUnitId)).length
     }
     if (currentRole === 'officer' || currentRole === 'case_owner') {
       return cases.filter((c) => c.stage === 'officer_intake' || c.stage === 'staff_review' || c.returned ||
         (c.stage === 'notice' && !c.deliveredAt) || (c.stage === 'protection' && !c.policeAckAt) ||
-        (Boolean(c.protectionHandoff) && ['notice', 'method_operation', 'protection'].includes(c.stage))).length
+        (Boolean(c.protectionHandoff) && ['notice', 'method_operation', 'protection'].includes(c.stage)) || isAppealFolderStageReviewer(currentRole, c)).length
     }
     if (currentRole === 'supervisor') {
-      return cases.filter((c) => c.stage === 'supervisor_review' || c.extensionRequests?.at(-1)?.formSnapshot && c.extensionRequests.at(-1)?.approvalStage === 'supervisor' && ['submitted', 'pending'].includes(c.extensionRequests.at(-1)!.status)).length
+      return cases.filter((c) => c.stage === 'supervisor_review' || kb15AtStage(c) || kb14AtStage(c) || isAppealFolderStageReviewer(currentRole, c)).length
     }
     if (currentRole === 'director') {
-      return cases.filter((c) => c.stage === 'director_review' || c.stage === 'director_assign' || c.extensionRequests?.at(-1)?.formSnapshot && c.extensionRequests.at(-1)?.approvalStage === 'director' && c.extensionRequests.at(-1)?.status === 'pending').length
+      return cases.filter((c) => c.stage === 'director_review' || c.stage === 'director_assign' || kb14AtStage(c) || kb15AtStage(c) || isAppealFolderStageReviewer(currentRole, c)).length
     }
     if (currentRole === 'deputy_secretary') {
-      return cases.filter((c) => c.stage === 'deputy_review' || c.extensionRequests?.at(-1)?.formSnapshot && c.extensionRequests.at(-1)?.approvalStage === 'deputy_secretary' && c.extensionRequests.at(-1)?.status === 'pending').length
+      return cases.filter((c) => c.stage === 'deputy_review' || kb15AtStage(c) || isAppealFolderStageReviewer(currentRole, c) || c.extensionRequests?.at(-1)?.formSnapshot && c.extensionRequests.at(-1)?.approvalStage === 'deputy_secretary' && c.extensionRequests.at(-1)?.status === 'pending').length
     }
     if (currentRole === 'secretary') {
       return cases.filter(
         (c) =>
-          c.stage === 'external_pending' ||
+          c.stage === 'external_pending' || c.protectionHandoff?.step === 'pending_send' || c.article14?.step === 'secretary_review' || (c.article14?.step === 'committee_pending' && !c.article14.secretarySignature) ||
           (c.extensionRequests || []).some((r) => r.status === 'pending' && r.approvalStage === 'secretary') ||
-          c.terminationRequest?.status === 'pending'
+          c.terminationRequest?.status === 'pending' ||
+          (c.kb15?.status === 'endorsed' && !c.terminationApproval) ||
+          kb15AtStage(c) ||
+          isAppealFolderStageReviewer(currentRole, c) ||
+          (c.kb16?.status === 'submitted' && !c.kb16.signedAt) ||
+          (c.kb17?.status === 'submitted' && !c.kb17.signedAt)
       ).length
     }
     if (currentRole === 'protection') {
@@ -80,7 +113,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
       return cases.filter((c) => c.stage === 'appeal').length
     }
     return cases.length
-  }, [cases, currentRole, currentOfficerUserId])
+    }
+  }, [cases, transitWork, currentRole, currentOfficerUserId, currentOrgUnitId])
 
   /** โครงเมนูตามสิทธิ์ของบทบาทปัจจุบัน — กลุ่มหลัก > กลุ่มย่อย > รายการ */
   const navTree = React.useMemo(() => getNavTreeForRole(currentRole), [currentRole])
@@ -91,9 +125,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
       currentPath === item.path ||
       (item.path === '/registry' && currentPath === '/') ||
       (item.path === '/forms' && currentPath.startsWith('/form/')) ||
+      (item.path === '/saraban' && currentPath.startsWith('/saraban/')) ||
       (item.path === '/appeal' && currentPath.startsWith('/appeal-folder')) ||
       (item.path === '/protection-methods' && currentPath.startsWith('/protection-method/')) ||
-      (item.path === '/protection-reviews' && currentPath.startsWith('/protection-review/')) ||
       (item.path === '/protection-extensions' && currentPath.startsWith('/protection-extension/')) ||
       (item.path === '/termination' && currentPath.startsWith('/termination/')),
     [currentPath]
@@ -140,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
 
   const officerAccount = getCurrentOfficerAccount()
   const displayName = currentRole.startsWith('got_') ? useAuthStore.getState().getCurrentUserAccount()?.name || ROLE_NAMES[currentRole]
-    : (currentRole === 'officer' || currentRole === 'case_owner') && officerAccount ? officerAccount.name : currentRole === 'secretary' ? 'นายสุรศักดิ์ ธรรมพิทักษ์' : 'thanthita'
+    : (currentRole === 'officer' || currentRole === 'case_owner') && officerAccount ? officerAccount.name : useAuthStore.getState().getCurrentUserAccount()?.name || (currentRole === 'admin' ? 'ผู้ดูแลระบบ' : ROLE_NAMES[currentRole])
 
   const myWorkRoute = `/queue/${currentRole}`
 

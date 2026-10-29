@@ -4,6 +4,7 @@ import { CaseItem } from '../../types/case'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { isCaseWorkerRole } from '../../lib/constants'
+import { sarabanInTransit } from '../../lib/saraban'
 import { formatThaiDate } from '../../lib/utils'
 import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
 
@@ -14,7 +15,7 @@ import { confirmBody, showConfirmAlert, showToast } from '../../lib/swal'
  * ส่งผ่านระบบสารบรรณเดิม · เก็บหลักฐานการรับ แล้วจึงถือว่าขั้นอุทธรณ์ปิดสมบูรณ์
  * เดิมระบบบันทึกได้แค่มติ จึงปิดขั้นอุทธรณ์ได้โดยไม่มีร่องรอยว่าแจ้งผลให้พยานแล้ว
  *
- * ใช้กับทั้งแขนงยืนคำสั่งเดิมและแขนงเปลี่ยนคำสั่ง เพราะผังให้แจ้งผลทั้งสองทาง
+ * ใช้กับทั้งแขนงยกคำร้องและแขนงเปลี่ยนคำสั่ง เพราะผังให้แจ้งผลทั้งสองทาง
  */
 export const AppealNoticeCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem }) => {
   const { recordAppealNotice } = useCaseStore()
@@ -30,11 +31,11 @@ export const AppealNoticeCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
     ackDocument: '',
   })
 
-  if (!resolution) return null
+  if (!resolution || (resolution.outcome === 'uphold' && caseItem.appealAgainst !== 'kb17')) return null
 
   const recorded = Boolean(resolution.noticeRecordedAt)
   const uphold = resolution.outcome === 'uphold'
-  const canRecord = isCaseWorkerRole(currentRole)
+  const canRecord = isCaseWorkerRole(currentRole) && !sarabanInTransit(caseItem, 'appeal')
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((p) => ({ ...p, [key]: e.target.value }))
@@ -48,9 +49,9 @@ export const AppealNoticeCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
       icon: 'question',
       title: 'บันทึกหนังสือแจ้งผลอุทธรณ์และหลักฐานการรับ?',
       html: confirmBody(
-        `${uphold ? 'ยืนคำสั่งเดิม' : 'เปลี่ยนคำสั่ง'} — หนังสือแจ้งผลอุทธรณ์ส่งผ่านระบบสารบรรณเดิม (ไม่มีเลข คบ.)`,
+        `${uphold ? 'ยกคำร้อง' : 'เปลี่ยนคำสั่ง'} — หนังสือแจ้งผลอุทธรณ์ส่งผ่านระบบสารบรรณเดิม (ไม่มีเลข คบ.)`,
         [
-          ['มติคณะกรรมการ', `${resolution.resolutionNo} · ${uphold ? 'ยืนคำสั่งเดิม' : 'เปลี่ยนแปลงคำสั่ง'}`],
+          ['มติคณะกรรมการ', `${resolution.resolutionNo} · ${uphold ? 'ยกคำร้อง' : 'เปลี่ยนแปลงคำสั่ง'}`],
           ['ชื่อหนังสือแจ้งผล', form.documentName.trim()],
           ['เลขทะเบียนส่ง (สารบรรณ)', form.registryNo.trim()],
           ['วันที่ส่ง / วันที่พยานได้รับ', `${formatThaiDate(form.sentAt)} → ${formatThaiDate(form.deliveredAt)}`],
@@ -81,7 +82,7 @@ export const AppealNoticeCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
   return (
     <div className="ws-card p-5 space-y-3" data-testid="appeal-notice-card">
       <h3 className="ws-section-title !mb-0 border-b border-line pb-2">
-        หนังสือแจ้งผลอุทธรณ์ (ไม่มีเลข คบ.) · {uphold ? 'ยืนคำสั่งเดิม' : 'เปลี่ยนคำสั่ง'}
+        หนังสือแจ้งผลอุทธรณ์ (ไม่มีเลข คบ.) · {uphold ? 'ยกคำร้อง' : 'เปลี่ยนคำสั่ง'}
       </h3>
 
       {recorded ? (
@@ -109,7 +110,7 @@ export const AppealNoticeCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
           </p>
           <div className="ws-grid-2">
             <label className="ws-field">
-              <span className="ws-label">ชื่อหนังสือแจ้งผลอุทธรณ์ *</span>
+              <span className="ws-label">ชื่อหนังสือแจ้งผลอุทธรณ์ <span className="text-danger">*</span></span>
               <input
                 value={form.documentName}
                 onChange={set('documentName')}
@@ -119,7 +120,7 @@ export const AppealNoticeCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
               />
             </label>
             <label className="ws-field">
-              <span className="ws-label">เลขทะเบียนส่ง (สารบรรณเดิม) *</span>
+              <span className="ws-label">เลขทะเบียนส่ง (สารบรรณเดิม) <span className="text-danger">*</span></span>
               <input
                 value={form.registryNo}
                 onChange={set('registryNo')}
@@ -149,7 +150,7 @@ export const AppealNoticeCard: React.FC<{ caseItem: CaseItem }> = ({ caseItem })
               />
             </label>
             <label className="ws-field">
-              <span className="ws-label">ผู้รับหนังสือ *</span>
+              <span className="ws-label">ผู้รับหนังสือ <span className="text-danger">*</span></span>
               <input
                 value={form.recipient}
                 onChange={set('recipient')}

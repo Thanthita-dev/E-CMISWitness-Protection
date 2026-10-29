@@ -4,6 +4,9 @@ import { showToast } from '../../lib/swal'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { VersionHistory, VersionHistoryEntry } from '../common/VersionHistory'
+import { APPEAL_ADDENDUM_LABEL, addendumLabel, appealAddendumEditable, appealAddendumVersion, getActiveExtensionDocs, versionLabelFor } from '../../lib/formSignature'
+import { Kb3SignatureActions } from './Kb3SignatureActions'
+import { DocAside } from './EditorView'
 import { Area, DateField, DocHeaderFields, EditorShell, Field, Grid, Section, ThaiDateFields } from './fields/FormKit'
 
 interface Kb3FormEditorProps {
@@ -16,6 +19,7 @@ interface Kb3FormEditorProps {
 export const Kb3FormEditor: React.FC<Kb3FormEditorProps> = ({ onSaved, caseNo }) => {
   const getCase = useCaseStore((s) => s.getCase)
   const caseItem = caseNo ? getCase(caseNo) : undefined
+  const extDocs = caseItem ? getActiveExtensionDocs(caseItem) : null
   const kb3Lock = useFormDraftStore((s) => s.locks[3])
 
   /**
@@ -36,6 +40,16 @@ export const Kb3FormEditor: React.FC<Kb3FormEditorProps> = ({ onSaved, caseNo })
   }, [kb6SupervisorSignedAt, kb6SupervisorSignedBy])
 
   const kb3Version = caseItem?.kb3Version || 1
+  /** ขอขยายระยะเวลา: คบ.3 แสดงเป็น "บันทึกเพิ่มเติม ครั้งที่ N" แนบฉบับเดิม ไม่ใช่ฉบับใหม่ */
+  const inExtension = Boolean(extDocs || caseItem?.extensionDocs)
+  /** บันทึกเพิ่มเติม (อุทธรณ์) — ฉบับปัจจุบันของร่างคือบันทึกที่เจ้าหน้าที่จัดทำประกอบแฟ้มอุทธรณ์ */
+  const appealAddendum = Boolean(caseItem && appealAddendumVersion(caseItem, 3))
+  const kb3DraftVersion = useFormDraftStore((s) => (s.revisions[3]?.length || 0) + 1)
+  const appealCurrent = Boolean(caseItem && appealAddendum && appealAddendumVersion(caseItem, 3) === kb3DraftVersion)
+  const kb3LabelForVersion = (inExtension || appealAddendum) && caseItem
+    ? (v: number) => versionLabelFor(caseItem, 3, v)
+    : undefined
+  const kb3CurrentLabel = extDocs ? addendumLabel(extDocs.round) : appealCurrent ? APPEAL_ADDENDUM_LABEL : undefined
   const kb3PreviousVersions = caseItem?.kb3PreviousVersions || []
   const historyEntries: VersionHistoryEntry[] = kb3PreviousVersions.map((v) => ({
     version: v.version,
@@ -49,6 +63,8 @@ export const Kb3FormEditor: React.FC<Kb3FormEditorProps> = ({ onSaved, caseNo })
   <EditorShell
     code="คบ.3"
     formId={3}
+    versionLabel={kb3CurrentLabel}
+    labelForVersion={kb3LabelForVersion}
     title="บันทึกข้อเท็จจริง ประกอบการขอใช้มาตรการคุ้มครองเบื้องต้น"
     hint="สำหรับเจ้าพนักงาน ป.ป.ท. บันทึกถ้อยคำของผู้ให้ถ้อยคำต่อหน้าเจ้าพนักงาน"
     footer={
@@ -65,14 +81,27 @@ export const Kb3FormEditor: React.FC<Kb3FormEditorProps> = ({ onSaved, caseNo })
       </Button>
     }
   >
-    <VersionHistory
+    {extDocs && (
+        <div className="ws-callout text-[0.88rem] leading-relaxed" data-testid="ext-docs-banner">
+          {addendumLabel(extDocs.round)} (ขอขยายระยะเวลา) — ดึงข้อมูลจาก คบ.3 ฉบับเดิมมาให้แล้ว แก้ไขเฉพาะส่วนที่เปลี่ยน ฉบับเดิมเก็บไว้ไม่แก้ทับ
+        </div>
+      )}
+    {appealCurrent && caseItem && (
+        <div className="ws-callout text-[0.88rem] leading-relaxed" data-testid="appeal-docs-banner">
+          {APPEAL_ADDENDUM_LABEL} — จัดทำข้อเท็จจริงสำหรับคำอุทธรณ์ในฉบับนี้ โดยเก็บฉบับเดิมไว้อ้างอิง
+          {!appealAddendumEditable(caseItem) && ' · เสนอตามลำดับชั้นแล้ว ดูได้อย่างเดียว'}
+        </div>
+      )}
+    <DocAside><VersionHistory
       code="kb3"
       currentVersion={kb3Version}
+      labelForVersion={kb3LabelForVersion}
+      currentLabel={kb3CurrentLabel}
       entries={historyEntries}
       locked={Boolean(kb3Lock)}
       lockedBy={kb6SupervisorSignedBy}
       lockedNote={kb6SupervisorSignedAt ? `ลงนามรับรองชุดเสนอเมื่อ ${kb6SupervisorSignedAt}` : undefined}
-    />
+    /></DocAside>
 
     <Section title="หัวเอกสาร">
       <DocHeaderFields formId={3} />
@@ -165,6 +194,12 @@ export const Kb3FormEditor: React.FC<Kb3FormEditorProps> = ({ onSaved, caseNo })
         placeholder="นักสืบสวนสอบสวนชำนาญการ"
       />
     </Section>
+
+    <DocAside>
+      <Section title="ลายมือชื่อ">
+        <Kb3SignatureActions caseItem={caseItem} locked={Boolean(kb3Lock)} />
+      </Section>
+    </DocAside>
   </EditorShell>
   )
 }

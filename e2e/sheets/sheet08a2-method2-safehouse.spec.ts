@@ -9,7 +9,7 @@ import { readCase, seedMockState } from '../helpers/seed'
  *      → จัดแผนย้าย/รับ-ส่ง (WIT0827) → พาย้าย/เข้าพัก (WIT0828) → เริ่มปฏิบัติจริง (WIT0829)
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const METHOD2_URL = `/protection-method/2?caseNo=${CASE_NO}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {

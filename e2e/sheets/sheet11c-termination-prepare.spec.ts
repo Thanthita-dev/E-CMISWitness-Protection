@@ -12,8 +12,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * สถานะ "ยุติ" เกิดที่ 11D เมื่อมีคำสั่ง คบ.16 ที่ลงนามและถึงวันที่มีผลเท่านั้น
  */
 
-const CASE_NO = 'WP-2569-000501'
-const TERM_URL = `/termination/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const TERM_URL = `/termination/${encodeURIComponent(CASE_NO)}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
   const dialog = page.locator('.swal2-popup:not(.swal2-toast)')
@@ -69,6 +69,10 @@ test.describe('Sheet 11C · จัดทำเรื่องยุติกา�
 
     // เสนอไปแท็บ 11D แล้ว — การ์ด 11D ต้องปรากฏบนหน้าเดียวกัน
     await expect(page.getByText('พิจารณาและออกคำสั่งยุติ (คบ.16)', { exact: true })).toBeVisible()
+
+    // เอกสารข้ามหน่วย → สำนักงานเลขาธิการต้องผ่านธุรการ: เปิดทะเบียนขาไปรอธุรการหน่วย
+    const dispatch = after?.sarabanDispatch as Record<string, unknown>
+    expect(dispatch).toMatchObject({ flow: 'termination', direction: 'up', forms: [15] })
   })
 
   test('TC-140 · [Happy] เหตุยุติจากหนังสือภายนอก', async ({ page }) => {

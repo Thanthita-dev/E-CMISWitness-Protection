@@ -19,8 +19,8 @@ import { CASE_NO, DOSSIER_URL, confirmDialog, expectStage, formRow, signInModal 
  */
 
 const MONITOR_URL = `/protection-monitor?caseNo=${CASE_NO}`
-const REVIEW_URL = `/protection-review/${CASE_NO}`
-const EXT_URL = `/protection-extension/${CASE_NO}`
+const REVIEW_URL = `/protection-review/${encodeURIComponent(CASE_NO)}`
+const EXT_URL = `/protection-extension/${encodeURIComponent(CASE_NO)}`
 
 type Rec = Record<string, unknown>
 
@@ -69,7 +69,7 @@ async function supervisorPassesKb14(page: Page) {
   await page.goto(EXT_URL)
   await page.getByPlaceholder('ความเห็น / เหตุผลที่ส่งคืนแก้ไข').fill('เอกสารครบถ้วน เห็นควรเสนอ')
   await page.getByRole('button', { name: 'ครบถ้วน · เสนอตามลำดับชั้น' }).click()
-  await confirmDialog(page, 'ยืนยันครบถ้วน', 'เสนอตามลำดับชั้นให้ผู้มีอำนาจพิจารณาอนุมัติต่อไป')
+  await confirmDialog(page, 'ยืนยันครบถ้วน', 'เสนอตามลำดับชั้นให้เลขาธิการ ป.ป.ท. พิจารณาอนุมัติต่อไป')
 }
 
 /** ตั้งต้น "11A" — มี Episode สะสม `days` วัน วิธีที่ 1 กำลังคุ้มครอง (สำหรับทางแยกที่ seed ใกล้จุดตัดสินใจ) */
@@ -194,7 +194,7 @@ test.describe('J11 · ติดตามผล → ทบทวน → ขยา
     // ========== แท็บ 11A · ทบทวนผลการคุ้มครอง ==========
     await test.step('WIT1101 · เปิดแท็บ 11A จะเห็นว่างานถูกส่งมาจากแท็บ 10', async () => {
       await page.getByRole('link', { name: 'ทบทวนผลการคุ้มครอง', exact: true }).click()
-      await expect(page).toHaveURL(new RegExp(`/protection-review/${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/protection-review/${encodeURIComponent(CASE_NO)}`))
       await expect(page.getByTestId('review-outcome-extend')).toBeVisible()
     })
 
@@ -233,7 +233,7 @@ test.describe('J11 · ติดตามผล → ทบทวน → ขยา
       expect(c?.status).toBe('ดำเนินการขอขยายระยะเวลา (คบ.14)')
       expect(c?.stage).toBe('protection')
       await page.getByTestId('review-goto-11b').click()
-      await expect(page).toHaveURL(new RegExp(`/protection-extension/${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/protection-extension/${encodeURIComponent(CASE_NO)}`))
     })
 
     // ========== แท็บ 11B · ขยายระยะเวลา (คบ.14) ==========
@@ -286,7 +286,7 @@ test.describe('J11 · ติดตามผล → ทบทวน → ขยา
 
     await test.step('เชื่อมกลับแท็บ 10 · ติดตามต่อด้วยรอบ คบ.13 ถัดไป', async () => {
       await page.getByRole('link', { name: /กลับไปรายงานผลการคุ้มครอง/ }).click()
-      await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/protection-monitor\\?caseNo=${CASE_NO.replace('/', '(?:/|%2F)')}`))
       await expectStage(page, 'protection')
     })
   })
@@ -323,7 +323,7 @@ test.describe('J11 · ติดตามผล → ทบทวน → ขยา
 
     await test.step('ต่อ 11C · มีลิงก์ไปจัดทำเรื่องยุติเมื่อถึงกำหนด', async () => {
       await page.getByRole('link', { name: /หน้าจัดทำเรื่องยุติ \(คบ\.15\)/ }).click()
-      await expect(page).toHaveURL(new RegExp(`/termination/${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/termination/${encodeURIComponent(CASE_NO)}`))
       await expectStage(page, 'protection') // ยังคุ้มครองอยู่จนกว่าจะมีคำสั่งยุติ (WIT1130)
     })
   })
@@ -418,7 +418,7 @@ test.describe('J11 · ติดตามผล → ทบทวน → ขยา
 
     await test.step('WIT1101 · แท็บ 11A รับงานที่ส่งมา', async () => {
       await page.getByRole('link', { name: 'ทบทวนผลการคุ้มครอง', exact: true }).click()
-      await expect(page).toHaveURL(new RegExp(`/protection-review/${CASE_NO}`))
+      await expect(page).toHaveURL(new RegExp(`/protection-review/${encodeURIComponent(CASE_NO)}`))
       await expect(page.getByTestId('review-submit-proposal')).toBeVisible()
     })
   })

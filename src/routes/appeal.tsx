@@ -1,3 +1,4 @@
+import { useVisibleCases } from '../hooks/useVisibleCases'
 import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { PageHeader } from '../components/common/PageHeader'
@@ -26,7 +27,7 @@ export const Route = createFileRoute('/appeal')({
 })
 
 function AppealPage() {
-  const cases = useCaseStore((state) => state.cases)
+  const cases = useVisibleCases()
   const appealCases = cases.filter((c) => c.stage === 'appeal' || c.no.startsWith('AP-'))
   const noticeCases = cases.filter((c) => !c.appealFiledAt && !c.nonApprovalClosedAt &&
     (c.activity7State === 'rejected' && (c.kb10Signed || c.resultNotices?.[10]?.original || c.deliveredAt) || c.kb17?.deliveredAt))
@@ -113,7 +114,7 @@ function AppealPage() {
           <ul className="space-y-1.5">
             {lateAppeals.map((c) => (
               <li key={c.no} className="rounded-lg border border-line bg-white p-3 min-w-0">
-                <Link to="/appeal-folder/$caseNo" params={{ caseNo: c.no }} className="font-bold text-danger-dark hover:underline">
+                <Link to="/dossier/$caseNo" params={{ caseNo: c.no }} className="font-bold text-danger-dark hover:underline">
                   {c.no} · {c.person}
                 </Link>
                 <div className="text-[0.8rem] text-muted">
@@ -158,7 +159,7 @@ function AppealPage() {
                 rows.map((c) => (
                   <tr key={c.no} className="hover:bg-slate-50/70">
                     <td className="font-bold text-blue">
-                      <Link to="/appeal-folder/$caseNo" params={{ caseNo: c.no }}>
+                      <Link to={c.appealFolder ? '/dossier/$caseNo' : '/appeal-folder/$caseNo'} params={{ caseNo: c.no }}>
                         {c.no}
                       </Link>
                     </td>
@@ -208,12 +209,12 @@ function AppealPage() {
 
                     <td className="text-right">
                       <Link
-                        to="/appeal-folder/$caseNo"
+                        to={c.appealFolder ? '/dossier/$caseNo' : '/appeal-folder/$caseNo'}
                         params={{ caseNo: c.no }}
                         className="inline-flex min-h-[38px] items-center gap-[0.45rem] whitespace-nowrap rounded-lg bg-navy px-3 py-1.5 text-[0.85rem] font-semibold text-white transition hover:bg-blue"
                       >
                         <i className="fa-solid fa-folder-open text-xs" aria-hidden="true" />
-                        {c.appealFiledAt ? 'เปิดแฟ้มอุทธรณ์' : 'รับคำอุทธรณ์'}
+                        {c.appealFolder ? 'เปิดแฟ้มคดี' : 'รับคำอุทธรณ์'}
                       </Link>
                     </td>
                   </tr>

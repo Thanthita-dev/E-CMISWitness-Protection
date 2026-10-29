@@ -4,8 +4,9 @@ import { useAuthStore } from '../store/useAuthStore'
 import { useFormDraftStore } from '../store/useFormDraftStore'
 import { useNotificationStore } from '../store/useNotificationStore'
 import type { CaseItem } from '../types/case'
+import { passSarabanCheckpoint } from './sarabanTestHelpers'
 
-const NO = 'WP-2569-000501'
+const NO = '0501/2569'
 const initial = (): CaseItem => ({
   no: NO, form: 'คบ.1', person: 'นางสาวกมลชนก บุญรักษา', stage: 'external_pending',
   status: 'รอเลขาธิการพิจารณา', owner: 'เลขาธิการ ป.ป.ท.', next: 'พิจารณา', risk: 'สูง',
@@ -97,9 +98,9 @@ describe('เลือกผลเบื้องต้นและร่าง�
       expect(current().activity7State).toBe('approved')
       expect(current().kb9Signed).toBe(true)
       expect(current().kb10Signed).not.toBe(true)
-      expect(current().resultNotices?.[9]?.status).toBe('signed_incomplete')
+      expect(current().resultNotices?.[9]?.status).toBe('completed')
       expect(current().protectionHandoff?.destination).toBe(destination)
-      expect(current().protectionHandoff?.step).toBe(destination === 'got' ? 'pending_receipt' : 'accepted')
+      expect(current().protectionHandoff?.step).toBe('pending_outgoing')
       const signed = structuredClone(current())
       const notifications = structuredClone(useNotificationStore.getState().notifications)
       expect(store().confirmPreliminaryDecision(NO, 9)).toBe(false)
@@ -121,6 +122,9 @@ describe('เลือกผลเบื้องต้นและร่าง�
     expect(current().kb9Signed).not.toBe(true)
     expect(current().resultNotices?.[10]?.status).toBe('signed_incomplete')
     expect(current().protectionHandoff).toBeUndefined()
+    expect(current().sarabanDispatch?.flow).toBe('decision')
+    expect(passSarabanCheckpoint(NO)).toBe(true)
+    expect(passSarabanCheckpoint(NO)).toBe(true)
     expect(current().owner).toBe('นางสาวอรุณี ใจมั่น')
     expect(store().confirmPreliminaryDecision(NO, 10)).toBe(false)
   })

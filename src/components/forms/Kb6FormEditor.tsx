@@ -1,3 +1,4 @@
+import { ApprovalCoordinationPanel } from '../protection/ApprovalCoordinationPanel'
 import { Button } from '../common/Button'
 import React from 'react'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
@@ -5,12 +6,18 @@ import {
   PROTECTION_DURATION_OPTIONS,
   PROTECTION_MAX_DAYS,
   PROTECTION_DEFAULT_DAYS,
+  KB6_DURATION_DETAIL_FIELD,
   KB6_PROTECTION_METHOD_FIELD,
   KB6_METHOD_EXTERNAL,
   KB6_LEGAL_REFS_FIELD,
   readLegalRefs,
-  KB6_SHOW_RATIONALE_FIELD,
-  readShowRationale,
+  KB6_RATIONALE_FIELD,
+  KB6_METHOD2_DETAIL_FIELD,
+  KB6_METHOD3_DETAIL_FIELD,
+  KB6_METHOD_LABELS,
+  KB6_METHOD_SUBITEMS,
+  KB6_METHOD_SUBITEM_FIELDS,
+  readMethodSubitems,
   ROLE_NAMES,
 } from '../../lib/constants'
 import { formatThaiDate, addDays } from '../../lib/utils'
@@ -20,9 +27,11 @@ import { Area, DateField, EditorShell, Field, Grid, OfficerRosterFields, Protect
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { VersionHistory, VersionHistoryEntry } from '../common/VersionHistory'
-import { KB6_SIGNERS, Kb6Signer, canEditKb6Opinion } from '../../lib/formSignature'
+import { APPEAL_ADDENDUM_LABEL, KB6_SIGNERS, Kb6Signer, addendumLabel, appealAddendumEditable, appealAddendumVersion, canEditKb6Opinion, extensionKb6PendingSigner, getActiveExtensionDocs, versionLabelFor } from '../../lib/formSignature'
 import { saveKb6Opinions } from '../../lib/mockApi'
 import { Kb6SignatureActions } from './Kb6SignatureActions'
+import { DocAside } from './EditorView'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface Kb6FormEditorProps {
   onSaved?: () => void
@@ -35,7 +44,9 @@ const AutoTextarea: React.FC<{
   id: string
   value: string
   onChange: (next: string) => void
-}> = ({ id, value, onChange }) => {
+  testId?: string
+  minRows?: number
+}> = ({ id, value, onChange, testId, minRows = 2 }) => {
   const ref = React.useRef<HTMLTextAreaElement>(null)
 
   React.useLayoutEffect(() => {
@@ -46,10 +57,11 @@ const AutoTextarea: React.FC<{
   }, [value])
 
   return (
-    <textarea
+    <VoiceTextarea
       id={id}
       ref={ref}
-      rows={2}
+      rows={minRows}
+      data-testid={testId}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="ws-input resize-none overflow-hidden"
@@ -81,7 +93,7 @@ const Kb6OpinionArea: React.FC<{
       <label className="ws-label">
         {signer.no}. {signer.label}
       </label>
-      <textarea
+      <VoiceTextarea
         rows={2}
         value={value}
         disabled={!editable}
@@ -108,7 +120,7 @@ const LegalRefsFields: React.FC<{ refs: string[]; onChange: (next: string[]) => 
 }) => (
   <div className="space-y-2">
     {refs.map((text, i) => {
-      const no = `7.${toThaiDigits(i + 1)}`
+      const no = `7.${i + 1}`
       const id = `kb6-legal-ref-${i}`
       return (
         <div key={i}>
@@ -147,6 +159,27 @@ const LegalRefsFields: React.FC<{ refs: string[]; onChange: (next: string[]) => 
   </div>
 )
 
+/** FB-015 — รายละเอียดที่เจ้าหน้าที่กรอกเองใต้รูปแบบข้อ 2/3 (ไม่บังคับกรอก) */
+const MethodDetailArea: React.FC<{
+  n: 2 | 3
+  label: string
+  value: string
+  onChange: (next: string) => void
+}> = ({ n, label, value, onChange }) => (
+  <div>
+    <label htmlFor={`kb6-method-detail-${n}`} className="ws-label">
+      {label}
+    </label>
+    <AutoTextarea
+      id={`kb6-method-detail-${n}`}
+      testId={`kb6-method-detail-${n}`}
+      minRows={3}
+      value={value}
+      onChange={onChange}
+    />
+  </div>
+)
+
 /** คบ.6 — บันทึกข้อความ การคุ้มครองพยานในเบื้องต้น (เสนอเลขาธิการคณะกรรมการ ป.ป.ท.) */
 export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo }) => {
   const { getDraft, updateField, updateSignedField } = useFormDraftStore()
@@ -156,6 +189,9 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
   const logHistory = useCaseStore((s) => s.logHistory)
   const currentRole = useAuthStore((s) => s.currentRole)
   const caseItem = caseNo ? getCase(caseNo) : undefined
+  /** รอบขยายเวลา: ผู้ลงนามที่ถึงคิวของฉบับใหม่เขียนความเห็นได้ (ผ่าน updateSignedField ไม่ติดการ์ด v1 ของ store) */
+  const extDocs = caseItem ? getActiveExtensionDocs(caseItem) : null
+  const extPendingRole = caseItem && extDocs ? extensionKb6PendingSigner(caseItem, currentRole)?.role : undefined
 
   /**
    * TC-012 — ช่องความเห็นข้อ 10-13 ที่ผู้ใช้พยายามแก้ไขทั้งที่ไม่ถึงลำดับชั้นของตน (เช่น งัด disabled
@@ -184,6 +220,18 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
 
   const kb6Lock = useFormDraftStore((s) => s.locks[6])
   const kb6Version = caseItem?.kb6Version || 1
+  /** ขอขยายระยะเวลา: คบ.6 แสดงเป็น "บันทึกเพิ่มเติม ครั้งที่ N" แนบฉบับเดิม ไม่ใช่ฉบับใหม่ */
+  const inExtension = Boolean(extDocs || caseItem?.extensionDocs)
+  /** บันทึกเพิ่มเติม (อุทธรณ์) — ข้อ 10–13 ลงจากความเห็นแต่ละชั้นของแฟ้มอุทธรณ์ในแฟ้มคดี ไม่กรอกในหน้านี้ */
+  const appealAddendum = Boolean(caseItem && appealAddendumVersion(caseItem, 6))
+  const kb6DraftVersion = useFormDraftStore((s) => (s.revisions[6]?.length || 0) + 1)
+  const appealCurrent = Boolean(caseItem && appealAddendum && appealAddendumVersion(caseItem, 6) === kb6DraftVersion)
+  const kb6LabelForVersion = (inExtension || appealAddendum) && caseItem
+    ? (v: number) => versionLabelFor(caseItem, 6, v)
+    : undefined
+  const kb6CurrentLabel = extDocs ? addendumLabel(extDocs.round) : appealCurrent ? APPEAL_ADDENDUM_LABEL : undefined
+  const appealOpinionAt = (role: Kb6Signer['role']) =>
+    caseItem?.appealFolder?.[({ supervisor: 'supervisorOpinion', director: 'directorOpinion', deputy: 'deputyOpinion', secretary: 'secretaryOpinion' } as const)[role]]?.at
   const kb6PreviousVersions = caseItem?.kb6PreviousVersions || []
   const kb6HistoryEntries: VersionHistoryEntry[] = kb6PreviousVersions.map((v) => ({
     version: v.version,
@@ -200,12 +248,13 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
   /** ข้อ 4 ตัดชุดเจ้าพนักงานออก จึงปิดช่องกรอก 8.1 ไว้ แต่ยังเก็บค่าเดิมไม่ลบ */
   const rosterDisabled = methods.includes(KB6_METHOD_EXTERNAL)
   const legalRefs = readLegalRefs(draft)
-  const showRationale = readShowRationale(draft)
 
   return (
     <EditorShell
       code="คบ.6"
       formId={6}
+      versionLabel={kb6CurrentLabel}
+      labelForVersion={kb6LabelForVersion}
       title="บันทึกข้อความ การคุ้มครองพยานในเบื้องต้น"
       hint="เจ้าพนักงานประเมินความเสี่ยง เสนอมาตรการ และผ่านความเห็นตามลำดับชั้นถึงเลขาธิการคณะกรรมการ ป.ป.ท."
       footer={
@@ -213,6 +262,10 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
           <Button
             type="button"
             onClick={async () => {
+              if (!methods.length) {
+                showToast('กรุณาเลือกรูปแบบการคุ้มครองในข้อ 8.2 ก่อนบันทึก คบ.6', 'warning')
+                return
+              }
               if (durationDays > PROTECTION_MAX_DAYS) {
                 showToast(`ระยะเวลาคุ้มครองต้องไม่เกิน ${PROTECTION_MAX_DAYS} วันต่อครั้ง`)
                 return
@@ -286,14 +339,28 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
         </>
       }
     >
-      <VersionHistory
+      {extDocs && (
+        <div className="ws-callout text-[0.88rem] leading-relaxed" data-testid="ext-docs-banner">
+          {addendumLabel(extDocs.round)} (ขอขยายระยะเวลา) — ดึงข้อมูลจาก คบ.6 ฉบับเดิมมาให้แล้ว แก้ไขเฉพาะส่วนที่เปลี่ยน ฉบับเดิมเก็บไว้ไม่แก้ทับ
+        </div>
+      )}
+      {appealCurrent && caseItem && (
+        <div className="ws-callout text-[0.88rem] leading-relaxed" data-testid="appeal-docs-banner">
+          {APPEAL_ADDENDUM_LABEL} — จัดทำความเห็นสำหรับคำอุทธรณ์ในฉบับนี้ โดยเก็บฉบับเดิมไว้อ้างอิง ·
+          ความเห็นข้อ 10–13 ลงจากการเสนอตามลำดับชั้นในแฟ้มคดี (ผบช.ชั้นต้น → ผอ. → รองเลขาธิการฯ → เลขาธิการฯ)
+          {!appealAddendumEditable(caseItem) && ' · เสนอตามลำดับชั้นแล้ว ส่วนของเจ้าหน้าที่ดูได้อย่างเดียว'}
+        </div>
+      )}
+      <DocAside><VersionHistory
         code="kb6"
         currentVersion={kb6Version}
+        labelForVersion={kb6LabelForVersion}
+        currentLabel={kb6CurrentLabel}
         entries={kb6HistoryEntries}
         locked={Boolean(kb6Lock)}
         lockedBy={kb6SupervisorSignedBy}
         lockedNote={kb6SupervisorSignedAt ? `ลงนามความเห็นผู้บังคับบัญชาชั้นต้น (ข้อ 10) เมื่อ ${kb6SupervisorSignedAt}` : undefined}
-      />
+      /></DocAside>
 
       <Section title="หัวบันทึกข้อความ">
         <Grid>
@@ -351,13 +418,13 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
 
       <Section no="3." title="รูปแบบวิธีและระยะเวลาการดำเนินการคุ้มครอง">
         <Grid>
-          <Field formId={6} name="รูปแบบการคุ้มครอง" label="รูปแบบการคุ้มครอง (ตามระเบียบฯ ข้อ 15)" required />
           <div>
-            <label className="ws-label">
+            <label className="ws-label" htmlFor="kb6-duration">
               ระยะเวลาที่เสนอขอความคุ้มครอง <span className="text-danger">*</span> (ครั้งละไม่เกิน{' '}
               2 เดือน)
             </label>
             <select
+              id="kb6-duration"
               value={durationDays}
               onChange={(e) => updateField(6, 'ระยะเวลาคุ้มครองวัน', Number(e.target.value))}
               className="ws-input"
@@ -385,12 +452,14 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
             )}
           </div>
         </Grid>
-        <Grid cols={4}>
-          <DateField formId={6} name="เริ่มวันที่" label="ในระหว่างวันที่" />
-          <DateField formId={6} name="ถึงวันที่" label="ถึงวันที่" />
-          <Field formId={6} name="รวมเดือน" label="รวมเป็นเวลา (เดือน)" />
-          <Field formId={6} name="รวมวัน" label="และ (วัน)" />
-        </Grid>
+        {/* ข้อ ๓ เป็นข้อความอิสระที่เจ้าพนักงานเขียนเอง — ระยะเวลาด้านบนใช้คำนวณกำหนดครบของระบบ ไม่บังคับรูปประโยคบนกระดาษ */}
+        <Area
+          formId={6}
+          name={KB6_DURATION_DETAIL_FIELD}
+          label="รายละเอียดรูปแบบวิธีและระยะเวลาการดำเนินการคุ้มครอง"
+          rows={4}
+          placeholder="พยานมีความประสงค์จะให้เจ้าหน้าที่ดำเนินการอย่างไร (ถ้ามี) ให้บันทึกรายละเอียด"
+        />
       </Section>
 
       <Section
@@ -405,27 +474,46 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
       </Section>
 
       <Section no="8." title="ข้อพิจารณา — เจ้าพนักงานที่มอบหมาย">
-        <button
-          type="button"
-          aria-pressed={showRationale}
-          onClick={() => updateField(6, KB6_SHOW_RATIONALE_FIELD, !showRationale)}
-          className={`block w-full min-h-[44px] rounded-lg border px-3 py-2 text-[0.88rem] font-semibold text-left transition ${
-            showRationale
-              ? 'border-blue bg-blue-soft text-navy'
-              : 'border-[#aebdca] bg-white text-ink hover:bg-soft'
-          }`}
-        >
-          {showRationale ? '☑' : '☐'} พิมพ์ข้อความข้อพิจารณามาตรฐานลงในเอกสาร
-          <span className="block font-normal text-muted">
-            ไม่ติ๊ก = เว้นเป็นเส้นประให้เขียนด้วยลายมือ
-          </span>
-        </button>
+        {/* FB-013 — เจ้าหน้าที่พิมพ์ข้อพิจารณาเอง (ว่าง = เส้นประบนกระดาษ) */}
+        <div>
+          <label htmlFor="kb6-rationale" className="ws-label">
+            ข้อพิจารณา (เจ้าหน้าที่ระบุเองว่าเห็นควรคุ้มครองหรือไม่คุ้มครอง พร้อมเหตุผล)
+          </label>
+          <AutoTextarea
+            id="kb6-rationale"
+            testId="kb6-rationale-input"
+            minRows={4}
+            value={String(draft[KB6_RATIONALE_FIELD] ?? '')}
+            onChange={(next) => updateField(6, KB6_RATIONALE_FIELD, next)}
+          />
+        </div>
         <OfficerRosterFields formId={6} disabled={rosterDisabled} />
         <Field formId={6} name="ดำเนินการโดย" label="8.2 ดำเนินการคุ้มครองโดยการ" />
         <ProtectionMethodChecks
           selected={methods}
           onChange={(next) => updateField(6, KB6_PROTECTION_METHOD_FIELD, next)}
+          labels={KB6_METHOD_LABELS}
+          subitems={KB6_METHOD_SUBITEMS}
+          subitemSelected={readMethodSubitems(draft)}
+          onSubitemChange={(n, text) => updateField(6, KB6_METHOD_SUBITEM_FIELDS[n], text)}
         />
+        {/* FB-015 — รายละเอียดข้อ 2/3 แสดงเมื่อเลือกข้อนั้น ยกเลิกแล้วซ่อนแต่เก็บค่าไว้ */}
+        {methods.includes(2) && (
+          <MethodDetailArea
+            n={2}
+            label="รายละเอียดข้อ 2 — สถานที่ที่จัดให้พยานอยู่"
+            value={String(draft[KB6_METHOD2_DETAIL_FIELD] ?? '')}
+            onChange={(next) => updateField(6, KB6_METHOD2_DETAIL_FIELD, next)}
+          />
+        )}
+        {methods.includes(3) && (
+          <MethodDetailArea
+            n={3}
+            label="รายละเอียดข้อ 3 — ข้อมูลที่ปกปิดและวิธีรักษาความลับ"
+            value={String(draft[KB6_METHOD3_DETAIL_FIELD] ?? '')}
+            onChange={(next) => updateField(6, KB6_METHOD3_DETAIL_FIELD, next)}
+          />
+        )}
         <Area formId={6} name="มาตรการทั่วไป" label="มาตรการทั่วไปที่เสนอให้ความคุ้มครอง" rows={4} />
       </Section>
 
@@ -444,8 +532,8 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
             key={signer.role}
             signer={signer}
             value={String(draft[signer.opinionField] ?? '')}
-            editable={caseItem ? canEditKb6Opinion(signer, currentRole, caseItem) : false}
-            signedAt={caseItem ? signer.signedAt(caseItem) : undefined}
+            editable={appealCurrent ? false : extDocs ? extPendingRole === signer.role : caseItem ? canEditKb6Opinion(signer, currentRole, caseItem) : false}
+            signedAt={appealCurrent ? appealOpinionAt(signer.role) : extDocs ? extDocs.request?.kb6Signatures?.[signer.role]?.at : caseItem ? signer.signedAt(caseItem) : undefined}
             onChange={(next) => updateSignedField(6, signer.opinionField, next)}
             onBlockedAttempt={() => blockedOpinionAttemptsRef.current.add(signer.opinionField)}
           />
@@ -456,6 +544,7 @@ export const Kb6FormEditor: React.FC<Kb6FormEditorProps> = ({ onSaved, caseNo })
           แต่ละข้อจำกัดสิทธิ์แก้ไขตามลำดับชั้นและขั้นตอนของแฟ้มโดยอัตโนมัติ
         </p>
       </Section>
+      {caseItem && !inExtension && <ApprovalCoordinationPanel caseItem={caseItem} />}
     </EditorShell>
   )
 }

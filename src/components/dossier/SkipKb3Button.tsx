@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { CaseItem } from '../../types/case'
 import { useCaseStore } from '../../store/useCaseStore'
 import { showToast, MySwal } from '../../lib/swal'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 const DEFAULT_SKIP_REASON = 'ระบุข้อเท็จจริงและพฤติการณ์ภัยคุกคามไว้ครบถ้วนแล้วในแบบ คบ.1'
 
@@ -19,8 +20,8 @@ const SkipKb3ModalBody: React.FC<{
         แต่ <strong>ต้องบันทึกเหตุผลในการกดข้ามไว้ในระบบ</strong>
       </p>
       <div>
-        <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">เหตุผลในการกดข้าม *</label>
-        <textarea
+        <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">เหตุผลในการกดข้าม <span className="text-danger">*</span></label>
+        <VoiceTextarea
           rows={3}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -97,7 +98,7 @@ export const SkipKb3Button: React.FC<SkipKb3ButtonProps> = ({ caseItem, onAction
       type="button"
       onClick={() => (caseItem.kb3Skipped ? handleRestore() : handleSkipClick())}
       variant="secondary"
-      size="md"
+      size="sm"
     >
       <i className={`fa-solid ${caseItem.kb3Skipped ? 'fa-rotate-left' : 'fa-forward'} text-[0.8rem]`} />
       {caseItem.kb3Skipped ? 'กู้คืน คบ.3' : 'กดข้าม คบ.3 (ระบุเหตุผล)'}

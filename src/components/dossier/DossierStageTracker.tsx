@@ -4,6 +4,7 @@ import { CaseItem } from '../../types/case'
 import { CurrentStepCard } from '../common/CurrentStepCard'
 import { NumberedStepper, StepperStep } from '../common/NumberedStepper'
 import { handoffReady } from '../../lib/protectionHandoff'
+import { ARTICLE14_STEP_LABELS, article14Agency } from '../../lib/constants'
 
 interface DossierStageTrackerProps {
     caseItem: CaseItem
@@ -38,9 +39,36 @@ export const STAGES = [
 
 const CLOSING_STAGES = ['terminated', 'transferred', 'withdrawn']
 
+/**
+ * แฟ้มที่เข้าเส้นทางส่งต่อกรมคุ้มครองสิทธิฯ (ข้อ 14) — หมุด 13 เป็นปลายทางของเส้นทาง ไม่มีหมุดคำสั่งยุติ/ปิดงาน
+ * คณะกรรมการไม่เห็นชอบแล้วกลับไปคุ้มครองตามคำสั่งเดิม จึงใช้หมุดชุดปกติ
+ */
+export const isArticle14Path = (c: CaseItem): boolean =>
+    c.article14 ? c.article14.step !== 'committee_rejected' : c.stage === 'article14'
+
+const ARTICLE14_STAGE = { key: 'article14', label: 'ส่งต่อกรมคุ้มครองสิทธิฯ', step: '7' }
+
+const isNonApprovalPath = (c: CaseItem): boolean =>
+    c.activity7State === 'rejected' || Boolean(c.appealFolder && c.appealAgainst !== 'kb17' && c.appealResolution?.outcome !== 'overturn')
+const NON_APPROVAL_STAGES = [
+    ...STAGES.slice(0, 9),
+    { key: 'appeal', label: 'พิจารณาอุทธรณ์', step: '5' },
+    { key: 'appeal_closed', label: 'ปิดขั้นอุทธรณ์', step: '5' },
+]
+
+/** หมุดที่แสดงของแฟ้มนี้ — เส้นทางข้อ 14 แทนหมุด 13 และตัดหมุด 14 ออก */
+export const stagesFor = (c: CaseItem) =>
+    (isNonApprovalPath(c) ? NON_APPROVAL_STAGES : isArticle14Path(c) ? [...STAGES.slice(0, 12), ARTICLE14_STAGE] : STAGES).map((s) =>
+        c.stage === 'director_outgoing_registry' && s.key === 'director_review' ? { ...s, label: 'ธุรการออกเลขส่ง' } : s)
+
 /** ตำแหน่งหมุด "แจ้งผล/นำส่ง" ใช้ตัดสินว่าจะกางรายละเอียดขั้นย่อยของหมุดนี้หรือไม่ */
 
 export function getStageIndex(c: CaseItem): number {
+    if (isNonApprovalPath(c)) {
+        if (c.appealClosedAt || c.nonApprovalClosedAt || c.appealResolution?.outcome === 'uphold') return 10
+        if (c.appealFolder || c.appealFiledAt) return 9
+        return 8
+    }
     /** ปิดงานแล้ว — หมุดสุดท้าย (11D WIT1148) */
     if (CLOSING_STAGES.includes(c.stage)) return 13
     /** ผู้มีอำนาจพิจารณาเรื่องยุติแล้ว หรือมีคำสั่ง คบ.16 — อยู่หน้า 11D (WIT1136) */
@@ -64,7 +92,8 @@ export function getStageIndex(c: CaseItem): number {
     if (c.stage === 'external_pending') return 7
     /** WIT0512-0513 — รองเลขาธิการฯ กลั่นกรองชุดเสนอก่อนถึงเลขาธิการฯ */
     if (c.stage === 'deputy_review') return 6
-    if (c.stage === 'director_review') return 5
+    /** ทะเบียนสารบรรณ (ธุรการ) ระหว่าง ผอ. กับรองเลขาธิการฯ — ใช้หมุด ผอ. ต่อ แสดงขั้นย่อยที่ข้อความใต้หมุด */
+    if (c.stage === 'director_review' || c.stage === 'director_outgoing_registry' || c.stage === 'secretary_incoming_registry') return 5
     if (c.stage === 'supervisor_review') return 4
     if (c.stage === 'staff_review') return 3
     if (c.stage === 'director_assign') return 2
@@ -75,6 +104,14 @@ export function getStageIndex(c: CaseItem): number {
 
 export const stageDesc = (key: string, c: CaseItem): string => {
     switch (key) {
+        case 'appeal':
+            return c.appealResolution ? 'คณะกรรมการวินิจฉัยแล้ว' : c.appealFolder ? c.status : 'รอการยื่นอุทธรณ์'
+        case 'appeal_closed':
+            return c.appealResolution?.outcome === 'uphold' ? 'คณะกรรมการยกคำร้อง' : c.nonApprovalClosedAt ? 'ปิดเรื่องไม่อนุมัติ' : 'รอผลพิจารณา'
+
+        case 'article14':
+            if (c.stage === 'transferred') return 'ส่งมอบแล้ว'
+            return c.article14 ? ARTICLE14_STEP_LABELS[c.article14.step] : 'รอจัดทำข้อเสนอ'
         case 'intake':
             return c.form
         case 'main_case':
@@ -86,15 +123,18 @@ export const stageDesc = (key: string, c: CaseItem): string => {
             if (!c.urgency) return 'รอประเมินความเร่งด่วน'
             return c.kb3Skipped ? 'ข้าม คบ.3' : c.intakeDocType === 'kb1' ? 'คบ.3/6' : 'คบ.1/3/6'
         case 'supervisor_review':
-            return c.urgent ? 'ข้าม (Fast Track)' : 'ผบช.ต้น'
+            return c.urgent ? 'ข้าม' : 'ผบช.ต้น'
         case 'director_review':
+            if (c.stage === 'director_outgoing_registry') return 'ธุรการสำนัก/กอง ออกเลขส่ง'
+            if (c.stage === 'secretary_incoming_registry') return 'ธุรการสำนักงานเลขาธิการ ลงเลขรับ'
             return c.kb6DirectorSignedAt ? 'ลงนามแล้ว' : 'คบ.6'
         case 'deputy_review':
             return c.deputyScreenedAt ? 'กลั่นกรองแล้ว' : 'กลั่นกรองก่อนเสนอ'
         case 'external_pending':
             return c.decisionNumber || 'พิจารณาอนุมัติ'
         case 'notice':
-            if (!handoffReady(c)) return 'ส่งงานหลังอนุมัติ · กอท.'
+            if (isNonApprovalPath(c)) return c.deliveredAt ? 'พยานได้รับ คบ.10 แล้ว' : c.dispatchedAt ? 'นำส่ง คบ.10 แล้ว' : 'จัดทำและนำส่ง คบ.10'
+            if (!handoffReady(c)) return 'ส่งงานหลังพิจารณา · กอท.'
             return noticeForCase(c) ? NOTICE_STATUS_LABELS[noticeForCase(c)!.status] : c.activity7State === 'rejected' ? 'คบ.10' : 'คบ.9/11'
         case 'method_operation': {
             const tracks = c.methodTracks || []
@@ -119,7 +159,7 @@ export const stageDesc = (key: string, c: CaseItem): string => {
         }
         /** 11B/11C — ขยายเวลา คบ.14 หรือจัดทำเรื่องยุติ คบ.7/คบ.15 */
         case 'extension_termination': {
-            if (c.stage === 'article14') return 'ส่งต่อกรมคุ้มครองสิทธิฯ'
+            if (c.stage === 'article14') return `ส่งต่อ${article14Agency(c).short}`
             if (c.kb15) return `คบ.15 v${c.kb15.version}`
             if (c.terminationRequest) return 'เรื่องยุติ คบ.7'
             /** WIT1125-WIT1128 — รับเหตุยุติแล้วแต่ยังไม่ได้จัดทำ คบ.15 */
@@ -153,40 +193,46 @@ export const stageDesc = (key: string, c: CaseItem): string => {
 
 /** ข้อมูลหมุดปัจจุบันของแฟ้ม ใช้เติมข้อความอัตโนมัติในหน้าอื่น เช่น Mock State */
 export function getCurrentStageInfo(c: CaseItem): { label: string; desc: string } {
-    if (!handoffReady(c)) return { label: 'ส่งงานหลังอนุมัติ', desc: c.status }
-    const stage = STAGES[Math.min(getStageIndex(c), STAGES.length - 1)]
+    if (!handoffReady(c)) return { label: 'ส่งงานหลังพิจารณา', desc: c.status }
+    const stages = stagesFor(c)
+    const stage = stages[Math.min(getStageIndex(c), stages.length - 1)]
     return { label: stage.label, desc: stageDesc(stage.key, c) }
 }
 
 export const DossierStageTracker: React.FC<DossierStageTrackerProps> = ({ caseItem }) => {
     const activeIndex = getStageIndex(caseItem)
+    const completed = Boolean(caseItem.kb17?.deliveredAt || caseItem.terminationDocumentsClosedAt)
     /** ไม่มีเส้นทางปัดตกเพราะไม่พบเลขสำนวนหลักอีกต่อไป (WIT0215) — คงตัวแปรไว้สำหรับเส้นทางยุติ */
     const isRejected = caseItem.activity7State === 'rejected'
     const isFastTrack = Boolean(caseItem.urgent)
-    const currentStage = STAGES[Math.min(activeIndex, STAGES.length - 1)]
-    const nextStage = STAGES[activeIndex + 1]
-    const steps: StepperStep[] = STAGES.map((stage, idx) => ({
+    const stages = stagesFor(caseItem)
+    const article14Path = isArticle14Path(caseItem)
+    const currentStage = stages[Math.min(activeIndex, stages.length - 1)]
+    const nextStage = stages[activeIndex + 1]
+    /** เส้นทางข้อ 14 ไม่มีหมุดถัดไป — ปลายทางคือส่งมอบให้กรมคุ้มครองสิทธิฯ */
+    const nextLabel = isNonApprovalPath(caseItem) && activeIndex === 10 ? (caseItem.appealKb10 ? 'จัดทำและนำส่ง คบ.10 แจ้งผลมติ' : 'สิ้นสุดการพิจารณา') : nextStage ? nextStage.label : article14Path && activeIndex < stages.length ? `ส่งมอบให้${article14Agency(caseItem).short}` : 'ปิดงานแล้ว'
+    const steps: StepperStep[] = stages.map((stage, idx) => ({
         key: stage.key,
         label: stage.label,
         sublabel: stageDesc(stage.key, caseItem),
-        state: idx < activeIndex ? 'done' : idx === activeIndex ? 'current' : 'pending',
+        state: completed || idx < activeIndex ? 'done' : idx === activeIndex ? 'current' : 'pending',
     }))
 
     return (
         <div className="min-w-0 max-w-full space-y-4" data-testid="dossier-stage-tracker">
             <CurrentStepCard
-                current={!handoffReady(caseItem) ? 'ส่งงานหลังอนุมัติ' : currentStage.label}
-                responsible={!handoffReady(caseItem) ? `${caseItem.owner} · ${caseItem.status}` : `${stageDesc(currentStage.key, caseItem)} · ขั้นตอนที่ ${currentStage.step}`}
-                next={!handoffReady(caseItem) ? caseItem.next : nextStage ? nextStage.label : 'ปิดงานแล้ว'}
-                nextNote={nextStage ? `ขั้นตอนที่ ${nextStage.step}` : undefined}
-                index={activeIndex + 1}
-                total={STAGES.length}
+                current={completed ? 'ปิดงานแล้ว' : !handoffReady(caseItem) ? 'ส่งงานหลังพิจารณา' : currentStage.label}
+                responsible={completed ? 'แจ้งคำสั่งยุติและบันทึกพยานรับ คบ.17 แล้ว' : !handoffReady(caseItem) ? `${caseItem.owner} · ${caseItem.status}` : `${stageDesc(currentStage.key, caseItem)} · ขั้นตอนที่ ${currentStage.step}`}
+                next={completed ? 'ดำเนินการครบแล้ว' : !handoffReady(caseItem) ? caseItem.next : nextLabel}
+                nextNote={completed ? undefined : nextStage ? `ขั้นตอนที่ ${nextStage.step}` : article14Path && activeIndex < stages.length ? `ขั้นตอนที่ ${currentStage.step}` : undefined}
+                index={completed ? stages.length : Math.min(activeIndex, stages.length - 1) + 1}
+                total={stages.length}
                 caption={[
-                    `เส้นทางการดำเนินงานตามลำดับชั้น · ${STAGES.length} หมุด ครอบคลุมขั้นตอนที่ 1-7`,
-                    isFastTrack ? 'Fast Track: ข้ามขั้นกลั่นกรอง' : isRejected ? 'ผลพิจารณา: ไม่อนุมัติ' : undefined,
+                    isNonApprovalPath(caseItem) ? 'เส้นทางไม่อนุมัติ · แจ้งผลและอุทธรณ์' : undefined,
+                    isFastTrack ? 'กรณีเร่งด่วน: ข้ามขั้นกลั่นกรอง' : isRejected ? 'ผลพิจารณา: ไม่อนุมัติ' : undefined,
                 ]}
             >
-                <NumberedStepper steps={steps} ariaLabel="เส้นทางการดำเนินงาน 14 หมุด" />
+                <NumberedStepper steps={steps} ariaLabel={`เส้นทางการดำเนินงาน ${stages.length} หมุด`} />
             </CurrentStepCard>
 
 

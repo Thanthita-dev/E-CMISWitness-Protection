@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { usePaperSignSlot } from './paper/paperSign'
 import { Button } from '../common/Button'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -6,7 +7,8 @@ import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { useConsentSigningStore } from '../../store/useConsentSigningStore'
 import { ECMIS_USER_DIRECTORY, ROLE_NAMES } from '../../lib/constants'
 import { buildSeedForCase } from '../../lib/formPrefill'
-import { MySwal, showToast } from '../../lib/swal'
+import { MySwal, showLinkDialog, showToast } from '../../lib/swal'
+import { createPortal } from 'react-dom'
 import {
   CONSENT_CHANNEL_LABELS,
   CONSENT_EVENT_LABELS,
@@ -151,7 +153,7 @@ const SendConsentModal: React.FC<{
         caseNo,
         reissue ? 'ออกลิงก์ลงชื่อยินยอม คบ.1 ใหม่ (ลิงก์เดิมถูกยกเลิก)' : 'ส่งลิงก์ให้ผู้ขอคุ้มครองลงชื่อยินยอมใน คบ.1',
         actor,
-        `ถึง ${name.trim()} · ${CONSENT_CHANNEL_LABELS[channel]} · หมดอายุ ${formatConsentDateTime(expiresPreview)} · เอกสารฉบับที่ ${nextVersion} (Prototype — ไม่ได้ส่งจริง)`
+        `ถึง ${name.trim()} · ${CONSENT_CHANNEL_LABELS[channel]} · หมดอายุ ${formatConsentDateTime(expiresPreview)} · เอกสารฉบับที่ ${nextVersion}`
       )
     onSent(token)
   }
@@ -173,16 +175,8 @@ const SendConsentModal: React.FC<{
 
         {step === 'form' ? (
           <div className="p-5 space-y-4 text-xs">
-            <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-[11px] text-violet-900 leading-relaxed">
-              <DemoTag className="mb-1" />
-              <div>
-                ระบบไม่ส่งข้อความออกไปเอง หลังยืนยันจะได้ลิงก์ให้คัดลอกส่งเอง หรือ QR Code ให้ผู้ขอคุ้มครองสแกนจากหน้าจอ
-                และเปิดหน้าจอจำลองฝั่งผู้ขอคุ้มครองได้
-              </div>
-            </div>
-
             <div>
-              <label htmlFor="consent-recipient-name" className="block font-bold text-slate-700 mb-1">ผู้รับ (ผู้ขอคุ้มครอง / ผู้ยื่นคำร้อง) *</label>
+              <label htmlFor="consent-recipient-name" className="block font-bold text-slate-700 mb-1">ผู้รับ (ผู้ขอคุ้มครอง / ผู้ยื่นคำร้อง) <span className="text-danger">*</span></label>
               <input
                 id="consent-recipient-name"
                 value={name}
@@ -193,7 +187,7 @@ const SendConsentModal: React.FC<{
             </div>
 
             <fieldset>
-              <legend className="block font-bold text-slate-700 mb-1">ช่องทางส่ง *</legend>
+              <legend className="block font-bold text-slate-700 mb-1">ช่องทางส่ง <span className="text-danger">*</span></legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {(Object.keys(CONSENT_CHANNEL_LABELS) as ConsentChannel[]).map((c) => (
                   <label
@@ -210,13 +204,12 @@ const SendConsentModal: React.FC<{
 
 
             <div>
-              <label htmlFor="consent-expiry" className="block font-bold text-slate-700 mb-1">อายุลิงก์ *</label>
+              <label htmlFor="consent-expiry" className="block font-bold text-slate-700 mb-1">อายุลิงก์ <span className="text-danger">*</span></label>
               <select id="consent-expiry" value={hours} onChange={(e) => setHours(Number(e.target.value))} className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-xs">
                 {CONSENT_EXPIRY_OPTIONS.map((o) => (
                   <option key={o.hours} value={o.hours}>{o.label}</option>
                 ))}
               </select>
-              <p className="mt-1 text-[11px] text-slate-500">ตัวเลือกอายุลิงก์เป็นค่าสมมติของ Prototype — ระยะเวลาจริงต้องยืนยันก่อนใช้งาน</p>
             </div>
 
             {reissue && (
@@ -370,6 +363,11 @@ export const ApplicantConsentPanel: React.FC<{ caseNo: string; compact?: boolean
     showToast('ยกเลิกลิงก์แล้ว — ลิงก์เดิมใช้ต่อไม่ได้')
   }
 
+  /** เส้นลงชื่อ "ผู้ยื่นคำร้อง" บนกระดาษ: ผู้ขอคุ้มครองลงชื่อเองผ่านลิงก์ — ปุ่มบนกระดาษเปิดการส่งลิงก์ (ลงชื่อแทนไม่ได้) */
+  usePaperSignSlot('kb1-applicant', validSigned ? null : pendingLink
+    ? { onSign: () => undefined, waitingLabel: 'รอผู้ขอคุ้มครองลงชื่อผ่านลิงก์' }
+    : { onSign: () => setSendMode('send'), label: 'ส่งลิงก์ลงชื่อ' })
+
   const sendButton = (
     <Button
       type="button"
@@ -396,7 +394,6 @@ export const ApplicantConsentPanel: React.FC<{ caseNo: string; compact?: boolean
           <p className="text-[11px] text-slate-500 mt-0.5">ผู้ขอคุ้มครองลงชื่อด้วยตนเองผ่านลิงก์ — เจ้าหน้าที่ลงชื่อแทนไม่ได้</p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <DemoTag />
           <ConsentStatusBadge status={status} />
           {needsResign && status !== 'pending' && (
             <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
@@ -552,18 +549,21 @@ export const ApplicantConsentPanel: React.FC<{ caseNo: string; compact?: boolean
         )}
       </div>
 
-      {sendMode && (
+      {/* หน้าต่างวางที่ระดับหน้า — แผงนี้อาจอยู่ในแบบกรอกที่ซ่อนไว้ (โหมดกรอกบนเอกสาร) */}
+      {sendMode && createPortal(
         <SendConsentModal
           caseNo={caseNo}
           reissue={sendMode === 'reissue'}
           onClose={() => setSendMode(null)}
-          onSent={() => {
+          onSent={(token) => {
             setSendMode(null)
-            showToast('สร้างลิงก์แล้ว (สาธิต — ไม่ได้ส่ง SMS/อีเมลจริง)')
+            /** แบบเดียวกับงานหมายจับ: แสดงลิงก์ให้คัดลอกไปส่งผู้ขอคุ้มครองลงชื่อเอง */
+            void showLinkDialog('ส่งลิงก์ให้ผู้ขอคุ้มครองลงชื่อ', `${window.location.origin}/sign/consent/${token}`)
           }}
-        />
+        />,
+        document.body,
       )}
-      {viewSigned && <SignedVersionModal req={viewSigned} onClose={() => setViewSigned(null)} />}
+      {viewSigned && createPortal(<SignedVersionModal req={viewSigned} onClose={() => setViewSigned(null)} />, document.body)}
     </div>
   )
 }

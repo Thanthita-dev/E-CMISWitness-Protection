@@ -4,6 +4,7 @@ export type UserRole =
   | 'case_owner'
   | 'supervisor'
   | 'director'
+  | 'secretary_receiver'
   | 'deputy_secretary'
   | 'secretary'
   | 'committee'
@@ -11,6 +12,7 @@ export type UserRole =
   | 'got_receiver'
   | 'got_director'
   | 'got_officer'
+  | 'got_supervisor'
   | 'appeal'
   | 'admin'
 

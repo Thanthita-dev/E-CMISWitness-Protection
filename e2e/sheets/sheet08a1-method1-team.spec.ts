@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
 
 /**
  * Sheet 08A-1 · WIT0814 → WIT0821 — วิธีที่ 1 จัดชุดคุ้มครอง
@@ -11,7 +12,7 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * และ Phase TEMPORARY → MAIN ต้องต่อวันสะสมโดยไม่รีเซ็ต (episode.ts)
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const METHOD1_URL = `/protection-method/1?caseNo=${CASE_NO}`
 
@@ -73,14 +74,17 @@ test.describe('08A-1 · WIT0814-0821 — วิธีที่ 1 จัดชุ
       methodTracks: [{ method: 1, status: 'pending' }],
     })
 
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await page.getByRole('button', { name: 'ส่งเสนอเลขาธิการฯ ลงนาม' }).click()
 
     let c = await readCase(page, CASE_NO)
     expect(c?.kb8SubmittedAt).toBeTruthy()
+    // ขาไป: ธุรการหน่วย → ธุรการ สลธ. ก่อนถึงเลขาธิการ
+    expect(c?.sarabanDispatch).toMatchObject({ flow: 'kb8', direction: 'up' })
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver', { afterRole: 'secretary' })
 
-    await switchRole(page, 'secretary')
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await page.getByRole('button', { name: 'ลงนาม' }).click()
     await page.getByRole('button', { name: 'ลงนาม คบ.8' }).click()
     await signInPlace(page)
@@ -88,6 +92,10 @@ test.describe('08A-1 · WIT0814-0821 — วิธีที่ 1 จัดชุ
     c = await readCase(page, CASE_NO)
     expect(c?.kb8Signed).toBe(true)
     expect(c?.kb8SignedAt).toBeTruthy()
+    // ขากลับ: ธุรการ สลธ. → ธุรการหน่วย ก่อนถึงเจ้าหน้าที่
+    expect(c?.sarabanDispatch).toMatchObject({ flow: 'kb8', direction: 'down' })
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver')
 
     // กรอกแผนปฏิบัติ (WIT0819) แล้วชี้แจง Need-to-Know (WIT0820) แล้วเริ่มปฏิบัติจริง (WIT0821)
     await switchRole(page, 'officer')
@@ -128,13 +136,13 @@ test.describe('08A-1 · WIT0814-0821 — วิธีที่ 1 จัดชุ
       },
     })
 
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     const before = await readCase(page, CASE_NO)
     const beforePhases = before?.episode?.phases as Array<{ kind: string }>
     expect(beforePhases).toHaveLength(1)
 
     await switchRole(page, 'secretary')
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await page.getByRole('button', { name: 'ลงนาม' }).click()
     await page.getByRole('button', { name: 'ลงนาม คบ.8' }).click()
     await signInPlace(page)
@@ -174,7 +182,7 @@ test.describe('08A-1 · WIT0814-0821 — วิธีที่ 1 จัดชุ
       },
     })
 
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     const before = await readCase(page, CASE_NO)
     expect(before?.episode).toBeTruthy()
 
@@ -211,7 +219,7 @@ test.describe('08A-1 · WIT0814-0821 — วิธีที่ 1 จัดชุ
       activity7State: 'rejected',
     })
 
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     const after = await readCase(page, CASE_NO)
     const track = (after?.methodTracks as Array<{ status: string; endedAt?: string }>)[0]
     // ธุรกิจที่ถูกต้อง: ต้องยุติช่วงชั่วคราวโดยอัตโนมัติ (endedAt) และแฟ้มต้องย้ายไปเส้นทางแท็บ 09A
@@ -246,7 +254,7 @@ test.describe('08A-1 · WIT0814-0821 — วิธีที่ 1 จัดชุ
     })
 
     await switchRole(page, 'secretary')
-    await page.goto(`/dossier/${CASE_NO}`)
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
     await page.getByRole('button', { name: 'ลงนาม' }).click()
 
     // ธุรกิจที่ถูกต้อง: เลขาธิการฯ ต้องส่งกลับแก้ไข คบ.8 ได้ (เหมือน คบ.6/คบ.10/คบ.14/คบ.15)

@@ -1,12 +1,26 @@
+import { currentTerminationReport, terminationSubmissionErrors } from '../lib/terminationDraft'
+import { confirmedAppealDeadline, terminationEffectiveAt, terminationReasonText, validateTerminationBasis } from '../lib/terminationRules'
+import { calendarDate } from '../lib/protectionMonths'
+import { restoreReferralCommitteeRoute } from '../lib/referralCommittee'
+import { article14LetterFormNo, isRightsReferral, requiresReferralCommittee } from '../lib/referralDocumentIdentity'
+import { restorePostalReceipt, canPostTerminationNotice } from '../lib/postalReceipt'
+import { prepareApprovalLetters } from '../lib/approvalCoordinationActions'
+import { approvalCoordinationAgency, approvalMethods } from '../lib/approvalCoordination'
+import { FORMS_CATALOG } from '../lib/constants'
+import { policeRequired, policeAllSigned, POLICE_KINDS, POLICE_TITLES } from '../lib/policeLetters'
+import { activateCaseForms } from '../lib/formPrefill'
 import { addProtectionMonths, calendarDays, monthLabel, legacyMonthLabel } from '../lib/protectionMonths'
-import { NOTICE_FIELD_POLICY, NOTICE_DETAIL_FIELDS, noticeWorkerAllowed, hasSignedResultNotice, cloneNotice, createNoticeDraft, missingNoticeFields, noticeCanSign, noticeForCase, signNoticeSnapshot, ResultNoticeFormNo, NoticeDecisionDraft, NoticeDecisionDraftInput } from '../lib/noticeDocuments'
+import { NOTICE_FIELD_POLICY, NOTICE_DETAIL_FIELDS, kb10ClerkAllowed, noticeWorkerAllowed, hasSignedResultNotice, cloneNotice, createNoticeDraft, missingNoticeFields, noticeCanSign, noticeForCase, signNoticeSnapshot, ResultNoticeFormNo, NoticeDecisionDraft, NoticeDecisionDraftInput } from '../lib/noticeDocuments'
 import { selectCaseDraft } from './useFormDraftStore'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { isCaseClosed } from '../lib/permissions'
+import type { EcmisUser } from '../types/user'
+import { assignableOfficers, canAssignInUnit } from '../lib/officerAssignment'
 import { getDefaultCaseState } from '../lib/defaultCases'
 import {
   Article14Case,
+  Article14ReviewLevel,
   AppealIntake,
   CaseItem,
   ConsentDeclineAction,
@@ -24,9 +38,11 @@ import {
   Kb16Order,
   Kb17DeliveryAttempt,
   MonthlyReport,
+  ExternalReportLetter,
   OpenKb13RoundInput,
   OfficialLetter,
   ProtectionMethodNo,
+  CoordinationAgencyType,
   ProtectionMethodStatus,
   ProtectionMethodTrack,
   ProtectionPhaseKind,
@@ -39,17 +55,23 @@ import {
   OutgoingNoticeFormNo,
   ProtectionHandoffDestination,
   ProtectionHandoffEvent,
+  SarabanCheckpoint,
+  SarabanRecord,
+  CoordinationLetterDraft,
 } from '../types/case'
 import {
   MAIN_CASE_OPTIONS,
   ECMIS_USER_DIRECTORY,
+  userNameById as userName,
   APPEAL_WINDOW_DAYS,
-  ARTICLE14_TARGET_AGENCY,
+  ARTICLE14_REVIEW_CHAIN,
+  article14Agency,
   PROTECTION_DEFAULT_DAYS,
   PROTECTION_MAX_DAYS,
   PROTECTION_TOTAL_CAP_DAYS,
   readRoutableProtectionMethods,
   resolveMainCaseLeadOfficer,
+  COORDINATION_AGENCY_TYPES,
 } from '../lib/constants'
 import {
   checkExtension,
@@ -58,6 +80,8 @@ import {
   cumulativeDays,
   deriveEpisode,
   earliestMethodStart,
+  isEarlyArticle14,
+  summarizeEpisode,
   currentPhaseKind,
   hasConsent,
   openEpisode,
@@ -65,15 +89,40 @@ import {
   switchPhase,
 } from '../lib/episode'
 import { temporaryDecisionPending } from '../lib/fastTrack'
-import { nowDisplay, addDays, currentReportPeriod, daysUntil, formatThaiDate, parseAnyDate } from '../lib/utils'
-import { Kb13SignSlot, KB11_SIGN_SLOTS, KB6_SIGNERS, kb11Gate } from '../lib/formSignature'
+import { kb1Completed, mainCaseResolved, urgencyScreened } from '../lib/intakeSequence'
+import { nowDisplay, addDays, currentReportPeriod, daysUntil, formatThaiDate, parseAnyDate, caseNoSeq, caseNoFileSafe, getCaseFormNumbers } from '../lib/utils'
+import { isKb13RoundReadyToReceive } from '../lib/kb13'
+import { Kb13SignSlot, KB11_SIGN_SLOTS, KB6_SIGNERS, KB6_DEFAULT_OPINION, kb11Gate, extensionKb6SignerFor, addendumLabel, APPEAL_ADDENDUM_LABEL, APPEAL_ADDENDUM_DRAFT_STAGES } from '../lib/formSignature'
+import { buildSeedForCase } from '../lib/formPrefill'
 import { methodStartBlocker, method4ReplyRecorded } from '../lib/methodProgress'
-import { evaluateCloseGuard } from '../lib/terminationProgress'
+import { evaluateCloseGuard, isTerminationAppealable } from '../lib/terminationProgress'
 import { showToast } from '../lib/swal'
 import { useNotificationStore } from './useNotificationStore'
 import { useFormDraftStore } from './useFormDraftStore'
 import { useAuthStore } from './useAuthStore'
-import { GOT_UNIT_NAME, HANDOFF_STATUS, canOperateHandoff, gotAssignableOfficers, protectionResponsibleName } from '../lib/protectionHandoff'
+import { canActAsLetterClerk, letterClerkAccount, letterClerkUnitName, letterNumberingOf } from '../lib/coordinationLetterNumbering'
+import { GOT_UNIT_NAME, HANDOFF_STATUS, canOperateHandoff, gotAssignableOfficers, protectionResponsibleName, roleForCase, isKb14StageReviewer, isKb15StageReviewer, kb15PendingStage, kb15StageLabel, gotReviewChain, reviewLevelLabel } from '../lib/protectionHandoff'
+import {
+  SARABAN_CHECKPOINT_META,
+  SARABAN_STAGES,
+  SarabanInput,
+  activeSarabanCheckpoint,
+  canRecordSaraban,
+  currentSarabanRound,
+  sarabanCheckpointComplete,
+  sarabanClerkAccount,
+  sarabanDefaultRecipient,
+  sarabanFormsFor,
+  sarabanRecipientsFor,
+  sarabanRecordFor,
+  sarabanUnitName,
+  validateSarabanInput,
+  nextOutgoingSarabanNumber,
+  SarabanDispatchInput,
+  dispatchUnitFor,
+  dispatchWaitingText,
+  sarabanInTransit,
+} from '../lib/saraban'
 
 /**
  * WIT0506 / WIT0511 / WIT0708 — ถูกตีกลับเมื่อใด แบบในชุดเสนอต้องขึ้นเวอร์ชันใหม่
@@ -125,22 +174,91 @@ type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : nev
 /** อินพุตของ fileAppeal/openKb17Appeal — recordedAt/recordedBy เติมให้จากเวลาบันทึกจริง ไม่รับจากผู้เรียก */
 export type AppealIntakeInput = DistributiveOmit<AppealIntake, 'recordedAt' | 'recordedBy'>
 
+/** รอบขอขยายเวลาปัจจุบัน — คำขอที่ยังเปิดอยู่คือรอบของมันเอง ไม่เช่นนั้นเป็นรอบถัดไป (คำขอรอบ N อยู่ที่ extensionRequests[N-1]) */
+/** รอบการขยายเวลาของคำขอ = ลำดับในรายการ + 1 */
+const extensionRoundOf = (requests: ExtensionRequest[] | undefined, request: ExtensionRequest): number =>
+  Math.max(1, (requests || []).findIndex((r) => r.id === request.id) + 1)
+
+/** คบ.14 บันทึกเพิ่มเติม ครั้งที่ N (ถ้าถูกส่งกลับแล้วเสนอใหม่ ต่อท้ายด้วยครั้งที่แก้ไข) */
+const kb14Label = (round: number, version?: number): string =>
+  `คบ.14 ${addendumLabel(round)}${(version || 1) > 1 ? ` (แก้ไขครั้งที่ ${(version || 1) - 1})` : ''}`
+
+const currentExtensionRound = (c: CaseItem): number => {
+  const reqs = c.extensionRequests || []
+  const last = reqs.at(-1)
+  return last && ['submitted', 'pending', 'returned'].includes(last.status) ? reqs.length : reqs.length + 1
+}
+
+/** ทำให้ร่าง คบ.3/คบ.6 ของแฟ้มนี้เป็นร่างที่ใช้งานอยู่ก่อนอ่าน/เขียน */
+const activateExtensionForms = (c: CaseItem) => {
+  const forms = useFormDraftStore.getState()
+  forms.ensureDraftForCase(3, c.no, buildSeedForCase(3, c))
+  forms.ensureDraftForCase(6, c.no, buildSeedForCase(6, c))
+}
+
+/** ล้างลายมือชื่อ/ความเห็น คบ.6 ในร่าง (ส่วนร่างของ prepareAppealKb6Revision) */
+const resetKb6OpinionDraft = () => {
+  useFormDraftStore.setState((state) => ({
+    drafts: { ...state.drafts, 6: Object.fromEntries(Object.entries(state.drafts[6] || {}).map(([key, value]) => [key, KB6_SIGNERS.some((signer) => signer.opinionField === key) ? '' : value])) },
+    signatures: Object.fromEntries(Object.entries(state.signatures).filter(([key]) => !key.startsWith('kb6-'))),
+    draftTouched: { ...state.draftTouched, 6: false },
+  }))
+}
+
+/**
+ * WIT0607 → WIT0608 — ผอ. ส่งกลับแก้ คบ.4 / ร่าง คบ.5 ฉบับแก้ไขเป็นเอกสารใหม่
+ * ล้างลายมือชื่อเจ้าหน้าที่และ ผอ. ใน คบ.4 กับของ ผอ. ใน คบ.5 (พร้อมล็อกอัตโนมัติจากลายมือชื่อ) ให้ลงนามใหม่ก่อนส่งตรวจรอบถัดไป
+ */
+const FAST_TRACK_SIGNATURE_KEYS = ['kb4-officer', 'kb4-director', 'kb5-director']
+const resetFastTrackSignatures = () => {
+  useFormDraftStore.setState((state) => {
+    const locks = { ...state.locks }
+    if (state.signatures['kb5-director']?.signed) delete locks[5]
+    return {
+      signatures: Object.fromEntries(Object.entries(state.signatures).filter(([key]) => !FAST_TRACK_SIGNATURE_KEYS.includes(key))),
+      locks,
+    }
+  })
+}
+
+/** สะท้อนลายมือชื่อผู้ลงนาม คบ.6 ฉบับขยายเวลาเข้าร่าง (รูปแบบเดียวกับ kb6-* เดิม) */
+const mirrorKb6Signature = (c: CaseItem, stage: ExtensionRequest['approvalStage'], by: string, at: string, opinion: string) => {
+  const signer = extensionKb6SignerFor(stage)
+  if (!signer) return
+  activateExtensionForms(c)
+  const forms = useFormDraftStore.getState()
+  forms.updateSignedField(6, signer.nameField, by)
+  forms.updateSignedField(6, signer.opinionField, opinion)
+  useFormDraftStore.setState((state) => ({
+    signatures: { ...state.signatures, [`kb6-${signer.role}`]: { signed: true, signerName: by, signedAt: at } },
+  }))
+}
+
 const routedWorkerAllowed = (c: CaseItem): boolean => {
   if (!c.protectionHandoff) return true
   const auth = useAuthStore.getState()
   return canOperateHandoff(auth.currentRole, c, auth.currentOfficerUserId)
 }
 
+const terminationWorkerAllowed = (c: CaseItem): boolean => ['officer', 'case_owner', 'got_officer', 'admin'].includes(useAuthStore.getState().currentRole) && routedWorkerAllowed(c)
+
 const ACTOR = {
-  officer: 'นางสาวอรุณี ใจมั่น',
-  supervisor: 'นายกิตติศักดิ์ ธรรมรักษ์',
-  director: 'นายวีระยุทธ พิทักษ์ธรรม',
-  secretary: 'นายสุรศักดิ์ ธรรมพิทักษ์',
-  protection: 'ร.ต.อ. อนุชา กล้าหาญ',
-  receiver: 'นายสมบัติ รับสารบรรณ',
-  appeal: 'นางสาววราภรณ์ นิติธรรม',
-  deputySecretary: 'นายพิพัฒน์ ศรีสุวรรณ',
-  committee: 'นางสาวปิยะนุช เลขะกุล',
+  officer: userName('OFF-001'),
+  supervisor: userName('SUP-001'),
+  director: userName('DIR-001'),
+  secretary: userName('SEC-001'),
+  protection: userName('PROT-001'),
+  receiver: userName('REC-001'),
+  appeal: userName('APP-001'),
+  deputySecretary: userName('DSEC-001'),
+  committee: userName('CMT-001'),
+}
+
+/** ชื่อบัญชีที่ล็อกอินอยู่ — ใช้เป็นชื่อผู้ดำเนินการจริงในประวัติ (Admin สาธิตแทนบทบาท จึงใช้ชื่อตั้งต้นของชั้นนั้น) */
+const currentActorName = (fallback: string): string => {
+  const auth = useAuthStore.getState()
+  if (auth.currentRole === 'admin') return fallback
+  return auth.getCurrentUserAccount()?.name || fallback
 }
 
 /** WIT0812 — ชื่อแนวทางที่เสนอได้เมื่อพยานไม่ยินยอม */
@@ -194,7 +312,8 @@ interface CaseState {
   addCase: (item: CaseItem) => void
   beginPreliminaryDecision: (caseNo: string, outcome: 'approved' | 'rejected') => boolean
   savePreliminaryDecision: (caseNo: string, formNo: ResultNoticeFormNo, input: NoticeDecisionDraftInput) => boolean
-  confirmPreliminaryDecision: (caseNo: string, formNo: ResultNoticeFormNo) => boolean
+  sendSignedDecision: (caseNo: string) => boolean
+  confirmPreliminaryDecision: (caseNo: string, formNo: ResultNoticeFormNo, signatureImage?: string) => boolean
   prepareResultNotices: (caseNo: string) => boolean
   completeResultNotice: (caseNo: string, formNo: ResultNoticeFormNo, patch: Record<string, string>) => boolean
   checkResultNoticeReady: (caseNo: string) => boolean
@@ -213,9 +332,11 @@ interface CaseState {
   markMainCaseNotFound: (caseNo: string, reason: string, actor?: string) => void
   // ขั้นที่ 1 — พยานเข้ามาลงนาม คบ.1 ภายหลังกรณีรับแจ้งทางโทรศัพท์ (คบ.2)
   confirmKb1Signature: (caseNo: string, signerName: string) => void
+  /** บันทึกแบบ คบ.1 ของแฟ้มแล้ว — ขั้นถัดไปของเจ้าของสำนวนคือเชื่อมโยงคดีหลักและกลั่นกรองความเร่งด่วน */
+  markKb1Completed: (caseNo: string, actor?: string) => void
 
   // ขั้นที่ 2 — ผอ.สำนัก/กอง มอบหมายเจ้าของสำนวน
-  assignOfficer: (caseNo: string, officerUserId: string, note?: string) => void
+  assignOfficer: (caseNo: string, officerUserId: string, note?: string) => boolean
   /**
    * เชื่อมโยงเลขสำนวนหลักไม่ได้ — บันทึกเหตุผลแล้ว "รับเรื่องต่อ" (WIT0215 / NOTE03_CASE)
    * flow ห้ามปัดตกด้วยเหตุนี้ จึงไม่มี action ปัดตกอีกต่อไป
@@ -253,8 +374,13 @@ interface CaseState {
     issueLabel: string,
     returnNote: string,
     targetRole: string,
-    returnedByRole?: 'supervisor' | 'director' | 'deputy_secretary'
-  ) => void
+    returnedByRole?: 'supervisor' | 'director' | 'deputy_secretary',
+    /** FB-018 — รองเลขาธิการฯ เลือกปลายทางส่งกลับ: เจ้าของเรื่อง (ตามประเด็น) หรือ กอท. (ผู้รับผิดชอบ กอท. แก้ต่อ) */
+    options?: { destination?: 'owner' | 'got' }
+  ) => boolean
+  /** FB-018 — รองเลขาธิการฯ เลือกผลความเห็นข้อ 12 ใน คบ.6: เห็นควร / ไม่เห็นควร (ไม่เห็นควรส่งเลขาธิการฯ ไม่ได้ ต้องส่งกลับแก้ไข) */
+  setDeputyOpinionChoice: (caseNo: string, choice: 'agree' | 'disagree') => boolean
+  setSecretaryOpinionChoice: (caseNo: string, choice: 'agree' | 'disagree') => boolean
   // ขั้นที่ 4 — ลงนามอิเล็กทรอนิกส์ใน คบ.6
   /** WIT0501 — เจ้าหน้าที่บันทึกแบบ คบ.6 ของแฟ้มนี้แล้ว ชุดเสนอจึงมี คบ.6 ครบพอจะส่งกลั่นกรองได้ */
   markKb6Prepared: (caseNo: string, by?: string) => void
@@ -263,15 +389,31 @@ interface CaseState {
   // ขั้นที่ 5
   secretaryApprove: (caseNo: string, decisionNo: string, reason: string, destination: ProtectionHandoffDestination, instruction: string, durationDays?: number) => boolean
   advanceProtectionHandoff: (caseNo: string, action: 'receive' | 'submit' | 'assign' | 'accept', note?: string, assigneeUserId?: string) => boolean
-  secretaryReject: (caseNo: string, decisionNo: string, reason: string) => void
-  secretaryReturn: (caseNo: string, issue: string, reason: string) => void
+  /** ธุรการลงทะเบียนสารบรรณ (เลขรับ/เลขส่ง วันที่ เวลา) ทีละ คบ. ณ จุดที่แฟ้มรออยู่ */
+  recordSaraban: (caseNo: string, checkpoint: SarabanCheckpoint, recipient: string, input: SarabanInput) => boolean
+  addSarabanRecipient: (caseNo: string, checkpoint: SarabanCheckpoint, name: string) => boolean
+  removeSarabanRecipient: (caseNo: string, checkpoint: SarabanCheckpoint, name: string) => boolean
+  /** ธุรการส่งแฟ้มต่อหลังลงทะเบียนครบทุก คบ. ของจุดนั้น */
+  sendAppealByPost: (caseNo: string, input: { trackingNo: string; sentAt: string; recipient: string; address: string }) => boolean
+  completeAppealPost: (caseNo: string, deliveredAt: string, evidence: string) => boolean
+  submitSarabanCheckpoint: (caseNo: string, note?: string) => boolean
+  /**
+   * เปิดชุดนำส่งผ่านธุรการ — เรียกต่อจาก action ที่ส่งเรื่องข้ามหน่วย↔สำนักงานเลขาธิการ "หลัง" อัปเดตแฟ้มแล้ว
+   * owner/status/next ที่ action นั้นตั้งไว้จะถูกเก็บไว้คืนให้ผู้รับเมื่อธุรการลงเลขรับครบ
+   */
+  openSarabanDispatch: (caseNo: string, input: SarabanDispatchInput) => boolean
+  secretaryReject: (caseNo: string, decisionNo: string, reason: string, destination?: ProtectionHandoffDestination) => void
+  secretaryReturn: (caseNo: string, issue: string, reason: string, destination?: 'owner' | 'got') => void
+  secretaryContinue: (caseNo: string, destination: 'owner' | 'got') => boolean
   /** WIT0708 — ผอ.สำนัก/กอง มอบหมายให้เจ้าหน้าที่ผู้รับผิดชอบแก้ คบ.3 / คบ.6 เป็น Revision ใหม่ */
-  assignReturnRevision: (caseNo: string, instruction: string) => void
+  assignReturnRevision: (caseNo: string, instruction: string, assigneeUserId?: string) => void
   /** WIT0713 — ผลพิจารณาแขนงที่ 4: เห็นควรดำเนินการตามข้อ 14 (ไปแท็บ 08C) */
   secretaryReferArticle14: (caseNo: string, decisionNo: string, reason: string) => void
   submitOutgoingForSignature: (caseNo: string) => void
   submitKb8ForSignature: (caseNo: string) => void
   signOutgoingNotice: (caseNo: string, formNo: OutgoingNoticeFormNo, signerName?: string) => void
+  requestKb10Dispatch: (caseNo: string) => boolean
+  numberKb10ForDispatch: (caseNo: string, number: string, date: string) => boolean
   recordDispatch: (
     caseNo: string,
     channel: string,
@@ -288,16 +430,15 @@ interface CaseState {
   recordDelivery: (caseNo: string, deliveredAt?: string, receipt?: DeliveryReceipt) => void
   /**
    * WIT0911-WIT0913 — พยานยื่นอุทธรณ์ผ่านช่องทางหนังสือหรือวาจา ผูกกับแฟ้มเดิม ไม่สร้าง คบ.1 ใหม่
-   * ไม่เปลี่ยน owner อัตโนมัติ — เปลี่ยนได้เฉพาะทาง assignAppealOfficer เท่านั้น
+   * ไม่เปลี่ยน owner อัตโนมัติ — เจ้าของสำนวนเดิมเป็นผู้รับผิดชอบแฟ้มอุทธรณ์
    */
   fileAppeal: (
     caseNo: string,
     reason: string,
     intake: AppealIntakeInput,
-    opts?: { against?: 'kb10' | 'kb17'; recordedBy?: string }
+    /** lateReason — เหตุผลความล่าช้าที่ผู้รับบันทึกตอนรับคำอุทธรณ์ (ยื่นเกินกรอบ 30 วัน) */
+    opts?: { against?: 'kb10' | 'kb17'; recordedBy?: string; lateReason?: string }
   ) => boolean
-  /** มอบหมายเจ้าหน้าที่อุทธรณ์อย่างชัดเจน — จุดเดียวที่เปลี่ยน owner ของแฟ้มอุทธรณ์ได้ */
-  assignAppealOfficer: (caseNo: string, officerUserId: string, note?: string, actor?: string) => void
 
   // 09A — ด่านก่อนลงนาม คบ.10 และการปิดเรื่องเมื่อไม่อุทธรณ์
   /** WIT0904 — เจ้าหน้าที่ตรวจความครบถ้วนของร่าง คบ.10 แล้วเสนอรองเลขาธิการฯ กลั่นกรอง */
@@ -324,6 +465,8 @@ interface CaseState {
   openKb13Round: (caseNo: string, input: OpenKb13RoundInput) => void
   /** WIT1005 — จัดทำ คบ.13 ของรอบที่เปิดอยู่ แล้วแนบแบบเข้าแฟ้มเพื่อลงนาม */
   submitKb13Round: (caseNo: string, reportId: string, patch: Partial<MonthlyReport>) => void
+  /** รอบที่ใช้หนังสือภายนอกแทน คบ.13 — บันทึกรับหนังสือและแนบไฟล์ แทน WIT1005-WIT1007 */
+  recordExternalReport: (caseNo: string, reportId: string, letter: Omit<ExternalReportLetter, 'recordedAt' | 'recordedBy'>, recordedBy?: string) => void
   /**
    * WIT1008 — รับ คบ.13 ที่ลงนามครบแล้วและตรวจผลปฏิบัติเทียบวิธีที่ได้รับอนุมัติ
    * `mismatchIssue` ใช้บันทึกประเด็นความไม่สอดคล้องเป็นปัญหา/เหตุสำคัญของรอบทันทีที่ตรวจรับ
@@ -342,6 +485,8 @@ interface CaseState {
   // ขั้นที่ 7
   requestExtension: (caseNo: string, durationDays: number, reason: string, requestedBy?: string) => void
   decideExtension: (caseNo: string, requestId: string, approve: boolean, note: string) => void
+  /** เจ้าของสำนวนรับทราบผลพิจารณา คบ.14 จากเลขาธิการ */
+  acknowledgeExtensionDecision: (caseNo: string, requestId: string, by: string) => void
   requestTermination: (caseNo: string, reason: string, requestedBy?: string) => void
   decideTermination: (caseNo: string, approve: boolean, note: string) => void
   requestTransfer: (caseNo: string, agency: string, reason: string, requestedBy?: string) => void
@@ -430,7 +575,13 @@ interface CaseState {
     endorse: boolean,
     note: string
   ) => void
-  setApprovedMethods: (caseNo: string, methods: ProtectionMethodNo[], actor?: string) => void
+  setApprovedMethods: (caseNo: string, methods: ProtectionMethodNo[], actor?: string, options?: { allowOutsideOrder?: boolean }) => void
+  /** เจ้าหน้าที่ กอท. เลือกแนวทางตอนเปิดงาน — ตาม คบ.6 หรือเลือกวิธีใหม่ (วิธีที่ 4 ระบุหน่วยงานปลายทาง) */
+  chooseOperationMethods: (
+    caseNo: string,
+    choice: { mode: 'kb4' | 'kb6' | 'new'; methods: ProtectionMethodNo[]; agencyType?: CoordinationAgencyType },
+    actor?: string
+  ) => void
   updateMethodTrack: (caseNo: string, method: ProtectionMethodNo, patch: Partial<ProtectionMethodTrack>) => void
   setMethodStatus: (
     caseNo: string,
@@ -446,11 +597,31 @@ interface CaseState {
   // หนังสือราชการผ่านสารบรรณเดิม (08B, 08C, 11D)
   addOfficialLetter: (caseNo: string, letter: Omit<OfficialLetter, 'id'>) => void
   updateOfficialLetter: (caseNo: string, letterId: string, patch: Partial<OfficialLetter>) => void
+  /** วิธีที่ 4 — เจ้าหน้าที่ส่งหนังสือประสานให้ธุรการหน่วยเจ้าของเรื่องออกเลข (ขาออก) */
+  requestCoordinationLetterNumber: (caseNo: string, input: { agency: string; letterDraft: CoordinationLetterDraft }) => boolean
+  /** ธุรการออกเลขและวันที่หนังสือประสาน */
+  issueCoordinationLetterNumber: (caseNo: string, input: { registryNo: string; registryDate: string }) => boolean
+  /** ธุรการส่งคืนหนังสือประสานให้เจ้าหน้าที่แก้ไข */
+  returnCoordinationLetter: (caseNo: string, note: string) => boolean
+  /** นำส่งหนังสือประสานที่ออกเลขแล้ว — เจ้าหน้าที่หรือธุรการกดได้ */
+  sendCoordinationLetter: (caseNo: string, input: { channel: NonNullable<OfficialLetter['channel']>; trackingNo: string }) => boolean
 
   // 08C — ข้อ 14
-  openArticle14: (caseNo: string, input: Pick<Article14Case, 'threatSummary' | 'riskAssessment' | 'recommendedMeasure'>, actor?: string) => void
-  reviewArticle14: (caseNo: string, role: 'supervisor' | 'secretary', endorse: boolean, note: string) => void
+  /**
+   * เสนอครั้งแรก → เข้าคิว ผบช.ชั้นต้นทันที
+   * Revision หลังส่งคืนแก้ไข → เพิ่มหนังสือแจ้งกรมฯ ฉบับใหม่เข้าแฟ้ม เรื่องยังอยู่กับเจ้าหน้าที่จนกว่าจะกด submitArticle14
+   */
+  openArticle14: (caseNo: string, input: Pick<Article14Case, 'threatSummary' | 'riskAssessment' | 'targetAgencyType'>, actor?: string) => void
+  /** ส่ง Revision ที่เตรียม คบ.3 ฉบับใหม่แล้วให้พิจารณาตามลำดับชั้น (เริ่มที่ ผบช.ชั้นต้น) */
+  submitArticle14: (caseNo: string, actor?: string) => void
+  /** เจ้าหน้าที่กด "บันทึกหนังสือ" ในแบบฟอร์มหนังสือแจ้งกรมฯ — ปลดล็อกปุ่มส่งให้ผู้บังคับบัญชาชั้นต้นของฉบับนั้น */
+  markArticle14LetterSaved: (caseNo: string) => void
+  signArticle14Secretary: (caseNo: string, name: string, image?: string) => boolean
+  returnArticle14Committee: (caseNo: string, reason: string) => void
+  reviewArticle14: (caseNo: string, level: Article14ReviewLevel, endorse: boolean, note: string) => void
   recordArticle14Resolution: (caseNo: string, resolutionNo: string, approved: boolean, note: string) => void
+  /** เสนอก่อนครบ 6 เดือน — เลขาธิการเห็นชอบแล้ว เจ้าหน้าที่ส่งเรื่องให้คณะกรรมการ (พิจารณาในอีกกิจกรรม) */
+  sendArticle14ToCommittee: (caseNo: string, actor?: string) => void
   /** WIT0860 — บันทึกหนังสือตอบรับขาเข้าจากกรม ต้องมีหนังสือขาออกก่อน จึงเปิดขั้นเตรียมส่งมอบ (WIT0861) */
   recordArticle14Reply: (
     caseNo: string,
@@ -533,9 +704,11 @@ interface CaseState {
   draftKb15: (
     caseNo: string,
     input: Pick<Kb15Report, 'trigger' | 'triggerRef' | 'summary' | 'evidenceNote'> &
-      Partial<Pick<Kb15Report, 'triggerDocumentName' | 'triggerReceivedAt'>>,
+      Partial<Pick<Kb15Report, 'triggerDocumentName' | 'triggerReceivedAt' | 'regulationClause'>>,
     actor?: string
   ) => void
+  refreshTerminationEffect: (caseNo: string) => void
+  reviseTerminationDocument: (caseNo: string, formNo: number, reason: string) => boolean
   reviewKb15: (caseNo: string, endorse: boolean, note: string) => void
 
   // 11D — คบ.16 / คบ.17
@@ -567,7 +740,7 @@ interface CaseState {
    * WIT1147 — รับอุทธรณ์คำสั่งยุติ ผูกกับ คบ.17 เดิม ไม่สร้าง คบ.1 ใหม่
    * เป็น wrapper บาง ๆ ที่เดินผ่านฟอร์มรับอุทธรณ์เดียวกับ 09B (fileAppeal) โดยระบุ against เป็น 'kb17'
    */
-  openKb17Appeal: (caseNo: string, reason: string, intake: AppealIntakeInput, actor?: string) => void
+  openKb17Appeal: (caseNo: string, reason: string, intake: AppealIntakeInput, actor?: string, lateReason?: string) => void
   closeProtectionCase: (caseNo: string, note?: string) => void
 
   // 09B — ลำดับชั้นแฟ้มอุทธรณ์และมติคณะกรรมการ
@@ -580,7 +753,13 @@ interface CaseState {
   /** WIT0919 — ฝ่ายเลขานุการบรรจุระเบียบวาระเสนอคณะกรรมการวินิจฉัย */
   scheduleAppealAgenda: (caseNo: string, agendaNo: string) => void
   prepareAppealKb6Revision: (caseNo: string) => void
-  recordAppealResolution: (caseNo: string, input: { resolutionNo: string; outcome: 'uphold' | 'overturn'; note: string }) => void
+  /** จัดทำบันทึกเพิ่มเติม (อุทธรณ์) ของ คบ.3/คบ.6 — เรียกอัตโนมัติตอนรับคำอุทธรณ์ ฉบับเดิมเก็บไว้ไม่แก้ทับ */
+  startAppealDocs: (caseNo: string) => { kb3Version: number; kb6Version: number } | null
+  /** คบ.3/คบ.6 ฉบับใหม่เพื่อขยายเวลา — idempotent ต่อรอบ; null เมื่อทำไม่ได้ (ปิดแฟ้ม/ครบเพดาน) */
+  startExtensionDocs: (caseNo: string) => { round: number; kb3Version: number; kb6Version: number } | null
+  signExtensionKb6: (caseNo: string, opinion?: string, signerName?: string) => boolean
+  recordAppealResolution: (caseNo: string, input: { resolutionNo: string; outcome: 'uphold' | 'overturn'; note: string; destination?: 'original_owner' | 'got' }) => void
+  returnAppealForCorrection: (caseNo: string, reason: string) => void
   /** WIT0921/WIT0922 — บันทึกหนังสือแจ้งผลอุทธรณ์และหลักฐานการรับของพยาน */
   recordAppealNotice: (
     caseNo: string,
@@ -635,7 +814,9 @@ export const useCaseStore = create<CaseState>()(
         const auth = useAuthStore.getState()
         const actor = auth.getCurrentUserAccount()
         if (!current || isCaseClosed(current) || hasSignedResultNotice(current) || current.stage !== 'external_pending' || !actor || !['secretary', 'admin'].includes(auth.currentRole) || !['approved', 'rejected'].includes(outcome)) return false
+        if ((current.policeLetters?.decisionKey || current.coordinationApproval?.signature || current.approvalNoticeSignature) && outcome !== 'approved') return false
         const formNo: ResultNoticeFormNo = outcome === 'approved' ? 9 : 10
+        if (outcome === 'approved') prepareApprovalLetters(caseNo)
         get().prepareResultNotices(caseNo)
         const refreshed = get().getCase(caseNo)!
         if (refreshed.preliminaryDecision?.formNo === formNo) return true
@@ -643,7 +824,7 @@ export const useCaseStore = create<CaseState>()(
         const previous = refreshed.preliminaryDecision
         const existing = refreshed.noticeDecisionDrafts?.[formNo]
         const selected: NoticeDecisionDraft = existing ? { ...existing, selectedAt: at, selectedBy: actor.name } : {
-          formNo, outcome, decisionNo: `ลธ.ปปท./${current.no.slice(-6)}/${new Date().getFullYear() + 543}`,
+          formNo, outcome, decisionNo: `ลธ.ปปท./${caseNoSeq(current.no)}/${new Date().getFullYear() + 543}`,
           reason: '', instruction: '', durationDays: current.protectionDays || PROTECTION_DEFAULT_DAYS,
           selectedAt: at, selectedBy: actor.name,
         }
@@ -665,13 +846,14 @@ export const useCaseStore = create<CaseState>()(
         if (!current || isCaseClosed(current) || hasSignedResultNotice(current) || current.stage !== 'external_pending' || !actor || !['secretary', 'admin'].includes(auth.currentRole) || draft?.formNo !== formNo || !notice) return false
         if (typeof input.decisionNo !== 'string' || typeof input.reason !== 'string' || typeof input.instruction !== 'string' || !Number.isFinite(input.durationDays) || input.durationDays <= 0 || input.durationDays > PROTECTION_MAX_DAYS || (input.destination && !['original_owner', 'got'].includes(input.destination))) return false
         if (!input.fields || Object.keys(input.fields).some((key) => !NOTICE_DETAIL_FIELDS.includes(key as typeof NOTICE_DETAIL_FIELDS[number]) || typeof input.fields[key] !== 'string')) return false
+        if ((current.policeLetters?.decisionKey || current.coordinationApproval?.signature || current.approvalNoticeSignature) && (input.decisionNo.trim() !== draft.decisionNo || input.reason.trim() !== draft.reason || input.instruction.trim() !== draft.instruction || input.durationDays !== draft.durationDays || Object.entries(input.fields).some(([key, value]) => value.trim() !== (notice.fields[key] || '')))) return false
         const fields = { ...notice.fields, ...Object.fromEntries(Object.entries(input.fields).map(([key, value]) => [key, value.trim()])) }
         const forms = useFormDraftStore.getState()
         forms.ensureDraftForCase(formNo, caseNo, notice.fields)
         for (const key of NOTICE_DETAIL_FIELDS) if (Object.prototype.hasOwnProperty.call(fields, key)) forms.updateField(formNo, key, fields[key])
         const at = nowDisplay()
         const next: NoticeDecisionDraft = { ...draft, decisionNo: input.decisionNo.trim(), reason: input.reason.trim(), instruction: input.instruction.trim(), durationDays: input.durationDays,
-          ...(formNo === 9 && input.destination ? { destination: input.destination } : { destination: undefined }), savedAt: at, savedBy: actor.name }
+          ...(input.destination ? { destination: input.destination } : { destination: undefined }), savedAt: at, savedBy: actor.name }
         get().updateCase(caseNo, {
           preliminaryDecision: next, noticeDecisionDrafts: { ...current.noticeDecisionDrafts, [formNo]: next },
           resultNotices: { ...current.resultNotices, [formNo]: { ...notice, fields, status: 'awaiting_signature' } },
@@ -679,15 +861,53 @@ export const useCaseStore = create<CaseState>()(
         return true
       },
 
-      confirmPreliminaryDecision: (caseNo, formNo) => {
+      confirmPreliminaryDecision: (caseNo, formNo, signatureImage) => {
         const current = get().getCase(caseNo)
         const draft = current?.preliminaryDecision
         const auth = useAuthStore.getState()
-        if (!current || isCaseClosed(current) || hasSignedResultNotice(current) || current.stage !== 'external_pending' || !['secretary', 'admin'].includes(auth.currentRole) || draft?.formNo !== formNo || !draft.savedAt || !current.kb6SecretarySignedAt || !draft.decisionNo.trim() || !draft.reason.trim()) return false
-        if (formNo === 9) return draft.outcome === 'approved' && Boolean(draft.destination) && get().secretaryApprove(caseNo, draft.decisionNo, draft.reason, draft.destination!, draft.instruction, draft.durationDays)
-        if (draft.outcome !== 'rejected') return false
-        get().secretaryReject(caseNo, draft.decisionNo, draft.reason)
-        return Boolean(get().getCase(caseNo)?.resultNotices?.[10]?.original)
+        if (!current || isCaseClosed(current) || hasSignedResultNotice(current) || current.stage !== 'external_pending' || !['secretary', 'admin'].includes(auth.currentRole) || draft?.formNo !== formNo || !draft.savedAt || !current.kb6SecretarySignedAt || !draft.decisionNo.trim()) return false
+        if (formNo === 9 && policeRequired(current, selectCaseDraft(useFormDraftStore.getState(), 6, caseNo)) && !policeAllSigned(current.policeLetters)) return false
+        const coordinationAgency = approvalCoordinationAgency(current, selectCaseDraft(useFormDraftStore.getState(), 6, caseNo))
+        if (formNo === 9 && approvalMethods(current, selectCaseDraft(useFormDraftStore.getState(), 6, caseNo)).includes(4) && !coordinationAgency) return false
+        if (formNo === 9 && coordinationAgency && coordinationAgency !== 'police' && (!current.coordinationApproval?.signature || current.coordinationApproval.agencyType !== coordinationAgency)) return false
+        if (formNo === 9) {
+          if (draft.outcome !== 'approved' || !draft.destination || !get().secretaryApprove(caseNo, draft.decisionNo, draft.reason, draft.destination, draft.instruction, draft.durationDays)) return false
+        } else {
+          if (draft.outcome !== 'rejected' || !draft.destination) return false
+          get().secretaryReject(caseNo, draft.decisionNo, draft.reason, draft.destination)
+        }
+        const signedCase = get().getCase(caseNo)
+        const notice = signedCase?.resultNotices?.[formNo]
+        if (!notice?.original) return false
+        if (signatureImage) set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item, resultNotices: { ...item.resultNotices, [formNo]: {
+          ...notice, original: { ...notice.original!, signatureImage },
+          versions: notice.versions.map((version) => version.signatureVerification === 'simulated_original' ? { ...version, signatureImage } : version),
+        } } } : item) }))
+        return true
+      },
+
+      sendSignedDecision: (caseNo) => {
+        const current = get().getCase(caseNo)
+        const auth = useAuthStore.getState()
+        const h = current?.protectionHandoff
+        if (!current || isCaseClosed(current) || !['secretary', 'admin'].includes(auth.currentRole) || h?.step !== 'pending_send' || !hasSignedResultNotice(current) || current.sarabanDispatch) return false
+        if (policeRequired(current, selectCaseDraft(useFormDraftStore.getState(), 6, caseNo)) && !policeAllSigned(current.policeLetters)) return false
+        const at = nowDisplay()
+        const clerk = sarabanClerkAccount(current, 'secretary_outgoing')
+        const actor = auth.getCurrentUserAccount() || secretaryAccount()
+        get().updateCase(caseNo, {
+          protectionHandoff: { ...h, step: 'pending_outgoing', events: [...h.events, {
+            id: `HANDOFF-${crypto.randomUUID()}`, at, action: 'เลขาธิการส่งผลพิจารณาให้ธุรการออกเลข',
+            actorUserId: actor.id, actorName: actor.name, actorRole: auth.currentRole,
+            fromUserId: actor.id, fromName: actor.name, toUserId: clerk.id, toName: clerk.name, note: '',
+          }] },
+          owner: clerk.name, status: HANDOFF_STATUS.pending_outgoing,
+          sarabanRound: (current.sarabanRound || 0) + 1,
+          next: 'ธุรการสำนักงานเลขาธิการออกเลขส่ง แล้วส่งธุรการหน่วยงานปลายทางลงเลขรับ',
+        })
+        get().logHistory(caseNo, 'ส่งผลพิจารณาให้ธุรการสำนักงานเลขาธิการออกเลข', actor.name, h.destination === 'got' ? 'ปลายทาง กอท. รับเลขแล้วเสนอ ผอ. มอบหมายเจ้าของสำนวน' : 'หน่วยงานเจ้าของสำนวนเดิมรับเลขแล้วส่งเจ้าของสำนวน')
+        useNotificationStore.getState().addNotification({ caseNo, type: 'saraban', toName: clerk.name, toUserId: clerk.id, channel: 'ระบบ', message: `${caseNo} · รอออกเลขส่งผลพิจารณา`, urgency: current.urgent ? 'ด่วนที่สุด' : 'ปกติ' })
+        return true
       },
 
       prepareResultNotices: (caseNo) => {
@@ -719,7 +939,7 @@ export const useCaseStore = create<CaseState>()(
         const auth = useAuthStore.getState()
         const actor = auth.getCurrentUserAccount()
         if (!current || isCaseClosed(current) || !document?.original || !actor || noticeForCase(current)?.formNo !== formNo) return false
-        if (!noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId) || !document.policy.confirmed || ['ready', 'sent'].includes(document.status)) return false
+        if (!noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId) || current.kb10DispatchRequestedAt || current.dispatchedAt || !document.policy.confirmed || ['ready', 'sent'].includes(document.status)) return false
         const keys = Object.keys(patch)
         if (!keys.length || keys.some((key) => !NOTICE_DETAIL_FIELDS.includes(key as typeof NOTICE_DETAIL_FIELDS[number]) || !document.policy.allowedAfterSigning.includes(key) || typeof patch[key] !== 'string')) return false
         const changes = keys.filter((key) => (document.fields[key] || '') !== patch[key].trim()).map((field) => ({ field, before: document.fields[field] || '', after: patch[field].trim() }))
@@ -741,7 +961,7 @@ export const useCaseStore = create<CaseState>()(
         const current = get().getCase(caseNo)
         const document = noticeForCase(current)
         const actor = useAuthStore.getState().getCurrentUserAccount()
-        if (!current || isCaseClosed(current) || !actor || !noticeWorkerAllowed(useAuthStore.getState().currentRole, current, useAuthStore.getState().currentOfficerUserId) || !document?.original || document.status !== 'completed' || missingNoticeFields(document).length) return false
+        if (!current || isCaseClosed(current) || !actor || !noticeWorkerAllowed(useAuthStore.getState().currentRole, current, useAuthStore.getState().currentOfficerUserId) || !document?.original || !['completed', 'signed_incomplete'].includes(document.status) || missingNoticeFields(document).length) return false
         const next = { ...document, status: 'ready' as const, checkedAt: nowDisplay(), checkedBy: actor.name }
         set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item, resultNotices: { ...item.resultNotices, [document.formNo]: next } } : item) }))
         get().logHistory(caseNo, `ตรวจ คบ.${document.formNo} พร้อมส่ง`, actor.name, `รุ่น ${document.versions.length} ข้อมูลครบ — ลายมือชื่อจำลองเดิมอ้างถึงรุ่น 1 เท่านั้น`)
@@ -752,6 +972,21 @@ export const useCaseStore = create<CaseState>()(
         /** WIT1148 — แฟ้มปิดงานคุ้มครองแล้วถูกล็อกทั้งแฟ้ม: รับเฉพาะการบันทึกประวัติ/Audit Log เท่านั้น */
         const target = get().cases.find((c) => c.no === no)
         if ('appealKb6Version' in updates || 'appealKb6PreviousResult' in updates) return
+        if (target?.kb15 && ['submitted', 'endorsed'].includes(target.kb15.status) && updates.kb15) {
+          for (const key of ['summary', 'regulationClause', 'article19Reason', 'facts', 'evidenceNote', 'occurredAt', 'proposedEndAt', 'basis', 'formSnapshot', 'headSignature'] as const) {
+            if (JSON.stringify(target.kb15[key]) !== JSON.stringify(updates.kb15[key])) return
+          }
+        }
+        if (target?.kb16?.signedAt && updates.kb16) {
+          for (const key of ['orderNo', 'reason', 'issuedAt', 'effectiveAt', 'signedAt', 'signedBy', 'formSnapshot', 'kb15Version', 'regulationClause'] as const) {
+            if (JSON.stringify(target.kb16[key]) !== JSON.stringify(updates.kb16[key])) return
+          }
+        }
+        if (target?.kb17?.signedAt && updates.kb17) {
+          for (const key of ['reason', 'orderNo', 'orderIssuedAt', 'orderEffectiveAt', 'signedAt', 'signedBy', 'formSnapshot', 'regulationClause'] as const) {
+            if (JSON.stringify(target.kb17[key]) !== JSON.stringify(updates.kb17[key])) return
+          }
+        }
         if (target && updates.kb11Signed === true && target.activity7State === 'approved') {
           const forms = useFormDraftStore.getState()
           const signatures = forms.draftCaseNo[11] === no ? forms.signatures : forms.caseDrafts[no]?.signatures || {}
@@ -793,8 +1028,17 @@ export const useCaseStore = create<CaseState>()(
       linkMainCase: (caseNo, mainCaseId, relation, actor) => {
         const option = MAIN_CASE_OPTIONS.find((opt) => opt.id === mainCaseId)
         if (!option) return
+        const current = get().getCase(caseNo)
 
         get().updateCase(caseNo, {
+          /** เจ้าของสำนวนเชื่อมโยงแล้ว ขั้นถัดไปคือกลั่นกรองความเร่งด่วนในการ์ดเดียวกัน */
+          ...(current?.stage === 'staff_review' && !urgencyScreened(current) && {
+            next: 'กลั่นกรองความเร่งด่วน (ปกติ / เร่งด่วน) แล้วจัดทำ คบ.3',
+          }),
+          /** เจ้าหน้าที่ผู้รับเรื่องเชื่อมโยงแล้ว ขั้นถัดไปคือส่ง ผอ. มอบหมาย */
+          ...(current?.stage === 'officer_intake' && {
+            next: 'ส่ง ผอ.สำนัก/กอง มอบหมายเจ้าของสำนวน',
+          }),
           linkedMainCaseId: option.id,
           mainCaseNo: option.no,
           mainCaseTitle: option.title,
@@ -849,6 +1093,9 @@ export const useCaseStore = create<CaseState>()(
             status: 'รับเรื่องต่อโดยยังไม่มีเลขสำนวนหลัก',
             next: 'ผอ.สำนัก/กอง มอบหมายเจ้าของสำนวนตามปกติ แล้วติดตามเชื่อมโยงเลขสำนวนภายหลัง',
           }),
+          ...(current?.stage === 'staff_review' && !urgencyScreened(current) && {
+            next: 'กลั่นกรองความเร่งด่วน (ปกติ / เร่งด่วน) แล้วจัดทำ คบ.3',
+          }),
         })
         get().logHistory(
           caseNo,
@@ -867,13 +1114,33 @@ export const useCaseStore = create<CaseState>()(
         get().logHistory(caseNo, 'พยานเข้ามาลงนามยินยอมใน คบ.1', signerName, 'เดิมรับแจ้งทางโทรศัพท์และบันทึกไว้ในแบบ คบ.2')
       },
 
+      markKb1Completed: (caseNo, actor) => {
+        const current = get().getCase(caseNo)
+        if (!current || isCaseClosed(current)) return
+        /** บันทึกซ้ำ (แก้ไข คบ.1) ไม่ต้องเพิ่มประวัติหรือย้อนข้อความงานถัดไป */
+        if (current.kb1CompletedAt) return
+        const atOwnerStage = current.stage === 'staff_review'
+        get().updateCase(caseNo, {
+          kb1CompletedAt: nowDisplay(),
+          ...(atOwnerStage && !mainCaseResolved(current) && {
+            next: 'เชื่อมโยงคดีหลักจากกิจกรรมที่ 4/5 แล้วกลั่นกรองความเร่งด่วน (ปกติ / เร่งด่วน)',
+          }),
+          ...(atOwnerStage && mainCaseResolved(current) && !urgencyScreened(current) && {
+            next: 'กลั่นกรองความเร่งด่วน (ปกติ / เร่งด่วน) แล้วจัดทำ คบ.3',
+          }),
+        })
+        get().logHistory(caseNo, 'บันทึกแบบ คบ.1', actor || protectionResponsibleName(current), 'จัดทำคำร้องขอคุ้มครองพยาน (คบ.1) ในแฟ้มแล้ว')
+      },
+
       // ---------- ขั้นที่ 2 : การมอบหมายและจัดสรรผู้รับผิดชอบ ----------
       assignOfficer: (caseNo, officerUserId, note) => {
         const current = get().getCase(caseNo)
-        if (current?.protectionHandoff) return
-        if (!current) return
-        const officer = ECMIS_USER_DIRECTORY.find((u) => u.id === officerUserId)
-        if (!officer) return
+        const auth = useAuthStore.getState()
+        if (!current || current.protectionHandoff || isCaseClosed(current) ||
+          !canAssignInUnit(auth.currentRole, auth.currentOrgUnitId, current)) return false
+        const officer = assignableOfficers(auth.currentRole, auth.currentOrgUnitId).find((u) => u.id === officerUserId)
+        if (!officer) return false
+        const directorName = auth.getCurrentUserAccount()?.name || ACTOR.director
 
         /** เปลี่ยนตัวผู้รับผิดชอบ ไม่ใช่การมอบหมายครั้งแรก — ใช้แยกข้อความแจ้งเตือนและบันทึกประวัติ */
         const previousOfficer = current.assignedOfficerUserId
@@ -883,14 +1150,14 @@ export const useCaseStore = create<CaseState>()(
           assignedOfficer: officer.name,
           assignedOfficerUserId: officer.id,
           assignedAt: nowDisplay(),
-          assignedBy: ACTOR.director,
+          assignedBy: directorName,
           status: 'มอบหมายเจ้าของสำนวนแล้ว — รอส่งต่อ',
           next: 'ยืนยันส่งต่อเพื่อเริ่มขั้นตอนถัดไป (สามารถเปลี่ยนเจ้าของสำนวนได้ก่อนส่งต่อ)',
         })
         get().logHistory(
           caseNo,
           isReassign ? 'ผอ.สำนัก/กอง เปลี่ยนเจ้าของสำนวน' : 'ผอ.สำนัก/กอง มอบหมายเจ้าของสำนวน',
-          ACTOR.director,
+          directorName,
           note || `มอบหมายให้ ${officer.name} (${officer.unit}) รับผิดชอบสำนวนเพื่อความต่อเนื่องของคดี`
         )
 
@@ -904,7 +1171,7 @@ export const useCaseStore = create<CaseState>()(
           toName: officer.name,
           toUserId: officer.id,
           channel: 'ระบบ E-CMIS',
-          message: `${ACTOR.director} มอบหมายให้ท่านรับผิดชอบงานคุ้มครองพยานของแฟ้ม ${caseNo} (${current.person || 'ยังไม่ระบุชื่อผู้ขอรับการคุ้มครอง'})`,
+          message: `${directorName} มอบหมายให้ท่านรับผิดชอบงานคุ้มครองพยานของแฟ้ม ${caseNo} (${current.person || 'ยังไม่ระบุชื่อผู้ขอรับการคุ้มครอง'})`,
           urgency: current.urgent ? 'ด่วนที่สุด' : 'ปกติ',
         })
 
@@ -921,6 +1188,7 @@ export const useCaseStore = create<CaseState>()(
             urgency: 'ปกติ',
           })
         }
+        return true
       },
 
       /**
@@ -956,7 +1224,8 @@ export const useCaseStore = create<CaseState>()(
         const isUrgent = urgency === 'urgent'
         /** WIT0410 — แก้ผลประเมินทับของเดิม ต้องแยกข้อความในประวัติ ไม่ให้ปนกับการประเมินครั้งแรก */
         const isRevision = Boolean(current.urgencyAssessedAt) && current.urgency !== urgency
-        const remaining = current.pendingIntakeForms || ['คบ.3']
+        /** คบ.1 จัดทำก่อนกลั่นกรองเสมอ — งานที่เหลือหลังกลั่นกรองจึงไม่รวม คบ.1 */
+        const remaining = (current.pendingIntakeForms || ['คบ.3']).filter((f) => f !== 'คบ.1')
         const tail = isUrgent ? 'คบ.4 → คบ.5' : 'คบ.6'
         const assessor = actor || protectionResponsibleName(current)
 
@@ -968,7 +1237,7 @@ export const useCaseStore = create<CaseState>()(
           urgencyAssessmentNote: note,
           risk: isUrgent && current.risk === 'ยังไม่ประเมิน' ? 'วิกฤต' : current.risk,
           status: isUrgent ? 'ประเมินเป็นกรณีจำเป็นเร่งด่วน' : 'ประเมินเป็นกรณีปกติ',
-          next: `จัดทำ ${remaining.join(' / ')} แล้วดำเนินการตามเส้นทาง ${tail}`,
+          next: `จัดทำ ${remaining.length ? remaining.join(' / ') : 'คบ.3'} แล้วดำเนินการตามเส้นทาง ${tail}`,
         })
         const baseDetail =
           note ||
@@ -1023,8 +1292,13 @@ export const useCaseStore = create<CaseState>()(
           return fastTrackDirect ? 'director_review' : 'supervisor_review'
         }
         if (caseItem.stage === 'supervisor_review') return 'director_review'
-        /** WIT0512 — ผอ. ลงนาม คบ.6 แล้วส่งรองเลขาธิการฯ กลั่นกรองก่อนถึงเลขาธิการฯ */
-        if (caseItem.stage === 'director_review') return 'deputy_review'
+        /**
+         * WIT0512 — ผอ. ลงนาม คบ.6 แล้วส่งรองเลขาธิการฯ กลั่นกรองก่อนถึงเลขาธิการฯ
+         * แต่ข้ามหน่วยงานต้องผ่านทะเบียนสารบรรณ: ธุรการสำนัก/กอง ออกเลขส่ง → ธุรการ สลธ. ลงเลขรับ → รองเลขาธิการฯ
+         */
+        if (caseItem.stage === 'director_review') return SARABAN_STAGES.director_outgoing
+        if (caseItem.stage === SARABAN_STAGES.director_outgoing) return SARABAN_STAGES.secretary_incoming
+        if (caseItem.stage === SARABAN_STAGES.secretary_incoming) return 'deputy_review'
         if (caseItem.stage === 'deputy_review') return 'external_pending'
         return 'external_pending'
       },
@@ -1033,7 +1307,19 @@ export const useCaseStore = create<CaseState>()(
         const current = get().getCase(caseNo)
         if (current?.protectionHandoff) return
         if (!current) return
+        if (sarabanInTransit(current, 'decision')) return // ผลพิจารณา/ส่งคืนยังอยู่ระหว่างธุรการนำส่ง
 
+        // ผอ. ส่งชุดเสนอได้เฉพาะแฟ้มของหน่วยงานตน
+        const auth = useAuthStore.getState()
+        if (current.stage === 'director_review' && targetStage === SARABAN_STAGES.director_outgoing &&
+          !canAssignInUnit(auth.currentRole, auth.currentOrgUnitId, current)) return
+
+        const kb6ForPolice = selectCaseDraft(useFormDraftStore.getState(), 6, caseNo)
+        if (policeRequired(current, kb6ForPolice)) {
+          if (!current.policeLetters || POLICE_KINDS.some(k => !current.policeLetters!.letters[k].draft.body.trim())) return
+          const b = current.policeLetters
+          get().updateCase(caseNo, { policeLetters: { ...b, letters: Object.fromEntries(POLICE_KINDS.map(k => [k, { ...b.letters[k], status: b.letters[k].signedAt ? b.letters[k].status : 'review' }])) as typeof b.letters } })
+        }
         get().prepareResultNotices(caseNo)
         const timestamp = nowDisplay()
         const history = current.assignmentHistory || []
@@ -1048,6 +1334,9 @@ export const useCaseStore = create<CaseState>()(
         const urgencyReroute =
           current.stage === 'supervisor_review' && targetStage === 'director_review' && Boolean(current.urgent)
 
+        /** หน่วยของ ผอ. ผู้ส่งชุดเสนอ — ธุรการหน่วยนี้ออกเลขทะเบียนส่ง (ผอ. เขต 1 → ธุรการ เขต 1) */
+        const forwardingAuth = useAuthStore.getState()
+        const sarabanOriginUnit = (forwardingAuth.currentRole === 'director' && forwardingAuth.currentOrgUnitId) || (current.gotRevision ? 'central-gmc' : current.orgUnitId)
         let nextStatus = current.status
         let nextActor = current.owner
         let nextWork = current.next
@@ -1063,7 +1352,9 @@ export const useCaseStore = create<CaseState>()(
         } else if (targetStage === 'staff_review') {
           nextStatus = 'มอบหมายเจ้าของสำนวนแล้ว'
           nextActor = protectionResponsibleName(current)
-          nextWork = `ประเมินความเร่งด่วน (ปกติ / เร่งด่วน) แล้วจัดทำ ${(current.pendingIntakeForms || ['คบ.1', 'คบ.3']).join(' / ')} ตามเส้นทางที่ประเมินได้`
+          nextWork = kb1Completed(current)
+            ? 'เชื่อมโยงคดีหลักและกลั่นกรองความเร่งด่วน (ปกติ / เร่งด่วน) แล้วจัดทำ คบ.3 ตามเส้นทางที่กลั่นกรองได้'
+            : 'จัดทำ คบ.1 แล้วเชื่อมโยงคดีหลักและกลั่นกรองความเร่งด่วน (ปกติ / เร่งด่วน) ก่อนจัดทำ คบ.3'
         } else if (targetStage === 'supervisor_review') {
           nextStatus = 'รอกลั่นกรอง'
           nextActor = ACTOR.supervisor
@@ -1080,6 +1371,14 @@ export const useCaseStore = create<CaseState>()(
             : current.urgent
             ? 'ผอ.สำนัก/กอง พิจารณาออกคำสั่งคุ้มครองชั่วคราว คบ.5'
             : 'ผอ.สำนัก/กอง ลงนามใน คบ.6 และส่งรองเลขาธิการ ป.ป.ท. กลั่นกรอง'
+        } else if (targetStage === SARABAN_STAGES.director_outgoing) {
+          nextStatus = 'รอธุรการสำนัก/กอง ออกเลขทะเบียนส่ง'
+          nextActor = sarabanClerkAccount({ ...current, sarabanOriginUnitId: sarabanOriginUnit }, 'director_outgoing').name
+          nextWork = 'ธุรการสำนัก/กอง ออกเลขทะเบียนส่ง คบ.1 / คบ.3 / คบ.6 แล้วส่งธุรการสำนักงานเลขาธิการ'
+        } else if (targetStage === SARABAN_STAGES.secretary_incoming) {
+          nextStatus = 'รอธุรการสำนักงานเลขาธิการ ลงเลขทะเบียนรับ'
+          nextActor = sarabanClerkAccount(current, 'secretary_incoming').name
+          nextWork = 'ธุรการสำนักงานเลขาธิการ ลงเลขทะเบียนรับ คบ.1 / คบ.3 / คบ.6 แล้วส่งรองเลขาธิการ ป.ป.ท. กลั่นกรอง'
         } else if (targetStage === 'deputy_review') {
           nextStatus = 'รอรองเลขาธิการ ป.ป.ท. กลั่นกรอง'
           nextActor = ACTOR.deputySecretary
@@ -1115,10 +1414,16 @@ export const useCaseStore = create<CaseState>()(
           activity7State: revisionReachedSecretary ? 'pending' : current.activity7State,
           activity7Label: revisionReachedSecretary ? 'รอผลพิจารณา (Revision)' : current.activity7Label,
           fastTracked: current.fastTracked || skippedSupervisor || urgencyReroute,
+          /** รอบเสนอใหม่ทุกครั้งที่ ผอ.สำนัก/กอง ส่งชุดเสนอขึ้นไป — ทะเบียนสารบรรณของรอบเก่าไม่ใช้ซ้ำ */
+          sarabanRound: targetStage === SARABAN_STAGES.director_outgoing ? (current.sarabanRound || 0) + 1 : current.sarabanRound,
+          sarabanOriginUnitId: targetStage === SARABAN_STAGES.director_outgoing ? sarabanOriginUnit : current.sarabanOriginUnitId,
           deputyReviewState: targetStage === 'deputy_review' ? 'pending' : deputyScreened ? 'screened' : current.deputyReviewState,
           deputyScreenedBy: deputyScreened ? ACTOR.deputySecretary : current.deputyScreenedBy,
           deputyScreenedAt: deputyScreened ? timestamp : current.deputyScreenedAt,
           deputyScreenNote: deputyScreened ? note || current.deputyScreenNote : current.deputyScreenNote,
+          /** FB-018 — เห็นควรและส่งเลขาธิการฯ แล้ว รอบแก้ไขที่ กอท. รับไปทำจบลง */
+          gotRevision: deputyScreened ? undefined : current.gotRevision,
+          kb6DeputyOpinionChoice: deputyScreened ? current.kb6DeputyOpinionChoice ?? 'agree' : current.kb6DeputyOpinionChoice,
           secretarySubmittedBy: targetStage === 'external_pending' ? ACTOR.deputySecretary : current.secretarySubmittedBy,
           secretarySubmittedAt: targetStage === 'external_pending' ? timestamp : current.secretarySubmittedAt,
           secretaryReviewState: targetStage === 'external_pending' ? 'pending' : current.secretaryReviewState,
@@ -1143,9 +1448,39 @@ export const useCaseStore = create<CaseState>()(
         get().prepareResultNotices(caseNo)
       },
 
-      returnCase: (caseNo, returnedBy, issueLabel, returnNote, targetRole, returnedByRole) => {
+      setSecretaryOpinionChoice: (caseNo, choice) => {
+        const current = get().cases.find((c) => c.no === caseNo)
+        const auth = useAuthStore.getState()
+        if (!current || current.stage !== 'external_pending' || current.kb6SecretarySignedAt || isCaseClosed(current)) return false
+        if (!['secretary', 'admin'].includes(auth.currentRole) || current.kb6SecretaryOpinionChoice === choice) return false
+        get().updateCase(caseNo, { kb6SecretaryOpinionChoice: choice })
+        get().logHistory(caseNo, `เลขาธิการฯ ให้ความเห็น: ${choice === 'agree' ? 'เห็นควร' : 'ไม่เห็นควร'}`,
+          auth.getCurrentUserAccount()?.name || 'เลขาธิการ ป.ป.ท.', 'บันทึกผลความเห็นใน คบ.6 ข้อ 13')
+        return true
+      },
+
+      setDeputyOpinionChoice: (caseNo, choice) => {
         const current = get().getCase(caseNo)
-        if (!current) return
+        const role = useAuthStore.getState().currentRole
+        if (!current || current.stage !== 'deputy_review' || current.kb6DeputyOpinionChoice === choice) return false
+        if (!['deputy_secretary', 'admin'].includes(role)) return false
+        /** ลงนามข้อ 12 แล้วเปลี่ยนผลความเห็นไม่ได้ — ลายเซ็นผูกกับผลที่เลือก */
+        if (current.kb6DeputySignedAt) return false
+        get().updateCase(caseNo, { kb6DeputyOpinionChoice: choice })
+        get().logHistory(
+          caseNo,
+          choice === 'agree' ? 'รองเลขาธิการฯ ให้ความเห็น: เห็นควร' : 'รองเลขาธิการฯ ให้ความเห็น: ไม่เห็นควร',
+          ACTOR.deputySecretary,
+          choice === 'agree'
+            ? 'เห็นควรเสนอเลขาธิการ ป.ป.ท. พิจารณา — ลงนามความเห็นข้อ 12 แล้วส่งต่อได้'
+            : 'ไม่เห็นควร — ลงนามความเห็นข้อ 12 แล้วเสนอเลขาธิการ ป.ป.ท. พิจารณาต่อได้'
+        )
+        return true
+      },
+
+      returnCase: (caseNo, returnedBy, issueLabel, returnNote, targetRole, returnedByRole, options) => {
+        const current = get().getCase(caseNo)
+        if (!current) return false
 
         /**
          * WIT0505 (TC-014) — ส่งกลับได้เฉพาะผู้ที่ "ถือแฟ้มอยู่ในขั้นของตน" เท่านั้น
@@ -1163,13 +1498,27 @@ export const useCaseStore = create<CaseState>()(
             returnedBy,
             `แฟ้มอยู่ขั้น ${current.stage} ไม่ใช่ขั้นของผู้ส่งกลับ (${returnedByRole}) — ส่งต่อแล้วดึงกลับไม่ได้`
           )
-          return
+          return false
         }
 
         const timestamp = nowDisplay()
         const history = current.assignmentHistory || []
 
-        let returnTargetOwner = protectionResponsibleName(current)
+        /**
+         * FB-018 — รองเลขาธิการฯ ส่งกลับให้ กอท.: ผู้รับผิดชอบ กอท. แก้ คบ.6 แล้วเสนอผ่านสาย ผบช.ต้น กอท. → ผอ. กอท.
+         * กลับถึงรองเลขาธิการฯ · ปลายทางนี้เข้าหาเจ้าหน้าที่เสมอ (ไม่ใช่ ผอ.สำนัก/กองเดิม)
+         */
+        const toGot = returnedByRole === 'deputy_secretary' && options?.destination === 'got'
+        const gotOfficer = toGot ? gotAssignableOfficers()[0] : undefined
+        /** ไม่มีผู้รับผิดชอบ กอท. ให้มอบ — ไม่ย้อนไปส่งเจ้าของเรื่องเงียบ ๆ */
+        if (toGot && !gotOfficer) return false
+        if (gotOfficer) targetRole = 'officer'
+
+        let returnTargetOwner = gotOfficer
+          ? gotOfficer.name
+          : current.gotRevision && returnedByRole !== 'deputy_secretary'
+          ? current.gotRevision.assigneeName
+          : protectionResponsibleName(current)
         if (targetRole === 'supervisor') {
           returnTargetOwner = ACTOR.supervisor
         } else if (targetRole === 'director') {
@@ -1178,6 +1527,8 @@ export const useCaseStore = create<CaseState>()(
 
         const targetStage =
           targetRole === 'supervisor' ? 'supervisor_review' : targetRole === 'director' ? 'director_review' : 'staff_review'
+        const deputyDestination: 'owner' | 'got' | undefined =
+          returnedByRole === 'deputy_secretary' ? (gotOfficer ? 'got' : 'owner') : current.returnDestination
 
         /**
          * WIT0510 — ผอ. ไม่เห็นชอบ ให้ส่งกลับ "ตรง" ถึงเจ้าหน้าที่ผู้รับผิดชอบ ข้าม ผบช.ชั้นต้น
@@ -1193,7 +1544,9 @@ export const useCaseStore = create<CaseState>()(
             actor: returnedBy,
             detail: isDirectorDirectReturn
               ? `${issueLabel}: ${returnNote} (ส่งกลับตรงเจ้าหน้าที่ผู้รับผิดชอบ ไม่ผ่านผู้บังคับบัญชาชั้นต้น)`
-              : `${issueLabel}: ${returnNote}`,
+              : gotOfficer
+              ? `${issueLabel}: ${returnNote} (ส่งกลับให้ ${GOT_UNIT_NAME} แก้ไขต่อ · ผู้รับผิดชอบ ${gotOfficer.name})`
+              : `${issueLabel}: ${returnNote}${current.kb6DeputyOpinionChoice === 'disagree' ? ' (รองเลขาธิการฯ ไม่เห็นควร · ส่งกลับเจ้าของเรื่อง)' : ''}`,
           },
         ]
 
@@ -1229,6 +1582,15 @@ export const useCaseStore = create<CaseState>()(
           kb6DirectorSignedBy: undefined,
           kb6DeputySignedAt: undefined,
           kb6DeputySignedBy: undefined,
+          /** FB-018 — ผลความเห็นข้อ 12 ผูกกับรอบเสนอ: ถูกส่งกลับแล้วต้องให้ความเห็นใหม่เมื่อเสนอกลับมา */
+          kb6DeputyOpinionChoice: undefined,
+          kb6SecretaryOpinionChoice: undefined,
+          returnDestination: deputyDestination,
+          /** ส่งคืนเจ้าของเรื่องหลังรอบ กอท. — ล้างหน่วยต้นทางที่ถูกตั้งเป็น กอท. เพื่อให้ธุรการหน่วยเจ้าของสำนวนรับเรื่อง */
+          sarabanOriginUnitId: returnedByRole === 'deputy_secretary' && !gotOfficer && current.gotRevision ? undefined : current.sarabanOriginUnitId,
+          gotRevision: gotOfficer
+            ? { assigneeUserId: gotOfficer.id, assigneeName: gotOfficer.name, at: timestamp, by: returnedBy }
+            : returnedByRole === 'deputy_secretary' ? undefined : current.gotRevision,
           assignmentHistory: returnHistory,
           /** TC-161 — เก็บฉบับ คบ.3/คบ.6 ปัจจุบันไว้เป็นประวัติก่อนขึ้นเวอร์ชันใหม่ */
           ...proposalSetRevisionPatch(current, returnedBy, `${issueLabel}: ${returnNote}`),
@@ -1236,6 +1598,12 @@ export const useCaseStore = create<CaseState>()(
 
         /** WIT0506 — เปิดฉบับใหม่ของ คบ.3 / คบ.6 ให้แก้ โดยเก็บฉบับที่ถูกตีกลับไว้เป็นประวัติ */
         reviseProposalSet(returnedBy, `${issueLabel}: ${returnNote}`)
+
+        /** รองเลขาธิการส่งคืนลงหน่วย (สำนักงานเลขาธิการ → หน่วย) ต้องผ่านธุรการทั้งสองฝั่ง; ส่งคืนภายในหน่วยไม่เปลี่ยน */
+        if (returnedByRole === 'deputy_secretary' && (targetRole === 'director' || targetRole === 'officer' || !targetRole)) {
+          get().openSarabanDispatch(caseNo, { flow: 'decision', direction: 'down', forms: [1, 3, 6], subject: 'ส่งคืนแก้ไขชุดเสนอ (รองเลขาธิการ)' })
+        }
+        return true
       },
 
       // ---------- ขั้นที่ 4-5 : ลงนามความเห็นตามลำดับชั้นใน คบ.6 (ข้อ 10-13) ----------
@@ -1243,6 +1611,7 @@ export const useCaseStore = create<CaseState>()(
         const current = get().getCase(caseNo)
         if (!current) return
         const actor = by || protectionResponsibleName(current)
+        prepareApprovalLetters(caseNo)
         if (current.kb6PreparedAt) return
         get().updateCase(caseNo, { kb6PreparedAt: nowDisplay(), kb6PreparedBy: actor })
         get().logHistory(caseNo, 'จัดทำแบบ คบ.6', actor, 'บันทึกแบบ คบ.6 เข้าชุดเสนอของแฟ้มคำร้อง')
@@ -1253,8 +1622,16 @@ export const useCaseStore = create<CaseState>()(
         const name = signerName || KB6_SIGNER_DEFAULTS[role].actor
         const meta = KB6_SIGNER_DEFAULTS[role]
 
-        get().updateCase(caseNo, { kb6Signed: true, ...meta.patch(at, name) })
+        /** FB-018 — ลงนามข้อ 12 โดยยังไม่ได้เลือกผลความเห็น = เห็นควร (ค่าตั้งต้นโหมดสาธิต) เพื่อให้แบบพิมพ์ติ๊กช่องตรงกับการลงนาม */
+        const deputyDefaultChoice = role === 'deputy' && !get().getCase(caseNo)?.kb6DeputyOpinionChoice
+          ? { kb6DeputyOpinionChoice: 'agree' as const }
+          : {}
+        get().updateCase(caseNo, { kb6Signed: true, ...meta.patch(at, name), ...deputyDefaultChoice })
         get().logHistory(caseNo, meta.historyAction, name, 'ลงลายมือชื่ออิเล็กทรอนิกส์รับรองความเห็นตามลำดับชั้นในแบบ คบ.6')
+        const signed = get().getCase(caseNo)
+        if (role === 'secretary' && signed?.kb6SecretaryOpinionChoice && !signed.appealFolder?.addendum && !signed.extensionDocs) {
+          get().beginPreliminaryDecision(caseNo, signed.kb6SecretaryOpinionChoice === 'agree' ? 'approved' : 'rejected')
+        }
       },
 
       // ---------- ขั้นที่ 5 : การพิจารณาสั่งการขั้นสุดท้าย ----------
@@ -1263,7 +1640,8 @@ export const useCaseStore = create<CaseState>()(
         const auth = useAuthStore.getState()
         if (!current || isCaseClosed(current) || hasSignedResultNotice(current) || current.stage !== 'external_pending' || current.secretaryReviewState === 'signed' || current.activity7State === 'approved') return false
         if (auth.currentRole !== 'secretary' && auth.currentRole !== 'admin') return false
-        if (!decisionNo.trim() || !reason.trim()) return false
+        if (policeRequired(current, selectCaseDraft(useFormDraftStore.getState(), 6, caseNo)) && !policeAllSigned(current.policeLetters)) return false
+        if (!decisionNo.trim()) return false
         const preliminary = current.preliminaryDecision
         if (preliminary && (!preliminary.savedAt || preliminary.formNo !== 9 || preliminary.outcome !== 'approved' || preliminary.decisionNo !== decisionNo.trim() || preliminary.reason !== reason.trim() || preliminary.destination !== destination || preliminary.instruction !== instruction.trim() || preliminary.durationDays !== (durationDays || PROTECTION_DEFAULT_DAYS))) return false
         if (!current.kb6SecretarySignedAt || !['original_owner', 'got'].includes(destination)) return false
@@ -1276,14 +1654,17 @@ export const useCaseStore = create<CaseState>()(
         const at = nowDisplay()
         const sec = secretaryAccount()
         const signedNotice = signNoticeSnapshot(notice, current, at, sec.name, decisionNo, reason)
-        const recipient = destination === 'got'
+        /** หลังอนุมัติต้องผ่านธุรการ สลธ. ออกเลขทะเบียนส่งก่อน (ทั้งสองปลายทาง) แล้วจึงถึงธุรการปลายทางลงเลขรับ */
+
+        const recipient = sec
+        const finalRecipient = destination === 'got'
           ? ECMIS_USER_DIRECTORY.find((u) => u.active && u.roles.includes('got_receiver'))!
           : originalOwner!
         const documents = current.documents || []
         const days = Math.min(durationDays || PROTECTION_DEFAULT_DAYS, PROTECTION_MAX_DAYS)
         const event: ProtectionHandoffEvent = {
           id: `HANDOFF-${crypto.randomUUID()}`, at,
-          action: destination === 'got' ? 'เลขาธิการอนุมัติและมอบหมาย กอท.' : 'เลขาธิการอนุมัติและส่งงานให้เจ้าของสำนวนเดิม',
+          action: 'เลขาธิการลงนาม คบ.9 · รอกดส่ง',
           actorUserId: sec.id, actorName: sec.name, actorRole: 'secretary',
           fromUserId: sec.id, fromName: sec.name, toUserId: recipient.id, toName: recipient.name,
           note: instruction.trim(),
@@ -1292,7 +1673,7 @@ export const useCaseStore = create<CaseState>()(
         const newDoc: IntakeDocument = {
           id: `DOC-FINAL-${Date.now()}`,
           category: 'official',
-          name: `คำสั่งอนุมัติคุ้มครองพยาน_${caseNo}.pdf`,
+          name: `คำสั่งอนุมัติคุ้มครองพยาน_${caseNoFileSafe(caseNo)}.pdf`,
           reference: decisionNo,
           signed: true,
           signers: [`${sec.name} (${sec.position})`],
@@ -1326,21 +1707,20 @@ export const useCaseStore = create<CaseState>()(
           secretarySignedAt: at,
           secretarySignedBy: sec.name,
           stage: 'notice',
-          status: destination === 'got' ? HANDOFF_STATUS.pending_receipt : 'อนุมัติและลงนาม คบ.9 แล้ว · ส่งเจ้าของสำนวนเดิมดำเนินการต่อ',
+          status: HANDOFF_STATUS.pending_send,
           owner: recipient.name,
           protectionHandoff: {
-            destination, step: destination === 'got' ? 'pending_receipt' : 'accepted',
+            destination, step: 'pending_send',
             originalOwnerUserId: current.assignedOfficerUserId || '',
             originalOwnerName: originalOwner?.name || current.assignedOfficer || current.owner,
             secretaryInstruction: instruction.trim(),
-            ...(destination === 'original_owner' ? { assigneeUserId: recipient.id, assigneeName: recipient.name, acceptedAt: at } : {}),
             events: [event],
           },
           /**
            * คบ.8 ไม่อยู่ในชุดนี้ — ตาม WIT0817/WIT0818 คำสั่งมอบหมายชุดคุ้มครองจัดทำในหน้า 08A-1
            * จึงเพิ่มเข้าแฟ้มก็ต่อเมื่อพยานลงนาม คบ.11 แล้ว และ คบ.6 เสนอวิธีที่ 1 ไว้ (ดู setApprovedMethods)
            */
-          next: destination === 'got' ? 'ธุรการคดี กอท. รับเรื่องและส่งเสนอ ผอ. กอท. เพื่อมอบหมายผู้รับผิดชอบ' : 'เติมรายละเอียด คบ.9 หลังลงนาม ตรวจพร้อมส่ง และดำเนินการ คบ.11 ตามลำดับเดิม',
+          next: 'เลขาธิการกดส่งให้ธุรการสำนักงานเลขาธิการออกเลข',
           approvalStep: 3,
           protectionDays: days,
           extraForms: Array.from(new Set([...(current.extraForms || []), 9, 11])),
@@ -1353,13 +1733,8 @@ export const useCaseStore = create<CaseState>()(
               actor: sec.name,
               detail: `${decisionNo} — อนุมัติคุ้มครอง ${legacyMonthLabel(days)} · ${reason}`,
             },
-            { at, action: event.action, actor: event.actorName, detail: `ผู้ส่ง: ${event.fromName} → ผู้รับ: ${event.toName}${destination === 'got' ? ` (${GOT_UNIT_NAME})` : ''} · คำสั่ง/หมายเหตุ: ${event.note || 'ไม่ระบุ'}` },
+            { at, action: event.action, actor: event.actorName, detail: `ผู้ส่ง: ${event.fromName} → ผู้รับ: ${event.toName} · ปลายทางหลังออกเลขส่ง: ${destination === 'got' ? GOT_UNIT_NAME : `เจ้าของสำนวนเดิม ${finalRecipient.name}`} · คำสั่ง/หมายเหตุ: ${event.note || 'ไม่ระบุ'}` },
           ],
-        })
-        useNotificationStore.getState().addNotification({
-          caseNo, type: 'protection_handoff', toName: recipient.name, toUserId: recipient.id,
-          channel: 'ระบบ', message: `${caseNo} อนุมัติคุ้มครอง ${legacyMonthLabel(days)} · ${destination === 'got' ? 'รอธุรการคดี กอท. รับเรื่อง' : 'ส่งให้เจ้าของสำนวนเดิมดำเนินการต่อ'} · ${instruction.trim() || reason}`,
-          urgency: current.urgent ? 'ด่วนที่สุด' : 'ปกติ',
         })
         return true
       },
@@ -1370,7 +1745,9 @@ export const useCaseStore = create<CaseState>()(
         const h = current?.protectionHandoff
         const auth = useAuthStore.getState()
         const actor = auth.getCurrentUserAccount()
-        if (!current || isCaseClosed(current) || current.activity7State !== 'approved' || h?.destination !== 'got' || !actor) return false
+        if (!current || isCaseClosed(current) || !['approved', 'rejected'].includes(current.activity7State || '') || h?.destination !== 'got' || !actor) return false
+        /** ตำแหน่งของ กอท. ในเมนูใช้บทบาททั่วไปกับบัญชี กอท. */
+        const duty = roleForCase(auth.currentRole, current)
         const receiver = ECMIS_USER_DIRECTORY.find((u) => u.active && u.roles.includes('got_receiver'))!
         const director = ECMIS_USER_DIRECTORY.find((u) => u.active && u.roles.includes('got_director'))!
         const at = nowDisplay()
@@ -1382,24 +1759,24 @@ export const useCaseStore = create<CaseState>()(
         let assigneeId = h.assigneeUserId
         let assigneeName = h.assigneeName
         if (action === 'receive') {
-          if (h.step !== 'pending_receipt' || auth.currentRole !== 'got_receiver' || actor.id !== receiver.id) return false
+          if (h.step !== 'pending_receipt' || duty !== 'got_receiver' || actor.id !== receiver.id || !sarabanCheckpointComplete(current, 'destination_incoming')) return false
           nextStep = 'received'; from = secretaryAccount(); to = receiver
           label = 'ธุรการคดี กอท. รับเรื่องจากเลขาธิการ'
         } else if (action === 'submit') {
-          if (h.step !== 'received' || auth.currentRole !== 'got_receiver' || actor.id !== receiver.id) return false
+          if (h.step !== 'received' || duty !== 'got_receiver' || actor.id !== receiver.id) return false
           nextStep = 'pending_assignment'; to = director
           label = 'ธุรการคดี กอท. ส่งเสนอ ผอ. กอท.'
         } else if (action === 'assign') {
-          if (h.step !== 'pending_assignment' || auth.currentRole !== 'got_director' || actor.id !== director.id || !note.trim()) return false
+          if (h.step !== 'pending_assignment' || duty !== 'got_director' || actor.id !== director.id || !note.trim()) return false
           const selected = gotAssignableOfficers().find((u) => u.id === assigneeUserId)
           if (!selected) return false
           nextStep = 'assigned'; to = selected; assigneeId = selected.id; assigneeName = selected.name
           instruction = note.trim()
-          label = 'ผอ. กอท. มอบหมายผู้รับผิดชอบดำเนินการคุ้มครอง'
+          label = 'ผอ. กอท. มอบหมายเจ้าของสำนวน'
         } else if (action === 'accept') {
-          if (h.step !== 'assigned' || auth.currentRole !== 'got_officer' || actor.id !== h.assigneeUserId) return false
+          if (h.step !== 'assigned' || duty !== 'got_officer' || actor.id !== h.assigneeUserId) return false
           nextStep = 'accepted'; from = director
-          label = 'ผู้ได้รับมอบหมาย กอท. รับงานดำเนินการคุ้มครอง'
+          label = 'ผู้ได้รับมอบหมาย กอท. รับงานตามผลพิจารณา'
         } else return false
         const event: ProtectionHandoffEvent = {
           id: `HANDOFF-${crypto.randomUUID()}`, action: label, at,
@@ -1413,7 +1790,7 @@ export const useCaseStore = create<CaseState>()(
           next: nextStep === 'received' ? 'ธุรการคดีส่งเสนอ ผอ. กอท.'
             : nextStep === 'pending_assignment' ? 'ผอ. กอท. เลือกผู้รับผิดชอบและบันทึกคำสั่งมอบหมาย'
             : nextStep === 'assigned' ? 'ผู้ได้รับมอบหมาย กอท. รับงาน'
-            : 'เติมรายละเอียด คบ.9 หลังลงนาม ตรวจพร้อมส่ง และดำเนินการ คบ.11 ตามวิธีที่อนุมัติ',
+            : current.activity7State === 'rejected' ? 'ส่ง คบ.10 ให้ธุรการออกเลขและนำส่งพยาน' : 'ดำเนินการแจ้งผล คบ.9 และ คบ.11 ตามวิธีที่อนุมัติ',
           assignmentHistory: [...(current.assignmentHistory || []), {
             at, action: label, actor: actor.name,
             detail: `ผู้ส่ง: ${from.name} → ผู้รับ: ${to.name} · คำสั่ง/หมายเหตุ: ${note.trim() || 'ไม่ระบุ'} · ผลอนุมัติเดิม ${current.decisionNumber || ''}`,
@@ -1429,7 +1806,321 @@ export const useCaseStore = create<CaseState>()(
         return true
       },
 
-      secretaryReject: (caseNo, decisionNo, reason) => {
+      /** ธุรการลงเลขทะเบียน/วันที่/เวลา ให้ผู้รับหนึ่งราย (ครอบคลุมทุก คบ. ในชุด) ณ จุดที่แฟ้มรออยู่ — ลงซ้ำในรอบเดียวกัน ฉบับล่าสุดแทนที่ */
+      recordSaraban: (caseNo, checkpoint, recipient, input) => {
+        const current = get().cases.find((c) => c.no === caseNo)
+        const auth = useAuthStore.getState()
+        if (!current || isCaseClosed(current) || !canRecordSaraban(auth.currentRole, current, checkpoint, auth.currentOrgUnitId)) return false
+        if (!sarabanRecipientsFor(current, checkpoint).includes(recipient)) return false
+        if (Object.keys(validateSarabanInput(input)).length > 0) return false
+        const clerk = auth.getCurrentUserAccount() || sarabanClerkAccount(current, checkpoint)
+        const at = nowDisplay()
+        const round = currentSarabanRound(current)
+        const meta = SARABAN_CHECKPOINT_META[checkpoint]
+        const forms = sarabanFormsFor(current, checkpoint)
+        const isDefault = recipient === sarabanDefaultRecipient(current, checkpoint)
+        const record: SarabanRecord = {
+          id: `SRB-${crypto.randomUUID()}`,
+          checkpoint, direction: meta.direction, formNo: forms[0], forms: [...forms], recipient,
+          ...(current.policeLetters && !current.extensionDocs && !current.appealFolder && (!current.sarabanDispatch || current.sarabanDispatch.flow === 'decision') ? { additionalDocuments: POLICE_KINDS.map(k => ({ id: current.policeLetters!.letters[k].id, label: POLICE_TITLES[k], version: current.policeLetters!.letters[k].version })) } : {}),
+          ...(current.coordinationApproval?.signature && !current.extensionDocs && !current.appealFolder ? { additionalDocuments: [{ id: current.coordinationApproval.id, label: `หนังสือประสาน${current.coordinationApproval.agency}`, version: 1 }] } : {}),
+          number: meta.direction === 'outgoing' && input.documentNumber !== undefined
+            ? sarabanRecordFor(current, checkpoint, recipient)?.number || nextOutgoingSarabanNumber(get().cases, sarabanUnitName(current, checkpoint), input.date)
+            : input.number.trim(), date: input.date, time: input.time,
+          ...(input.documentNumber !== undefined ? { documentNumber: input.documentNumber.trim() } : {}),
+          unitName: sarabanUnitName(current, checkpoint),
+          clerkUserId: clerk.id, clerkName: clerk.name, recordedAt: at, round,
+          ...(current.sarabanDispatch ? { subject: current.sarabanDispatch.subject } : {}),
+        }
+        get().updateCase(caseNo, {
+          sarabanRecords: [
+            ...(current.sarabanRecords || []).filter((r) => !(r.checkpoint === checkpoint && r.round === round && (r.recipient ? r.recipient === recipient : isDefault))),
+            record,
+          ],
+          assignmentHistory: [...(current.assignmentHistory || []), {
+            at, action: `${meta.numberLabel} ถึง ${recipient}`, actor: clerk.name,
+            detail: `${record.unitName} · ${meta.direction === 'outgoing' ? 'ออกเลขทะเบียนส่ง' : 'ลงเลขทะเบียนรับ'} ${record.number} · ${forms.map((n) => `คบ.${n}`).join(' / ')} · ${record.date} ${record.time} น. · ${record.subject || `รอบเสนอที่ ${round}`}`,
+          }],
+        })
+        return true
+      },
+
+      /** เพิ่มผู้รับอีกรายในจุดลงทะเบียนขาออก — รายใหม่ต้องได้เลขของตนเองก่อนส่งต่อ (ขาเข้าเพิ่มไม่ได้) */
+      addSarabanRecipient: (caseNo, checkpoint, name) => {
+        const current = get().cases.find((c) => c.no === caseNo)
+        const auth = useAuthStore.getState()
+        const trimmed = name.trim()
+        if (!current || isCaseClosed(current) || !trimmed || SARABAN_CHECKPOINT_META[checkpoint].direction !== 'outgoing' || !canRecordSaraban(auth.currentRole, current, checkpoint, auth.currentOrgUnitId)) return false
+        if (sarabanRecipientsFor(current, checkpoint).includes(trimmed)) return false
+        get().updateCase(caseNo, {
+          sarabanRecipients: [...(current.sarabanRecipients || []), { checkpoint, round: currentSarabanRound(current), name: trimmed }],
+        })
+        return true
+      },
+
+      /** ลบผู้รับที่เพิ่มเอง (ผู้รับตั้งต้นลบไม่ได้) — ลบได้เฉพาะรายที่ยังไม่ได้ลงเลข */
+      removeSarabanRecipient: (caseNo, checkpoint, name) => {
+        const current = get().cases.find((c) => c.no === caseNo)
+        const auth = useAuthStore.getState()
+        if (!current || isCaseClosed(current) || !canRecordSaraban(auth.currentRole, current, checkpoint, auth.currentOrgUnitId)) return false
+        const round = currentSarabanRound(current)
+        if (sarabanRecordFor(current, checkpoint, name)) return false
+        const next = (current.sarabanRecipients || []).filter((r) => !(r.checkpoint === checkpoint && r.round === round && r.name === name))
+        if (next.length === (current.sarabanRecipients || []).length) return false
+        get().updateCase(caseNo, { sarabanRecipients: next })
+        return true
+      },
+
+      /** ส่งแฟ้มต่อจากจุดลงทะเบียน — ต้องลงครบทุก คบ. ของจุดนั้นก่อน */
+      sendAppealByPost: (caseNo, input) => {
+        const c = get().getCase(caseNo)
+        const auth = useAuthStore.getState()
+        if (c && canPostTerminationNotice(c)) {
+          if (c.sarabanDispatch!.postal || c.kb17?.dispatchedAt || !sarabanCheckpointComplete(c, 'destination_incoming') || !canRecordSaraban(auth.currentRole, c, 'destination_incoming', auth.currentOrgUnitId) || Object.values(input).some((v) => !v.trim()) || !calendarDate(input.sentAt) || calendarDate(input.sentAt) > calendarDate(new Date())) return false
+          const by = auth.getCurrentUserAccount()?.name || c.owner
+          const outgoing = sarabanRecordFor(c, 'secretary_outgoing', sarabanDefaultRecipient(c, 'secretary_outgoing'))
+          get().updateCase(caseNo, {
+            sarabanDispatch: { ...c.sarabanDispatch!, postal: { ...input, recordedBy: by } },
+            kb17: { ...c.kb17!, dispatchedAt: input.sentAt, registryNo: c.kb17?.registryNo || outgoing?.documentNumber || outgoing?.number, registryDate: c.kb17?.registryDate || outgoing?.date },
+            status: 'ส่งไปรษณีย์แจ้งคำสั่งยุติแล้ว · รอพยานรับหนังสือ', next: 'บันทึกวันที่พยานได้รับ คบ.17 จริงพร้อมหลักฐาน',
+          })
+          get().logHistory(caseNo, 'ธุรการส่งไปรษณีย์ คบ.17', by, `${input.trackingNo} · ${input.recipient} · ${input.address}`)
+          return true
+        }
+        if (c && !c.sarabanDispatch && c.protectionHandoff && activeSarabanCheckpoint(c) === 'destination_incoming') {
+          if (c.protectionHandoff.postal || !sarabanCheckpointComplete(c, 'destination_incoming') || !canRecordSaraban(auth.currentRole, c, 'destination_incoming', auth.currentOrgUnitId) || Object.values(input).some((v) => !v.trim())) return false
+          const by = auth.getCurrentUserAccount()?.name || c.owner
+          set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item,
+            protectionHandoff: { ...c.protectionHandoff!, postal: { ...input, recordedBy: by } },
+            dispatchedAt: input.sentAt, deliveryChannel: 'ไปรษณีย์ตอบรับด่วน (EMS)',
+            status: 'ส่งไปรษณีย์แจ้งผลแล้ว · รอพยานรับหนังสือ', next: 'ยืนยันเมื่อพยานได้รับหนังสือแล้ว',
+          } : item) }))
+          get().logHistory(caseNo, 'ธุรการส่งไปรษณีย์แจ้งผล', by, `${input.trackingNo} · ${input.recipient} · ${input.address}`)
+          return true
+        }
+        const d = c?.sarabanDispatch
+        if (!c || !d || d.flow !== 'appeal' || d.direction !== 'down' || d.checkpoint !== 'destination_incoming' || !c.appealResolution || d.postal || !sarabanCheckpointComplete(c, d.checkpoint) || !canRecordSaraban(auth.currentRole, c, d.checkpoint, auth.currentOrgUnitId) || Object.values(input).some((v) => !v.trim())) return false
+        const by = auth.getCurrentUserAccount()?.name || c.owner
+        set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item,
+          sarabanDispatch: { ...d, postal: { ...input, recordedBy: by } },
+          appealResolution: { ...c.appealResolution!, noticeDocumentName: 'หนังสือแจ้งผลอุทธรณ์', noticeRegistryNo: input.trackingNo, noticeSentAt: input.sentAt, noticeRecipient: input.recipient },
+          status: 'ส่งไปรษณีย์แจ้งผลอุทธรณ์แล้ว · รอผลนำส่ง', next: 'บันทึกวันที่ได้รับหนังสือและหลักฐานนำส่ง', updatedAt: new Date().toISOString(),
+        } : item) }))
+        get().logHistory(caseNo, 'ธุรการส่งไปรษณีย์แจ้งผลอุทธรณ์', by, `${input.trackingNo} · ${input.recipient} · ${input.address} · ส่ง ${input.sentAt}`)
+        return true
+      },
+      completeAppealPost: (caseNo, deliveredAt, evidence) => {
+        const c = get().getCase(caseNo)
+        const d = c?.sarabanDispatch
+        const auth = useAuthStore.getState()
+        if (c && canPostTerminationNotice(c) && d?.postal) {
+          if (d.postal.deliveredAt || !canRecordSaraban(auth.currentRole, c, 'destination_incoming', auth.currentOrgUnitId)) return false
+          get().recordKb17Delivery(caseNo, deliveredAt, evidence)
+          const updated = get().getCase(caseNo)
+          if (!updated?.kb17?.deliveredAt) return false
+          get().updateCase(caseNo, { sarabanDispatch: { ...d, postal: { ...d.postal, deliveredAt: updated.kb17.deliveredAt } } })
+          return true
+        }
+        if (c && !d && c.protectionHandoff?.postal) {
+          const postal = c.protectionHandoff.postal
+          if (postal.deliveredAt || !deliveredAt || !evidence.trim() || deliveredAt < postal.sentAt || !canRecordSaraban(auth.currentRole, c, 'destination_incoming', auth.currentOrgUnitId)) return false
+          get().recordDelivery(caseNo, deliveredAt, { recipient: postal.recipient, ackType: 'ใบตอบรับไปรษณีย์', ackDocument: evidence })
+          if (!get().getCase(caseNo)?.deliveredAt) return false
+          set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item, protectionHandoff: { ...item.protectionHandoff!, postal: { ...postal, deliveredAt } } } : item) }))
+          get().logHistory(caseNo, 'ธุรการยืนยันพยานได้รับหนังสือ', auth.getCurrentUserAccount()?.name || c.owner, deliveredAt)
+          return true
+        }
+        if (!c || !d?.postal || d.postal.deliveredAt || !c.appealResolution || !deliveredAt || deliveredAt < d.postal.sentAt || !evidence.trim() || !canRecordSaraban(auth.currentRole, c, d.checkpoint, auth.currentOrgUnitId)) return false
+        const by = auth.getCurrentUserAccount()?.name || c.owner
+        set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item,
+          sarabanDispatch: { ...d, postal: { ...d.postal!, deliveredAt } },
+          appealResolution: { ...c.appealResolution!, noticeDeliveredAt: deliveredAt, noticeAckDocument: evidence.trim(), noticeRecordedAt: nowDisplay(), noticeRecordedBy: by },
+          owner: d.recipientName, status: c.appealResolution!.outcome === 'uphold' ? 'แจ้งผลอุทธรณ์แล้ว · ปิดขั้นอุทธรณ์' : d.deliveredStatus,
+          next: c.appealResolution!.outcome === 'uphold' ? 'สิ้นสุดขั้นอุทธรณ์' : d.deliveredNext, updatedAt: new Date().toISOString(),
+        } : item) }))
+        get().logHistory(caseNo, 'พยานได้รับหนังสือแจ้งผลอุทธรณ์ทางไปรษณีย์', by, `${deliveredAt} · ${evidence}`)
+        return true
+      },
+
+      submitSarabanCheckpoint: (caseNo, note = '') => {
+        const current = get().cases.find((c) => c.no === caseNo)
+        const auth = useAuthStore.getState()
+        const checkpoint = current ? activeSarabanCheckpoint(current) : null
+        if (!current || !checkpoint || isCaseClosed(current) || !canRecordSaraban(auth.currentRole, current, checkpoint, auth.currentOrgUnitId) || !sarabanCheckpointComplete(current, checkpoint)) return false
+        const actor = auth.getCurrentUserAccount() || sarabanClerkAccount(current, checkpoint)
+        const h = current.protectionHandoff
+        const at = nowDisplay()
+        const urgency = current.urgent ? 'ด่วนที่สุด' : 'ปกติ'
+
+        const dispatch = current.sarabanDispatch
+        if (dispatch?.postal) return false
+        if (dispatch) {
+          const forms = dispatch.forms.map((n) => `คบ.${n}`).join(' / ')
+          const outgoing = checkpoint === 'director_outgoing' || checkpoint === 'secretary_outgoing'
+          if (outgoing) {
+            const nextCp = checkpoint === 'director_outgoing' ? 'secretary_incoming' : 'destination_incoming'
+            const moved = { ...current, sarabanDispatch: { ...dispatch, checkpoint: nextCp } as typeof dispatch }
+            const to = sarabanClerkAccount(moved, nextCp)
+            const waiting = dispatchWaitingText(moved, nextCp)
+            const label = `${SARABAN_CHECKPOINT_META[checkpoint].label} · ${dispatch.subject}`
+            get().updateCase(caseNo, {
+              sarabanDispatch: moved.sarabanDispatch,
+              owner: to.name, status: waiting.status, next: waiting.next,
+              assignmentHistory: [...(current.assignmentHistory || []), { at, action: label, actor: actor.name, detail: `ส่ง${to.name} · ${forms}${note.trim() ? ` · ${note.trim()}` : ''}` }],
+            })
+            useNotificationStore.getState().addNotification({
+              caseNo, type: 'saraban', toName: to.name, toUserId: to.id, channel: 'ระบบ',
+              message: `${caseNo} · ${waiting.status}`, urgency,
+            })
+            return true
+          }
+          // รองรับ คบ.10 ที่ส่งเข้าธุรการไว้ก่อนแยกขั้นลงนามกับส่งงาน
+          if (checkpoint === 'destination_incoming' && dispatch.flow === 'decision' && current.activity7State === 'rejected' && current.nonApprovalDestination === 'got' && !current.protectionHandoff) {
+            const director = ECMIS_USER_DIRECTORY.find((user) => user.active && user.roles.includes('got_director'))
+            if (!director) return false
+            get().updateCase(caseNo, {
+              sarabanDispatch: undefined, kb10DispatchRequestedAt: undefined,
+              protectionHandoff: { destination: 'got', step: 'pending_assignment', originalOwnerUserId: current.assignedOfficerUserId || '', originalOwnerName: current.assignedOfficer || '', secretaryInstruction: current.preliminaryDecision?.instruction || '', events: [] },
+              owner: director.name, status: HANDOFF_STATUS.pending_assignment, next: 'ผอ. กอท. มอบหมายเจ้าของสำนวน',
+            })
+            get().logHistory(caseNo, 'ธุรการ กอท. ลงเลขรับผลไม่อนุมัติแล้ว', actor.name, 'รอส่งเสนอ ผอ. กอท. มอบหมายเจ้าของสำนวน')
+            useNotificationStore.getState().addNotification({ caseNo, type: 'protection_handoff', toName: director.name, toUserId: director.id, channel: 'ระบบ', message: `${caseNo} · รอมอบหมายเจ้าของสำนวน`, urgency })
+            return true
+          }
+          /** ลงเลขรับครบ — นำส่งถึงผู้รับ คืนสถานะที่เรื่องนั้นตั้งไว้ */
+          const label = `${SARABAN_CHECKPOINT_META[checkpoint].label} · ${dispatch.subject}`
+          get().updateCase(caseNo, {
+            sarabanDispatch: undefined,
+            owner: dispatch.recipientName, status: dispatch.deliveredStatus, next: dispatch.deliveredNext,
+            assignmentHistory: [...(current.assignmentHistory || []), { at, action: label, actor: actor.name, detail: `ส่งถึง${dispatch.recipientName} · ${forms}${note.trim() ? ` · ${note.trim()}` : ''}` }],
+          })
+          const recipient = ECMIS_USER_DIRECTORY.find((u) => u.active && u.name === dispatch.recipientName)
+          useNotificationStore.getState().addNotification({
+            caseNo, type: 'saraban', toName: dispatch.recipientName, toUserId: recipient?.id, channel: 'ระบบ',
+            message: `${caseNo} · ${dispatch.subject} · ${dispatch.deliveredStatus}`, urgency,
+          })
+          return true
+        }
+
+        if (checkpoint === 'director_outgoing') {
+          get().forwardCase(caseNo, SARABAN_STAGES.secretary_incoming, note || 'ธุรการสำนัก/กอง ออกเลขทะเบียนส่ง คบ.1 / คบ.3 / คบ.6 ครบแล้ว')
+          const to = sarabanClerkAccount(current, 'secretary_incoming')
+          useNotificationStore.getState().addNotification({
+            caseNo, type: 'saraban', toName: to.name, toUserId: to.id, channel: 'ระบบ',
+            message: `${caseNo} · รอธุรการสำนักงานเลขาธิการ ลงเลขทะเบียนรับ คบ.1 / คบ.3 / คบ.6`, urgency,
+          })
+          return true
+        }
+        if (checkpoint === 'secretary_incoming') {
+          get().forwardCase(caseNo, 'deputy_review', note || 'ธุรการสำนักงานเลขาธิการ ลงเลขทะเบียนรับ คบ.1 / คบ.3 / คบ.6 ครบแล้ว')
+          useNotificationStore.getState().addNotification({
+            caseNo, type: 'saraban', toName: ACTOR.deputySecretary, channel: 'ระบบ',
+            message: `${caseNo} · รอรองเลขาธิการ ป.ป.ท. กลั่นกรองชุดเสนอ คบ.1 / คบ.3 / คบ.6`, urgency,
+          })
+          return true
+        }
+        if (!h) return false
+
+        const sec = secretaryAccount()
+        const toClerk = h.destination === 'got'
+          ? ECMIS_USER_DIRECTORY.find((u) => u.active && u.roles.includes('got_receiver'))!
+          : sarabanClerkAccount(current, 'destination_incoming')
+        const events = (label: string, from: EcmisUser, to: EcmisUser): ProtectionHandoffEvent => ({
+          id: `HANDOFF-${crypto.randomUUID()}`, action: label, at,
+          actorUserId: actor.id, actorName: actor.name, actorRole: auth.currentRole,
+          fromUserId: from.id, fromName: from.name, toUserId: to.id, toName: to.name, note: note.trim(),
+        })
+        const historyOf = (label: string, from: EcmisUser, to: EcmisUser) => [...(current.assignmentHistory || []), {
+          at, action: label, actor: actor.name,
+          detail: `ผู้ส่ง: ${from.name} → ผู้รับ: ${to.name} · คำสั่ง/หมายเหตุ: ${note.trim() || 'ไม่ระบุ'} · ผลอนุมัติเดิม ${current.decisionNumber || ''}`,
+        }]
+
+        if (checkpoint === 'secretary_outgoing') {
+          const resultForm = current.activity7State === 'rejected' ? 10 : 9
+          const label = `ธุรการ สลธ. ออกเลขทะเบียนส่ง คบ.1 / คบ.3 / คบ.6 / คบ.${resultForm} และส่งธุรการปลายทาง`
+          get().updateCase(caseNo, {
+            protectionHandoff: { ...h, step: 'pending_receipt', events: [...h.events, events(label, sec, toClerk)] },
+            status: HANDOFF_STATUS.pending_receipt,
+            owner: toClerk.name,
+            next: h.destination === 'got'
+              ? `ธุรการคดี กอท. ลงเลขทะเบียนรับ คบ.1 / คบ.3 / คบ.6 / คบ.${resultForm} แล้วส่งเสนอ ผอ. กอท. เพื่อมอบหมายผู้รับผิดชอบ`
+              : `ธุรการสำนัก/กอง ลงเลขทะเบียนรับ คบ.1 / คบ.3 / คบ.6 / คบ.${resultForm} แล้วส่งเจ้าของสำนวนเดิมดำเนินการต่อ`,
+            assignmentHistory: historyOf(label, sec, toClerk),
+          })
+          useNotificationStore.getState().addNotification({
+            caseNo, type: 'protection_handoff', toName: toClerk.name, toUserId: toClerk.id, channel: 'ระบบ',
+            message: `${caseNo} · ${label} · ${HANDOFF_STATUS.pending_receipt}`, urgency,
+          })
+          return true
+        }
+
+        /** ลงเลขรับครบแล้วส่งเสนอ ผอ. ได้จากหน้าสารบรรณโดยตรง */
+        if (h.destination === 'got') {
+          const director = ECMIS_USER_DIRECTORY.find((user) => user.active && user.roles.includes('got_director'))
+          if (!director) return false
+          const label = 'ธุรการ กอท. ลงเลขรับและส่งเสนอ ผอ. กอท.'
+          get().updateCase(caseNo, {
+            protectionHandoff: { ...h, step: 'pending_assignment', events: [...h.events, events(label, toClerk, director)] },
+            status: HANDOFF_STATUS.pending_assignment, owner: director.name,
+            next: 'ผอ. กอท. เลือกเจ้าของสำนวนและบันทึกคำสั่งมอบหมาย',
+            assignmentHistory: historyOf(label, toClerk, director),
+          })
+          useNotificationStore.getState().addNotification({ caseNo, type: 'protection_handoff', toName: director.name, toUserId: director.id, channel: 'ระบบ', message: `${caseNo} · รอมอบหมายเจ้าของสำนวน`, urgency })
+          return true
+        }
+        const owner = ECMIS_USER_DIRECTORY.find((u) => u.id === h.originalOwnerUserId) || ECMIS_USER_DIRECTORY.find((u) => u.id === current.assignedOfficerUserId)
+        if (!owner) return false
+        const label = 'ธุรการสำนัก/กอง ลงเลขทะเบียนรับและส่งงานให้เจ้าของสำนวนเดิม'
+        get().updateCase(caseNo, {
+          protectionHandoff: { ...h, step: 'accepted', assigneeUserId: owner.id, assigneeName: owner.name, acceptedAt: at, events: [...h.events, events(label, toClerk, owner)] },
+          status: 'รับเลขแล้ว · ส่งเจ้าของสำนวนเดิมดำเนินการตามผลพิจารณา',
+          owner: owner.name,
+          next: current.activity7State === 'rejected' ? 'ส่ง คบ.10 ให้ธุรการออกเลขและนำส่งพยาน' : 'ดำเนินการแจ้งผล คบ.9 และ คบ.11 ตามลำดับเดิม',
+          assignmentHistory: historyOf(label, toClerk, owner),
+        })
+        useNotificationStore.getState().addNotification({
+          caseNo, type: 'protection_handoff', toName: owner.name, toUserId: owner.id, channel: 'ระบบ',
+          message: `${caseNo} ${current.activity7State === 'rejected' ? 'ไม่อนุมัติให้ความคุ้มครอง' : 'อนุมัติให้ความคุ้มครอง'} · ส่งให้เจ้าของสำนวนเดิมดำเนินการต่อ · ${h.secretaryInstruction || current.resultReason || ''}`, urgency,
+        })
+        return true
+      },
+
+      openSarabanDispatch: (caseNo, input) => {
+        const current = get().getCase(caseNo)
+        if (!current || current.sarabanDispatch || !input.forms.length) return false
+        if (input.flow === 'termination') {
+          input = { ...input, forms: Array.from(new Set([...getCaseFormNumbers(current), ...input.forms, 15, 16, 17])).sort((a, b) => a - b) }
+        }
+        const appealDestination = input.flow === 'appeal' && input.direction === 'down' ? current.appealResolution?.destination : undefined
+        const unit = appealDestination === 'got' ? { role: 'got_receiver' as const, unitId: 'central-gmc' } : appealDestination === 'original_owner' ? { role: 'receiver' as const, unitId: ECMIS_USER_DIRECTORY.find((u) => u.id === current.assignedOfficerUserId)?.orgUnitId || current.orgUnitId || 'central-gmc' } : dispatchUnitFor(current)
+        const checkpoint = input.direction === 'up' ? 'director_outgoing' : 'secretary_outgoing'
+        const round = (current.sarabanRound || 0) + 1
+        const at = nowDisplay()
+        const dispatch: NonNullable<CaseItem['sarabanDispatch']> = {
+          id: `DSP-${crypto.randomUUID()}`, ...input, checkpoint,
+          unitClerkRole: unit.role, unitId: unit.unitId, round,
+          recipientName: current.owner, deliveredStatus: current.status, deliveredNext: current.next,
+          openedAt: at, openedBy: useAuthStore.getState().getCurrentUserAccount()?.name || current.owner,
+        }
+        const scoped = { ...current, sarabanDispatch: dispatch }
+        const clerk = sarabanClerkAccount(scoped, checkpoint)
+        const waiting = dispatchWaitingText(scoped, checkpoint)
+        get().updateCase(caseNo, {
+          sarabanDispatch: dispatch, sarabanRound: round,
+          owner: clerk.name, status: waiting.status, next: waiting.next,
+          assignmentHistory: [...(current.assignmentHistory || []), {
+            at, action: `ส่งผ่านธุรการ · ${input.subject}`, actor: dispatch.openedBy,
+            detail: `${input.direction === 'up' ? 'ขาไปสำนักงานเลขาธิการ' : 'ขากลับหน่วย'} · ${input.forms.map((n) => `คบ.${n}`).join(' / ')} · ผู้รับปลายทาง: ${dispatch.recipientName}`,
+          }],
+        })
+        useNotificationStore.getState().addNotification({
+          caseNo, type: 'saraban', toName: clerk.name, toUserId: clerk.id, channel: 'ระบบ',
+          message: `${caseNo} · ${waiting.status}`, urgency: current.urgent ? 'ด่วนที่สุด' : 'ปกติ',
+        })
+        return true
+      },
+
+      secretaryReject: (caseNo, decisionNo, reason, destination = 'original_owner') => {
         const current = get().getCase(caseNo)
         const auth = useAuthStore.getState()
         if (!current || isCaseClosed(current) || hasSignedResultNotice(current) || current.stage !== 'external_pending' || current.secretaryReviewState === 'signed' || !['secretary', 'admin'].includes(auth.currentRole) || !current.kb6SecretarySignedAt) return
@@ -1439,7 +2130,7 @@ export const useCaseStore = create<CaseState>()(
         const notice = get().getCase(caseNo)?.resultNotices?.[10]
         if (!notice || !noticeCanSign(notice)) return
         if (current?.protectionHandoff) return
-        if (!current || !decisionNo.trim() || !reason.trim()) return
+        if (!current || !decisionNo.trim()) return
 
         const at = nowDisplay()
         const sec = secretaryAccount()
@@ -1448,7 +2139,7 @@ export const useCaseStore = create<CaseState>()(
         const newDoc: IntakeDocument = {
           id: `DOC-REJECT-${Date.now()}`,
           category: 'official',
-          name: `คำสั่งไม่อนุมัติคุ้มครองพยาน_${caseNo}.pdf`,
+          name: `คำสั่งไม่อนุมัติคุ้มครองพยาน_${caseNoFileSafe(caseNo)}.pdf`,
           reference: decisionNo,
           signed: true,
           signers: [`${sec.name} (${sec.position})`],
@@ -1461,6 +2152,13 @@ export const useCaseStore = create<CaseState>()(
         get().updateCase(caseNo, {
           resultNotices: { ...get().getCase(caseNo)?.resultNotices, 10: signNoticeSnapshot(notice, current, at, sec.name, decisionNo, reason) },
           kb10Signed: true, kb10SignedAt: at, kb10SignedBy: sec.name, outgoingSignedAt: at, outgoingSignedBy: sec.name,
+          nonApprovalDestination: destination,
+          protectionHandoff: {
+            destination, step: 'pending_send',
+            originalOwnerUserId: current.assignedOfficerUserId || '',
+            originalOwnerName: current.assignedOfficer || current.owner,
+            secretaryInstruction: preliminary?.instruction || '', events: [],
+          },
           activity7State: 'rejected',
           activity7Label: 'ไม่อนุมัติให้ความคุ้มครอง',
           externalReference: decisionNo,
@@ -1472,9 +2170,9 @@ export const useCaseStore = create<CaseState>()(
           secretarySignedAt: at,
           secretarySignedBy: sec.name,
           stage: 'notice',
-          status: 'เลขาธิการ ป.ป.ท. ไม่อนุมัติ',
-          owner: protectionResponsibleName(current),
-          next: 'เติมรายละเอียด คบ.10 หลังลงนาม ตรวจพร้อมส่ง และแจ้งพยานตามเส้นทางเดิม',
+          status: HANDOFF_STATUS.pending_send,
+          owner: sec.name,
+          next: 'เลขาธิการกดส่งให้ธุรการสำนักงานเลขาธิการออกเลข',
           nonApprovalStep: 3,
           extraForms: Array.from(new Set([...(current.extraForms || []), 10])),
           documents: [...documents, newDoc],
@@ -1490,13 +2188,35 @@ export const useCaseStore = create<CaseState>()(
         })
       },
 
-      secretaryReturn: (caseNo, issue, reason) => {
+      secretaryContinue: (caseNo, destination) => {
+        const current = get().cases.find((c) => c.no === caseNo)
+        const auth = useAuthStore.getState()
+        if (!current || current.stage !== 'external_pending' || !current.kb6SecretarySignedAt || isCaseClosed(current) || hasSignedResultNotice(current) || current.protectionHandoff) return false
+        if (!['secretary', 'admin'].includes(auth.currentRole)) return false
+        const forms = useFormDraftStore.getState()
+        const fields = selectCaseDraft(forms, 6, caseNo)
+        const instruction = String(fields['ความเห็นเลขาธิการ'] || '').trim()
+        if (!instruction) return false
+        const signatures = forms.draftCaseNo[6] === caseNo ? forms.signatures : forms.caseDrafts[caseNo]?.signatures || {}
+        get().updateCase(caseNo, { secretaryContinuation: {
+          destination, instruction, signedBy: current.kb6SecretarySignedBy || auth.getCurrentUserAccount()?.name || '',
+          signedAt: current.kb6SecretarySignedAt, version: current.kb6Version || 1,
+          fields: structuredClone(fields),
+          signatures: structuredClone(Object.fromEntries(Object.entries(signatures).filter(([key]) => key.startsWith('kb6-')))),
+        } })
+        get().secretaryReturn(caseNo, 'ดำเนินการเพิ่มเติมตามความเห็น คบ.6 ข้อ 13', instruction, destination)
+        return get().getCase(caseNo)?.activity7State === 'returned'
+      },
+
+      secretaryReturn: (caseNo, issue, reason, destination = 'owner') => {
         const current = get().getCase(caseNo)
         if (current?.protectionHandoff) return
         if (!current || isCaseClosed(current) || current.stage !== 'external_pending' || hasSignedResultNotice(current) || !['secretary', 'admin'].includes(useAuthStore.getState().currentRole)) return
 
         const at = nowDisplay()
         const sec = secretaryAccount()
+        const toGot = destination === 'got'
+        const directorName = toGot ? ECMIS_USER_DIRECTORY.find((u) => u.active && u.roles.includes('got_director'))?.name || 'ผอ. กอท.' : ACTOR.director
 
         get().updateCase(caseNo, {
           activity7State: 'returned',
@@ -1509,8 +2229,11 @@ export const useCaseStore = create<CaseState>()(
           stage: 'director_review',
           status: 'เลขาธิการ ป.ป.ท. ส่งกลับแก้ไข',
           /** WIT0707 — ข้อสั่งการลงที่ ผอ.สำนัก/กอง ผู้เป็นเจ้าของขั้น director_review ไม่ใช่ผู้เสนอแฟ้ม */
-          owner: ACTOR.director,
-          next: 'ผอ.สำนัก/กอง รับทราบข้อสั่งการและมอบหมายเจ้าหน้าที่ผู้รับผิดชอบแก้ไขเป็น Revision ใหม่',
+          owner: directorName,
+          returnDestination: destination,
+          gotRevision: toGot ? { assigneeUserId: '', assigneeName: '', at, by: sec.name } : undefined,
+          sarabanOriginUnitId: toGot ? 'central-gmc' : undefined,
+          next: `${toGot ? 'ผอ. กอท.' : 'ผอ.สำนัก/กอง'} รับข้อสั่งการจาก คบ.6 และมอบหมายเจ้าหน้าที่จัดทำฉบับเพิ่มเติม`,
           /** งานยังไม่ลงถึงคนแก้จนกว่า ผอ. จะกดมอบหมาย — ธงสองตัวนี้คุมการ์ด WIT0708 ในแฟ้ม */
           secretaryReturnRework: false,
           revisionAssignedAt: undefined,
@@ -1526,6 +2249,8 @@ export const useCaseStore = create<CaseState>()(
             },
           ],
         })
+        /** ส่งคืนแก้ไขลงหน่วยต้องผ่านธุรการสำนักงานเลขาธิการ → ธุรการหน่วย */
+        get().openSarabanDispatch(caseNo, { flow: 'decision', direction: 'down', forms: [1, 3, 6], subject: `ส่งให้${toGot ? ' กอท.' : 'เจ้าของสำนวน'}ดำเนินการตามข้อสั่งการ คบ.6 (เลขาธิการ)` })
       },
 
       /**
@@ -1533,13 +2258,22 @@ export const useCaseStore = create<CaseState>()(
        * ให้แก้ คบ.3 และ/หรือ คบ.6 เป็น Revision ใหม่ โดยไม่แก้ทับฉบับที่ลงนามแล้ว
        * ก่อนมีขั้นนี้ เคสที่ถูกส่งกลับจะค้างอยู่ในคิวของ ผอ. และเดินต่อไม่ได้เลย
        */
-      assignReturnRevision: (caseNo, instruction) => {
+      assignReturnRevision: (caseNo, instruction, assigneeUserId) => {
         const current = get().getCase(caseNo)
         if (!current) return
         if (current.activity7State !== 'returned') return
+        if (sarabanInTransit(current, 'decision')) return
 
         const at = nowDisplay()
-        const officer = protectionResponsibleName(current)
+        const auth = useAuthStore.getState()
+        if (current.stage !== 'director_review' || current.revisionAssignedAt) return
+        const toGot = current.returnDestination === 'got' && Boolean(current.gotRevision)
+        if (!['admin', toGot ? 'got_director' : 'director'].includes(roleForCase(auth.currentRole, current))) return
+        const selected = toGot ? gotAssignableOfficers().find((u) => u.id === assigneeUserId) : undefined
+        if (toGot && !selected) return
+        const actor = auth.getCurrentUserAccount()?.name || ACTOR.director
+        const officer = selected?.name || protectionResponsibleName(current)
+        activateCaseForms(current, [3, 6])
         const round = (current.revisionRound || 0) + 1
         const issue = current.returnIssueLabel || 'ข้อสั่งการของเลขาธิการ ป.ป.ท.'
 
@@ -1551,7 +2285,8 @@ export const useCaseStore = create<CaseState>()(
           secretaryReturnRework: true,
           revisionRound: round,
           revisionAssignedAt: at,
-          revisionAssignedBy: ACTOR.director,
+          revisionAssignedBy: actor,
+          gotRevision: selected ? { assigneeUserId: selected.id, assigneeName: selected.name, at, by: actor } : current.gotRevision,
           revisionInstruction: instruction,
           /**
            * WIT0709 — รอบนี้ต้องเดินตามลำดับเดิมทุกขั้น จึงห้ามใช้ทางลัดของ WIT0510/WIT0511
@@ -1563,17 +2298,29 @@ export const useCaseStore = create<CaseState>()(
             ...(current.assignmentHistory || []),
             {
               at,
-              action: 'ผอ.สำนัก/กอง มอบหมายแก้ไขตามข้อสั่งการเลขาธิการฯ',
-              actor: ACTOR.director,
+              action: `${toGot ? 'ผอ. กอท.' : 'ผอ.สำนัก/กอง'} มอบหมายแก้ไขตามข้อสั่งการเลขาธิการฯ`,
+              actor,
               detail: `${issue}: ${instruction} (แก้เป็น Revision ครั้งที่ ${round} ไม่แก้ทับฉบับที่ลงนามแล้ว)`,
             },
           ],
           /** TC-161 — เก็บฉบับ คบ.3/คบ.6 ปัจจุบันไว้เป็นประวัติก่อนขึ้นเวอร์ชันใหม่ */
-          ...proposalSetRevisionPatch(current, ACTOR.director, `${issue}: ${instruction}`),
+          ...proposalSetRevisionPatch(current, actor, `${issue}: ${instruction}`),
         })
 
         /** WIT0708 — รอบแก้ไขตามข้อสั่งการเลขาธิการฯ ใช้กลไกเวอร์ชันเดียวกับการตีกลับชั้นกลั่นกรอง */
-        reviseProposalSet(ACTOR.director, `${issue}: ${instruction}`)
+        reviseProposalSet(actor, `${issue}: ${instruction}`)
+        get().updateCase(caseNo, {
+          kb6Signed: false, kb6PreparedAt: undefined,
+          kb6SupervisorSignedAt: undefined, kb6SupervisorSignedBy: undefined,
+          kb6DirectorSignedAt: undefined, kb6DirectorSignedBy: undefined,
+          kb6DeputySignedAt: undefined, kb6DeputySignedBy: undefined, kb6DeputyOpinionChoice: undefined,
+          kb6SecretarySignedAt: undefined, kb6SecretarySignedBy: undefined, kb6SecretaryOpinionChoice: undefined,
+          secretaryReviewState: 'pending', deputyReviewState: 'pending',
+        })
+        useFormDraftStore.setState((state) => ({
+          signatures: Object.fromEntries(Object.entries(state.signatures).filter(([key]) => !key.startsWith('kb6-') && !key.startsWith('kb3-'))),
+          drafts: { ...state.drafts, 6: { ...state.drafts[6], ...Object.fromEntries(KB6_SIGNERS.map((signer) => [signer.opinionField, ''])) } },
+        }))
       },
 
       /**
@@ -1616,6 +2363,7 @@ export const useCaseStore = create<CaseState>()(
             },
           ],
         })
+        get().openSarabanDispatch(caseNo, { flow: 'decision', direction: 'down', forms: [1, 3, 6], subject: 'ผลพิจารณาคำร้อง · ส่งต่อหน่วยงานอื่นช่วยคุ้มครองพยาน' })
       },
 
       /** เจ้าหน้าที่เสนอ คบ.9 ให้เลขาธิการฯ ลงนามก่อนส่งออกภายนอก (คบ.8 เป็นคำสั่งของขั้น 08A-1) */
@@ -1655,6 +2403,8 @@ export const useCaseStore = create<CaseState>()(
           owner: ACTOR.secretary,
           next: 'เลขาธิการ ป.ป.ท. ลงนามคำสั่งมอบหมายชุดคุ้มครอง คบ.8',
         })
+        /** ขาไปสำนักงานเลขาธิการ: ธุรการหน่วยออกเลขส่ง → ธุรการสำนักงานเลขาธิการลงเลขรับ ก่อนถึงเลขาธิการ */
+        get().openSarabanDispatch(caseNo, { flow: 'kb8', direction: 'up', forms: [8], subject: `คบ.8 ฉบับที่ ${current.kb8Version || 1} · เสนอเลขาธิการลงนาม` })
         get().logHistory(
           caseNo,
           'เสนอ คบ.8 ให้เลขาธิการฯ ลงนาม',
@@ -1672,6 +2422,7 @@ export const useCaseStore = create<CaseState>()(
       returnKb8ForRevision: (caseNo, reason, actor) => {
         const current = get().getCase(caseNo)
         if (!current) return
+        if (sarabanInTransit(current, 'kb8')) return
         const at = nowDisplay()
         const by = actor || ACTOR.secretary
         const officer = protectionResponsibleName(current)
@@ -1702,6 +2453,7 @@ export const useCaseStore = create<CaseState>()(
           next: `แก้ไข คบ.8 ตามข้อสั่งการแล้วเสนอลงนามใหม่ (ฉบับที่ ${version + 1})`,
         })
         get().logHistory(caseNo, `ส่งกลับแก้ไข คบ.8 (ฉบับที่ ${version})`, by, reason)
+        get().openSarabanDispatch(caseNo, { flow: 'kb8', direction: 'down', forms: [8], subject: 'ส่งคืนแก้ไข คบ.8' })
       },
 
       /**
@@ -1752,6 +2504,7 @@ export const useCaseStore = create<CaseState>()(
         if ([9, 10].includes(formNo)) return // ลงนามครั้งเดียวพร้อมผลพิจารณาเท่านั้น
         const current = get().getCase(caseNo)
         if (!current) return
+        if (formNo === 8 && sarabanInTransit(current, 'kb8')) return
         if (current.protectionHandoff && (!['accepted', 'active'].includes(current.protectionHandoff.step) || !['secretary', 'admin'].includes(useAuthStore.getState().currentRole))) return
         const at = nowDisplay()
         const name = signerName || ACTOR.secretary
@@ -1809,6 +2562,8 @@ export const useCaseStore = create<CaseState>()(
             : 'ลงนามหนังสือส่งออกภายนอกจากหน้าแบบฟอร์มของฉบับนั้น'
         )
 
+        if (formNo === 8) get().openSarabanDispatch(caseNo, { flow: 'kb8', direction: 'down', forms: [8], subject: 'คบ.8 ลงนามแล้ว' })
+
         if (phaseSwitched) {
           const after = get().getCase(caseNo)
           get().logHistory(
@@ -1829,13 +2584,44 @@ export const useCaseStore = create<CaseState>()(
        * เพราะหนังสือตีกลับแล้วเปลี่ยนช่องทางส่งใหม่ได้หลายรอบ ส่วนฟิลด์เดี่ยวคงไว้เป็น "ครั้งล่าสุด"
        * วันอ้างอิงของสิทธิอุทธรณ์ยังเป็น deliveredAt (วันที่ผู้รับได้รับจริง) ไม่ใช่วันที่ส่ง
        */
+      requestKb10Dispatch: (caseNo) => {
+        const current = get().getCase(caseNo)
+        const auth = useAuthStore.getState()
+        if (!current || isCaseClosed(current) || current.activity7State !== 'rejected' || !current.resultNotices?.[10]?.original || current.sarabanDispatch || current.kb10DispatchRequestedAt || current.kb10DispatchNumbering || !noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId)) return false
+        const actor = auth.getCurrentUserAccount()?.name || ''
+        get().updateCase(caseNo, { kb10DispatchRequestedAt: nowDisplay(), next: 'ธุรการออกเลขหนังสือ คบ.10 และนำส่งให้พยาน' })
+        get().logHistory(caseNo, 'ส่ง คบ.10 ให้ธุรการออกเลขและนำส่ง', actor, 'รอธุรการหน่วยงานเจ้าของสำนวนดำเนินการ')
+        return true
+      },
+
+      numberKb10ForDispatch: (caseNo, number, date) => {
+        const current = get().getCase(caseNo)
+        const auth = useAuthStore.getState()
+        const notice = current?.resultNotices?.[10]
+        if (!current || isCaseClosed(current) || current.activity7State !== 'rejected' || current.sarabanDispatch || !notice?.original || !current.kb10DispatchRequestedAt || current.kb10DispatchNumbering || !kb10ClerkAllowed(auth.currentRole, current, auth.currentOrgUnitId)) return false
+        if (!number.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return false
+        const [year, month, day] = date.split('-').map(Number)
+        const slash = number.lastIndexOf('/')
+        const at = nowDisplay()
+        const by = auth.getCurrentUserAccount()?.name || ''
+        const fields = { ...notice.fields, เลขที่หนังสือ: slash > 0 ? number.slice(0, slash).trim() : number.trim(), ปีหนังสือ: slash > 0 ? number.slice(slash + 1).trim() : String(year + 543), วันที่: String(day), เดือน: new Date(year, month - 1, day).toLocaleDateString('th-TH', { month: 'long' }), 'พ.ศ.': String(year + 543), คำร้องลงวันที่: notice.fields['คำร้องลงวันที่'] || current.createdAt || '' }
+        const snapshot = { ...cloneNotice(notice.original), version: notice.versions.length + 1, fields, signatureVerification: 'not_covered_by_original_signature' as const }
+        const changes = NOTICE_DETAIL_FIELDS.filter((field) => fields[field] !== notice.fields[field]).map((field) => ({ field, before: notice.fields[field] || '', after: fields[field] }))
+        // Authorized numbering creates a new version without replacing the signed original.
+        const numberingPatch: Partial<CaseItem> = { kb10DispatchNumbering: { number: number.trim(), registryNumber: nextOutgoingSarabanNumber(get().cases, sarabanUnitName(current, 'director_outgoing'), date), unitName: sarabanUnitName(current, 'director_outgoing'), date, at, by }, resultNotices: { ...current.resultNotices, 10: { ...notice, fields, versions: [...notice.versions, snapshot], status: 'ready', checkedAt: at, checkedBy: by, audit: [...notice.audit, { id: crypto.randomUUID(), at, by, userId: auth.currentOfficerUserId, version: snapshot.version, changes }] } } }
+        set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item, ...numberingPatch, updatedAt: new Date().toISOString() } : item) }))
+        get().logHistory(caseNo, 'ธุรการออกเลขหนังสือ คบ.10 เพื่อนำส่งพยาน', by, `${number.trim()} · ${date}`)
+        return true
+      },
+
       recordDispatch: (caseNo, channel, tracking, outcome, failureReason) => {
         const current = get().getCase(caseNo)
         if (!current || isCaseClosed(current)) return
-        if (!routedWorkerAllowed(current)) return
         const notice = noticeForCase(current)
         const auth = useAuthStore.getState()
-        if (notice && (!noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId) || !notice.original || !['ready', 'sent'].includes(notice.status) || missingNoticeFields(notice).length)) return
+        const clerkDispatch = notice?.formNo === 10 && kb10ClerkAllowed(auth.currentRole, current, auth.currentOrgUnitId) && Boolean(current.kb10DispatchNumbering) && !current.sarabanDispatch
+        if (notice?.formNo === 10 ? !clerkDispatch : !routedWorkerAllowed(current)) return
+        if (notice && (!(clerkDispatch || noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId)) || !notice.original || !['ready', 'sent'].includes(notice.status) || missingNoticeFields(notice).length)) return
         if (!notice && !current.outgoingSignedAt) return
         if (!channel.trim()) return
         const last = current.dispatchHistory?.at(-1)
@@ -1852,7 +2638,7 @@ export const useCaseStore = create<CaseState>()(
           dispatchedAt: at,
           outcome: outcome || 'in_transit',
           failureReason,
-          recordedBy: protectionResponsibleName(current),
+          recordedBy: auth.getCurrentUserAccount()?.name || protectionResponsibleName(current),
         }
         get().updateCase(caseNo, {
           dispatchChannel: channel,
@@ -1897,10 +2683,12 @@ export const useCaseStore = create<CaseState>()(
       recordDelivery: (caseNo, deliveredAt, receipt) => {
         const current = get().getCase(caseNo)
         if (!current || isCaseClosed(current)) return
-        if (!routedWorkerAllowed(current)) return
         const notice = noticeForCase(current)
+        const auth = useAuthStore.getState()
+        const clerkReceipt = (notice?.formNo === 10 && kb10ClerkAllowed(auth.currentRole, current, auth.currentOrgUnitId)) || Boolean(!current.sarabanDispatch && current.protectionHandoff?.postal && canRecordSaraban(auth.currentRole, current, 'destination_incoming', auth.currentOrgUnitId))
+        if (!clerkReceipt && !routedWorkerAllowed(current)) return
         if (current.deliveredAt) return
-        if (notice && (!noticeWorkerAllowed(useAuthStore.getState().currentRole, current, useAuthStore.getState().currentOfficerUserId) || !notice.dispatches.length || !receipt?.recipient?.trim() || !receipt.ackType || !receipt.ackDocument)) return
+        if (notice && (!(clerkReceipt || noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId)) || (!notice.dispatches.length && !current.dispatchedAt) || (notice.formNo !== 10 && (!receipt?.recipient?.trim() || !receipt.ackType || !receipt.ackDocument)))) return
         if (!notice && !current.dispatchedAt) return
         const delivered = deliveredAt || new Date().toISOString()
         if (notice && receipt) {
@@ -1923,11 +2711,12 @@ export const useCaseStore = create<CaseState>()(
           deliveryAckType: receipt?.ackType || current.deliveryAckType,
           deliveryAckDocument: receipt?.ackDocument || current.deliveryAckDocument,
           resultPendingAck: false,
-          appealDueAt: current.activity7State === 'rejected' ? dueAt : undefined,
-          postAckStatus: 'พยานได้รับหนังสือแล้ว',
+          appealDueAt: current.activity7State === 'rejected' && !current.appealResolution ? dueAt : undefined,
+          ...(current.activity7State === 'rejected' && !current.appealResolution ? { status: 'พยานได้รับ คบ.10 แล้ว · ยื่นอุทธรณ์ได้', next: 'รับคำอุทธรณ์ภายในกำหนดนับจากวันที่พยานได้รับหนังสือ' } : {}),
+          postAckStatus: current.activity7State === 'rejected' && !current.appealResolution ? 'พยานได้รับ คบ.10 แล้ว · ยื่นอุทธรณ์ได้' : 'พยานได้รับหนังสือแล้ว',
           postAckOwner: protectionResponsibleName(current),
-          postAckNext:
-            current.activity7State === 'rejected'
+          postAckNext: current.appealResolution ? 'คำวินิจฉัยอุทธรณ์เป็นที่สุด — ไม่เปิดรับอุทธรณ์ซ้ำ' :
+            current.activity7State === 'rejected' && !current.appealResolution
               ? `นับสิทธิอุทธรณ์ ${APPEAL_WINDOW_DAYS} วันจากวันที่ได้รับหนังสือ`
               : 'ลงนามข้อตกลง คบ.11 และประสานตำรวจในพื้นที่',
         })
@@ -1936,7 +2725,7 @@ export const useCaseStore = create<CaseState>()(
           'บันทึกวันที่พยานได้รับหนังสือ',
           protectionResponsibleName(current),
           [
-            current.activity7State === 'rejected'
+            current.activity7State === 'rejected' && !current.appealResolution
               ? `เริ่มนับสิทธิอุทธรณ์ ${APPEAL_WINDOW_DAYS} วันจากวันที่ไปรษณีย์ส่งถึงบ้านพยาน`
               : 'ยืนยันการรับหนังสือแจ้งผลการพิจารณา',
             receipt?.recipient ? `ผู้รับ: ${receipt.recipient}${receipt.recipientRelation ? ` (${receipt.recipientRelation})` : ''}` : '',
@@ -1949,15 +2738,16 @@ export const useCaseStore = create<CaseState>()(
 
       /**
        * WIT0911-WIT0913 — พยานยื่นอุทธรณ์ (หนังสือ/วาจา) ผูกกับแฟ้มเดิมและวนกลับเข้าโฟลว์พิจารณาปกติ
-       * ผังห้ามเปลี่ยนเจ้าของเรื่องอัตโนมัติ — owner คงเดิมจนกว่าจะมี assignAppealOfficer อย่างชัดเจน
+       * ผังห้ามเปลี่ยนเจ้าของเรื่องอัตโนมัติ — เจ้าของสำนวนเดิมเป็นผู้รับผิดชอบแฟ้มอุทธรณ์
        */
       fileAppeal: (caseNo, reason, intake, opts) => {
         const current = get().getCase(caseNo)
-        if (!current || isCaseClosed(current)) return false
+        if (!current || (isCaseClosed(current) && opts?.against !== 'kb17')) return false
         const against = opts?.against ?? 'kb10'
+        if (current.appealResolution && current.appealResolution.against === against) return false
         if ((current.appealFolder || current.appealFiledAt) && ((current.appealAgainst || 'kb10') === against || current.appealFolder?.stage !== 'resolved')) return false
         const auth = useAuthStore.getState()
-        if (hasSignedResultNotice(current) && against === 'kb10' && (current.activity7State !== 'rejected' || !current.deliveredAt || current.appealFiledAt || !['receiver', 'officer', 'case_owner', 'admin'].includes(auth.currentRole) || (['officer', 'case_owner'].includes(auth.currentRole) && !noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId)))) return false
+        if (hasSignedResultNotice(current) && against === 'kb10' && (current.activity7State !== 'rejected' || !current.deliveredAt || current.appealFiledAt || !['receiver', 'got_receiver', 'officer', 'case_owner', 'got_officer', 'admin'].includes(auth.currentRole) || (auth.currentRole === 'got_receiver' && !kb10ClerkAllowed(auth.currentRole, current, auth.currentOrgUnitId)) || (['officer', 'case_owner', 'got_officer'].includes(auth.currentRole) && !noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId)))) return false
         /** WIT0909 — ปิดเรื่องไม่อนุมัติแล้ว (พยานไม่ประสงค์อุทธรณ์/ครบ 30 วัน) ห้ามรับคำอุทธรณ์ คบ.10 อีก */
         if (against === 'kb10' && current.nonApprovalClosedAt) return false
         const at = nowDisplay()
@@ -1994,6 +2784,7 @@ export const useCaseStore = create<CaseState>()(
               category: 'official',
               name: documentName,
               reference: 'คำร้องอุทธรณ์',
+              previewUrl: intake.channel === 'letter' ? intake.evidenceDataUrl : intake.signedRecordDataUrl,
               uploadedBy: recordedBy,
               uploadedAt: at,
               note: reason,
@@ -2007,44 +2798,14 @@ export const useCaseStore = create<CaseState>()(
           against === 'kb17' ? recordedBy : current.person,
           `${channelNote} — ${reason}`
         )
+        /**
+         * WIT0914 รวมเข้ากับการรับคำอุทธรณ์ — คำนวณกรอบ 30 วันทันที ไม่มีขั้นกด "ยืนยันแฟ้มครบถ้วน" แยก
+         * ภายในกรอบ → ชั้นความเห็นเจ้าหน้าที่ · เกินกรอบ → รอ ผบช.ชั้นต้นรับเรื่องไว้ (ห้ามปัดตกอัตโนมัติ)
+         */
+        get().checkAppealFolder(caseNo, { lateReason: opts?.lateReason })
+        /** แล้วจัดทำบันทึกเพิ่มเติม (อุทธรณ์) ของ คบ.3/คบ.6 ให้ทันที — เปิดแก้จากรายการแบบฟอร์มในแฟ้มคดี */
+        get().startAppealDocs(caseNo)
         return true
-      },
-
-      /**
-       * มอบหมายเจ้าหน้าที่อุทธรณ์อย่างชัดเจน (ผบช.ชั้นต้น/ผอ.สำนัก/กอง) — จุดเดียวที่เปลี่ยน owner
-       * ของแฟ้มอุทธรณ์ได้จริง ต่างจาก fileAppeal ที่ต้องไม่แตะ owner โดยอัตโนมัติ
-       */
-      assignAppealOfficer: (caseNo, officerUserId, note, actor) => {
-        const current = get().getCase(caseNo)
-        if (!current?.appealFolder || current.appealFolder.stage === 'resolved') return
-        const officer = ECMIS_USER_DIRECTORY.find((u) => u.id === officerUserId)
-        if (!officer) return
-        const at = nowDisplay()
-        const by = actor || ACTOR.supervisor
-        const previousOwner = current.owner
-
-        get().updateCase(caseNo, {
-          appealFolder: {
-            ...current.appealFolder,
-            appealOfficer: { name: officer.name, userId: officer.id, at, by, note },
-          },
-          owner: officer.name,
-        })
-        get().logHistory(
-          caseNo,
-          'มอบหมายเจ้าหน้าที่อุทธรณ์',
-          by,
-          `${previousOwner || '-'} → ${officer.name}${note ? ` · ${note}` : ''}`
-        )
-        useNotificationStore.getState().addNotification({
-          caseNo,
-          type: 'มอบหมายงานอุทธรณ์',
-          toName: officer.name,
-          toUserId: officer.id,
-          channel: 'ระบบ E-CMIS',
-          message: `${by} มอบหมายให้ท่านเป็นเจ้าหน้าที่อุทธรณ์ของแฟ้ม ${caseNo} (${current.person || 'ยังไม่ระบุชื่อผู้ขอรับการคุ้มครอง'})`,
-          urgency: current.urgent ? 'ด่วนที่สุด' : 'ปกติ',
-        })
       },
 
       // ---------- 09A : ด่านก่อนลงนาม คบ.10 และการปิดเรื่องเมื่อไม่อุทธรณ์ ----------
@@ -2055,6 +2816,8 @@ export const useCaseStore = create<CaseState>()(
       submitKb10ForScreening: (caseNo, note) => {
         const current = get().getCase(caseNo)
         if (!current) return
+        /** ร่างที่ถูกส่งกลับยังอยู่ระหว่างธุรการนำส่ง — เสนอใหม่ไม่ได้จนกว่าเจ้าหน้าที่จะได้รับ */
+        if (sarabanInTransit(current, 'kb10')) return
         const officer = protectionResponsibleName(current)
         get().updateCase(caseNo, {
           nonApprovalStep: 1,
@@ -2072,6 +2835,11 @@ export const useCaseStore = create<CaseState>()(
           officer,
           note
         )
+        /** ร่าง คบ.10 จากหน่วยไปรองเลขาธิการฯ (สำนักงานเลขาธิการ) ต้องผ่านธุรการทั้งสองฝั่ง */
+        get().openSarabanDispatch(caseNo, {
+          flow: 'kb10', direction: 'up', forms: [10],
+          subject: 'คบ.10 · เสนอรองเลขาธิการกลั่นกรอง',
+        })
       },
 
       /**
@@ -2081,6 +2849,8 @@ export const useCaseStore = create<CaseState>()(
       screenKb10ByDeputy: (caseNo, pass, note) => {
         const current = get().getCase(caseNo)
         if (!current) return
+        /** ร่างยังอยู่ระหว่างธุรการลงทะเบียนนำส่ง — รองเลขาธิการฯ ยังไม่ได้รับ */
+        if (sarabanInTransit(current, 'kb10')) return
         const officer = protectionResponsibleName(current)
         const at = nowDisplay()
 
@@ -2098,6 +2868,11 @@ export const useCaseStore = create<CaseState>()(
             next: 'แก้ไขร่าง คบ.10 ตามข้อสังเกต แล้วเสนอรองเลขาธิการฯ กลั่นกรองใหม่',
           })
           get().logHistory(caseNo, 'รองเลขาธิการฯ ส่งร่าง คบ.10 กลับแก้ไข', ACTOR.deputySecretary, note)
+          /** ส่งคืนแก้ไขจากสำนักงานเลขาธิการลงหน่วย ต้องผ่านธุรการ */
+          get().openSarabanDispatch(caseNo, {
+            flow: 'kb10', direction: 'down', forms: [10],
+            subject: 'ส่งคืนแก้ไข คบ.10',
+          })
           return
         }
 
@@ -2300,8 +3075,10 @@ export const useCaseStore = create<CaseState>()(
         const last = rounds[rounds.length - 1]
         if (last && !last.lockedAt) return
         const by = input.openedBy || protectionResponsibleName(current)
+        const external = input.source === 'external'
         const round: MonthlyReport = {
           id: `RPT-${Date.now()}`,
+          source: external ? 'external' : 'kb13',
           period: input.period,
           periodFrom: input.periodFrom,
           periodTo: input.periodTo,
@@ -2311,10 +3088,15 @@ export const useCaseStore = create<CaseState>()(
           incidentCount: (current.importantEvents || []).length,
           evidenceRefs: input.evidenceRefs?.filter(Boolean),
         }
-        get().updateCase(caseNo, { monthlyReports: [...rounds, round] })
+        get().updateCase(caseNo, {
+          monthlyReports: [...rounds, round],
+          ...(external ? { next: `บันทึกรับหนังสือรายงานจากหน่วยงานภายนอก งวด ${input.period}` } : {}),
+        })
         get().logHistory(
           caseNo,
-          `เปิดรอบรายงานผล คบ.13 งวด ${input.period}`,
+          external
+            ? `เปิดรอบรายงานผล งวด ${input.period} (หนังสือรายงานจากหน่วยงานภายนอก)`
+            : `เปิดรอบรายงานผล คบ.13 งวด ${input.period}`,
           by,
           `รวบรวมบันทึกปฏิบัติ หลักฐาน และรายงานภายนอกของทุกวิธี (${
             round.evidenceRefs?.length || 0
@@ -2347,13 +3129,45 @@ export const useCaseStore = create<CaseState>()(
         )
       },
 
+      /**
+       * รอบที่เลือกใช้หนังสือภายนอกแทน คบ.13 — บันทึกรับหนังสือพร้อมไฟล์ แทนการจัดทำและลงนาม (WIT1005-WIT1007)
+       * บันทึกซ้ำได้จนกว่าจะตรวจรับ เพื่อแก้เลขหนังสือหรือเปลี่ยนไฟล์ที่แนบผิด
+       */
+      recordExternalReport: (caseNo, reportId, letter, recordedBy) => {
+        const current = get().getCase(caseNo)
+        if (!current) return
+        const target = (current.monthlyReports || []).find((r) => r.id === reportId)
+        if (!target || target.lockedAt || target.reviewedAt || target.source !== 'external') return
+        const by = recordedBy || protectionResponsibleName(current)
+        const externalLetter: ExternalReportLetter = { ...letter, recordedAt: nowDisplay(), recordedBy: by }
+        get().updateCase(caseNo, {
+          monthlyReports: (current.monthlyReports || []).map((r) =>
+            r.id === reportId
+              ? {
+                  ...r,
+                  externalLetter,
+                  summary: r.summary || `หนังสือ ${letter.agency} ที่ ${letter.letterNo}`,
+                  submittedAt: nowDisplay(),
+                }
+              : r
+          ),
+          next: `ตรวจรับหนังสือรายงานจากหน่วยงานภายนอก งวด ${target.period}`,
+        })
+        get().logHistory(
+          caseNo,
+          `บันทึกรับหนังสือรายงานจากหน่วยงานภายนอก งวด ${target.period}`,
+          by,
+          `${letter.agency} · ที่ ${letter.letterNo} · เลขรับ ${letter.receiveNo} · ${letter.documentName}`
+        )
+      },
+
       /** WIT1008 — รับ คบ.13 ที่ลงนามครบแล้ว และตรวจผลปฏิบัติเทียบวิธีที่ได้รับอนุมัติ */
       receiveKb13Round: (caseNo, reportId, receivedBy, mismatchIssue) => {
         const current = get().getCase(caseNo)
         if (!current) return
         const target = (current.monthlyReports || []).find((r) => r.id === reportId)
         /** ตรวจรับได้เมื่อครบทั้งสองลายมือชื่อเท่านั้น ตามลำดับในผัง */
-        if (!target || target.lockedAt || !target.officerSignedAt || !target.witnessSignedAt) return
+        if (!target || target.lockedAt || !isKb13RoundReadyToReceive(target)) return
         const by = receivedBy || current.protectionOwner || protectionResponsibleName(current)
         get().updateCase(caseNo, {
           monthlyReports: (current.monthlyReports || []).map((r) =>
@@ -2365,7 +3179,9 @@ export const useCaseStore = create<CaseState>()(
         })
         get().logHistory(
           caseNo,
-          `รับ คบ.13 งวด ${target.period} ที่ลงนามแล้ว`,
+          target.source === 'external'
+            ? `ตรวจรับหนังสือรายงานจากหน่วยงานภายนอก งวด ${target.period}`
+            : `รับ คบ.13 งวด ${target.period} ที่ลงนามแล้ว`,
           by,
           mismatchIssue
             ? `พบผลปฏิบัติไม่ตรงกับวิธีที่ได้รับอนุมัติ บันทึกเป็นประเด็น: ${mismatchIssue}`
@@ -2416,7 +3232,7 @@ export const useCaseStore = create<CaseState>()(
         const target = (current.monthlyReports || []).find((r) => r.id === reportId)
         if (!target || target.lockedAt) return
         /** ต้องผ่าน WIT1006/1007 (ลงนาม), WIT1008 (ตรวจรับ) และ WIT1009 (บันทึกสถานะ) มาก่อน */
-        if (!target.officerSignedAt || !target.witnessSignedAt || !target.reviewedAt || !target.riskLevel) return
+        if (!isKb13RoundReadyToReceive(target) || !target.reviewedAt || !target.riskLevel) return
         get().updateCase(caseNo, {
           monthlyReports: (current.monthlyReports || []).map((r) =>
             r.id === reportId ? { ...r, lockedAt: nowDisplay() } : r
@@ -2426,7 +3242,9 @@ export const useCaseStore = create<CaseState>()(
         })
         get().logHistory(
           caseNo,
-          `ล็อก คบ.13 งวด ${target.period} เป็นรอบรายงานใหม่`,
+          target.source === 'external'
+            ? `ล็อกหนังสือรายงานจากหน่วยงานภายนอก งวด ${target.period} เป็นรอบรายงานใหม่`
+            : `ล็อก คบ.13 งวด ${target.period} เป็นรอบรายงานใหม่`,
           target.reviewedBy || target.submittedBy,
           'ฉบับลงนามถูกล็อก แก้ไขไม่ได้อีก และปรับข้อมูลคุ้มครองล่าสุดของแฟ้ม'
         )
@@ -2469,6 +3287,7 @@ export const useCaseStore = create<CaseState>()(
             by: actor,
             reason,
             reportId: last?.id,
+            reportSource: last?.source || (last ? 'kb13' : undefined),
             period: last?.period,
             riskLevel: last?.riskLevel || current.risk,
             orderRef: currentPhaseKind(episode) === 'TEMPORARY' ? 'คบ.5' : 'คบ.8/คบ.11',
@@ -2503,7 +3322,7 @@ export const useCaseStore = create<CaseState>()(
             stage: 'article14',
             status: `คุ้มครองสะสมครบเพดาน 6 เดือน · ห้ามขยายเวลา`,
             owner: by,
-            next: `จัดทำเรื่องเสนอเพื่อส่ง ${ARTICLE14_TARGET_AGENCY}`,
+            next: 'จัดทำเรื่องเสนอส่งต่อหน่วยงานอื่นช่วยคุ้มครองพยาน',
           })
           get().logHistory(caseNo, 'ปฏิเสธคำขอขยายเวลา — ครบเพดานรวม', by, check.reason || '')
           return
@@ -2539,6 +3358,10 @@ export const useCaseStore = create<CaseState>()(
         const request = current.extensionRequests?.find((r) => r.id === requestId)
         const role = useAuthStore.getState().currentRole
         if (!request?.formSnapshot || request.status !== 'pending' || request.approvalStage !== 'secretary' || !['secretary', 'admin'].includes(role)) return
+        /** คบ.14 อยู่ระหว่างธุรการลงทะเบียนนำส่ง — ผู้รับยังตัดสินไม่ได้ */
+        if (current.sarabanDispatch?.flow === 'kb14') return
+        /** รอบขยายเวลาที่แนบ คบ.6 — เลขาธิการลงนาม คบ.6 ข้อ 13 ก่อน จึงอนุมัติ/ไม่อนุมัติได้ (ลายมือชื่อคงไว้ทั้งสองกรณี) */
+        if (request.kb6Snapshot && !request.kb6Signatures?.secretary) return
         const at = nowDisplay()
         const requests = (current.extensionRequests || []).map((r) =>
           r.id === requestId
@@ -2592,6 +3415,37 @@ export const useCaseStore = create<CaseState>()(
           ACTOR.secretary,
           note
         )
+        /** ผลพิจารณาลงมาหน่วยต้องผ่านธุรการ สลธ. ขาออก → ธุรการหน่วย ขาเข้า ก่อนเจ้าของสำนวนรับทราบ */
+        get().openSarabanDispatch(caseNo, {
+          flow: 'kb14', direction: 'down', forms: request.kb6Snapshot ? [14, 3, 6] : [14],
+          subject: `ผลพิจารณา ${kb14Label(extensionRoundOf(current.extensionRequests, request), request.version)} · ${approve ? 'อนุมัติ' : 'ไม่อนุมัติ'}`,
+        })
+
+        /** แจ้งผลถึงเจ้าของสำนวนผู้ยื่น คบ.14 (กล่องแจ้งเตือน + ป็อปอัปเมื่อเปิดหน้าระยะเวลาคุ้มครอง) */
+        const updated = get().getCase(caseNo)
+        useNotificationStore.getState().addNotification({
+          caseNo,
+          type: approve ? 'อนุมัติขยายระยะเวลาคุ้มครอง (คบ.14)' : 'ไม่อนุมัติขยายระยะเวลาคุ้มครอง (คบ.14)',
+          toName: protectionResponsibleName(current),
+          ...(current.protectionOwnerUserId ? { toUserId: current.protectionOwnerUserId } : {}),
+          channel: 'ระบบ E-CMIS',
+          message: approve && decided
+            ? `${ACTOR.secretary} อนุมัติขยายระยะเวลาคุ้มครองแฟ้ม ${caseNo} อีก ${decided.durationMonths ? monthLabel(decided.durationMonths) : legacyMonthLabel(decided.durationDays)}${updated?.protectionEndAt ? ` สิ้นสุด ${formatThaiDate(updated.protectionEndAt)}` : ''}`
+            : `${ACTOR.secretary} ไม่อนุมัติขยายระยะเวลาคุ้มครองแฟ้ม ${caseNo} — คงคำสั่งเดิมถึงวันสิ้นสุด${note ? ` · ${note}` : ''}`,
+          urgency: 'ปกติ',
+        })
+      },
+
+      acknowledgeExtensionDecision: (caseNo, requestId, by) => {
+        const current = get().getCase(caseNo)
+        const request = current?.extensionRequests?.find((r) => r.id === requestId)
+        if (!current || !request || !['approved', 'rejected'].includes(request.status) || request.ownerAcknowledgedAt) return
+        if (current.sarabanDispatch?.flow === 'kb14') return
+        const at = nowDisplay()
+        get().updateCase(caseNo, {
+          extensionRequests: current.extensionRequests!.map((r) => (r.id === requestId ? { ...r, ownerAcknowledgedAt: at, ownerAcknowledgedBy: by } : r)),
+        })
+        get().logHistory(caseNo, request.status === 'approved' ? 'เจ้าของสำนวนรับทราบการอนุมัติขยายระยะเวลา (คบ.14)' : 'เจ้าของสำนวนรับทราบผลไม่อนุมัติขยายระยะเวลา (คบ.14)', by, '')
       },
 
       /**
@@ -2603,8 +3457,11 @@ export const useCaseStore = create<CaseState>()(
         const current = get().getCase(caseNo)
         if (!current) return
         if (!routedWorkerAllowed(current)) return
+        /** คบ.14 อยู่ระหว่างธุรการลงทะเบียนนำส่ง — เจ้าหน้าที่ยังแก้/เสนอใหม่ไม่ได้ */
+        if (current.sarabanDispatch?.flow === 'kb14') return
         const existing = current.extensionRequests?.at(-1)
-        if (existing && (existing.status === 'pending' || existing.status === 'approved' || existing.status === 'submitted' && existing.formSnapshot)) return
+        /** ขอขยายได้หลายครั้งจนครบเพดาน 6 เดือน — กันเฉพาะระหว่างที่ฉบับก่อนยังอยู่ในขั้นพิจารณา */
+        if (existing && (existing.status === 'pending' || existing.status === 'submitted' && existing.formSnapshot)) return
         const by = actor || protectionResponsibleName(current)
         const episode = current.episode || deriveEpisode(current)
 
@@ -2623,7 +3480,20 @@ export const useCaseStore = create<CaseState>()(
         const grantedDays = input.durationMonths ? input.durationDays : Math.min(input.durationDays, PROTECTION_MAX_DAYS, check.maxDays)
         const version = (editable?.version || 0) + 1
 
+        /** คบ.3/คบ.6 ฉบับขยายเวลาของรอบนี้ — แนบสำเนาไปกับคำขอและล็อกแบบ (ส่งกลับแล้วแก้ในฉบับเดิม) */
+        const round = editable ? requests.indexOf(editable) + 1 : requests.length + 1
+        const docs = current.extensionDocs?.round === round ? current.extensionDocs : undefined
+        let docFields: Partial<ExtensionRequest> = {}
+        if (docs) {
+          activateExtensionForms(current)
+          const forms = useFormDraftStore.getState()
+          docFields = { docVersion: docs.kb6Version, kb3DocVersion: docs.kb3Version, kb3Snapshot: { ...forms.getDraft(3) }, kb6Snapshot: { ...forms.getDraft(6) }, kb6Signatures: {} }
+          forms.lockForm(3, by, `แนบกับ คบ.14 ${addendumLabel(round)}`)
+          forms.lockForm(6, by, `แนบกับ คบ.14 ${addendumLabel(round)}`)
+        }
+
         const request: ExtensionRequest = {
+          ...docFields,
           id: editable?.id || `EXT-${Date.now()}`,
           requestedAt: nowDisplay(),
           requestedBy: by,
@@ -2660,14 +3530,14 @@ export const useCaseStore = create<CaseState>()(
 
         get().updateCase(caseNo, {
           extensionRequests: editable ? requests.map((r) => (r.id === editable.id ? request : r)) : [...requests, request],
-          status: `จัดทำ คบ.14 ฉบับที่ ${version} · รอผู้ตรวจตรวจเอกสาร`,
+          status: `จัดทำ ${kb14Label(round, version)} · รอผู้ตรวจตรวจเอกสาร`,
           owner: ACTOR.supervisor,
           next: 'ตรวจ คบ.14 เหตุผล หลักฐาน ช่วงวันที่ และเพดานวันสะสม',
           extraForms: Array.from(new Set([...(current.extraForms || []), 14])),
         })
         get().logHistory(
           caseNo,
-          `จัดทำ คบ.14 ฉบับที่ ${version}`,
+          `จัดทำ ${kb14Label(round, version)}`,
           by,
           `ขอขยาย ${grantedDays} วัน${input.periodFrom ? ` (${input.periodFrom} ถึง ${input.periodTo || '-'})` : ''} · สะสมแล้ว ${check.cumulative} วัน คงเหลือ ${check.remaining} วันจากเพดาน 6 เดือน · ${input.reason}`
         )
@@ -2678,76 +3548,133 @@ export const useCaseStore = create<CaseState>()(
         const current = get().getCase(caseNo)
         const request = current?.extensionRequests?.find((r) => r.id === requestId)
         if (!current || !request || !request.formSnapshot || !['submitted', 'pending'].includes(request.status)) return
+        if (current.sarabanDispatch?.flow === 'kb14') return
         const role = useAuthStore.getState().currentRole
         const step = request.approvalStage || 'supervisor'
-        if ((step === 'secretary' && endorse) || (role !== step && role !== 'admin' && !(step === 'director' && role === 'got_director'))) return
+        if ((step === 'secretary' && endorse) || !isKb14StageReviewer(role, step, current)) return
         if (!endorse && !note.trim()) return
         const nextStep = step === 'supervisor' ? 'director' : step === 'director' ? 'deputy_secretary' : 'secretary'
         const actors = { supervisor: ACTOR.supervisor, director: ACTOR.director, deputy_secretary: ACTOR.deputySecretary, secretary: ACTOR.secretary }
-        const labels = { supervisor: 'ผู้บังคับบัญชาชั้นต้น', director: 'ผอ.กอง', deputy_secretary: 'รองเลขาธิการ', secretary: 'เลขาธิการ' }
+        const labels = { supervisor: gotReviewChain(current) ? 'ผบช.ต้น กอท.' : 'ผู้บังคับบัญชาชั้นต้น', director: gotReviewChain(current) ? 'ผอ. กอท.' : 'ผอ.กอง', deputy_secretary: 'รองเลขาธิการ', secretary: 'เลขาธิการ' }
         const at = nowDisplay()
+        const kb6Signer = request.kb6Snapshot ? extensionKb6SignerFor(step) : undefined
+        /**
+         * รอบขยายเวลาที่แนบ คบ.6 — ชั้นนี้ต้องลงนาม คบ.6 ก่อน จึงส่งต่อชั้นถัดไปได้
+         * ส่งคืนแก้ไขไม่ต้องลงนาม ยกเว้นชั้นเลขาธิการที่ต้องลงนามก่อนทุกการตัดสินใจ
+         */
+        if (kb6Signer && !request.kb6Signatures?.[kb6Signer.role] && (endorse || step === 'secretary')) return
         get().updateCase(caseNo, {
           extensionRequests: current.extensionRequests!.map((r) => r.id === requestId ? {
             ...r, status: endorse ? 'pending' : 'returned', approvalStage: endorse ? nextStep : 'supervisor',
             reviewedAt: at, reviewedBy: actors[step], reviewNote: note,
             approvalHistory: [...(r.approvalHistory || []), { role: step, by: actors[step], at, note, endorsed: endorse }],
+            ...(request.kb6Snapshot && !endorse
+              ? {
+                  kb6Signatures: {},
+                  kb6Snapshot: Object.fromEntries(Object.entries(r.kb6Snapshot || {}).map(([k, v]) => [k, KB6_SIGNERS.some((sg) => sg.opinionField === k) ? '' : v])),
+                }
+              : {}),
           } : r),
           status: endorse ? `คบ.14 · รอ${labels[nextStep]}พิจารณา` : 'ส่งคืนแก้ไข คบ.14',
           owner: endorse ? actors[nextStep] : protectionResponsibleName(current),
           next: endorse ? `${labels[nextStep]}พิจารณา คบ.14` : 'แก้ไขแบบ คบ.14 แล้วเสนอใหม่',
         })
         get().logHistory(caseNo, endorse ? `${labels[step]}เห็นชอบ คบ.14` : `${labels[step]}ส่งคืน คบ.14`, actors[step], note)
+        /**
+         * ข้ามระหว่างหน่วยกับสำนักงานเลขาธิการต้องผ่านธุรการ — ผอ.หน่วยเห็นชอบ → ขึ้นรองเลขาธิการ (ขาไป)
+         * รองเลขาธิการ/เลขาธิการส่งคืนแก้ไข → ลงหน่วย (ขากลับ) ส่วนการส่งคืนในหน่วยไม่ผ่านธุรการ
+         */
+        const kb14Forms = request.kb6Snapshot ? [14, 3, 6] : [14]
+        if (endorse && step === 'director') {
+          get().openSarabanDispatch(caseNo, { flow: 'kb14', direction: 'up', forms: kb14Forms, subject: `${kb14Label(extensionRoundOf(current.extensionRequests, request), request.version)} · ขอขยายระยะเวลา` })
+        } else if (!endorse && (step === 'deputy_secretary' || step === 'secretary')) {
+          get().openSarabanDispatch(caseNo, { flow: 'kb14', direction: 'down', forms: kb14Forms, subject: `ส่งคืนแก้ไข ${kb14Label(extensionRoundOf(current.extensionRequests, request), request.version)}` })
+        }
+        if (request.kb6Snapshot) {
+          if (!endorse) {
+            /** ส่งกลับแก้ — เปิดแก้ คบ.3/คบ.6 ฉบับเดิมของรอบนี้ ไม่สร้างฉบับใหม่ และล้างลายมือชื่อ คบ.6 */
+            activateExtensionForms(current)
+            resetKb6OpinionDraft()
+            useFormDraftStore.setState((state) => ({ locks: Object.fromEntries(Object.entries(state.locks).filter(([k]) => Number(k) !== 3 && Number(k) !== 6)) }))
+          }
+        }
+      },
+
+      /** เริ่มจัดทำบันทึกเพิ่มเติมของ คบ.3/คบ.6 เพื่อขยายเวลา (หนึ่งครั้งต่อหนึ่งรอบ) */
+      startExtensionDocs: (caseNo) => {
+        const current = get().getCase(caseNo)
+        if (!current || isCaseClosed(current)) return null
+        if (current.sarabanDispatch?.flow === 'kb14') return null
+        const round = currentExtensionRound(current)
+        const existing = current.extensionDocs
+        if (existing?.round === round) return { round, kb3Version: existing.kb3Version, kb6Version: existing.kb6Version }
+        const episode = current.episode || deriveEpisode(current)
+        if (checkExtension(episode, 1).maxDays <= 0) return null
+        const by = protectionResponsibleName(current)
+        const reason = `จัดทำบันทึกเพิ่มเติม ครั้งที่ ${round} ของ คบ.3/คบ.6 เพื่อขอขยายระยะเวลาคุ้มครอง (ฉบับเดิมเก็บไว้ไม่แก้ทับ)`
+        activateExtensionForms(current)
+        const forms = useFormDraftStore.getState()
+        forms.reviseForm(3, by, reason)
+        forms.reviseForm(6, by, reason)
+        resetKb6OpinionDraft()
+        const kb3Version = useFormDraftStore.getState().getFormVersion(3)
+        const kb6Version = useFormDraftStore.getState().getFormVersion(6)
+        get().updateCase(caseNo, {
+          extensionDocs: { round, kb3Version, kb6Version, preparedAt: nowDisplay(), preparedBy: by },
+          extraForms: Array.from(new Set([...(current.extraForms || []), 3, 6, 14])),
+        })
+        get().logHistory(caseNo, `จัดทำ คบ.3 และ คบ.6 ${addendumLabel(round)} เพื่อขยายเวลา`, by, reason)
+        return { round, kb3Version, kb6Version }
+      },
+
+      /**
+       * ลงนาม คบ.6 ฉบับขยายเวลาตามขั้นของ คบ.14 — บันทึกลายมือชื่ออย่างเดียว แฟ้มยังอยู่ชั้นเดิม
+       * แล้วจึงกด "ส่ง…" (reviewKb14) หรือ "อนุมัติ/ไม่อนุมัติ" ของเลขาธิการ (decideExtension) ใน footer เอง
+       */
+      signExtensionKb6: (caseNo, opinion, _signerName) => {
+        const current = get().getCase(caseNo)
+        const request = current?.extensionRequests?.at(-1)
+        if (!current || !request?.kb6Snapshot || !['submitted', 'pending'].includes(request.status)) return false
+        if (current.sarabanDispatch?.flow === 'kb14') return false
+        const stage = request.approvalStage || 'supervisor'
+        const note = opinion?.trim() || KB6_DEFAULT_OPINION
+        const signer = extensionKb6SignerFor(stage)
+        if (signer && !request.kb6Signatures?.[signer.role]) {
+          const role = useAuthStore.getState().currentRole
+          if (!isKb14StageReviewer(role, stage, current)) return false
+          if (stage === 'secretary' && request.status !== 'pending') return false
+          const by = { supervisor: ACTOR.supervisor, director: ACTOR.director, deputy_secretary: ACTOR.deputySecretary, secretary: ACTOR.secretary }[stage]
+          const at = nowDisplay()
+          get().updateCase(caseNo, {
+            extensionRequests: current.extensionRequests!.map((r) => r.id === request.id ? {
+              ...r,
+              kb6Signatures: { ...r.kb6Signatures, [signer.role]: { at, by, opinion: note } },
+              kb6Snapshot: { ...r.kb6Snapshot, [signer.nameField]: by, [signer.opinionField]: note },
+            } : r),
+          })
+          get().logHistory(caseNo, `ลงนาม${signer.label} (ข้อ ${signer.no}) ใน คบ.6 ${addendumLabel(extensionRoundOf(current.extensionRequests, request))}`, by, note)
+          mirrorKb6Signature(current, stage, by, at, note)
+        }
+        const after = get().getCase(caseNo)?.extensionRequests?.find((r) => r.id === request.id)
+        return Boolean(signer && after?.kb6Signatures?.[signer.role])
       },
 
       /** คบ.7 — คำร้องขอยุติการคุ้มครองพยาน */
       requestTermination: (caseNo, reason, requestedBy) => {
         const current = get().getCase(caseNo)
-        if (!current) return
+        if (!current || !routedWorkerAllowed(current) || current.terminationRequest) return
         const by = requestedBy || protectionResponsibleName(current)
         get().updateCase(caseNo, {
           terminationRequest: { requestedAt: nowDisplay(), requestedBy: by, reason, status: 'pending' },
-          status: 'รอเลขาธิการ ป.ป.ท. ลงนามสั่งยุติการคุ้มครอง (คบ.7)',
-          owner: ACTOR.secretary,
-          next: 'เลขาธิการ ป.ป.ท. ลงนามรับรองเพื่อสั่งยุติการปฏิบัติงานคุ้มครองพยาน',
           extraForms: Array.from(new Set([...(current.extraForms || []), 7])),
+          next: 'รับคำร้อง คบ.7 แล้วจัดทำ คบ.15 ในแฟ้มเดิม',
         })
-        get().logHistory(caseNo, 'จัดทำ คบ.7 คำร้องขอยุติการคุ้มครองพยาน', by, reason)
+        get().logHistory(caseNo, 'บันทึกคำร้อง คบ.7', by, reason)
       },
 
-      /**
-       * WIT1136-1137 — ผู้มีอำนาจพิจารณาคำขอยุติ
-       *
-       * เห็นชอบให้ยุติ = เข้าสู่ขั้นออกคำสั่ง คบ.16 เท่านั้น ยังไม่ใช่การยุติ
-       * (WIT1130: การยุติยังไม่เกิดขึ้นเพียงเพราะรับ คบ.7 หรือจัดทำ คบ.15
-       *  ต้องรอคำสั่ง คบ.16 ที่ลงนามและถึงวันที่มีผล — ดู issueKb16 / signKb16)
-       */
+      // ทางเรียกเดิมใช้ผลพิจารณา คบ.15 ชุดเดียวกัน ไม่ข้ามรายงานไป คบ.16
       decideTermination: (caseNo, approve, note) => {
-        const current = get().getCase(caseNo)
-        if (!current || !current.terminationRequest) return
-        const at = nowDisplay()
-
-        get().updateCase(caseNo, {
-          terminationRequest: {
-            ...current.terminationRequest,
-            status: approve ? 'pending' : 'rejected',
-            decidedAt: at,
-            decidedBy: ACTOR.secretary,
-            decisionNote: note,
-          },
-          stage: approve ? 'termination_order' : 'protection',
-          status: approve ? 'เห็นชอบให้ยุติ · รอออกคำสั่ง คบ.16' : 'กำลังคุ้มครอง (ไม่อนุมัติยุติ)',
-          owner: approve ? protectionResponsibleName(current) : ACTOR.protection,
-          next: approve
-            ? 'จัดทำร่างคำสั่งยุติ (คบ.16) ระบุวันที่ออกคำสั่งและวันที่มีผล แล้วเสนอลงนาม'
-            : 'ปฏิบัติการคุ้มครองต่อเนื่องตามคำสั่งเดิม',
-          activity7Label: approve ? 'เห็นชอบให้ยุติ — รอคำสั่ง คบ.16' : current.activity7Label,
-        })
-        get().logHistory(
-          caseNo,
-          approve ? 'ผู้มีอำนาจเห็นชอบให้ยุติ · เข้าสู่ขั้นออกคำสั่ง คบ.16' : 'ผู้มีอำนาจไม่อนุมัติการยุติ',
-          ACTOR.secretary,
-          approve ? `${note} — การคุ้มครองยังไม่สิ้นสุดจนกว่าคำสั่ง คบ.16 จะลงนามและถึงวันที่มีผล` : note
-        )
+        get().decideTerminationApproval(caseNo, approve, note)
       },
 
       /** คบ.12 — ส่งต่อหน่วยงานภายนอกเมื่อเกินขอบเขตอำนาจ ป.ป.ท. */
@@ -2979,6 +3906,7 @@ export const useCaseStore = create<CaseState>()(
         const at = nowDisplay()
         const officer = protectionResponsibleName(current)
         const history = current.assignmentHistory || []
+        resetFastTrackSignatures()
 
         get().updateCase(caseNo, {
           fastTrack: {
@@ -3262,7 +4190,7 @@ export const useCaseStore = create<CaseState>()(
         if (!target || target.stage !== level) return
         const at = nowDisplay()
         const by = level === 'supervisor' ? ACTOR.supervisor : ACTOR.director
-        const roleLabel = level === 'supervisor' ? 'ผบช.ชั้นต้น' : 'ผอ.สำนัก/กอง'
+        const roleLabel = reviewLevelLabel(level, current)
 
         const nextStage: ConsentDeclineProposal['stage'] = !endorse
           ? 'returned'
@@ -3382,7 +4310,7 @@ export const useCaseStore = create<CaseState>()(
 
         const proposal: Article14EscalationProposal = {
           id: `A14E-${Date.now()}`,
-          failedAgency: ARTICLE14_TARGET_AGENCY,
+          failedAgency: article14Agency(current).office,
           failedReason: input.failedReason,
           proposedApproach: input.proposedApproach,
           note: input.note,
@@ -3395,12 +4323,12 @@ export const useCaseStore = create<CaseState>()(
           article14: { ...current.article14, step: 'delivery_failed' },
           article14EscalationProposals: [...(current.article14EscalationProposals || []), proposal],
           owner: ACTOR.supervisor,
-          status: `${ARTICLE14_TARGET_AGENCY} แจ้งว่าดำเนินการไม่ได้ · เสนอผู้มีอำนาจพิจารณาแนวทางใหม่`,
+          status: `${article14Agency(current).office} แจ้งว่าดำเนินการไม่ได้ · เสนอ ผอ.สำนัก/กอง พิจารณาแนวทางใหม่`,
           next: `ผบช.ชั้นต้นพิจารณาแนวทางใหม่: ${input.proposedApproach} — มาตรการคุ้มครองเดิมยังคงอยู่ระหว่างพิจารณา`,
         })
         get().logHistory(
           caseNo,
-          `${ARTICLE14_TARGET_AGENCY} แจ้งว่าดำเนินการคุ้มครองไม่ได้`,
+          `${article14Agency(current).office} แจ้งว่าดำเนินการคุ้มครองไม่ได้`,
           by,
           `${input.failedReason} · เสนอแนวทาง: ${input.proposedApproach}${input.note ? ` · ${input.note}` : ''}`
         )
@@ -3414,7 +4342,7 @@ export const useCaseStore = create<CaseState>()(
         if (!target || target.stage !== level) return
         const at = nowDisplay()
         const by = level === 'supervisor' ? ACTOR.supervisor : ACTOR.director
-        const roleLabel = level === 'supervisor' ? 'ผบช.ชั้นต้น' : 'ผอ.สำนัก/กอง'
+        const roleLabel = reviewLevelLabel(level, current)
         const officer = protectionResponsibleName(current)
 
         const nextStage: Article14EscalationProposal['stage'] = !endorse
@@ -3512,7 +4440,7 @@ export const useCaseStore = create<CaseState>()(
         if (!target || target.stage !== level) return
         const at = nowDisplay()
         const by = level === 'supervisor' ? ACTOR.supervisor : ACTOR.director
-        const roleLabel = level === 'supervisor' ? 'ผบช.ชั้นต้น' : 'ผอ.สำนัก/กอง'
+        const roleLabel = reviewLevelLabel(level, current)
 
         const nextStage: CoordinationDeclineProposal['stage'] = !endorse
           ? 'returned'
@@ -3569,6 +4497,9 @@ export const useCaseStore = create<CaseState>()(
               declinedReason: undefined,
               contactPerson: undefined,
               acceptedAt: undefined,
+              /** หนังสือฉบับใหม่ต้องให้ธุรการออกเลขใหม่ */
+              letterNumbering: undefined,
+              letterDraft: track.coordination?.letterDraft ? { ...track.coordination.letterDraft, registryNo: '' } : undefined,
             },
           })
           get().setMethodStatus(caseNo, 4, 'preparing')
@@ -3633,7 +4564,7 @@ export const useCaseStore = create<CaseState>()(
       },
 
       /** WIT0603 / WIT0813 — เลือกได้อิสระมากกว่า 1 วิธี และเปิดเส้นทางปฏิบัติพร้อมกันทุกวิธี */
-      setApprovedMethods: (caseNo, methods, actor) => {
+      setApprovedMethods: (caseNo, methods, actor, options) => {
         const current = get().getCase(caseNo)
         if (!current) return
         if (!routedWorkerAllowed(current)) return
@@ -3647,9 +4578,14 @@ export const useCaseStore = create<CaseState>()(
         const ordered = current.orderedMethods
         const requested = Array.from(new Set(methods)).sort() as ProtectionMethodNo[]
         const unique =
-          ordered && ordered.length > 0 ? requested.filter((m) => ordered.includes(m)) : requested
+          ordered && ordered.length > 0 && !options?.allowOutsideOrder ? requested.filter((m) => ordered.includes(m)) : requested
         if (unique.length === 0) return
-        const existing = current.methodTracks || []
+        /**
+         * คำร้องหลักเปิดงานของตัวเองหลังพยานลงนาม คบ.11 — แยกงานคุ้มครองชั่วคราวตาม คบ.5 ออกเป็นอีกชุด
+         * แล้วเริ่มชุดวิธีของคำร้องหลักใหม่ทั้งหมด ไม่ใช้งาน/หนังสือของชั่วคราวต่อ แม้เป็นวิธีเดียวกัน
+         */
+        const separateTemporary = Boolean(current.kb5Approved && current.kb11Signed && !current.temporaryProtection && (current.methodTracks || []).length > 0)
+        const existing = separateTemporary ? [] : current.methodTracks || []
         const tracks: ProtectionMethodTrack[] = unique.map(
           (m) => existing.find((t) => t.method === m) || { method: m, status: 'pending' }
         )
@@ -3658,11 +4594,37 @@ export const useCaseStore = create<CaseState>()(
          * จึงเพิ่มเข้าแฟ้ม ณ จุดนี้ ซึ่งเกิดหลังพยานลงนาม คบ.11 แล้ว (ดู Kb11SignatureActions)
          * วิธีที่ 2–4 ไม่มี คบ.8 ในแฟ้ม
          */
+        const approvalLetter = current.coordinationApproval
+        if (approvalLetter?.signature) {
+          const index = tracks.findIndex(t => t.method === 4)
+          const target = tracks[index]
+          if (target && !target.coordination?.letterDraft) tracks[index] = { ...target, coordination: {
+            ...target.coordination, agencyType: approvalLetter.agencyType, agency: approvalLetter.agency,
+            letterDraft: { ...approvalLetter.signature.draft }, responseStatus: 'awaiting',
+          } }
+        }
         const withKb8 = unique.includes(1)
+        /**
+         * WIT0614 — คุ้มครองชั่วคราวตาม คบ.5 ที่คำร้องหลักยังไม่อนุมัติ ให้คำร้องหลักคงอยู่ขั้นเดิม
+         * ไม่งั้นการ์ดส่งงานหายและส่ง คบ.6 ให้ ผบช.ชั้นต้น ไม่ได้หลังเปิดงานตามวิธี
+         */
+        const mainPetitionPending = Boolean(current.kb5Approved && !current.kb11Signed && current.activity7State !== 'approved')
         get().updateCase(caseNo, {
           approvedMethods: unique,
           methodTracks: tracks,
-          stage: current.stage === 'protection' ? current.stage : 'method_operation',
+          stage: current.stage === 'protection' || mainPetitionPending ? current.stage : 'method_operation',
+          ...(separateTemporary
+            ? {
+                temporaryProtection: {
+                  approvedMethods: current.approvedMethods || [],
+                  methodChoice: current.methodChoice,
+                  methodTracks: current.methodTracks || [],
+                  letterIds: (current.officialLetters || []).filter((l) => l.context === 'method4').map((l) => l.id),
+                  separatedAt: new Date().toISOString(),
+                },
+                methodChoice: undefined,
+              }
+            : {}),
           status: `เปิดเส้นทางปฏิบัติ ${unique.length} วิธีตามคำสั่ง`,
           owner: protectionResponsibleName(current),
           next: withKb8
@@ -3670,6 +4632,14 @@ export const useCaseStore = create<CaseState>()(
             : `ดำเนินการตามวิธีที่ ${unique.join(', ')} — แต่ละวิธีเดินคู่ขนานได้`,
           ...(withKb8 ? { extraForms: Array.from(new Set([...(current.extraForms || []), 8])) } : {}),
         })
+        if (separateTemporary) {
+          get().logHistory(
+            caseNo,
+            'แยกงานคุ้มครองชั่วคราวตาม คบ.5 ออกจากงานตามคำร้องหลัก',
+            actor || protectionResponsibleName(current),
+            `งานชั่วคราววิธีที่ ${(current.approvedMethods || []).join(', ') || '-'} มีผลต่อจนการคุ้มครองตามคำร้องหลักเริ่มปฏิบัติจริง`
+          )
+        }
         get().logHistory(
           caseNo,
           'แยกแนวทางคุ้มครองตามวิธีที่อนุมัติ',
@@ -3686,11 +4656,49 @@ export const useCaseStore = create<CaseState>()(
         }
       },
 
+      chooseOperationMethods: (caseNo, choice, actor) => {
+        const current = get().getCase(caseNo)
+        if (!current) return
+        const by = actor || protectionResponsibleName(current)
+        const agencyType = choice.methods.includes(4) ? choice.agencyType : undefined
+        /**
+         * "เลือกใหม่" เป็นการตัดสินใจของเจ้าหน้าที่ตอนเปิดงาน จึงไม่ตัดวิธีที่อยู่นอก คบ.6 ทิ้ง
+         * "ตาม คบ.4" ใช้วิธีที่ ผอ. อนุมัติไว้ใน คบ.5 ก่อนมี คบ.6 จึงไม่กรองด้วยชุดวิธีตาม คบ.6 เช่นกัน
+         */
+        get().setApprovedMethods(caseNo, choice.methods, by, { allowOutsideOrder: choice.mode !== 'kb6' })
+        const after = get().getCase(caseNo)
+        if (!after?.methodTracks?.length) return
+        if (agencyType) {
+          const preset = COORDINATION_AGENCY_TYPES.find((t) => t.value === agencyType)
+          const track = after.methodTracks.find((t) => t.method === 4)
+          get().updateMethodTrack(caseNo, 4, {
+            coordination: { ...track?.coordination, agencyType, agency: agencyType === 'police' ? track?.coordination?.agency || '' : preset?.agency || '', stationId: agencyType === 'police' ? track?.coordination?.stationId : undefined },
+          })
+        }
+        get().updateCase(caseNo, { methodChoice: { mode: choice.mode, methods: after.approvedMethods || choice.methods, agencyType, at: new Date().toISOString(), by } })
+        get().logHistory(
+          caseNo,
+          choice.mode === 'kb6' ? 'เลือกดำเนินการตามวิธีที่เสนอใน คบ.6'
+            : choice.mode === 'kb4' ? 'เลือกดำเนินการตามวิธีที่ขอไว้ใน คบ.4'
+            : 'เลือกวิธีคุ้มครองใหม่ตอนเปิดงาน',
+          by,
+          `วิธีที่ ${(after.approvedMethods || choice.methods).join(', ')}${agencyType ? ` · ${COORDINATION_AGENCY_TYPES.find((t) => t.value === agencyType)?.label}` : ''}`
+        )
+      },
+
       updateMethodTrack: (caseNo, method, patch) => {
         const current = get().getCase(caseNo)
         if (!current) return
         if (!routedWorkerAllowed(current)) return
         const tracks = current.methodTracks || []
+        const signedCoordination = current.coordinationApproval
+        if (method === 4 && signedCoordination?.signature && patch.coordination) {
+          const old = tracks.find(t => t.method === 4)?.coordination
+          if (old?.agencyType === signedCoordination.agencyType) patch = { ...patch, coordination: {
+            ...patch.coordination, agencyType: signedCoordination.agencyType, agency: signedCoordination.agency,
+            letterDraft: old.letterDraft || signedCoordination.signature.draft,
+          } }
+        }
         const exists = tracks.some((t) => t.method === method)
         const next = exists
           ? tracks.map((t) => (t.method === method ? { ...t, ...patch, method } : t))
@@ -3736,20 +4744,42 @@ export const useCaseStore = create<CaseState>()(
             : t
         )
         const patch: Partial<CaseItem> = { methodTracks: tracks }
+        const temporary = current.temporaryProtection
+        let temporaryClosed = false
 
         if (status === 'active') {
           const kind: ProtectionPhaseKind = current.kb8Signed || current.kb11Signed ? 'MAIN' : 'TEMPORARY'
           const episode = current.episode || deriveEpisode(current)
           if (!episode) {
             patch.episode = openEpisode(kind, at, detail?.orderRef || (kind === 'TEMPORARY' ? 'คบ.5' : 'คบ.8'))
+          } else if (kind === 'MAIN' && !episode.closedAt && currentPhaseKind(episode) === 'TEMPORARY') {
+            /** วิธีแรกของคำร้องหลักเริ่มจริง — เปลี่ยน Phase ต่อเนื่องใน Episode เดิม ไม่รีเซ็ตวันสะสม */
+            patch.episode = switchPhase(episode, 'MAIN', at, detail?.orderRef || 'คบ.11')
           } else {
             patch.episode = episode
           }
+          /** การคุ้มครองตามคำร้องหลักเริ่มจริงแล้ว — ปิดงานคุ้มครองชั่วคราวที่ยังมีผลอยู่ */
+          if (temporary && !temporary.closedAt) {
+            patch.temporaryProtection = {
+              ...temporary,
+              closedAt: at,
+              closeReason: `การคุ้มครองตามคำร้องหลักเริ่มปฏิบัติ (วิธีที่ ${method})`,
+              methodTracks: temporary.methodTracks.map((t) => (t.status === 'ended' ? t : { ...t, status: 'ended', endedAt: at })),
+            }
+            temporaryClosed = true
+          }
           patch.actualStartedAt = current.actualStartedAt || earliestMethodStart({ methodTracks: tracks }) || at
-          patch.stage = 'protection'
-          patch.status = 'กำลังคุ้มครอง'
-          patch.owner = ACTOR.protection
-          patch.next = 'ปฏิบัติการคุ้มครองและจัดทำรายงานผลประจำงวด (คบ.13)'
+          /**
+           * WIT0614 — เริ่มวิธีตาม คบ.5 ขณะคำร้องหลักยังไม่อนุมัติ ให้คำร้องหลักคงอยู่ขั้นเดิม
+           * ไม่งั้นการ์ดส่งงานหายและส่ง คบ.6 ให้ ผบช.ชั้นต้น ไม่ได้
+           */
+          const mainPetitionPending = Boolean(current.kb5Approved && !current.kb11Signed && current.activity7State !== 'approved')
+          if (!mainPetitionPending) {
+            patch.stage = 'protection'
+            patch.status = 'กำลังคุ้มครอง'
+            patch.owner = ACTOR.protection
+            patch.next = 'ปฏิบัติการคุ้มครองและจัดทำรายงานผลประจำงวด (คบ.13)'
+          }
           if (current.protectionHandoff) {
             patch.owner = protectionResponsibleName(current)
             patch.status = HANDOFF_STATUS.active
@@ -3774,6 +4804,14 @@ export const useCaseStore = create<CaseState>()(
           protectionResponsibleName(current),
           detail?.reason || `สถานะใหม่: ${status}`
         )
+        if (temporaryClosed) {
+          get().logHistory(
+            caseNo,
+            'ปิดงานคุ้มครองชั่วคราวตาม คบ.5',
+            protectionResponsibleName(current),
+            `การคุ้มครองตามคำร้องหลักเริ่มปฏิบัติแล้ว (วิธีที่ ${method}) — งานชั่วคราวเก็บเป็นประวัติ`
+          )
+        }
       },
 
       // ---------- Episode / Phase ----------
@@ -3812,7 +4850,12 @@ export const useCaseStore = create<CaseState>()(
         const current = get().getCase(caseNo)
         if (!current) return
         if (!routedWorkerAllowed(current)) return
-        const entry: OfficialLetter = { ...letter, id: `LT-${Date.now()}` }
+        /** หนังสือข้อ 14 ออกได้เมื่อเลขาธิการเห็นชอบและธุรการหน่วยรับคืนแล้วเท่านั้น */
+        if (letter.context === 'article14' && sarabanInTransit(current, 'article14')) return
+        if (letter.context === 'article14' && letter.direction === 'outgoing' && requiresReferralCommittee(current) && !current.article14?.committeeApproved) return
+        if (letter.context === 'method4' && letter.direction === 'outgoing' && current.policeLetters && !['dopa', 'military', 'rlpd'].includes(current.methodTracks?.find(t => t.method === 4)?.coordination?.agencyType || 'police')) return
+        const replyToLetterId = letter.context === 'method4' && letter.direction === 'incoming' ? current.policeLetters?.letters.station.sentAt ? current.policeLetters.letters.station.id : undefined : undefined
+        const entry: OfficialLetter = { ...letter, ...(replyToLetterId ? { replyToLetterId } : {}), id: `LT-${Date.now()}` }
         get().updateCase(caseNo, { officialLetters: [...(current.officialLetters || []), entry] })
         get().logHistory(
           caseNo,
@@ -3822,9 +4865,103 @@ export const useCaseStore = create<CaseState>()(
         )
       },
 
+      requestCoordinationLetterNumber: (caseNo, { agency, letterDraft }) => {
+        const current = get().getCase(caseNo)
+        if (!current || (current.policeLetters && !['dopa', 'military', 'rlpd'].includes(current.methodTracks?.find(t => t.method === 4)?.coordination?.agencyType || 'police')) || !routedWorkerAllowed(current)) return false
+        const track = current.methodTracks?.find((t) => t.method === 4)
+        const prev = track?.coordination?.letterNumbering
+        if (!track || prev?.status === 'pending' || prev?.status === 'numbered' || prev?.status === 'sent') return false
+        const signed = current.coordinationApproval?.signature
+        if (signed) { letterDraft = { ...signed.draft }; agency = current.coordinationApproval!.agency }
+        const unit = dispatchUnitFor(current)
+        const letterNumbering = {
+          status: 'pending' as const,
+          clerkRole: unit.role,
+          unitId: unit.unitId,
+          requestedAt: new Date().toISOString(),
+          requestedBy: currentActorName(protectionResponsibleName(current)),
+        }
+        const methodTracks = current.methodTracks!.map((t) => t.method === 4
+          ? { ...t, coordination: { ...t.coordination, agency, letterDraft: { ...letterDraft, registryNo: '' }, letterNumbering } }
+          : t)
+        get().updateCase(caseNo, { methodTracks })
+        get().logHistory(caseNo, 'ส่งหนังสือประสานให้ธุรการออกเลข', letterNumbering.requestedBy,
+          `${letterDraft.subject} · ${agency} · ธุรการ${letterClerkUnitName(letterNumbering)}`)
+        return true
+      },
+
+      issueCoordinationLetterNumber: (caseNo, { registryNo, registryDate }) => {
+        const current = get().getCase(caseNo)
+        const auth = useAuthStore.getState()
+        const n = letterNumberingOf(current)
+        if (!current || !n || n.status !== 'pending' || !canActAsLetterClerk(auth.currentRole, current, auth.currentOrgUnitId)) return false
+        if (!registryNo.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(registryDate)) return false
+        const clerk = currentActorName(letterClerkAccount(n)?.name || 'ธุรการ')
+        const methodTracks = current.methodTracks!.map((t) => t.method === 4 && t.coordination?.letterDraft
+          ? { ...t, coordination: { ...t.coordination,
+            letterDraft: { ...t.coordination.letterDraft, registryNo: registryNo.trim(), registryDate },
+            letterNumbering: { ...n, status: 'numbered' as const, numberedAt: new Date().toISOString(), numberedBy: clerk } } }
+          : t)
+        get().updateCase(caseNo, { methodTracks })
+        get().logHistory(caseNo, 'ธุรการออกเลขหนังสือประสาน (ขาออก)', clerk, `เลขที่ ${registryNo.trim()} ลงวันที่ ${registryDate}`)
+        return true
+      },
+
+      returnCoordinationLetter: (caseNo, note) => {
+        const current = get().getCase(caseNo)
+        const auth = useAuthStore.getState()
+        const n = letterNumberingOf(current)
+        if (!current || !n || n.status !== 'pending' || !note.trim() || !canActAsLetterClerk(auth.currentRole, current, auth.currentOrgUnitId)) return false
+        const clerk = currentActorName(letterClerkAccount(n)?.name || 'ธุรการ')
+        const methodTracks = current.methodTracks!.map((t) => t.method === 4
+          ? { ...t, coordination: { ...t.coordination,
+            letterNumbering: { ...n, status: 'returned' as const, returnedAt: new Date().toISOString(), returnedBy: clerk, returnNote: note.trim() } } }
+          : t)
+        get().updateCase(caseNo, { methodTracks })
+        get().logHistory(caseNo, 'ธุรการส่งคืนหนังสือประสานให้แก้ไข', clerk, note.trim())
+        return true
+      },
+
+      sendCoordinationLetter: (caseNo, { channel, trackingNo }) => {
+        const current = get().getCase(caseNo)
+        const auth = useAuthStore.getState()
+        const n = letterNumberingOf(current)
+        if (!current || !n || n.status !== 'numbered') return false
+        const asClerk = canActAsLetterClerk(auth.currentRole, current, auth.currentOrgUnitId)
+        if (!asClerk && !routedWorkerAllowed(current)) return false
+        const track = current.methodTracks!.find((t) => t.method === 4)!
+        const co = track.coordination!
+        const draft = co.letterDraft!
+        const at = new Date().toISOString()
+        const actor = currentActorName(asClerk && auth.currentRole !== 'admin' ? letterClerkAccount(n)?.name || 'ธุรการ' : protectionResponsibleName(current))
+        const entry: OfficialLetter = {
+          id: `LT-${Date.now()}`,
+          direction: 'outgoing',
+          context: 'method4',
+          methodNo: 4,
+          subject: draft.subject,
+          draftSnapshot: { ...draft },
+          registryNo: draft.registryNo,
+          registryDate: draft.registryDate,
+          agency: co.agency || '',
+          channel,
+          trackingNo: trackingNo.trim(),
+          sentAt: at,
+        }
+        /** ตั้งวิธีที่ 4 เป็น "เตรียมการ" ตรงที่นี่ — ธุรการไม่ใช่ผู้ปฏิบัติของแฟ้ม setMethodStatus จึงไม่รับ */
+        const methodTracks = current.methodTracks!.map((t) => t.method === 4
+          ? { ...t, status: 'preparing' as ProtectionMethodStatus, blockedReason: undefined, wizardStep: 2,
+            coordination: { ...co, responseStatus: 'awaiting' as const, letterNumbering: { ...n, status: 'sent' as const, sentAt: at, sentBy: actor } } }
+          : t)
+        get().updateCase(caseNo, { methodTracks, officialLetters: [...(current.officialLetters || []), entry] })
+        get().logHistory(caseNo, 'ออกหนังสือผ่านสารบรรณเดิม', actor, `${entry.subject} · ${entry.agency} · เลขที่ ${entry.registryNo}`)
+        return true
+      },
+
       updateOfficialLetter: (caseNo, letterId, patch) => {
         const current = get().getCase(caseNo)
         if (!current) return
+        if (current.policeLetters && [...Object.values(current.policeLetters.letters), ...current.policeLetters.archives].some(l => l.id === letterId && l.signedAt)) return
         if (!routedWorkerAllowed(current)) return
         get().updateCase(caseNo, {
           officialLetters: (current.officialLetters || []).map((l) => (l.id === letterId ? { ...l, ...patch } : l)),
@@ -3834,35 +4971,138 @@ export const useCaseStore = create<CaseState>()(
       // ---------- 08C : ข้อ 14 ----------
       openArticle14: (caseNo, input, actor) => {
         const current = get().getCase(caseNo)
-        if (!current) return
+        if (!current || sarabanInTransit(current, 'article14')) return
         const by = actor || protectionResponsibleName(current)
-        const article14: Article14Case = {
-          ...input,
-          step: 'supervisor_review',
-          openedAt: nowDisplay(),
-          openedBy: by,
-          revisions: [],
+        const letterFormNo = article14LetterFormNo({ ...current, article14: { ...current.article14, targetAgencyType: input.targetAgencyType || current.article14?.targetAgencyType } } as CaseItem)
+        const previous = current.article14
+        /** เสนอ Revision ใหม่หลังส่งคืนแก้ไข — เก็บหนังสือแจ้งกรมฯ ฉบับเดิมไว้ แล้วเพิ่มหนังสือฉบับใหม่เข้าแฟ้ม */
+        const isRevision = previous?.step === 'proposal_draft' && previous.revisions.length > 0
+        const forms = useFormDraftStore.getState()
+        let letterPatch: Partial<CaseItem> = {}
+        let letterVersion = previous?.letterVersion
+        if (isRevision) {
+          const lastReturn = previous.revisions[previous.revisions.length - 1]
+          const reason = `ส่งคืนแก้ไขเรื่องส่งต่อ${article14Agency(current).short}: ${lastReturn.reason}`
+          forms.ensureDraftForCase(letterFormNo, current.no, buildSeedForCase(18, current))
+          forms.reviseForm(letterFormNo, by, reason)
+          letterVersion = useFormDraftStore.getState().getFormVersion(letterFormNo)
+          letterPatch = {
+            article14LetterPreviousVersions: [
+              ...(current.article14LetterPreviousVersions || []),
+              { version: letterVersion - 1, returnedAt: lastReturn.at, returnedBy: lastReturn.by, returnReason: lastReturn.reason },
+            ],
+          }
+        } else {
+          /** เสนอครั้งแรก — สร้างหนังสือแจ้งให้มีมาตรการช่วยเหลือแก่พยาน (แบบ 18) ฉบับที่ 1 เข้าแฟ้มพร้อมกัน */
+          forms.ensureDraftForCase(letterFormNo, current.no, buildSeedForCase(18, current))
+          letterVersion = 1
         }
+        /** ตัดสินเส้นทางตอนเปิดเรื่องครั้งแรก — Revision คงเส้นทางเดิม · ผลพิจารณาของเลขาธิการฯ (WIT0713) ใช้สายเดิม */
+        const earlyReferral = previous
+          ? previous.earlyReferral
+          : !current.article14Referral && isEarlyArticle14(summarizeEpisode(current.episode || deriveEpisode(current)))
+        const article14: Article14Case = {
+          ...previous,
+          ...input,
+          /** หน่วยงานปลายทาง — ไม่ได้ส่งมาให้คงของเดิม (ข้อมูลเดิมไม่มีค่า = กรมคุ้มครองสิทธิฯ) */
+          targetAgencyType: input.targetAgencyType || previous?.targetAgencyType,
+          earlyReferral,
+          /** ทั้งเสนอครั้งแรกและ Revision — เรื่องยังอยู่กับเจ้าหน้าที่ให้จัดทำหนังสือก่อน แล้วจึงกดส่งให้ผู้บังคับบัญชาชั้นต้นเอง */
+          step: 'proposal_draft',
+          openedAt: previous?.openedAt || nowDisplay(),
+          openedBy: previous?.openedBy || by,
+          revisions: previous?.revisions || [],
+          letterVersion,
+          revisionPreparedAt: nowDisplay(),
+          secretarySignature: undefined,
+          committeeSentAt: undefined,
+          committeeSentBy: undefined,
+          committeeApproved: undefined,
+          committeeResolutionNo: undefined,
+          committeeResolvedAt: undefined,
+          committeeNote: undefined,
+          approvals: [],
+        }
+        const agency = article14Agency({ article14 })
         get().updateCase(caseNo, {
+          ...letterPatch,
           article14,
           stage: 'article14',
-          status: 'จัดทำเรื่องเสนอส่งต่อกรมคุ้มครองสิทธิฯ',
-          owner: ACTOR.supervisor,
-          next: 'ผู้บังคับบัญชาตรวจเอกสาร เหตุภัย ระยะสะสม และข้อเสนอ ก่อนเสนอเลขาธิการฯ',
-          extraForms: Array.from(new Set([...(current.extraForms || []), 13])),
+          status: isRevision
+            ? `จัดทำหนังสือแจ้ง${agency.short} ฉบับที่ ${letterVersion} (Revision เรื่องส่งต่อ${agency.short})`
+            : `จัดทำหนังสือแจ้ง${agency.short} เรื่องส่งต่อ${agency.short}`,
+          owner: protectionResponsibleName(current),
+          next: `จัดทำหนังสือแจ้ง${agency.short} ฉบับที่ ${letterVersion} ในแฟ้ม แล้วส่งให้ผู้บังคับบัญชาชั้นต้น`,
+          extraForms: Array.from(new Set([...(current.extraForms || []), ...(isRightsReferral({ ...current, article14 }) ? [] : [13]), letterFormNo])),
         })
         get().logHistory(
           caseNo,
-          'เปิดเรื่องส่งต่อกรมคุ้มครองสิทธิและเสรีภาพ',
+          isRevision ? `จัดทำ Revision ใหม่เรื่องส่งต่อ${agency.short} พร้อมหนังสือแจ้ง${agency.short} ฉบับที่ ${letterVersion}` : `เปิดเรื่องส่งต่อ${agency.name}`,
           by,
-          `${input.threatSummary} — เสนอใช้มาตรการ${input.recommendedMeasure === 'special' ? 'พิเศษ' : 'ทั่วไป'}`
+          input.threatSummary
         )
       },
 
-      reviewArticle14: (caseNo, role, endorse, note) => {
+      submitArticle14: (caseNo, actor) => {
+        const current = get().getCase(caseNo)
+        const a14 = current?.article14
+        if (!current || !a14 || a14.step !== 'proposal_draft' || !a14.revisionPreparedAt || sarabanInTransit(current, 'article14')) return
+        const by = actor || protectionResponsibleName(current)
+        get().updateCase(caseNo, {
+          article14: { ...a14, step: 'supervisor_review', revisionPreparedAt: undefined, approvals: [] },
+          status: a14.revisions.length ? `เสนอ Revision เรื่องส่งต่อ${article14Agency(current).short} ตามลำดับชั้น` : `เสนอเรื่องส่งต่อ${article14Agency(current).short} ตามลำดับชั้น`,
+          owner: ACTOR.supervisor,
+          next: `ผู้บังคับบัญชาชั้นต้นตรวจหนังสือแจ้ง${article14Agency(current).short} เหตุภัย และข้อเสนอ ก่อนเสนอ ผอ.สำนัก/กอง`,
+        })
+        get().logHistory(
+          caseNo,
+          `ส่ง${a14.revisions.length ? ' Revision ' : 'เรื่อง'}พร้อมหนังสือแจ้ง${article14Agency(current).short} ฉบับที่ ${a14.letterVersion} ให้ผู้บังคับบัญชาชั้นต้นพิจารณา`,
+          by,
+          a14.threatSummary
+        )
+      },
+
+      markArticle14LetterSaved: (caseNo) => {
+        const current = get().getCase(caseNo)
+        const a14 = current?.article14
+        if (!a14 || a14.step !== 'proposal_draft' || a14.letterSavedVersion === a14.letterVersion) return
+        get().updateCase(caseNo, { article14: { ...a14, letterSavedVersion: a14.letterVersion } })
+      },
+
+      signArticle14Secretary: (caseNo, name, image) => {
+        const c = get().getCase(caseNo)
+        if (!c?.article14 || !['secretary', 'admin'].includes(useAuthStore.getState().currentRole) || !['secretary_review', 'committee_pending'].includes(c.article14.step) || c.sarabanDispatch || !name.trim()) return false
+        if (c.article14.secretarySignature) return true
+        get().updateCase(caseNo, { article14: { ...c.article14, secretarySignature: { name: name.trim(), at: nowDisplay(), image } } })
+        get().logHistory(caseNo, 'เลขาธิการลงนามบันทึกเสนอประธานกรรมการ', name, 'ลงนามเอกสารในแฟ้มส่งต่อกรมคุ้มครองสิทธิฯ')
+        return true
+      },
+
+      returnArticle14Committee: (caseNo, reason) => {
+        const c = get().getCase(caseNo)
+        if (!c?.article14 || c.article14.step !== 'committee_pending' || c.sarabanDispatch || !reason.trim() || !['committee', 'admin'].includes(useAuthStore.getState().currentRole)) return
+        const at = nowDisplay()
+        get().updateCase(caseNo, { article14: { ...c.article14, step: 'proposal_draft', revisionPreparedAt: undefined, secretarySignature: undefined, committeeSentAt: undefined,
+          revisions: [...c.article14.revisions, { at, by: ACTOR.committee, reason }] }, owner: protectionResponsibleName(c), status: 'คณะกรรมการส่งกลับแก้ไขเรื่องส่งต่อ', next: 'เจ้าหน้าที่แก้ไขเอกสารแล้วส่งตามลำดับชั้น' })
+        get().logHistory(caseNo, 'คณะกรรมการส่งกลับแก้ไขเรื่องส่งต่อ', ACTOR.committee, reason)
+        get().openSarabanDispatch(caseNo, { flow: 'article14', direction: 'down', forms: [19, article14LetterFormNo(c)], subject: 'ส่งกลับแก้ไขเรื่องส่งต่อกรมคุ้มครองสิทธิฯ' })
+      },
+
+      reviewArticle14: (caseNo, level, endorse, note) => {
         const current = get().getCase(caseNo)
         if (!current?.article14) return
-        const actor = role === 'supervisor' ? ACTOR.supervisor : ACTOR.secretary
+        /** ชุดนำส่งค้างที่ธุรการ — ผู้พิจารณายังดำเนินการไม่ได้จนกว่าจะลงเลขรับครบ */
+        if (sarabanInTransit(current, 'article14')) return
+        const chainIndex = ARTICLE14_REVIEW_CHAIN.findIndex((c) => c.level === level)
+        const link = ARTICLE14_REVIEW_CHAIN[chainIndex]
+        if (!link || current.article14.step !== link.step) return
+        const actors: Record<Article14ReviewLevel, string> = {
+          supervisor: ACTOR.supervisor,
+          director: ACTOR.director,
+          deputy_secretary: ACTOR.deputySecretary,
+          secretary: ACTOR.secretary,
+        }
+        const actor = actors[level]
         const at = nowDisplay()
 
         if (!endorse) {
@@ -3870,38 +5110,84 @@ export const useCaseStore = create<CaseState>()(
             article14: {
               ...current.article14,
               step: 'proposal_draft',
+              revisionPreparedAt: undefined,
               revisions: [...current.article14.revisions, { at, by: actor, reason: note }],
             },
             owner: protectionResponsibleName(current),
-            status: 'ส่งคืนแก้ไขเรื่องเสนอส่งต่อกรมคุ้มครองสิทธิฯ',
-            next: 'แก้ไขข้อเสนอเป็น Revision ใหม่ แล้วเสนอตามลำดับชั้นอีกครั้ง',
+            status: `ส่งคืนแก้ไขเรื่องเสนอส่งต่อ${article14Agency(current).short}`,
+            next: `จัดทำ Revision ใหม่พร้อมหนังสือแจ้ง${article14Agency(current).short} ฉบับใหม่ แล้วส่งให้พิจารณาตามลำดับชั้นอีกครั้ง`,
           })
-          get().logHistory(caseNo, `ส่งคืนแก้ไขเรื่องส่งต่อกรมคุ้มครองสิทธิฯ โดย ${actor}`, actor, note)
+          get().logHistory(caseNo, `ส่งคืนแก้ไขเรื่องส่งต่อ${article14Agency(current).short} โดย${link.label}`, actor, note)
+          /** สำนักงานเลขาธิการส่งคืนลงหน่วย → ผ่านธุรการ (รองเลขาธิการ/เลขาธิการ → ธุรการสำนักงาน → ธุรการหน่วย) ส่วนผบช./ผอ. อยู่ในหน่วยเดิม */
+          if (level === 'deputy_secretary' || level === 'secretary') {
+            get().openSarabanDispatch(caseNo, { flow: 'article14', direction: 'down', forms: [article14LetterFormNo(current)], subject: `ส่งคืนแก้ไขเรื่องส่งต่อ${article14Agency(current).short}` })
+          }
           return
         }
 
-        const isSupervisor = role === 'supervisor'
+        const nextLink = ARTICLE14_REVIEW_CHAIN[chainIndex + 1]
+        const isSecretary = level === 'secretary'
+        /** เสนอก่อนครบ 6 เดือน — เลขาธิการเห็นชอบแล้วส่งคืนเจ้าหน้าที่ส่งเรื่องให้คณะกรรมการ แทนการส่งหนังสือถึงกรม */
+        const toCommittee = isSecretary && requiresReferralCommittee(current)
+        if (toCommittee && isRightsReferral(current) && !current.article14.secretarySignature) return
         get().updateCase(caseNo, {
           article14: {
             ...current.article14,
-            step: isSupervisor ? 'secretary_review' : 'committee_pending',
-            supervisorNote: isSupervisor ? note : current.article14.supervisorNote,
-            supervisorAt: isSupervisor ? at : current.article14.supervisorAt,
-            secretaryNote: isSupervisor ? current.article14.secretaryNote : note,
-            secretaryAt: isSupervisor ? current.article14.secretaryAt : at,
+            /** เลขาธิการเห็นชอบ = ชั้นสุดท้าย ส่งคืนเจ้าหน้าที่บันทึกการนำส่ง/การได้รับหนังสือกับกรม */
+            step: nextLink ? nextLink.step : toCommittee ? 'committee_pending' : 'letter_sent',
+            approvals: [...(current.article14.approvals || []), { level, by: actor, at, note }],
+            ...(level === 'supervisor' ? { supervisorNote: note, supervisorAt: at } : {}),
+            ...(isSecretary ? { secretaryNote: note, secretaryAt: at } : {}),
+            ...(toCommittee ? { committeeSentAt: at, committeeSentBy: actor } : {}),
           },
-          owner: isSupervisor ? ACTOR.secretary : ACTOR.committee,
-          status: isSupervisor ? 'รอเลขาธิการฯ เสนอคณะกรรมการ ป.ป.ท.' : 'รอมติคณะกรรมการ ป.ป.ท. เรื่องส่งต่อกรมคุ้มครองสิทธิฯ',
-          next: isSupervisor
-            ? 'เลขาธิการฯ เสนอเรื่องพร้อมความเห็นต่อคณะกรรมการ ป.ป.ท.'
-            : 'ฝ่ายเลขานุการบรรจุวาระและบันทึกมติคณะกรรมการ',
+          owner: nextLink ? actors[nextLink.level] : toCommittee ? ACTOR.committee : protectionResponsibleName(current),
+          status: nextLink
+            ? `รอ${nextLink.label}พิจารณาเรื่องส่งต่อ${article14Agency(current).short}`
+            : toCommittee
+              ? `เลขาธิการเห็นชอบเสนอส่งต่อ${article14Agency(current).short} · รอคณะกรรมการพิจารณา`
+              : `เลขาธิการเห็นชอบส่งต่อ${article14Agency(current).name}`,
+          next: nextLink
+            ? `${nextLink.label}พิจารณาและให้ความเห็นตามลำดับชั้น`
+            : toCommittee
+              ? 'ฝ่ายเลขานุการคณะกรรมการบันทึกมติในแฟ้ม'
+              : `เจ้าหน้าที่บันทึกการนำส่งหนังสือถึง ${article14Agency(current).office} และบันทึกการได้รับหนังสือตอบรับ`,
         })
-        get().logHistory(caseNo, `เห็นชอบเรื่องส่งต่อกรมคุ้มครองสิทธิฯ โดย ${actor}`, actor, note)
+        get().logHistory(
+          caseNo,
+          toCommittee
+            ? `เลขาธิการเห็นชอบเสนอส่งต่อ${article14Agency(current).short} · ส่งฝ่ายเลขานุการคณะกรรมการพิจารณา`
+            : isSecretary ? `เลขาธิการเห็นชอบส่งต่อ${article14Agency(current).short} · ส่งคืนเจ้าหน้าที่ดำเนินการส่งหนังสือ` : `${link.label}เห็นชอบเรื่องส่งต่อ${article14Agency(current).short} · เสนอ${nextLink?.label}`,
+          actor,
+          note
+        )
+        /** คบ.18 (หนังสือแจ้งกรมฯ) คือเอกสารที่เดินทางกับข้อเสนอ — คบ.13 เป็นเพียงเอกสารอ้างอิงเดิมในแฟ้ม */
+        if (level === 'director') {
+          get().openSarabanDispatch(caseNo, { flow: 'article14', direction: 'up', forms: [article14LetterFormNo(current)], subject: `เรื่องส่งต่อ${article14Agency(current).short} · หนังสือฉบับที่ ${current.article14.letterVersion ?? 1}` })
+        } else if (isSecretary && !toCommittee) {
+          get().openSarabanDispatch(caseNo, { flow: 'article14', direction: 'down', forms: [article14LetterFormNo(current)], subject: `ผลพิจารณาเรื่องส่งต่อ${article14Agency(current).short} · เห็นชอบ` })
+        }
+      },
+
+      sendArticle14ToCommittee: (caseNo, actor) => {
+        const current = get().getCase(caseNo)
+        const a14 = current?.article14
+        if (!current || !a14 || a14.step !== 'committee_pending' || !requiresReferralCommittee(current) || a14.committeeSentAt || sarabanInTransit(current, 'article14')) return
+        const by = actor || protectionResponsibleName(current)
+        get().updateCase(caseNo, {
+          article14: { ...a14, committeeSentAt: nowDisplay(), committeeSentBy: by },
+          status: `ส่งคณะกรรมการพิจารณาเรื่องส่งต่อ${article14Agency(current).short} แล้ว`,
+          owner: ACTOR.committee,
+          next: 'รอผลพิจารณาของคณะกรรมการ',
+        })
+        get().logHistory(caseNo, `ส่งเรื่องเสนอส่งต่อ${article14Agency(current).short} ให้คณะกรรมการพิจารณา`, by, a14.threatSummary)
       },
 
       recordArticle14Resolution: (caseNo, resolutionNo, approved, note) => {
         const current = get().getCase(caseNo)
-        if (!current?.article14) return
+        if (!current?.article14 || current.article14.step !== 'committee_pending' || !resolutionNo.trim() || sarabanInTransit(current, 'article14')) return
+        if (requiresReferralCommittee(current) && !current.article14.committeeSentAt) return
+        if (isRightsReferral(current) && !current.article14.secretarySignature) return
+        if (!['committee', 'admin'].includes(useAuthStore.getState().currentRole) || !note.trim()) return
         const at = nowDisplay()
         get().updateCase(caseNo, {
           article14: {
@@ -3913,17 +5199,18 @@ export const useCaseStore = create<CaseState>()(
             committeeNote: note,
           },
           owner: protectionResponsibleName(current),
-          status: approved ? 'คณะกรรมการเห็นชอบส่งกรมคุ้มครองสิทธิและเสรีภาพ' : 'คณะกรรมการไม่เห็นชอบให้ส่งต่อกรมคุ้มครองสิทธิฯ',
+          status: approved ? `คณะกรรมการเห็นชอบส่ง${article14Agency(current).name}` : `คณะกรรมการไม่เห็นชอบให้ส่งต่อ${article14Agency(current).short}`,
           next: approved
-            ? `จัดทำหนังสือแจ้ง/ประสาน ${ARTICLE14_TARGET_AGENCY} ผ่านสารบรรณเดิม`
+            ? `จัดทำหนังสือแจ้ง/ประสาน ${article14Agency(current).office} ผ่านสารบรรณเดิม`
             : 'ดำเนินการตามคำสั่งเดิม เมื่อมาตรการสิ้นสุดให้เข้าสู่กระบวนการยุติ',
         })
         get().logHistory(
           caseNo,
-          approved ? 'มติคณะกรรมการ: เห็นชอบส่งกรมคุ้มครองสิทธิฯ' : 'มติคณะกรรมการ: ไม่เห็นชอบ',
+          approved ? `มติคณะกรรมการ: เห็นชอบส่ง${article14Agency(current).short}` : 'มติคณะกรรมการ: ไม่เห็นชอบ',
           ACTOR.committee,
           `มติที่ ${resolutionNo} — ${note}`
         )
+        get().openSarabanDispatch(caseNo, { flow: 'article14', direction: 'down', forms: [19, article14LetterFormNo(current)], subject: 'ผลมติคณะกรรมการเรื่องส่งต่อกรมคุ้มครองสิทธิฯ' })
       },
 
       /**
@@ -3932,7 +5219,7 @@ export const useCaseStore = create<CaseState>()(
        */
       recordArticle14Reply: (caseNo, input) => {
         const current = get().getCase(caseNo)
-        if (!current?.article14 || current.article14.step !== 'letter_sent') return
+        if (!current?.article14 || current.article14.step !== 'letter_sent' || sarabanInTransit(current, 'article14')) return
         const hasOutgoing = (current.officialLetters || []).some((l) => l.context === 'article14' && l.direction === 'outgoing')
         if (!hasOutgoing) return
         if (!input.registryNo.trim() || !input.registryDate || !input.contactPerson.trim() || !input.appointmentAt || !input.documentName) return
@@ -3940,10 +5227,12 @@ export const useCaseStore = create<CaseState>()(
         get().addOfficialLetter(caseNo, {
           direction: 'incoming',
           context: 'article14',
-          subject: `หนังสือตอบรับจาก ${ARTICLE14_TARGET_AGENCY} (มติที่ ${current.article14.committeeResolutionNo || '-'})`,
+          subject: `หนังสือตอบรับจาก ${article14Agency(current).office} (${
+            current.article14.committeeResolutionNo ? `มติที่ ${current.article14.committeeResolutionNo}` : `เลขาธิการเห็นชอบ ${current.article14.secretaryAt || '-'}`
+          })`,
           registryNo: input.registryNo.trim(),
           registryDate: input.registryDate,
-          agency: ARTICLE14_TARGET_AGENCY,
+          agency: article14Agency(current).office,
           contactPerson: input.contactPerson.trim(),
           channel: input.channel,
           receivedAt: new Date().toISOString(),
@@ -3969,7 +5258,7 @@ export const useCaseStore = create<CaseState>()(
         })
         get().logHistory(
           caseNo,
-          `บันทึกหนังสือตอบรับจาก ${ARTICLE14_TARGET_AGENCY}`,
+          `บันทึกหนังสือตอบรับจาก ${article14Agency(current).office}`,
           protectionResponsibleName(current),
           `เลขที่ ${input.registryNo.trim()} · วันนัด ${input.appointmentAt}`
         )
@@ -3980,11 +5269,12 @@ export const useCaseStore = create<CaseState>()(
         if (!current?.article14) return
         /** WIT0860 → WIT0861 — ส่งมอบได้เมื่อบันทึกหนังสือตอบรับจากกรมแล้วเท่านั้น */
         if (!['response_received', 'handover_ready'].includes(current.article14.step)) return
+        if (!calendarDate(input.successorStartedAt) || calendarDate(input.successorStartedAt) > calendarDate(new Date()) || !calendarDate(input.handoverCompletedAt) || calendarDate(input.handoverCompletedAt) > calendarDate(new Date()) || !input.successorLegalBasis.trim()) return
         const episode = current.episode || deriveEpisode(current)
         const closed = episode
           ? {
-              ...closeEpisode(episode, input.successorStartedAt, `ส่งมอบให้ ${ARTICLE14_TARGET_AGENCY}`),
-              successorAgency: ARTICLE14_TARGET_AGENCY,
+              ...closeEpisode(episode, input.successorStartedAt, `ส่งมอบให้ ${article14Agency(current).office}`),
+              successorAgency: article14Agency(current).office,
               successorStartedAt: input.successorStartedAt,
             }
           : undefined
@@ -3993,14 +5283,14 @@ export const useCaseStore = create<CaseState>()(
           article14: { ...current.article14, step: 'handover_done', ...input },
           episode: closed,
           stage: 'transferred',
-          status: `ส่งมอบให้ ${ARTICLE14_TARGET_AGENCY} แล้ว`,
+          status: `ส่งมอบให้ ${article14Agency(current).office} แล้ว`,
           owner: protectionResponsibleName(current),
           next: 'ติดตามสถานะการคุ้มครองภายใต้หน่วยงานผู้รับ และคงประวัติการส่งมอบไว้ในแฟ้ม',
-          activity7Label: 'ส่งต่อกรมคุ้มครองสิทธิฯ',
+          activity7Label: `ส่งต่อ${article14Agency(current).short}`,
         })
         get().logHistory(
           caseNo,
-          'ส่งมอบพยานให้กรมคุ้มครองสิทธิฯ และเริ่มมาตรการภายใต้หน่วยงานใหม่',
+          `ส่งมอบพยานให้${article14Agency(current).short} และเริ่มมาตรการภายใต้หน่วยงานใหม่`,
           protectionResponsibleName(current),
           `เริ่ม ${input.successorStartedAt} · ฐานกฎหมาย: ${input.successorLegalBasis}`
         )
@@ -4093,7 +5383,7 @@ export const useCaseStore = create<CaseState>()(
           },
           article14: {
             status: 'ครบเพดานแต่ยังมีภัย · ส่งต่อกรมคุ้มครองสิทธิฯ',
-            next: `ห้ามขยาย คบ.14 — จัดทำเรื่องเสนอส่ง ${ARTICLE14_TARGET_AGENCY}`,
+            next: 'ห้ามขยาย คบ.14 — จัดทำเรื่องเสนอส่งต่อหน่วยงานอื่นช่วยคุ้มครองพยาน',
             owner: protectionResponsibleName(current),
             stage: 'article14',
           },
@@ -4173,7 +5463,7 @@ export const useCaseStore = create<CaseState>()(
         if (!target || target.stage !== level) return
         const at = nowDisplay()
         const by = level === 'supervisor' ? ACTOR.supervisor : ACTOR.director
-        const roleLabel = level === 'supervisor' ? 'ผบช.ชั้นต้น' : 'ผอ.สำนัก/กอง'
+        const roleLabel = reviewLevelLabel(level, current)
         const officer = protectionResponsibleName(current)
 
         const nextStage: MethodChangeProposal['stage'] = !endorse
@@ -4278,20 +5568,20 @@ export const useCaseStore = create<CaseState>()(
        */
       recordTerminationTrigger: (caseNo, input, actor, documentPreviewUrl) => {
         const current = get().getCase(caseNo)
-        if (!current) return
-        if (!routedWorkerAllowed(current)) return
+        if (!current || current.terminationTrigger || current.kb15) return
+        if (!terminationWorkerAllowed(current)) return
         const by = actor || protectionResponsibleName(current)
         const at = nowDisplay()
         const LABEL: Record<TerminationTrigger['source'], string> = {
           witness_kb7: 'พยานยื่น คบ.7 / กรอกคำขอยุติในระบบ',
           external_letter: 'หนังสือขอยุติจากภายนอก',
-          due_or_officer: 'ครบกำหนด หรือเจ้าหน้าที่เห็นควรยุติ',
+          due_or_officer: 'เจ้าหน้าที่ตรวจพบหรือเสนอเรื่อง',
         }
 
         get().updateCase(caseNo, {
           terminationTrigger: { ...input, recordedAt: at, recordedBy: by },
           /** WIT1127 — เอกสารต้นเรื่องเข้าแฟ้มเดิมเสมอ */
-          documents: input.documentName
+          documents: input.documentName && !(current.documents || []).some(d => !d.deleted && d.name === input.documentName)
             ? [
                 ...(current.documents || []),
                 {
@@ -4370,46 +5660,135 @@ export const useCaseStore = create<CaseState>()(
         )
       },
 
-      draftKb15: (caseNo, input, actor) => {
-        const current = get().getCase(caseNo)
-        if (!current) return
-        if (!routedWorkerAllowed(current)) return
-        const by = actor || protectionResponsibleName(current)
-        const previous = current.kb15
-        const kb15: Kb15Report = {
-          ...input,
-          version: (previous?.version || 0) + 1,
-          createdAt: nowDisplay(),
-          createdBy: by,
-          status: 'submitted',
-          previousVersions: previous
-            ? [...(previous.previousVersions || []), { version: previous.version, createdAt: previous.createdAt, summary: previous.summary }]
-            : [],
+      reviseTerminationDocument: (caseNo: string, formNo: number, reason: string): boolean => {
+        const c = get().getCase(caseNo)
+        if (!c || ![15, 16, 17].includes(formNo) || !reason.trim() || !terminationWorkerAllowed(c) || sarabanInTransit(c)) return false
+        // Called only after the existing form revision store has archived every affected original.
+        const forms = useFormDraftStore.getState()
+        if (!forms.revisions[formNo]?.at(-1)?.caseSnapshot) return false
+        const patch: Partial<CaseItem> = {
+          terminationDocumentsClosedAt: undefined,
+          ...(formNo === 15 ? {
+            kb15: c.kb15 ? { ...c.kb15, status: 'returned' as const, reviewNote: reason } : undefined,
+            terminationApproval: undefined, kb16: undefined, kb17: undefined,
+          } : formNo === 16 ? {
+            kb16: c.kb16 ? { ...c.kb16, signedAt: undefined, signedBy: undefined, locked: false, status: 'draft' as const, submittedAt: undefined, formSnapshot: undefined } : undefined,
+            kb17: undefined,
+          } : { kb17: c.kb17 ? { documentName: c.kb17.documentName, orderNo: c.kb16?.orderNo, orderIssuedAt: c.kb16?.issuedAt, orderEffectiveAt: c.kb16?.effectiveAt, reason: c.kb16?.reason, regulationClause: c.kb16?.regulationClause, status: 'draft' as const } : undefined }),
         }
-        get().updateCase(caseNo, {
-          kb15,
-          stage: 'termination_review',
-          status: `จัดทำ คบ.15 ฉบับที่ ${kb15.version} · รอผู้บังคับบัญชาตรวจ`,
-          owner: ACTOR.supervisor,
-          next: 'ตรวจ คบ.15 เหตุผลและเอกสารประกอบ แล้วบันทึกความเห็นตามลำดับชั้น',
-          extraForms: Array.from(new Set([...(current.extraForms || []), 15])),
-        })
-        get().logHistory(caseNo, `จัดทำ คบ.15 ฉบับที่ ${kb15.version}`, by, input.summary)
+        // Explicit version transition; ordinary updateCase remains unable to replace signed content.
+        set(state => ({ cases: state.cases.map(item => item.no === caseNo ? { ...item, ...patch } : item) }))
+        get().logHistory(caseNo, `สร้างฉบับใหม่ คบ.${formNo}`, protectionResponsibleName(c), reason)
+        return true
       },
 
+      refreshTerminationEffect: (caseNo) => {
+        const current = get().getCase(caseNo)
+        if (!current) return
+        const end = terminationEffectiveAt(current)
+        const episode = current.episode || deriveEpisode(current)
+        if (!end || !episode || episode.closedAt) return
+        get().updateCase(caseNo, {
+          episode: closeEpisode(episode, end, terminationReasonText(current.kb15)),
+          methodTracks: (current.methodTracks || []).map(t => t.status === 'ended' ? t : { ...t, status: 'ended', endedAt: end }),
+        })
+        get().logHistory(caseNo, 'บันทึกการสิ้นสุดตามฐานเหตุและวันที่มีผล', 'ระบบ', `${current.kb15?.regulationClause} · ${end}`)
+      },
+
+      draftKb15: (caseNo, input, actor) => {
+        const current = get().getCase(caseNo)
+        if (!current || !terminationWorkerAllowed(current) || sarabanInTransit(current)) return
+        if (current.kb15 && !['draft', 'returned'].includes(current.kb15.status)) return
+        const errors = terminationSubmissionErrors(current)
+        if (errors.length) { showToast(errors[0], 'warning'); return }
+        const report = currentTerminationReport(current)
+        const by = actor || protectionResponsibleName(current)
+        const previous = current.kb15
+        const { previousVersions: _history, ...oldReport } = previous || {} as Kb15Report
+        const kb15: Kb15Report = {
+          ...input, ...report, bundledForms: true,
+          formSnapshot: { 'ชื่อพยาน': current.person, 'เลขคดี': current.mainCaseNo || '', ...report.formSnapshot },
+          trigger: current.terminationTrigger!.source,
+          summary: report.summary!,
+          version: (previous?.version || 0) + 1,
+          createdAt: nowDisplay(), createdBy: by,
+          status: 'submitted', approvalStage: 'supervisor', approvalHistory: [],
+          previousVersions: previous ? [...(previous.previousVersions || []), { version: previous.version, createdAt: previous.createdAt, summary: previous.summary, report: structuredClone(oldReport) }] : [],
+        }
+        const draft16 = selectCaseDraft(useFormDraftStore.getState(), 16, caseNo)
+        const draft17 = selectCaseDraft(useFormDraftStore.getState(), 17, caseNo)
+        const orderNo = [draft16['เลขที่คำสั่ง'], draft16['ปีคำสั่ง']].filter(Boolean).join('/')
+        get().updateCase(caseNo, {
+          kb15,
+          kb16: { ...current.kb16, orderNo: orderNo || current.kb16?.orderNo || '', reason: terminationReasonText(kb15), issuedAt: String(draft16['วันที่ออกคำสั่ง'] || current.kb16?.issuedAt || ''), effectiveAt: String(draft16['วันที่มีผล'] || kb15.proposedEndAt || ''), kb15Version: kb15.version, regulationClause: kb15.regulationClause, status: 'draft', formSnapshot: structuredClone(draft16) },
+          kb17: { ...current.kb17, documentName: current.kb17?.documentName || 'คบ.17', status: 'draft', formSnapshot: structuredClone(draft17) },
+          stage: 'termination_review',
+          status: `เสนอ คบ.15 ฉบับที่ ${kb15.version} · รอ${kb15StageLabel('supervisor', current)}ตรวจ`,
+          owner: reviewLevelLabel('supervisor', current),
+          next: 'ตรวจ คบ.15 เหตุผลและหลักฐาน แล้วบันทึกความเห็นตามลำดับชั้น',
+          extraForms: Array.from(new Set([...(current.extraForms || []), 15, 16, 17])),
+        })
+        get().logHistory(caseNo, `เสนอ คบ.15 ฉบับที่ ${kb15.version}`, by, input.summary)
+        get().refreshTerminationEffect(caseNo)
+      },
+
+      /**
+       * WIT1131/WIT1134 ผอ. → WIT1161 ธุรการขาไป → WIT1163 รองเลขาธิการ → WIT1162 เลขาธิการ — ลงนาม คบ.15 ตามลำดับชั้น
+       * เลขาธิการลงนามแล้วจึงพิจารณาอนุมัติยุติแยกอีกขั้น (decideTerminationApproval)
+       * ทุกชั้นส่งคืนแก้ไขกลับเจ้าหน้าที่ และเริ่มลำดับใหม่ในฉบับถัดไป
+       */
       reviewKb15: (caseNo, endorse, note) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb15) return
+        const step = kb15PendingStage(current)
+        if (!current?.kb15 || !step || sarabanInTransit(current)) return
+        if (!isKb15StageReviewer(useAuthStore.getState().currentRole, current)) return
+        if (!endorse && !note.trim()) return
+        const nextStep = step === 'supervisor' ? 'director' : step === 'director' ? 'deputy_secretary' : step === 'deputy_secretary' ? 'secretary' : null
+        const actors = { supervisor: reviewLevelLabel('supervisor', current), director: reviewLevelLabel('director', current), deputy_secretary: ACTOR.deputySecretary, secretary: ACTOR.secretary }
+        const label = kb15StageLabel(step, current)
         const at = nowDisplay()
+        /** ชื่อผู้ลงนามตามบัญชีที่เข้าระบบอยู่ — ใช้พิมพ์ในช่องลงนามของแบบ คบ.15 */
+        const by = useAuthStore.getState().getCurrentUserAccount()?.name || actors[step]
+        const history = [...(current.kb15.approvalHistory || []), { role: step, by, at, note, endorsed: endorse }]
         get().updateCase(caseNo, {
-          kb15: { ...current.kb15, status: endorse ? 'endorsed' : 'returned', reviewedAt: at, reviewedBy: ACTOR.supervisor, reviewNote: note },
-          owner: endorse ? ACTOR.secretary : protectionResponsibleName(current),
-          status: endorse ? 'เสนอผู้มีอำนาจพิจารณายุติ' : 'ส่งคืนแก้ไข คบ.15',
-          next: endorse
-            ? 'ผู้มีอำนาจพิจารณาและออกคำสั่งยุติ (คบ.16)'
-            : 'แก้ไข คบ.15 เป็นเวอร์ชันใหม่ (เก็บฉบับเดิมไว้) แล้วเสนอใหม่',
+          kb15: {
+            ...current.kb15,
+            status: !endorse ? 'returned' : nextStep ? 'submitted' : 'endorsed',
+            approvalStage: endorse && nextStep ? nextStep : undefined,
+            approvalHistory: history,
+            reviewedAt: at,
+            reviewedBy: by,
+            reviewNote: note,
+          },
+          owner: !endorse ? protectionResponsibleName(current) : nextStep ? actors[nextStep] : ACTOR.secretary,
+          status: !endorse
+            ? `${label}ส่งคืนแก้ไข คบ.15`
+            : nextStep
+              ? `คบ.15 ฉบับที่ ${current.kb15.version} · รอ${kb15StageLabel(nextStep, current)}${nextStep === 'secretary' ? 'ลงนาม' : 'ตรวจ'}`
+              : 'เลขาธิการพิจารณาและลงนาม คบ.15 แล้ว',
+          next: !endorse
+            ? 'แก้ไข คบ.15 เป็นเวอร์ชันใหม่ (เก็บฉบับเดิมไว้) แล้วเสนอใหม่'
+            : nextStep
+              ? `${kb15StageLabel(nextStep, current)}${nextStep === 'secretary' ? 'ลงนาม' : 'ตรวจและลงนาม'} คบ.15`
+              : 'จัดทำคำสั่ง คบ.16 ตามผลพิจารณา',
         })
-        get().logHistory(caseNo, endorse ? 'เห็นชอบ คบ.15 เสนอผู้มีอำนาจ' : 'ส่งคืนแก้ไข คบ.15', ACTOR.supervisor, note)
+        get().logHistory(
+          caseNo,
+          !endorse ? `${label}ส่งคืนแก้ไข คบ.15` : step === 'secretary' ? 'เลขาธิการลงนาม คบ.15' : `${label}เห็นชอบและลงนาม คบ.15`,
+          by,
+          note
+        )
+        /**
+         * ข้ามระหว่างหน่วยกับสำนักงานเลขาธิการต้องผ่านธุรการ — ผอ.เห็นชอบ → ขึ้นรองเลขาธิการ (ขาไป)
+         * รองเลขาธิการ/เลขาธิการส่งคืน → ลงหน่วย (ขากลับ) · ผอ.ส่งคืนอยู่ในหน่วยเดียวกัน ไม่ผ่านธุรการ
+         */
+        if (endorse && step === 'secretary') {
+          get().decideTerminationApproval(caseNo, true, note, by)
+        } else if (endorse && step === 'director') {
+          get().openSarabanDispatch(caseNo, { flow: 'termination', direction: 'up', forms: [15], subject: `คบ.15 ฉบับที่ ${current.kb15.version} · เสนอยุติการคุ้มครอง` })
+        } else if (!endorse && (step === 'deputy_secretary' || step === 'secretary')) {
+          get().openSarabanDispatch(caseNo, { flow: 'termination', direction: 'down', forms: [15], subject: `ส่งคืนแก้ไข คบ.15 ฉบับที่ ${current.kb15.version}` })
+        }
       },
 
       // ---------- 11D : คบ.16 / คบ.17 ----------
@@ -4419,7 +5798,10 @@ export const useCaseStore = create<CaseState>()(
        */
       decideTerminationApproval: (caseNo, approve, note, actor) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb15) return
+        /** พิจารณาได้หลังเลขาธิการลงนาม คบ.15 ครบลำดับชั้นแล้วเท่านั้น */
+        if (current?.kb15?.status !== 'endorsed' || current.terminationApproval) return
+        /** อำนาจยุติเป็นของเลขาธิการเท่านั้น และต้องรอธุรการนำส่งขาไปให้เสร็จก่อน */
+        if (!['secretary', 'admin'].includes(useAuthStore.getState().currentRole) || sarabanInTransit(current)) return
         const by = actor || ACTOR.secretary
         const at = nowDisplay()
 
@@ -4434,22 +5816,33 @@ export const useCaseStore = create<CaseState>()(
         })
         get().logHistory(
           caseNo,
-          approve ? 'ผู้มีอำนาจอนุมัติให้ยุติการคุ้มครอง' : 'ผู้มีอำนาจไม่อนุมัติให้ยุติ — คุ้มครองต่อ',
+          approve ? 'เลขาธิการ ป.ป.ท.อนุมัติให้ยุติการคุ้มครอง' : 'เลขาธิการ ป.ป.ท.ไม่อนุมัติให้ยุติ — คุ้มครองต่อ',
           by,
           note
         )
+        /** ขากลับ: ผลพิจารณาต้องผ่านธุรการสำนักงานเลขาธิการ → ธุรการหน่วย ก่อนถึงเจ้าของสำนวน */
+        if (approve && current.kb15.bundledForms && current.kb16 && current.kb17 && !current.kb17.signedAt) {
+          get().updateCase(caseNo, {
+            kb16: { ...current.kb16, status: 'submitted', submittedAt: at, submittedBy: current.kb15.createdBy },
+            kb17: { ...current.kb17, status: 'submitted', submittedAt: at, submittedBy: current.kb15.createdBy },
+            owner: ACTOR.secretary, status: 'รอเลขาธิการลงนาม คบ.16 และ คบ.17 ในชุดเดียวกัน',
+            next: 'ลงนาม คบ.16 และ คบ.17 แล้วส่งชุดเอกสารกลับผ่านธุรการ',
+          })
+          return
+        }
+        get().openSarabanDispatch(caseNo, { flow: 'termination', direction: 'down', forms: [15], subject: `ผลพิจารณาการยุติ · ${approve ? 'อนุมัติ' : 'ไม่อนุมัติ'}` })
       },
 
       /** ร่างคำสั่งยุติ — ยังไม่เปลี่ยนสถานะเป็น "ยุติ" จนกว่าจะลงนามและถึงวันที่มีผล (WIT1130 / WIT1139) */
       issueKb16: (caseNo, input) => {
         const current = get().getCase(caseNo)
-        if (!current) return
+        if (!current || sarabanInTransit(current) || !terminationWorkerAllowed(current) || current.kb16) return
         get().updateCase(caseNo, {
-          kb16: { ...input, status: 'draft' },
+          kb16: { ...input, reason: terminationReasonText(current.kb15), effectiveAt: current.kb15?.proposedEndAt || input.effectiveAt, kb15Version: current.kb15?.version, regulationClause: current.kb15?.regulationClause, status: 'draft' },
           stage: 'termination_order',
           status: 'ร่างคำสั่งยุติ (คบ.16) · เจ้าหน้าที่กรอกแบบในแฟ้ม',
           owner: protectionResponsibleName(current),
-          next: 'กรอกแบบ คบ.16 ในแฟ้มให้ครบ แล้วกด "ส่งให้อนุมัติ" เพื่อเสนอผู้มีอำนาจลงนาม',
+          next: 'กรอกแบบ คบ.16 ในแฟ้มให้ครบ แล้วกด "ส่งให้อนุมัติ" เพื่อเสนอเลขาธิการ ป.ป.ท.ลงนาม',
           extraForms: Array.from(new Set([...(current.extraForms || []), 16])),
         })
         get().logHistory(
@@ -4466,8 +5859,8 @@ export const useCaseStore = create<CaseState>()(
        */
       submitKb16ForSignature: (caseNo, patch) => {
         const current = get().getCase(caseNo)
-        if (current && !routedWorkerAllowed(current)) return
-        if (!current?.kb16 || current.kb16.signedAt) return
+        if (current && !terminationWorkerAllowed(current)) return
+        if (!current?.kb16 || current.kb16.signedAt || sarabanInTransit(current)) return
         const at = nowDisplay()
         const by = protectionResponsibleName(current)
         const merged: Kb16Order = {
@@ -4478,19 +5871,29 @@ export const useCaseStore = create<CaseState>()(
           submittedAt: at,
           submittedBy: by,
         }
+        const errors = validateTerminationBasis(current, current.kb15 || {})
+        if (!current.terminationApproval?.approved || current.kb15?.status !== 'endorsed' || errors.length) { showToast(errors[0] || 'รอผลพิจารณา คบ.15', 'warning'); return }
+        if (!merged.orderNo?.trim() || !calendarDate(merged.issuedAt || '') || !calendarDate(merged.effectiveAt || '')) { showToast('กรุณาระบุเลขคำสั่ง วันที่ออก และวันที่มีผล', 'warning'); return }
+        if (merged.effectiveAt !== current.kb15.proposedEndAt) { showToast('วันที่มีผลไม่ตรงกับ คบ.15 ที่ผ่านการพิจารณา ต้องส่งกลับแก้ไขก่อน', 'warning'); return }
+        if (calendarDate(merged.effectiveAt!) < calendarDate(merged.issuedAt!) && !merged.backdatedReason?.trim()) { showToast('กรุณาระบุเหตุผลของวันที่มีผลย้อนหลัง', 'warning'); return }
+        merged.reason = terminationReasonText(current.kb15)
+        merged.kb15Version = current.kb15.version
+        merged.regulationClause = current.kb15.regulationClause
         get().updateCase(caseNo, {
           kb16: merged,
           stage: 'termination_order',
-          status: 'เสนอผู้มีอำนาจลงนามคำสั่งยุติ (คบ.16)',
+          status: 'เสนอเลขาธิการ ป.ป.ท.ลงนามคำสั่งยุติ (คบ.16)',
           owner: ACTOR.secretary,
-          next: 'ผู้มีอำนาจลงนาม คบ.16 — ห้ามเริ่มสถานะยุติก่อนมีคำสั่งที่ลงนาม',
+          next: 'เลขาธิการ ป.ป.ท.ลงนาม คบ.16 — ห้ามเริ่มสถานะยุติก่อนมีคำสั่งที่ลงนาม',
         })
         get().logHistory(
           caseNo,
-          'ส่งคำสั่งยุติ (คบ.16) ให้ผู้มีอำนาจอนุมัติและลงนาม',
+          'ส่งคำสั่งยุติ (คบ.16) ให้เลขาธิการ ป.ป.ท.อนุมัติและลงนาม',
           by,
           `คำสั่งที่ ${merged.orderNo} · ออกคำสั่ง ${formatThaiDate(merged.issuedAt)} · มีผล ${formatThaiDate(merged.effectiveAt)}`
         )
+        /** ขาไป: เสนอลงนามต้องผ่านธุรการหน่วย → ธุรการสำนักงานเลขาธิการ */
+        get().openSarabanDispatch(caseNo, { flow: 'termination', direction: 'up', forms: [16], subject: 'คบ.16 · เสนอลงนามคำสั่งยุติ' })
       },
 
       /**
@@ -4499,21 +5902,25 @@ export const useCaseStore = create<CaseState>()(
        */
       signKb16: (caseNo, signerName) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb16) return
+        if (!current?.kb16 || current.kb16.signedAt || current.kb16.status !== 'submitted' || !['secretary', 'admin'].includes(useAuthStore.getState().currentRole) || sarabanInTransit(current)) return
+        const errors = validateTerminationBasis(current, current.kb15 || {})
+        if ((!current.kb15?.bundledForms && errors.length) || current.kb16.kb15Version !== current.kb15?.version || (!current.kb15?.bundledForms && current.kb16.effectiveAt !== current.kb15?.proposedEndAt)) { showToast(errors[0] || 'ข้อมูล คบ.16 ไม่ตรงกับ คบ.15 ที่ผ่านการพิจารณา', 'warning'); return }
+        useFormDraftStore.getState().ensureDraftForCase(16, caseNo, {})
+        useFormDraftStore.getState().lockForm(16, useAuthStore.getState().getCurrentUserAccount()?.name || ACTOR.secretary, 'ฉบับลงนาม ห้ามแก้ทับ')
         const at = nowDisplay()
-        const signer = signerName || ACTOR.secretary
+        const signer = useAuthStore.getState().getCurrentUserAccount()?.name || ACTOR.secretary
         const effective = parseAnyDate(/^\d{4}-\d{2}-\d{2}$/.test(current.kb16.effectiveAt || '') ? `${current.kb16.effectiveAt}T00:00:00+07:00` : current.kb16.effectiveAt)
-        const inForce = Boolean(effective && effective.getTime() <= Date.now())
+        const inForce = Boolean(terminationEffectiveAt({ ...current, kb16: { ...current.kb16, signedAt: at } }))
         const episode = current.episode || deriveEpisode(current)
 
         get().updateCase(caseNo, {
-          kb16: { ...current.kb16, signedAt: at, signedBy: signer, locked: true },
-          episode: inForce && episode ? closeEpisode(episode, current.kb16.effectiveAt || at, current.kb16.reason) : episode,
+          kb16: { ...current.kb16, signedAt: at, signedBy: signer, locked: true, formSnapshot: { ...structuredClone(selectCaseDraft(useFormDraftStore.getState(), 16, caseNo)), 'ชื่อพยาน': current.person, 'เหตุยุติ': current.kb16.reason, 'วันที่ออกคำสั่ง': current.kb16.issuedAt, 'วันที่มีผล': current.kb16.effectiveAt, 'เลขที่คำสั่ง': current.kb16.orderNo.split('/')[0], 'ปีคำสั่ง': current.kb16.orderNo.split('/')[1] } },
+          episode: inForce && episode && !episode.closedAt ? closeEpisode(episode, terminationEffectiveAt({ ...current, kb16: { ...current.kb16, signedAt: at } })!, current.kb16.reason) : episode,
           stage: inForce ? 'terminated' : 'termination_order',
           status: inForce ? 'ยุติการคุ้มครองแล้วตามคำสั่ง คบ.16' : `ลงนาม คบ.16 แล้ว · มีผลวันที่ ${formatThaiDate(current.kb16.effectiveAt)}`,
           owner: protectionResponsibleName(current),
           next: 'จัดทำ คบ.17 แจ้งคำสั่งยุติและสิทธิอุทธรณ์ แล้วออกเลขผ่านสารบรรณเดิม',
-          // ปิดมาตรการตามวันที่มีผล แต่แฟ้มยังต้องทำ คบ.17 และรอพ้นสิทธิอุทธรณ์
+          // สถานะการคุ้มครองแยกจากงานเอกสารและอุทธรณ์
           closedAt: undefined,
           terminationRequest: current.terminationRequest
             ? { ...current.terminationRequest, status: 'approved', decidedAt: at, decidedBy: signer, decisionNote: current.kb16.reason }
@@ -4522,17 +5929,23 @@ export const useCaseStore = create<CaseState>()(
         })
         get().logHistory(
           caseNo,
-          'ผู้มีอำนาจลงนามคำสั่งยุติ (คบ.16)',
+          'เลขาธิการ ป.ป.ท.ลงนามคำสั่งยุติ (คบ.16)',
           signer,
           inForce
             ? `คำสั่งมีผลแล้วตั้งแต่ ${formatThaiDate(current.kb16.effectiveAt)} — ปิด Episode ณ วันที่มีผล`
             : `คำสั่งจะมีผลวันที่ ${formatThaiDate(current.kb16.effectiveAt)} — ยังคุ้มครองต่อจนถึงวันดังกล่าว`
         )
+        /** ขากลับ: คำสั่งที่ลงนามแล้วต้องผ่านธุรการสำนักงานเลขาธิการ → ธุรการหน่วย */
+        if (current.kb15?.bundledForms && current.kb17 && !current.kb17.signedAt) {
+          get().updateCase(caseNo, { kb17: { ...current.kb17, orderNo: current.kb16.orderNo, orderIssuedAt: current.kb16.issuedAt, orderEffectiveAt: current.kb16.effectiveAt, reason: current.kb16.reason, regulationClause: current.kb16.regulationClause }, owner: ACTOR.secretary, status: 'ลงนาม คบ.16 แล้ว · รอเลขาธิการลงนาม คบ.17', next: 'ลงนาม คบ.17 แล้วส่งเอกสารทั้งชุดกลับ' })
+          return
+        }
+        get().openSarabanDispatch(caseNo, { flow: 'termination', direction: 'down', forms: [16], subject: 'คบ.16 · คำสั่งยุติที่ลงนามแล้ว' })
       },
 
       recordOperationStopped: (caseNo, stoppedAt) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb16) return
+        if (!current?.kb16 || !terminationWorkerAllowed(current) || !terminationEffectiveAt(current) || !calendarDate(stoppedAt) || calendarDate(stoppedAt) > calendarDate(new Date())) return
         get().updateCase(caseNo, {
           kb16: { ...current.kb16, operationStoppedAt: stoppedAt },
           methodTracks: (current.methodTracks || []).map((t) =>
@@ -4545,10 +5958,9 @@ export const useCaseStore = create<CaseState>()(
       /** WIT1141 — เปิดร่าง คบ.17 เข้าแฟ้มให้เจ้าหน้าที่กรอก ยังไม่ออกเลขสารบรรณ */
       draftKb17: (caseNo, input) => {
         const current = get().getCase(caseNo)
-        if (!current) return
-        if (!routedWorkerAllowed(current)) return
+        if (!current?.kb16?.signedAt || current.kb17 || sarabanInTransit(current) || !terminationWorkerAllowed(current)) return
         get().updateCase(caseNo, {
-          kb17: { ...(current.kb17 || {}), ...input, status: 'draft' },
+          kb17: { ...input, status: 'draft', orderNo: current.kb16.orderNo, orderIssuedAt: current.kb16.issuedAt, orderEffectiveAt: current.kb16.effectiveAt, reason: current.kb16.reason, regulationClause: current.kb16.regulationClause },
           status: 'ร่างหนังสือแจ้งคำสั่งยุติ (คบ.17) · เจ้าหน้าที่กรอกแบบในแฟ้ม',
           owner: protectionResponsibleName(current),
           next: 'กรอกแบบ คบ.17 ในแฟ้มให้ครบ แล้วกด "ส่งให้ลงนาม" เพื่อเสนอเลขาธิการ ป.ป.ท.',
@@ -4565,8 +5977,8 @@ export const useCaseStore = create<CaseState>()(
       /** เจ้าหน้าที่กรอกแบบ คบ.17 เสร็จแล้ว เสนอเลขาธิการ ป.ป.ท. ลงนาม */
       submitKb17ForSignature: (caseNo) => {
         const current = get().getCase(caseNo)
-        if (current && !routedWorkerAllowed(current)) return
-        if (!current?.kb17 || current.kb17.signedAt) return
+        if (current && !terminationWorkerAllowed(current)) return
+        if (!current?.kb17 || current.kb17.signedAt || sarabanInTransit(current)) return
         const at = nowDisplay()
         const by = protectionResponsibleName(current)
         get().updateCase(caseNo, {
@@ -4576,27 +5988,34 @@ export const useCaseStore = create<CaseState>()(
           next: 'เลขาธิการ ป.ป.ท. ลงนาม คบ.17 ก่อนออกเลขและนำส่งผ่านสารบรรณเดิม',
         })
         get().logHistory(caseNo, 'ส่งหนังสือแจ้งคำสั่งยุติ (คบ.17) ให้เลขาธิการ ป.ป.ท. ลงนาม', by, current.kb17.documentName || '')
+        /** ขาไป: เสนอลงนามต้องผ่านธุรการหน่วย → ธุรการสำนักงานเลขาธิการ */
+        get().openSarabanDispatch(caseNo, { flow: 'termination', direction: 'up', forms: [17], subject: 'คบ.17 · เสนอลงนาม' })
       },
 
       /** เลขาธิการ ป.ป.ท. ลงนาม คบ.17 แล้วล็อกฉบับลงนาม — จากนั้นจึงออกเลขและนำส่ง (WIT1142) */
       signKb17: (caseNo, signerName) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb17 || current.kb17.signedAt) return
+        if (!current?.kb17 || current.kb17.signedAt || current.kb17.status !== 'submitted' || !current.kb16?.signedAt || !['secretary', 'admin'].includes(useAuthStore.getState().currentRole) || sarabanInTransit(current)) return
+        useFormDraftStore.getState().ensureDraftForCase(17, caseNo, {})
+        useFormDraftStore.getState().lockForm(17, useAuthStore.getState().getCurrentUserAccount()?.name || ACTOR.secretary, 'ฉบับลงนาม ห้ามแก้ทับ')
         const at = nowDisplay()
-        const signer = signerName || ACTOR.secretary
+        const signer = useAuthStore.getState().getCurrentUserAccount()?.name || ACTOR.secretary
         get().updateCase(caseNo, {
-          kb17: { ...current.kb17, signedAt: at, signedBy: signer, locked: true },
+          kb17: { ...current.kb17, signedAt: at, signedBy: signer, locked: true, formSnapshot: { ...structuredClone(selectCaseDraft(useFormDraftStore.getState(), 17, caseNo)), 'ชื่อพยาน': current.person, 'เหตุยุติ': current.kb16?.reason, 'คำสั่งเลขที่': current.kb16?.orderNo, 'คำสั่งลงวันที่': current.kb16?.issuedAt, 'วันที่มีผล': current.kb16?.effectiveAt } },
           status: 'ลงนาม คบ.17 แล้ว · รอออกเลขและนำส่งผ่านสารบรรณเดิม',
           owner: protectionResponsibleName(current),
           next: 'ออกเลขและนำส่ง คบ.17 ผ่านระบบสารบรรณเดิม',
         })
         get().logHistory(caseNo, 'เลขาธิการ ป.ป.ท. ลงนามหนังสือแจ้งคำสั่งยุติ (คบ.17)', signer, `ลงนามเมื่อ ${at} — ออกเลขและนำส่งผ่านสารบรรณเดิมได้`)
+        /** ขากลับ: ฉบับลงนามแล้วต้องผ่านธุรการสำนักงานเลขาธิการ → ธุรการหน่วย */
+        if (current.kb15?.bundledForms && current.kb15.status === 'submitted') return
+        get().openSarabanDispatch(caseNo, { flow: 'termination', direction: 'down', forms: [17], subject: 'คบ.17 · หนังสือแจ้งคำสั่งยุติที่ลงนามแล้ว' })
       },
 
       dispatchKb17: (caseNo, input) => {
         const current = get().getCase(caseNo)
         /** WIT1142 — ออกเลขได้ต่อเมื่อฉบับนี้ลงนามแล้วเท่านั้น */
-        if (!current?.kb17?.signedAt) return
+        if (!current?.kb17?.signedAt || !terminationWorkerAllowed(current) || current.kb17.dispatchedAt || !input.registryNo.trim() || !calendarDate(input.registryDate) || sarabanInTransit(current)) return
         const at = nowDisplay()
         get().updateCase(caseNo, {
           kb17: { ...(current.kb17 || {}), ...input, dispatchedAt: at },
@@ -4614,8 +6033,8 @@ export const useCaseStore = create<CaseState>()(
               sentAt: at,
             },
           ],
-          status: 'นำส่ง คบ.17 แล้ว · รอบันทึกวันที่พยานได้รับ',
-          next: 'บันทึกวันที่พยานได้รับ คบ.17 เพื่อเริ่มนับสิทธิอุทธรณ์ 30 วัน',
+          status: 'นำส่ง คบ.17 แล้ว · รอบันทึกการรับแจ้ง',
+          next: 'บันทึกวันที่พยานได้รับแจ้งจริงพร้อมหลักฐาน',
         })
         get().logHistory(caseNo, 'ออกเลขและนำส่ง คบ.17 ผ่านสารบรรณเดิม', protectionResponsibleName(current), `เลขที่ ${input.registryNo} ลงวันที่ ${input.registryDate}`)
       },
@@ -4623,8 +6042,10 @@ export const useCaseStore = create<CaseState>()(
       /** WIT1145 — เริ่มนับอุทธรณ์ 30 วันจากวันที่พยานได้รับจริง (คนละรอบกับ คบ.10) */
       recordKb17Delivery: (caseNo, deliveredAt, receiptEvidence) => {
         const current = get().getCase(caseNo)
-        if (!current) return
-        const dueAt = addDays(deliveredAt, APPEAL_WINDOW_DAYS)
+        const auth = useAuthStore.getState()
+        const postalClerk = current && canPostTerminationNotice(current) && Boolean(current.sarabanDispatch?.postal) && canRecordSaraban(auth.currentRole, current, 'destination_incoming', auth.currentOrgUnitId)
+        if (!current?.kb17?.dispatchedAt || current.kb17.deliveredAt || (!terminationWorkerAllowed(current) && !postalClerk) || !receiptEvidence?.trim() || !calendarDate(deliveredAt) || calendarDate(deliveredAt) > calendarDate(new Date()) || calendarDate(deliveredAt) < calendarDate(current.kb17.dispatchedAt)) return
+        const dueAt = confirmedAppealDeadline(current, deliveredAt)
         /** TC-153 — การรับจริงก็นับเป็นความพยายามนำส่งที่สำเร็จ เพื่อให้ประวัติการนำส่งครบทุกทางที่บันทึก */
         const priorAttempts = current.kb17?.deliveryAttempts || []
         const receiptAttempt: Kb17DeliveryAttempt = {
@@ -4645,14 +6066,14 @@ export const useCaseStore = create<CaseState>()(
           },
           appealDueAt: dueAt,
           appealAgainst: 'kb17',
-          status: 'พยานได้รับ คบ.17 แล้ว · อยู่ในกรอบอุทธรณ์',
-          next: `รอครบกำหนดอุทธรณ์ ${APPEAL_WINDOW_DAYS} วัน หรือรับคำอุทธรณ์คำสั่งยุติ`,
+          status: 'บันทึกการรับแจ้ง คบ.17 แล้ว',
+          next: dueAt ? `ครบกำหนดอุทธรณ์ ${formatThaiDate(dueAt)} · ติดตามแยกจากงานเอกสาร` : 'รับคำอุทธรณ์และตรวจพิจารณาตามกระบวนงานเดิมได้',
         })
         get().logHistory(
           caseNo,
           'บันทึกวันที่พยานได้รับ คบ.17',
-          protectionResponsibleName(current),
-          `เริ่มนับสิทธิอุทธรณ์ ${APPEAL_WINDOW_DAYS} วันจากวันที่รับจริง`
+          postalClerk ? auth.getCurrentUserAccount()?.name || current.owner : protectionResponsibleName(current),
+          dueAt ? `ครบกำหนดอุทธรณ์ ${dueAt} นับจากวันรับแจ้งจริง` : 'บันทึกวันรับแจ้งจริงและหลักฐาน โดยไม่ปิดกั้นการรับคำอุทธรณ์'
         )
       },
 
@@ -4662,14 +6083,14 @@ export const useCaseStore = create<CaseState>()(
        */
       recordKb17DeliveryAttempt: (caseNo, attempt, actor) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb17) return
+        if (!current?.kb17?.dispatchedAt || !terminationWorkerAllowed(current) || !calendarDate(attempt.attemptedAt) || calendarDate(attempt.attemptedAt) > calendarDate(new Date()) || calendarDate(attempt.attemptedAt) < calendarDate(current.kb17.dispatchedAt) || (attempt.result === 'success' && !attempt.evidence?.trim())) return
         const by = actor || protectionResponsibleName(current)
         const attemptNo = (current.kb17.deliveryAttempts?.length || 0) + 1
         const entry: Kb17DeliveryAttempt = { ...attempt, attemptNo }
         const attempts = [...(current.kb17.deliveryAttempts || []), entry]
 
         if (attempt.result === 'success' && !current.kb17.deliveredAt) {
-          const dueAt = addDays(attempt.attemptedAt, APPEAL_WINDOW_DAYS)
+          const dueAt = confirmedAppealDeadline(current, attempt.attemptedAt)
           get().updateCase(caseNo, {
             kb17: {
               ...current.kb17,
@@ -4681,8 +6102,8 @@ export const useCaseStore = create<CaseState>()(
             },
             appealDueAt: dueAt,
             appealAgainst: 'kb17',
-            status: 'พยานได้รับ คบ.17 แล้ว · อยู่ในกรอบอุทธรณ์',
-            next: `รอครบกำหนดอุทธรณ์ ${APPEAL_WINDOW_DAYS} วัน หรือรับคำอุทธรณ์คำสั่งยุติ`,
+            status: 'บันทึกการรับแจ้ง คบ.17 แล้ว',
+            next: dueAt ? `ครบกำหนดอุทธรณ์ ${formatThaiDate(dueAt)} · ติดตามแยกจากงานเอกสาร` : 'รับคำอุทธรณ์และตรวจพิจารณาตามกระบวนงานเดิมได้',
           })
         } else {
           get().updateCase(caseNo, { kb17: { ...current.kb17, deliveryAttempts: attempts } })
@@ -4702,11 +6123,11 @@ export const useCaseStore = create<CaseState>()(
        */
       recordKb17DeemedReceipt: (caseNo, deemedAt, method, actor) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb17) return
+        if (!current?.kb17?.dispatchedAt || !terminationWorkerAllowed(current) || !calendarDate(deemedAt) || calendarDate(deemedAt) > calendarDate(new Date()) || calendarDate(deemedAt) < calendarDate(current.kb17.dispatchedAt) || !method.trim()) return
         const hasFailedAttempt = (current.kb17.deliveryAttempts || []).some((a) => a.result === 'failed')
         if (!hasFailedAttempt || current.kb17.deliveredAt) return
         const by = actor || protectionResponsibleName(current)
-        const dueAt = addDays(deemedAt, APPEAL_WINDOW_DAYS)
+        const dueAt = undefined // ไม่ใช่วันรับแจ้งจริง เก็บหลักฐานไว้ตรวจโดยไม่เริ่มนับ 30 วันอัตโนมัติ
         get().updateCase(caseNo, {
           kb17: {
             ...current.kb17,
@@ -4717,21 +6138,21 @@ export const useCaseStore = create<CaseState>()(
           },
           appealDueAt: dueAt,
           appealAgainst: 'kb17',
-          status: 'ถือว่าพยานได้รับ คบ.17 ตามระเบียบแล้ว · อยู่ในกรอบอุทธรณ์',
-          next: `รอครบกำหนดอุทธรณ์ ${APPEAL_WINDOW_DAYS} วัน หรือรับคำอุทธรณ์คำสั่งยุติ`,
+          status: 'บันทึกหลักฐานการแจ้งโดยวิธีอื่นแล้ว',
+          next: dueAt ? `ครบกำหนดอุทธรณ์ ${formatThaiDate(dueAt)} · ติดตามแยกจากงานเอกสาร` : 'รับคำอุทธรณ์และตรวจพิจารณาตามกระบวนงานเดิมได้',
         })
         get().logHistory(
           caseNo,
           'บันทึกวันที่ถือว่าพยานได้รับ คบ.17 ตามระเบียบ',
           by,
-          `${method} — เริ่มนับสิทธิอุทธรณ์ ${APPEAL_WINDOW_DAYS} วันจากวันนี้`
+          `${method} — ยังไม่ใช่วันรับแจ้งจริง`
         )
       },
 
       /** WIT1143 — อัปโหลด คบ.17 ฉบับที่ส่งจริงเข้ากับแฟ้ม คู่กับเลขที่/วันที่จากสารบรรณเดิม */
       attachKb17Sent: (caseNo, documentName, actor) => {
         const current = get().getCase(caseNo)
-        if (!current?.kb17) return
+        if (!current?.kb17?.dispatchedAt || !terminationWorkerAllowed(current) || !documentName.trim() || current.kb17.sentDocumentName === documentName) return
         const by = actor || protectionResponsibleName(current)
         const at = nowDisplay()
         get().updateCase(caseNo, {
@@ -4756,10 +6177,11 @@ export const useCaseStore = create<CaseState>()(
        * WIT1147 — มีอุทธรณ์ภายในกำหนด: ผูกคำอุทธรณ์กับ คบ.17 และหลักฐานการรับที่มีอยู่
        * ไม่สร้าง คบ.1 ใหม่ และไม่ปิดงาน
        */
-      openKb17Appeal: (caseNo, reason, intake, actor) => {
+      openKb17Appeal: (caseNo, reason, intake, actor, lateReason) => {
         const current = get().getCase(caseNo)
         if (!current?.kb17?.deliveredAt) return
-        get().fileAppeal(caseNo, reason, intake, { against: 'kb17' })
+        /** ไม่ปิดรับคำอุทธรณ์ตามเงื่อนไขการพิมพ์ข้อความใน คบ.17 */
+        get().fileAppeal(caseNo, reason, intake, { against: 'kb17', lateReason })
       },
 
       /**
@@ -4780,16 +6202,9 @@ export const useCaseStore = create<CaseState>()(
           }
           return
         }
-        get().updateCase(caseNo, {
-          stage: 'terminated',
-          status: 'ปิดงานคุ้มครองแล้ว',
-          owner: protectionResponsibleName(current),
-          next: 'เอกสารฉบับลงนามถูกล็อก คงประวัติการดำเนินการไว้ในแฟ้ม',
-          closedAt: current.kb16?.effectiveAt || nowDisplay(),
-          kb16: current.kb16 ? { ...current.kb16, locked: true } : current.kb16,
-          methodTracks: (current.methodTracks || []).map((t) => (t.status === 'ended' ? t : { ...t, status: 'ended' as ProtectionMethodStatus })),
-        })
-        get().logHistory(caseNo, 'ปิดงานคุ้มครองพยาน', protectionResponsibleName(current), note || 'ไม่มีอุทธรณ์ภายในกำหนด')
+        if (current.terminationDocumentsClosedAt || !terminationWorkerAllowed(current)) return
+        get().updateCase(caseNo, { terminationDocumentsClosedAt: new Date().toISOString() })
+        get().logHistory(caseNo, 'ปิดงานเอกสารสิ้นสุด คบ.15–17', protectionResponsibleName(current), note || 'คงการติดตามส่งต่อและอุทธรณ์แยกตามงานเดิม')
       },
 
       // ---------- 09B : ลำดับชั้นแฟ้มอุทธรณ์ ----------
@@ -4803,7 +6218,7 @@ export const useCaseStore = create<CaseState>()(
       checkAppealFolder: (caseNo, input) => {
         const current = get().getCase(caseNo)
         if (!current) return
-        const officer = current.appealFolder?.appealOfficer?.name || current.assignedOfficer || ACTOR.appeal
+        const officer = current.assignedOfficer || ACTOR.appeal
         const at = nowDisplay()
         /** ค่าบวก = ยื่นช้ากว่ากำหนดกี่วัน (daysUntil คืนค่าติดลบเมื่อครบกำหนดไปแล้ว) */
         const left = daysUntil(current.appealDueAt, current.appealFiledAt)
@@ -4837,22 +6252,23 @@ export const useCaseStore = create<CaseState>()(
       acceptLateAppeal: (caseNo, note) => {
         const current = get().getCase(caseNo)
         if (!current?.appealFolder) return
+        const by = currentActorName(ACTOR.supervisor)
         get().updateCase(caseNo, {
           appealFolder: {
             ...current.appealFolder,
             stage: 'officer_opinion',
             lateAcceptedAt: nowDisplay(),
-            lateAcceptedBy: ACTOR.supervisor,
+            lateAcceptedBy: by,
             lateAcceptNote: note,
           },
           status: 'รับแฟ้มอุทธรณ์ที่ยื่นเกินกำหนดไว้พิจารณา',
-          owner: current.appealFolder?.appealOfficer?.name || current.assignedOfficer || ACTOR.appeal,
+          owner: current.assignedOfficer || ACTOR.appeal,
           next: 'ตรวจข้อเท็จจริงและเอกสาร แล้วบันทึกความเห็นของเจ้าหน้าที่ผู้รับผิดชอบ',
         })
         get().logHistory(
           caseNo,
           'ผบช.ชั้นต้นรับแฟ้มอุทธรณ์ที่ยื่นเกินกำหนดไว้พิจารณา',
-          ACTOR.supervisor,
+          by,
           `${note} (ไม่ปัดตกอัตโนมัติ — ให้คณะกรรมการเป็นผู้ตัดสิน)`
         )
       },
@@ -4864,35 +6280,43 @@ export const useCaseStore = create<CaseState>()(
        * และเรียกได้เฉพาะเมื่อ `stage` ตรงกับชั้นของผู้กด ลำดับจึงข้ามไม่ได้
        */
       recordAppealOpinion: (caseNo, level, note) => {
-        const current = get().getCase(caseNo)
-        const folder = current?.appealFolder
+        let current = get().getCase(caseNo)
+        let folder = current?.appealFolder
         /** ชั้นเจ้าหน้าที่ใช้ชื่อ stage ว่า 'officer_opinion' ส่วนชั้นอื่นชื่อตรงกับ level */
         const expectedStage = level === 'officer' ? 'officer_opinion' : level
         if (!current || !folder || folder.stage !== expectedStage) return
+        /** แฟ้มอยู่ระหว่างธุรการลงทะเบียนนำส่ง — ผู้รับปลายทางยังไม่ได้รับแฟ้ม */
+        if (sarabanInTransit(current, 'appeal')) return
+        /** แฟ้มที่รับคำอุทธรณ์ก่อนมีบันทึกเพิ่มเติม (อุทธรณ์) — จัดทำให้ก่อนเสนอ เพื่อให้ทุกชั้นลงความเห็นใน คบ.6 ได้ */
+        if (level === 'officer' && !folder.addendum) {
+          if (!get().startAppealDocs(caseNo)) return
+          current = get().getCase(caseNo)!
+          folder = current.appealFolder!
+        }
 
         const opinion = { at: nowDisplay(), note, by: '' }
         const steps = {
           officer: {
             key: 'officerOpinion' as const,
-            by: folder.appealOfficer?.name || current.assignedOfficer || ACTOR.appeal,
+            by: currentActorName(current.assignedOfficer || ACTOR.appeal),
             nextStage: 'supervisor' as const,
-            owner: ACTOR.supervisor,
+            owner: current.protectionHandoff?.destination === 'got' ? ECMIS_USER_DIRECTORY.find((user) => user.active && user.roles.includes('got_supervisor'))?.name || ACTOR.supervisor : ACTOR.supervisor,
             action: 'เจ้าหน้าที่ผู้รับผิดชอบบันทึกความเห็นในแฟ้มอุทธรณ์',
             status: 'แฟ้มอุทธรณ์ · รอ ผบช.ชั้นต้นให้ความเห็น',
             next: 'ผบช.ชั้นต้น ตรวจความครบถ้วนและให้ความเห็น แล้วเสนอ ผอ.สำนัก/กอง ตามลำดับชั้น',
           },
           supervisor: {
             key: 'supervisorOpinion' as const,
-            by: ACTOR.supervisor,
+            by: currentActorName(ACTOR.supervisor),
             nextStage: 'director' as const,
-            owner: ACTOR.director,
+            owner: current.protectionHandoff?.destination === 'got' ? ECMIS_USER_DIRECTORY.find((user) => user.active && user.roles.includes('got_director'))?.name || ACTOR.director : ACTOR.director,
             action: 'ผบช.ชั้นต้นให้ความเห็นแฟ้มอุทธรณ์และเสนอ ผอ.สำนัก/กอง',
             status: 'แฟ้มอุทธรณ์ · รอ ผอ.สำนัก/กอง ตรวจและลงนามเสนอ',
             next: 'ผอ.สำนัก/กอง ตรวจ ให้ความเห็น และลงนามเสนอรองเลขาธิการฯ',
           },
           director: {
             key: 'directorOpinion' as const,
-            by: ACTOR.director,
+            by: currentActorName(ACTOR.director),
             nextStage: 'deputy' as const,
             owner: ACTOR.deputySecretary,
             action: 'ผอ.สำนัก/กองตรวจ ให้ความเห็น และลงนามเสนอแฟ้มอุทธรณ์',
@@ -4901,7 +6325,7 @@ export const useCaseStore = create<CaseState>()(
           },
           deputy: {
             key: 'deputyOpinion' as const,
-            by: ACTOR.deputySecretary,
+            by: currentActorName(ACTOR.deputySecretary),
             nextStage: 'secretary' as const,
             owner: ACTOR.secretary,
             action: 'รองเลขาธิการฯ กลั่นกรองแฟ้มอุทธรณ์',
@@ -4910,12 +6334,12 @@ export const useCaseStore = create<CaseState>()(
           },
           secretary: {
             key: 'secretaryOpinion' as const,
-            by: ACTOR.secretary,
+            by: currentActorName(ACTOR.secretary),
             nextStage: 'agenda' as const,
             owner: ACTOR.committee,
             action: 'เลขาธิการฯ ให้ความเห็นประกอบและส่งเสนอคณะกรรมการ',
-            status: 'แฟ้มอุทธรณ์ · รอบรรจุระเบียบวาระคณะกรรมการ',
-            next: 'ฝ่ายเลขานุการเสนอประธานเพื่อบรรจุวาระ แล้วคณะกรรมการวินิจฉัย',
+            status: 'แฟ้มอุทธรณ์ · รอผลพิจารณาคณะกรรมการ',
+            next: 'บันทึกผลพิจารณาอุทธรณ์และส่งต่อหน่วยงานดำเนินการ',
           },
         }[level]
 
@@ -4926,6 +6350,25 @@ export const useCaseStore = create<CaseState>()(
           next: steps.next,
         })
         get().logHistory(caseNo, steps.action, steps.by, note)
+        if (folder.addendum) {
+          if (level === 'officer') {
+            /** เสนอแล้วบันทึกเพิ่มเติมถูกล็อก — ชั้นถัดไปลงได้เฉพาะความเห็นข้อ 10–13 ของ คบ.6 */
+            const forms = useFormDraftStore.getState()
+            forms.lockForm(3, steps.by, `เสนอ คบ.3 ${APPEAL_ADDENDUM_LABEL} ตามลำดับชั้นแฟ้มอุทธรณ์`)
+            forms.lockForm(6, steps.by, `เสนอ คบ.6 ${APPEAL_ADDENDUM_LABEL} ตามลำดับชั้นแฟ้มอุทธรณ์`)
+          } else {
+            /** ความเห็นของชั้นนี้คือความเห็นข้อ 10–13 ใน คบ.6 บันทึกเพิ่มเติม (อุทธรณ์) */
+            mirrorKb6Signature(current, level === 'deputy' ? 'deputy_secretary' : level, steps.by, opinion.at, note)
+            get().logHistory(caseNo, `ลงนามความเห็นใน คบ.6 ${APPEAL_ADDENDUM_LABEL}`, steps.by, note)
+          }
+        }
+        /** ผอ.ลงนามเสนอ = เอกสารออกจากหน่วยไปสำนักงานเลขาธิการ ต้องผ่านธุรการหน่วย → ธุรการสำนักงานเลขาธิการ (คบ.10/17 = ฉบับที่ถูกอุทธรณ์) */
+        if (level === 'director') {
+          get().openSarabanDispatch(caseNo, {
+            flow: 'appeal', direction: 'up', forms: [3, 6, current.appealAgainst === 'kb17' ? 17 : 10],
+            subject: 'แฟ้มอุทธรณ์ · เสนอรองเลขาธิการ',
+          })
+        }
       },
 
       /** WIT0919 — ฝ่ายเลขานุการบรรจุระเบียบวาระ แฟ้มพร้อมให้คณะกรรมการวินิจฉัย (WIT0920) */
@@ -4933,88 +6376,143 @@ export const useCaseStore = create<CaseState>()(
         const current = get().getCase(caseNo)
         const folder = current?.appealFolder
         if (!current || !folder || folder.stage !== 'agenda') return
+        const by = currentActorName(ACTOR.committee)
         get().updateCase(caseNo, {
-          appealFolder: { ...folder, agendaNo, agendaAt: nowDisplay(), agendaBy: ACTOR.committee },
+          appealFolder: { ...folder, agendaNo, agendaAt: nowDisplay(), agendaBy: by },
           status: 'บรรจุระเบียบวาระแล้ว · รอคณะกรรมการวินิจฉัย',
           owner: ACTOR.committee,
           next: 'คณะกรรมการ ป.ป.ท. วินิจฉัยอุทธรณ์ — คำวินิจฉัยเป็นที่สุด',
         })
-        get().logHistory(caseNo, 'บรรจุแฟ้มอุทธรณ์เข้าระเบียบวาระคณะกรรมการ', ACTOR.committee, `ระเบียบวาระที่ ${agendaNo}`)
+        get().logHistory(caseNo, 'บรรจุแฟ้มอุทธรณ์เข้าระเบียบวาระคณะกรรมการ', by, `ระเบียบวาระที่ ${agendaNo}`)
+      },
+
+      startAppealDocs: (caseNo) => {
+        const current = get().getCase(caseNo)
+        const folder = current?.appealFolder
+        if (!current || !folder || isCaseClosed(current) || !APPEAL_ADDENDUM_DRAFT_STAGES.includes(folder.stage)) return null
+        if (folder.addendum?.freshDrafts) return { kb3Version: folder.addendum.kb3Version, kb6Version: folder.addendum.kb6Version }
+        const by = current.assignedOfficer || ACTOR.appeal
+        const reason = `จัดทำ ${APPEAL_ADDENDUM_LABEL} ของ คบ.3/คบ.6 ประกอบแฟ้มอุทธรณ์ (ฉบับเดิมเก็บไว้ไม่แก้ทับ)`
+        activateExtensionForms(current)
+        const forms = useFormDraftStore.getState()
+        if (!folder.addendum) {
+          forms.reviseForm(3, by, reason)
+          forms.reviseForm(6, by, reason)
+        }
+        // Keep archived originals; new appeal documents must not inherit their content or signatures.
+        useFormDraftStore.setState((state) => {
+          const drafts = { ...state.drafts }
+          let signatures = { ...state.signatures }
+          const locks = { ...state.locks }
+          for (const id of [3, 6] as const) {
+            const previousVersion = folder.addendum ? (id === 3 ? folder.addendum.kb3Version : folder.addendum.kb6Version) - 1 : state.revisions[id]?.length
+            const original = state.revisions[id]?.find((revision) => revision.version === previousVersion)
+            const existing = state.drafts[id] || {}
+            const fields = { ...buildSeedForCase(id, current), ...existing }
+            drafts[id] = Object.fromEntries(Object.entries(fields).map(([key, value]) => {
+              // Preserve edits made since the old appeal draft was created.
+              const edited = folder.addendum && Object.prototype.hasOwnProperty.call(existing, key) && JSON.stringify(value) !== JSON.stringify(original?.snapshot[key])
+              return [key, edited ? value : Array.isArray(value) ? [] : typeof value === 'boolean' ? false : '']
+            }))
+            signatures = Object.fromEntries(Object.entries(signatures).filter(([key, value]) => !key.startsWith(`kb${id}-`) || (folder.addendum && JSON.stringify(value) !== JSON.stringify(original?.signatures?.[key]))))
+            if (!Object.entries(signatures).some(([key, value]) => key.startsWith(`kb${id}-`) && value.signed)) delete locks[id]
+          }
+          return { drafts, signatures, locks, draftTouched: { ...state.draftTouched, 3: false, 6: false } }
+        })
+        const kb3Version = useFormDraftStore.getState().getFormVersion(3)
+        const kb6Version = useFormDraftStore.getState().getFormVersion(6)
+        get().updateCase(caseNo, {
+          appealFolder: { ...folder, addendum: { kb3Version, kb6Version, preparedAt: folder.addendum?.preparedAt || nowDisplay(), preparedBy: folder.addendum?.preparedBy || by, freshDrafts: true } },
+          extraForms: Array.from(new Set([...(current.extraForms || []), 3, 6])),
+        })
+        get().logHistory(caseNo, `จัดทำ คบ.3 และ คบ.6 ${APPEAL_ADDENDUM_LABEL}`, by, reason)
+        return { kb3Version, kb6Version }
       },
 
       // ---------- 09B : มติคณะกรรมการเรื่องอุทธรณ์ ----------
-      /** WIT0920-0922 — ยืนคำสั่งเดิมแล้วปิดขั้นอุทธรณ์ / เปลี่ยนคำสั่งแล้วกลับ 08A */
+      /** WIT0920-0922 — ยกคำร้องแล้วปิดขั้นอุทธรณ์ / เปลี่ยนคำสั่งแล้วกลับ 08A */
       prepareAppealKb6Revision: (caseNo) => {
+        const c = get().getCase(caseNo)
+        if (!c || c.appealResolution?.outcome !== 'overturn' || c.appealAgainst === 'kb17') return
+        if (c.activity7State === 'approved' && c.extraForms?.includes(11) && !c.secretaryReturnRework) return
+        const status = 'อนุมัติคุ้มครองตามผลอุทธรณ์ · รอจัดทำ คบ.11'
+        const next = 'จัดทำและลงนามข้อตกลง คบ.11'
+        set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item,
+          stage: 'method_operation', activity7State: 'approved', activity7Label: 'อนุมัติคุ้มครองตามผลอุทธรณ์',
+          extraForms: Array.from(new Set([...(item.extraForms || []), 11])),
+          directorReturn: false, secretaryReturnRework: false, appealKb6Version: undefined,
+          status: item.sarabanDispatch ? item.status : status, next: item.sarabanDispatch ? item.next : next,
+          sarabanDispatch: item.sarabanDispatch ? { ...item.sarabanDispatch, deliveredStatus: status, deliveredNext: next } : undefined,
+          updatedAt: new Date().toISOString(),
+        } : item) }))
+      },
+
+      returnAppealForCorrection: (caseNo, reason) => {
         const current = get().getCase(caseNo)
-        const auth = useAuthStore.getState()
-        if (!current || current.appealResolution?.outcome !== 'overturn' || current.appealAgainst === 'kb17' || current.appealKb6Version) return
-        if (!['committee', 'admin'].includes(auth.currentRole) && !noticeWorkerAllowed(auth.currentRole, current, auth.currentOfficerUserId)) return
-        const actor = auth.getCurrentUserAccount()?.name || current.owner
-        const reason = `จัดทำ คบ.6 ใหม่ตามมติอุทธรณ์ที่ ${current.appealResolution.resolutionNo}`
-        const forms = useFormDraftStore.getState()
-        forms.ensureDraftForCase(6, caseNo, {})
-        const oldDraft = { ...useFormDraftStore.getState().getDraft(6) }
-        const revision = proposalSetRevisionPatch(current, actor, reason)
-        const version = revision.kb6Version!
-        forms.reviseForm(6, actor, reason)
-        useFormDraftStore.setState((state) => ({
-          drafts: { ...state.drafts, 6: Object.fromEntries(Object.entries(oldDraft).map(([key, value]) => [key, KB6_SIGNERS.some((signer) => signer.opinionField === key) ? '' : value])) },
-          signatures: Object.fromEntries(Object.entries(state.signatures).filter(([key]) => !key.startsWith('kb6-'))),
-          draftTouched: { ...state.draftTouched, 6: false },
-        }))
-        const at = nowDisplay()
-        const patch: Partial<CaseItem> = {
-          appealKb6PreviousResult: { dispatchedAt: current.dispatchedAt, deliveredAt: current.deliveredAt, deliveryRecipient: current.deliveryRecipient, deliveryAckType: current.deliveryAckType, deliveryAckDocument: current.deliveryAckDocument, decisionNumber: current.decisionNumber, resultReason: current.resultReason, resultAt: current.resultAt, resultSigner: current.resultSigner },
-          appealKb6Version: version, kb6Version: version, kb6PreviousVersions: revision.kb6PreviousVersions,
-          stage: 'staff_review', status: `จัดทำ คบ.6 v${version} ตามมติอุทธรณ์`,
-          owner: protectionResponsibleName(current), next: `จัดทำ คบ.6 v${version} และเสนอผู้บังคับบัญชาชั้นต้น`,
-          activity7State: 'pending', activity7Label: 'จัดทำชุดเสนอใหม่ตามมติอุทธรณ์',
-          kb6PreparedAt: undefined, kb6PreparedBy: undefined, kb6Signed: false, kb6Forwarded: false,
-          kb6SupervisorSignedAt: undefined, kb6SupervisorSignedBy: undefined,
-          kb6DirectorSignedAt: undefined, kb6DirectorSignedBy: undefined,
-          kb6DeputySignedAt: undefined, kb6DeputySignedBy: undefined,
-          kb6SecretarySignedAt: undefined, kb6SecretarySignedBy: undefined,
-          secretaryReviewState: 'pending', deputyReviewState: 'pending',
-          secretarySignedAt: undefined, secretarySignedBy: undefined, resultAt: undefined, resultReason: undefined, resultSigner: undefined, decisionNumber: undefined, outgoingSignedAt: undefined, outgoingSignedBy: undefined,
-          preliminaryDecision: undefined, noticeDecisionDrafts: undefined,
-          directorReturn: false, secretaryReturnRework: true,
-          dispatchedAt: undefined, deliveredAt: undefined, deliveryRecipient: undefined, deliveryAckType: undefined, deliveryAckDocument: undefined,
-          assignmentHistory: [...(current.assignmentHistory || []), { at, actor, action: reason, detail: `เก็บ คบ.6 v${version - 1} และ คบ.10 เดิมไว้ ไม่สร้าง คบ.1 ใหม่` }],
-        }
-        set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item, ...patch, updatedAt: new Date().toISOString() } : item) }))
+        if (!current?.appealFolder || current.appealFolder.stage !== 'agenda' || current.appealResolution || sarabanInTransit(current, 'appeal') || !reason.trim() || !['committee', 'admin'].includes(useAuthStore.getState().currentRole)) return
+        set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item,
+          appealFolder: { ...current.appealFolder!, stage: 'secretary', agendaAt: undefined, agendaNo: undefined },
+          owner: ACTOR.secretary, status: 'แฟ้มอุทธรณ์ · ส่งกลับแก้ไข', next: reason.trim(), updatedAt: new Date().toISOString(),
+        } : item) }))
+        get().logHistory(caseNo, 'ส่งแฟ้มอุทธรณ์กลับเลขาธิการฯ แก้ไข', currentActorName(ACTOR.committee), reason.trim())
       },
 
       recordAppealResolution: (caseNo, input) => {
         const current = get().getCase(caseNo)
         if (!current || isCaseClosed(current)) return
         if (hasSignedResultNotice(current) && (!['committee', 'admin'].includes(useAuthStore.getState().currentRole) || current.appealFolder?.stage !== 'agenda')) return
-        /** WIT0920 รับมาจาก WIT0919 เท่านั้น — แฟ้มที่ยังไม่บรรจุวาระจะข้ามมาบันทึกมติไม่ได้ */
+        if (!['committee', 'admin'].includes(useAuthStore.getState().currentRole) || sarabanInTransit(current, 'appeal') || !input.resolutionNo.trim() || !input.note.trim()) return
+        /** รับผลพิจารณาเมื่อแฟ้มผ่านความเห็นตามลำดับชั้นแล้ว */
         if (current.appealResolution || (current.appealFolder && current.appealFolder.stage !== 'agenda')) return
         const overturn = input.outcome === 'overturn'
+        const targetOfficer = input.destination === 'original_owner'
+          ? ECMIS_USER_DIRECTORY.find((u) => u.id === current.assignedOfficerUserId)
+          : input.destination === 'got'
+            ? gotAssignableOfficers().find((u) => u.id === (current.gotRevision?.assigneeUserId || current.protectionHandoff?.assigneeUserId)) || gotAssignableOfficers()[0]
+            : undefined
+        const destinationPatch: Partial<CaseItem> = input.destination && targetOfficer ? {
+          gotRevision: input.destination === 'got' ? { assigneeUserId: targetOfficer.id, assigneeName: targetOfficer.name, at: nowDisplay(), by: currentActorName(ACTOR.committee) } : undefined,
+          protectionHandoff: current.protectionHandoff ? { ...current.protectionHandoff, destination: input.destination, assigneeUserId: targetOfficer.id, assigneeName: targetOfficer.name, step: 'accepted' } : undefined,
+        } : {}
         const workflowPatch: Partial<CaseItem> = {
+          ...destinationPatch,
           appealResolution: {
             ...input,
             resolvedAt: nowDisplay(),
             against: current.appealAgainst || 'kb10',
           },
           appealFolder: current.appealFolder ? { ...current.appealFolder, stage: 'resolved' } : undefined,
+          appealDueAt: undefined,
+          ...(!overturn && current.appealAgainst !== 'kb17' ? {
+            appealClosedAt: nowDisplay(),
+            appealKb10: { createdAt: nowDisplay(), fields: {
+              'คำร้องลงวันที่': current.createdAt?.slice(0, 10) || '',
+              'แจ้งผลอุทธรณ์': 'true',
+              'สาระสำคัญ': `คณะกรรมการ ป.ป.ท. มีมติที่ ${input.resolutionNo} ยกคำร้องอุทธรณ์ และยืนยันคำสั่งไม่ให้ได้รับการคุ้มครองพยาน เนื่องจาก ${input.note}`,
+            } },
+          } : {}),
           stage: overturn ? 'method_operation' : current.appealAgainst === 'kb17' ? 'terminated' : 'notice',
-          status: overturn ? 'คณะกรรมการเปลี่ยนแปลงคำสั่ง' : 'คณะกรรมการยืนคำสั่งเดิม · ปิดขั้นอุทธรณ์',
-          owner: protectionResponsibleName(current),
+          status: overturn ? 'คณะกรรมการเปลี่ยนแปลงคำสั่ง' : 'คณะกรรมการยกคำร้อง · ปิดขั้นอุทธรณ์',
+          owner: targetOfficer?.name || protectionResponsibleName(current),
           next: overturn
             ? 'ตรวจฐานคำสั่งใหม่และแยกแนวทางคุ้มครอง — ไม่สร้าง คบ.1 ใหม่'
-            : 'ทำหนังสือแจ้งผลอุทธรณ์ผ่านสารบรรณ เก็บหลักฐานการรับ และปิดขั้นอุทธรณ์',
+            : current.appealAgainst === 'kb17' ? 'ทำหนังสือแจ้งผลอุทธรณ์ผ่านสารบรรณ' : 'ปิดขั้นอุทธรณ์แล้ว · จัดทำ คบ.10 ฉบับใหม่เพื่อแจ้งผลมติคณะกรรมการ',
           activity7State: overturn ? 'approved' : 'rejected',
-          activity7Label: overturn ? 'อุทธรณ์สำเร็จ — เปลี่ยนแปลงคำสั่ง' : 'คณะกรรมการยืนคำสั่งเดิม',
+          activity7Label: overturn ? 'อุทธรณ์สำเร็จ — เปลี่ยนแปลงคำสั่ง' : 'คณะกรรมการยกคำร้อง',
         }
         set((state) => ({ cases: state.cases.map((item) => item.no === caseNo ? { ...item, ...workflowPatch, updatedAt: new Date().toISOString() } : item) }))
         get().logHistory(
           caseNo,
-          overturn ? 'มติคณะกรรมการ: เปลี่ยนแปลงคำสั่ง' : 'มติคณะกรรมการ: ยืนคำสั่งเดิม',
+          overturn ? 'มติคณะกรรมการ: เปลี่ยนแปลงคำสั่ง' : 'มติคณะกรรมการ: ยกคำร้อง',
           ACTOR.committee,
           `มติที่ ${input.resolutionNo} — ${input.note}`
         )
         if (overturn && current.appealAgainst !== 'kb17') get().prepareAppealKb6Revision(caseNo)
+        /** มติคณะกรรมการ (สำนักงานเลขาธิการ) ลงมาหน่วย ต้องผ่านธุรการสำนักงานเลขาธิการ → ธุรการหน่วย ก่อนเจ้าหน้าที่ดำเนินการต่อ */
+        get().openSarabanDispatch(caseNo, {
+          flow: 'appeal', direction: 'down', forms: [current.appealAgainst === 'kb17' ? 17 : 10],
+          subject: overturn ? 'ผลวินิจฉัยอุทธรณ์ · เพิกถอน' : 'ผลวินิจฉัยอุทธรณ์ · ยกคำร้อง',
+        })
       },
 
       /**
@@ -5022,11 +6520,13 @@ export const useCaseStore = create<CaseState>()(
        *
        * ผังกำหนดสามอย่างที่ต้องเกิดจริง: จัดทำหนังสือ · ส่งผ่านระบบสารบรรณเดิม ·
        * เก็บหลักฐานการรับ แล้วจึงถือว่าขั้นอุทธรณ์ปิดสมบูรณ์ — มติอย่างเดียวไม่พอ
-       * ใช้ได้ทั้งแขนงยืนคำสั่งเดิมและแขนงเปลี่ยนคำสั่ง เพราะผังให้แจ้งผลทั้งสองทาง
+       * ใช้ได้ทั้งแขนงยกคำร้องและแขนงเปลี่ยนคำสั่ง เพราะผังให้แจ้งผลทั้งสองทาง
        */
       recordAppealNotice: (caseNo, input) => {
         const current = get().getCase(caseNo)
         if (!current?.appealResolution) return
+        /** ผลวินิจฉัยยังอยู่ระหว่างธุรการลงทะเบียนนำส่ง — เจ้าหน้าที่ยังไม่ได้รับ */
+        if (sarabanInTransit(current, 'appeal')) return
         const officer = current.assignedOfficer || ACTOR.appeal
         const uphold = current.appealResolution.outcome === 'uphold'
         get().updateCase(caseNo, {
@@ -5084,10 +6584,13 @@ export const useCaseStore = create<CaseState>()(
       addExtraForm: (caseNo, formNo) => {
         const current = get().getCase(caseNo)
         if (!current) return
-        const extras = current.extraForms || []
-        if (extras.includes(formNo)) return
+        if (!FORMS_CATALOG.some((form) => form.n === formNo)) return
+        const forms = useFormDraftStore.getState()
+        const fields = structuredClone(forms.draftCaseNo[formNo] === caseNo ? forms.drafts[formNo] || {} : forms.caseDrafts[caseNo]?.drafts[formNo] || {})
         get().updateCase(caseNo, {
-          extraForms: [...extras, formNo],
+          attachedFormCopies: [...(current.attachedFormCopies || []), {
+            id: crypto.randomUUID(), formNo, createdAt: new Date().toISOString(), fields,
+          }],
         })
       },
 
@@ -5106,6 +6609,10 @@ export const useCaseStore = create<CaseState>()(
     }),
     {
       name: 'ecmis-case-storage-v2',
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<typeof current> | undefined
+        return { ...current, ...saved, cases: (saved?.cases || current.cases).map(restorePostalReceipt).map(restoreReferralCommitteeRoute) }
+      },
     }
   )
 )

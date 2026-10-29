@@ -15,6 +15,8 @@ export interface MethodStep {
   code: string
   label: string
   done: boolean
+  /** ขั้นที่ไม่ต้องทำในรอบนี้ — นับเป็นผ่านแต่แถบความคืบหน้าแสดงต่างจากขั้นที่ทำจริง */
+  skipped?: boolean
 }
 
 export interface MethodProgress {
@@ -220,9 +222,28 @@ export const getMethodProgress = (
  * รวมศูนย์ไว้ที่เดียวเพื่อไม่ให้แต่ละแผง (Method1-4 ใน MethodPanels.tsx) คิดเงื่อนไขของตัวเองซ้ำกัน
  * และเพื่อให้ store (setMethodStatus) บังคับซ้ำชั้นสุดท้ายด้วยกติกาเดียวกับที่ UI แสดง
  */
+/**
+ * เจ้าหน้าที่ กอท. เลือกแนวทางและเปิดงานตามวิธีคุ้มครองแล้ว
+ * เคสที่เริ่มทำงานในวิธีใดไปแล้วก่อนมีขั้นเลือกแนวทาง ถือว่าเปิดงานแล้วเช่นกัน
+ */
+export const methodWorkOpened = (caseItem: CaseItem): boolean =>
+  Boolean(caseItem.methodChoice) || (caseItem.methodTracks || []).some((t) =>
+    t.status !== 'pending' || t.startedAt || (t.wizardStep || 0) > 0 || t.coordination?.responseStatus)
+
+/** มีวิธีที่กำลังคุ้มครองอยู่ — รวมงานคุ้มครองชั่วคราวตาม คบ.5 ที่แยกออกแล้วแต่ยังไม่ปิด */
+export const anyMethodActive = (caseItem: CaseItem): boolean =>
+  (caseItem.methodTracks || []).some((t) => t.status === 'active') ||
+  Boolean(caseItem.temporaryProtection && !caseItem.temporaryProtection.closedAt && caseItem.temporaryProtection.methodTracks.some((t) => t.status === 'active'))
+
+/** หนังสือวิธีที่ 4 ของชุดงานปัจจุบัน — ไม่รวมหนังสือของงานคุ้มครองชั่วคราวที่แยกออกไปแล้ว */
+export const currentMethod4Letters = (caseItem: CaseItem) => {
+  const temporaryIds = caseItem.temporaryProtection?.letterIds || []
+  return (caseItem.officialLetters || []).filter((l) => l.context === 'method4' && !temporaryIds.includes(l.id))
+}
+
 export const method4ReplyRecorded = (caseItem: CaseItem): boolean => {
   const co = caseItem.methodTracks?.find((track) => track.method === 4)?.coordination
-  const letters = caseItem.officialLetters || []
+  const letters = currentMethod4Letters(caseItem)
   return co?.responseStatus === 'accepted' && letters.some((letter) => letter.context === 'method4' && letter.direction === 'outgoing' && Boolean(letter.sentAt)) &&
     letters.some((letter) => letter.context === 'method4' && letter.direction === 'incoming' && Boolean(letter.receivedAt && letter.documentName) && letter.subject === 'หนังสือตอบรับดำเนินการคุ้มครองพยาน')
 }
@@ -235,7 +256,7 @@ export function methodStartBlocker(
   const t = track || (caseItem.methodTracks || []).find((x) => x.method === method)
   if (caseItem.activity7State === 'approved' && currentPhaseKind(caseItem.episode || deriveEpisode(caseItem)) !== 'TEMPORARY' && !caseItem.kb5Approved && (!caseItem.kb11Signed || !kb11Gate(caseItem).unlocked)) return 'ต้องแจ้งผล คบ.9 บันทึกการรับแจ้ง และลงนามข้อตกลง คบ.11 ให้ครบก่อนเริ่มคุ้มครอง'
 
-  if (method === 4 && !method4ReplyRecorded(caseItem)) return 'ต้องนำส่งหนังสือประสานและแนบหนังสือตอบรับจากสถานีตำรวจก่อนเริ่มคุ้มครอง'
+  if (method === 4 && !method4ReplyRecorded(caseItem)) return `ต้องนำส่งหนังสือประสานและแนบหนังสือตอบรับจาก${(t?.coordination?.agencyType || 'police') === 'police' ? 'สถานีตำรวจ' : 'หน่วยงาน'}ก่อนเริ่มคุ้มครอง`
 
   /**
    * เพดาน 180 วันของ Episode — ใช้กับทุกวิธี ไม่ใช่เฉพาะวิธีที่ 1

@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { Button } from '../common/Button'
 import { CaseItem } from '../../types/case'
 import { TERMINATION_TRIGGERS } from '../../lib/constants'
+import { isTerminationAppealable, terminationClauseLabel } from '../../lib/terminationProgress'
 import { Kb15ReviewActions } from './Kb15ReviewActions'
 
 interface Kb15ReviewModalProps {
@@ -81,6 +82,12 @@ export const Kb15ReviewModal: React.FC<Kb15ReviewModalProps> = ({ caseItem, open
                   {TERMINATION_TRIGGERS.find((t) => t.value === kb15.trigger)?.label || kb15.trigger}
                   {kb15.triggerRef ? ` · อ้างอิง ${kb15.triggerRef}` : ''}
                 </div>
+                {kb15.regulationClause && (
+                  <div>
+                    <strong>เหตุสิ้นสุดตามระเบียบ:</strong> {terminationClauseLabel(kb15.regulationClause)} ·{' '}
+                    {kb15.regulationClause === 4 ? 'ข้อ 19' : 'เหตุสิ้นสุดตามข้อ 18'}
+                  </div>
+                )}
                 {(kb15.triggerDocumentName || trigger?.documentName) && (
                   <div className="text-muted">
                     <i className="fa-solid fa-paperclip mr-1" />

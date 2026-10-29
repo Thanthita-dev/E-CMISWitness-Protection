@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { KB1_DONE, linkMainCaseAsOfficer, readCase, seedMockState, switchRole } from '../helpers/seed'
 
 /**
  * FB-2 / FB-3 — ข้อเสนอแนะจากผู้ใช้ (E-CMIS_UserTest_Feedback_TestCases.xlsx)
@@ -7,13 +7,13 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * FB-2: กล่องสรุปข้อมูลแฟ้ม "สรุปข้อมูลแฟ้ม" ต้องแสดงผลประเมินความเร่งด่วนที่ถูกต้องเสมอ (TC-003 .. TC-005)
  * FB-3: การ์ด "แบบฟอร์ม คบ. ในแฟ้มนี้" ต้องแสดงชุดแบบฟอร์มให้ตรงกับเส้นทางที่ประเมินไว้ (TC-006 .. TC-008)
  *
- * หมายเหตุการแมปเคส: ชีททดสอบอ้างคดี WP-2569-000502 / 000503 ซึ่งไม่มีอยู่จริงในระบบ (มี mock state
- * เดียวคือ WP-2569-000501 ในทุกไฟล์ src/mock-states/*.json) — ทุกเทสต์ในไฟล์นี้จึงใช้ WP-2569-000501
+ * หมายเหตุการแมปเคส: ชีททดสอบอ้างคดี 0502/2569 / 000503 ซึ่งไม่มีอยู่จริงในระบบ (มี mock state
+ * เดียวคือ 0501/2569 ในทุกไฟล์ src/mock-states/*.json) — ทุกเทสต์ในไฟล์นี้จึงใช้ 0501/2569
  * ร่วมกับ mock state ที่ใกล้เคียงขั้นตอนที่ต้องการทดสอบที่สุด (ระบุไว้ในแต่ละเทสต์)
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const KB4_FORM_URL = `/form/4?caseNo=${CASE_NO}`
 
 /** ช่องแสดงค่า "ความเร่งด่วน:" ในกล่อง "สรุปข้อมูลแฟ้ม" ทางขวาของแฟ้ม */
@@ -39,10 +39,12 @@ test.describe('FB-2 · กล่องสรุปข้อมูลแฟ้ม
   test('TC-003 · ประเมินเป็น "ไม่เร่งด่วน (กรณีปกติ)" ครั้งแรก แล้วสรุปข้อมูลแฟ้มต้องอัปเดตและคงอยู่หลังรีโหลด', async ({
     page,
   }) => {
-    // ไม่มี Case 1.x ที่ตรงกับ WP-2569-000502 ในชีท — ใช้ Case 1.3 (staff_review, ยังไม่ประเมินความเร่งด่วน)
+    // ไม่มี Case 1.x ที่ตรงกับ 0502/2569 ในชีท — ใช้ Case 1.3 (staff_review, ยังไม่ประเมินความเร่งด่วน)
     // ซึ่งเป็นขั้นที่ใกล้เคียงที่สุดกับ "เปิดคำร้อง → ไปประเมินความเร่งด่วน" ตามที่ TC-003 ต้องการ
-    await seedMockState(page, 'Case 1.3', 'officer')
+    // ลำดับงาน: บันทึก คบ.1 แล้ว → เชื่อมโยงคดีหลัก → แผงกลั่นกรองจึงแสดง
+    await seedMockState(page, 'Case 1.3', 'officer', KB1_DONE)
     await page.goto(DOSSIER_URL)
+    await linkMainCaseAsOfficer(page)
 
     // ก่อนประเมิน กล่องสรุปต้องยังไม่ระบุผล
     await expect(urgencySummaryValue(page)).toHaveText('ยังไม่ประเมิน')
@@ -84,7 +86,7 @@ test.describe('FB-2 · แก้ไขผลประเมินจาก "ไ�
     page,
   }) => {
     // Case 1.4 — supervisor_review ที่ประเมินไว้แล้วว่า "กรณีปกติ" ตรงกับสถานะตั้งต้นของ TC-004 มากที่สุด
-    // (ไม่มี Case ที่ตรงกับ WP-2569-000503 ในชีท) ผู้แก้ไขในขั้นนี้คือผู้บังคับบัญชาชั้นต้น (WIT0410)
+    // (ไม่มี Case ที่ตรงกับ 0503/2569 ในชีท) ผู้แก้ไขในขั้นนี้คือผู้บังคับบัญชาชั้นต้น (WIT0410)
     await seedMockState(page, 'Case 1.4', 'supervisor')
     await page.goto(DOSSIER_URL)
 
@@ -144,8 +146,8 @@ test.describe('FB-2 · แฟ้มที่ยังไม่ประเมิ
     // คบ.6 เข้ารายการล่วงหน้า (เดิมสันนิษฐานว่า "กรณีปกติ" ไปก่อนทันที)
     await expect(formRow(page, 'คบ.6')).toHaveCount(0)
 
-    // ต้องมีข้อความแนะนำให้ประเมินความเร่งด่วนก่อนจึงจะเห็นแบบฟอร์มเส้นทางถัดไป
-    await expect(page.getByText(/ประเมินความเร่งด่วนก่อน|กรุณาประเมินความเร่งด่วน/)).toBeVisible()
+    // คบ.3 เข้าแฟ้มหลังกลั่นกรองแล้วเท่านั้น (ลำดับ คบ.1 → เชื่อมโยงคดีหลัก → กลั่นกรอง → คบ.3)
+    await expect(formRow(page, 'คบ.3')).toHaveCount(0)
   })
 })
 

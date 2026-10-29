@@ -239,6 +239,30 @@ export function summarizeEpisode(episode?: ProtectionEpisode, asOf?: string | Da
 }
 
 /**
+ * เสนอส่งต่อหน่วยงานอื่นตามข้อ 14 ก่อนครบ 6 เดือน — ยังเหลือเกิน NEAR_CAP_WINDOW_DAYS
+ * เส้นนี้ต้องผ่านคณะกรรมการหลังเลขาธิการเห็นชอบ ส่วนช่วงใกล้ครบ/ครบเพดานใช้สายเดิม
+ */
+export const isEarlyArticle14 = (summary: EpisodeSummary): boolean => !summary.atCap && !summary.nearCap
+
+const CLOSED_STAGES = ['terminated', 'transferred', 'withdrawn']
+
+/** เริ่มคุ้มครองจริงแล้วและยังไม่ปิดงาน — เสนอส่งต่อหน่วยงานอื่นตามข้อ 14 ได้ทุกเมื่อ ไม่ต้องรอใกล้ครบเพดาน */
+export function canProposeArticle14(caseItem: CaseItem): boolean {
+  if (CLOSED_STAGES.includes(caseItem.stage)) return false
+  return Boolean(caseItem.actualStartedAt || caseItem.episode?.phases.length)
+}
+
+/** แฟ้มเลือกวิธีที่ 4 (ประสานงานหน่วยงานอื่น) ไว้แล้ว — ใน คบ.4/คบ.6 คำสั่ง หรือเส้นทางปฏิบัติ */
+export function selectedMethod4(caseItem: CaseItem): boolean {
+  return [caseItem.orderedMethods, caseItem.approvedMethods, caseItem.fastTrack?.proposedMethods, caseItem.methodTracks?.map((t) => t.method)]
+    .some((methods) => methods?.includes(4))
+}
+
+/** เรื่องที่เริ่มคุ้มครองแล้วเสนอส่งต่อได้ รวมถึงเรื่องที่กำลังใช้วิธีที่ 4 */
+export const canProposeAgencyReferral = (caseItem: CaseItem): boolean =>
+  canProposeArticle14(caseItem)
+
+/**
  * ย้อนสร้าง Episode จากสำนวนเดิมที่บันทึกไว้ก่อนมีโมเดลนี้
  * ใช้ actualStartedAt เป็นวันเริ่มจริง และเดา Phase จากคำสั่งที่มี
  */

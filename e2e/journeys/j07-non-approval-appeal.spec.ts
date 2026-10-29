@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
 import { checkNoticeReady, completeNoticeDetails } from '../helpers/noticeDocuments'
 import {
   CASE_NO,
@@ -23,13 +24,13 @@ import {
  *       → ◇ WIT0908 ประสงค์อุทธรณ์? ใช่ → WIT0910 รับคำอุทธรณ์เข้าแฟ้มเดิม / ไม่ → WIT0909 ปิดเรื่อง
  *   09B WIT0911-0913 รับอุทธรณ์/ผูกกับแฟ้มเดิม → WIT0914 ตรวจครบถ้วน/คำนวณ 30 วัน → WIT0915 เจ้าหน้าที่
  *       → WIT0916 ผบช.ชั้นต้น/ผอ. → WIT0917 รองเลขาธิการฯ → WIT0918 เลขาธิการฯ → WIT0919 บรรจุวาระ
- *       → ◇ WIT0920 คณะกรรมการวินิจฉัย: ยืนคำสั่งเดิม → WIT0921 ปิดขั้นอุทธรณ์ / เปลี่ยนคำสั่ง → WIT0922 กลับ 08A
+ *       → ◇ WIT0920 คณะกรรมการวินิจฉัย: ยกคำร้อง → WIT0921 ปิดขั้นอุทธรณ์ / เปลี่ยนคำสั่ง → WIT0922 กลับ 08A
  *
- * ทางหลัก (J07) เริ่มที่ Case 1.7 (ก่อนเลขาธิการฯ ตัดสิน) แล้วเดินผ่าน UI ล้วนจนคณะกรรมการยืนคำสั่งเดิม
+ * ทางหลัก (J07) เริ่มที่ Case 1.7 (ก่อนเลขาธิการฯ ตัดสิน) แล้วเดินผ่าน UI ล้วนจนคณะกรรมการยกคำร้อง
  * ทางแยกเริ่มที่ Case 4 (ร่าง คบ.10) แล้วเดินผ่าน UI ไปจนจบแขนงนั้น
  */
 
-const APPEAL_URL = `/appeal-folder/${CASE_NO}`
+const APPEAL_URL = `/appeal-folder/${encodeURIComponent(CASE_NO)}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const DEPUTY = 'นายพิพัฒน์ ศรีสุวรรณ'
 const SECRETARY = 'นายสุรศักดิ์ ธรรมพิทักษ์'
@@ -55,6 +56,9 @@ async function officerSubmitsScreening(page: Page, note: string) {
   await page.getByTestId('kb10-readiness-note').fill(note)
   await page.getByTestId('kb10-submit-screening').click()
   await confirmDialog(page, 'ยืนยันเสนอกลั่นกรอง', 'รองเลขาธิการฯ')
+  // คบ.10 ออกจากหน่วยไปสำนักงานเลขาธิการ ต้องผ่านธุรการหน่วย → ธุรการ สลธ.
+  for (const clerk of ['receiver', 'secretary_receiver'] as const) await passSarabanCheckpoint(page, CASE_NO, clerk)
+  await page.goto(DOSSIER_URL)
 }
 
 /** WIT0905 — รองเลขาธิการฯ กลั่นกรองผ่าน */
@@ -128,6 +132,13 @@ async function giveOpinion(page: Page, role: string | null, note: string, expect
   await page.getByTestId('appeal-opinion-note').fill(note)
   await page.getByTestId('appeal-opinion-submit').click()
   await confirmDialog(page, 'ยืนยัน', expectedText)
+  if (role === 'director') await passAppealClerks(page, ['receiver', 'secretary_receiver'])
+}
+
+/** ผ่านธุรการตามลำดับ แล้วกลับมาหน้าแฟ้มอุทธรณ์ */
+async function passAppealClerks(page: Page, order: Array<'receiver' | 'secretary_receiver'>) {
+  for (const clerk of order) await passSarabanCheckpoint(page, CASE_NO, clerk)
+  await page.goto(`/appeal-folder/${encodeURIComponent(CASE_NO)}`)
 }
 
 /** WIT0914 → WIT0919 — ตรวจครบถ้วนแล้วเดินลำดับชั้นจนฝ่ายเลขานุการบรรจุวาระ (เริ่มที่เจ้าหน้าที่) */
@@ -159,7 +170,7 @@ async function officerRecordsAppealNotice(page: Page, registryNo: string, expect
 }
 
 test.describe('J07 · ไม่อนุมัติและอุทธรณ์ (07 → 09A → 09B)', () => {
-  test('J07 · ไม่อนุมัติ → คบ.10 แจ้งสิทธิอุทธรณ์ → พยานอุทธรณ์ในแฟ้มเดิม → ลำดับชั้น → คณะกรรมการยืนคำสั่งเดิม', async ({ page }) => {
+  test('J07 · ไม่อนุมัติ → คบ.10 แจ้งสิทธิอุทธรณ์ → พยานอุทธรณ์ในแฟ้มเดิม → ลำดับชั้น → คณะกรรมการยกคำร้อง', async ({ page }) => {
     test.setTimeout(300_000)
     await seedMockState(page, 'Case 1.7', 'secretary')
 
@@ -388,7 +399,7 @@ test.describe('J07 · ไม่อนุมัติและอุทธรณ�
       expect(folder.agendaNo).toContain('9/2569')
     })
 
-    await test.step('WIT0920 · ◇ คณะกรรมการวินิจฉัย: ยืนคำสั่งเดิม (ยกเลิกในจอยืนยันก่อน แล้วยืนยันจริง)', async () => {
+    await test.step('WIT0920 · ◇ คณะกรรมการวินิจฉัย: ยกคำร้อง (ยกเลิกในจอยืนยันก่อน แล้วยืนยันจริง)', async () => {
       await page.getByTestId('appeal-resolution-no').fill('มติที่ 55/2569')
       await page.getByTestId('appeal-resolution-note').fill('พยานหลักฐานใหม่ไม่เปลี่ยนสาระสำคัญของคำสั่งเดิม')
       await page.getByTestId('appeal-resolution-uphold').click()
@@ -396,7 +407,8 @@ test.describe('J07 · ไม่อนุมัติและอุทธรณ�
       expect((await caseOf(page)).appealResolution).toBeFalsy()
 
       await page.getByTestId('appeal-resolution-uphold').click()
-      await confirmDialog(page, 'ยืนยันมติยืนคำสั่งเดิม', 'เป็นที่สุด')
+      await confirmDialog(page, 'ยืนยันมติยกคำร้อง', 'เป็นที่สุด')
+      await passAppealClerks(page, ['secretary_receiver', 'receiver'])
       const c = await caseOf(page)
       expect(c.appealResolution.outcome).toBe('uphold')
       expect(c.appealFolder.stage).toBe('resolved')
@@ -404,7 +416,7 @@ test.describe('J07 · ไม่อนุมัติและอุทธรณ�
       expect(c.appealResolution.noticeRecordedAt).toBeFalsy()
     })
 
-    await test.step('WIT0921 · ยืนคำสั่งเดิม — เจ้าหน้าที่ทำหนังสือแจ้งผลอุทธรณ์ เก็บหลักฐานรับ และปิดขั้นอุทธรณ์', async () => {
+    await test.step('WIT0921 · ยกคำร้อง — เจ้าหน้าที่ทำหนังสือแจ้งผลอุทธรณ์ เก็บหลักฐานรับ และปิดขั้นอุทธรณ์', async () => {
       await switchRole(page, 'officer')
       await page.getByTestId('appeal-notice-document').fill('หนังสือแจ้งผลอุทธรณ์_สมชาย.pdf')
       // ขาดเลขทะเบียนส่ง — จอยืนยันต้องไม่ขึ้น
@@ -421,7 +433,7 @@ test.describe('J07 · ไม่อนุมัติและอุทธรณ�
       expect(notice.noticeAckDocument).toContain('EMS')
       await expect(page.getByTestId('appeal-notice-done')).toContainText('แจ้งผลอุทธรณ์ให้พยานแล้ว')
       await expect(page.getByTestId('appeal-notice-form')).toHaveCount(0)
-      // ยืนคำสั่งเดิม = ไม่อนุมัติต่อไป ไม่กลับเข้า 08A
+      // ยกคำร้อง = ไม่อนุมัติต่อไป ไม่กลับเข้า 08A
       expect((await caseOf(page)).activity7State).not.toBe('approved')
     })
   })
@@ -457,6 +469,7 @@ test.describe('J07 · ไม่อนุมัติและอุทธรณ�
       await page.getByTestId('appeal-resolution-note').fill('พยานหลักฐานใหม่รับฟังได้ ให้เปลี่ยนแปลงคำสั่งเดิม')
       await page.getByTestId('appeal-resolution-overturn').click()
       await confirmDialog(page, 'ยืนยันมติเปลี่ยนแปลงคำสั่ง', 'ไม่สร้าง คบ.1 ใหม่')
+      await passAppealClerks(page, ['secretary_receiver', 'receiver'])
       expect((await caseOf(page)).appealResolution.outcome).toBe('overturn')
     })
 

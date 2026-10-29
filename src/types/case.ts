@@ -60,7 +60,18 @@ export interface IntakeDocument {
  * → pending (เสนอตามลำดับชั้นถึงผู้มีอำนาจ WIT1120) → approved/rejected (WIT1121)
  * ฉบับหนังสือและความเห็นเดินผ่านผู้บังคับบัญชาชั้นต้น ผอ. รองเลขาธิการ และเลขาธิการ
  */
+/** ผู้ลงนาม คบ.6 ฉบับขยายเวลา — ลำดับเดียวกับ approvalStage ของ คบ.14 */
+export type ExtensionKb6SignerRole = 'supervisor' | 'director' | 'deputy' | 'secretary'
+export interface ExtensionDocSignature { at: string; by: string; opinion?: string }
+
 export interface ExtensionRequest {
+  /** เลขรุ่นภายในของ คบ.6 ที่แนบเป็นบันทึกเพิ่มเติมของรอบขยายเวลานี้ (ผู้ใช้เห็นเป็น "บันทึกเพิ่มเติม ครั้งที่ N") */
+  docVersion?: number
+  /** เลขรุ่นภายในของ คบ.3 ที่แนบเป็นบันทึกเพิ่มเติมของรอบนี้ — ไม่มีในข้อมูลเก่า ให้ใช้ docVersion แทน */
+  kb3DocVersion?: number
+  kb3Snapshot?: Record<string, any>
+  kb6Snapshot?: Record<string, any>
+  kb6Signatures?: Partial<Record<ExtensionKb6SignerRole, ExtensionDocSignature>>
   formSnapshot?: Record<string, any>
   approvalStage?: 'supervisor' | 'director' | 'deputy_secretary' | 'secretary'
   approvalHistory?: Array<{ role: string; by: string; at: string; note: string; endorsed: boolean }>
@@ -101,13 +112,39 @@ export interface ExtensionRequest {
   submittedBy?: string
   /** WIT1122 — ล็อกฉบับลงนามหลังอนุมัติ แก้ไม่ได้อีก */
   locked?: boolean
+  /** เจ้าของสำนวนรับทราบผลพิจารณาของเลขาธิการแล้ว (ป็อปอัปแจ้งผลจะไม่ขึ้นซ้ำ) */
+  ownerAcknowledgedAt?: string
+  ownerAcknowledgedBy?: string
   decidedAt?: string
   decidedBy?: string
   decisionNote?: string
 }
 
+/** แหล่งรายงานของรอบ — คบ.13 ที่จัดทำเอง หรือหนังสือรายงานจากหน่วยงานภายนอกที่ใช้แทน คบ.13 */
+export type MonthlyReportSource = 'kb13' | 'external'
+
+/** หนังสือรายงานผลการคุ้มครองที่หน่วยงานภายนอกส่งมา — ไม่มีแบบฟอร์ม เจ้าหน้าที่บันทึกรับและแนบไฟล์ */
+export interface ExternalReportLetter {
+  /** หน่วยงานผู้ส่ง เช่น สถานีตำรวจที่ปฏิบัติการคุ้มครอง */
+  agency: string
+  letterNo: string
+  /** ลงวันที่หนังสือ (YYYY-MM-DD) */
+  letterDate: string
+  /** วันที่ ป.ป.ท. รับหนังสือ (YYYY-MM-DD) */
+  receivedAt: string
+  receiveNo: string
+  documentName: string
+  documentUrl: string
+  recordedAt: string
+  recordedBy: string
+}
+
 export interface MonthlyReport {
   id: string
+  /** ไม่ระบุถือเป็น 'kb13' เพื่อให้ข้อมูลเดิมทำงานตามเดิม */
+  source?: MonthlyReportSource
+  /** ใช้เมื่อ source = 'external' แทนการจัดทำและลงนาม คบ.13 (WIT1005-WIT1007) */
+  externalLetter?: ExternalReportLetter
   period: string
   submittedAt: string
   submittedBy: string
@@ -146,6 +183,8 @@ export interface MonthlyReport {
 /** WIT1004 — ข้อมูลที่ใช้เปิดรอบรายงานใหม่ */
 export interface OpenKb13RoundInput {
   period: string
+  /** เจ้าหน้าที่เลือกตอนเปิดรอบว่ารอบนี้รายงานด้วย คบ.13 หรือหนังสือจากหน่วยงานภายนอก */
+  source?: MonthlyReportSource
   periodFrom?: string
   periodTo?: string
   evidenceRefs?: string[]
@@ -171,6 +210,8 @@ export interface ReviewHandoff {
   reason: string
   /** รอบรายงานที่ใช้เป็นฐานของการทบทวน */
   reportId?: string
+  /** แหล่งรายงานของรอบที่ใช้เป็นฐาน — ให้แท็บ 11A แสดงได้ว่าเป็น คบ.13 หรือหนังสือภายนอก */
+  reportSource?: MonthlyReportSource
   period?: string
   riskLevel?: CaseItem['risk']
   orderRef?: string
@@ -267,7 +308,8 @@ export interface Article14EscalationProposal {
 }
 
 export type ProtectionHandoffDestination = 'original_owner' | 'got'
-export type ProtectionHandoffStep = 'pending_receipt' | 'received' | 'pending_assignment' | 'assigned' | 'accepted' | 'active'
+/** pending_outgoing — ธุรการสำนักงานเลขาธิการออกเลขทะเบียนส่ง (ขาออก) ก่อนส่งถึงธุรการปลายทาง */
+export type ProtectionHandoffStep = 'pending_send' | 'pending_outgoing' | 'pending_receipt' | 'received' | 'pending_assignment' | 'assigned' | 'accepted' | 'active'
 
 export interface ProtectionHandoffEvent {
   id: string
@@ -283,8 +325,80 @@ export interface ProtectionHandoffEvent {
   note: string
 }
 
+/**
+ * จุดลงทะเบียนหนังสือ (สารบรรณ) ระหว่างหน่วยงาน — ธุรการกรอก เลขรับ / วันที่ / เวลา แยกทีละ คบ.
+ * director_outgoing  — ธุรการสำนัก/กอง ออกเลขทะเบียนส่ง ก่อนเสนอรองเลขาธิการ ป.ป.ท.
+ * secretary_incoming — ธุรการสำนักงานเลขาธิการ ลงเลขทะเบียนรับ แล้วจึงส่งรองเลขาธิการ ป.ป.ท.
+ * secretary_outgoing — ธุรการสำนักงานเลขาธิการ ออกเลขทะเบียนส่ง หลังเลขาธิการ ป.ป.ท. อนุมัติ
+ * destination_incoming — ธุรการปลายทาง (ธุรการคดี กอท. หรือธุรการสำนัก/กอง เดิม) ลงเลขทะเบียนรับ
+ */
+export type SarabanCheckpoint = 'director_outgoing' | 'secretary_incoming' | 'secretary_outgoing' | 'destination_incoming'
+
+export interface SarabanRecord {
+  additionalDocuments?: { id: string; label: string; version: number }[]
+  id: string
+  checkpoint: SarabanCheckpoint
+  direction: 'outgoing' | 'incoming'
+  /** คบ. ฉบับแรกของชุด (คงไว้ให้ข้อมูลเดิมที่ลงรายฉบับยังอ่านได้) */
+  formNo: number
+  /** คบ. ทั้งหมดในชุดที่เลขนี้ครอบคลุม — เลขสารบรรณออกต่อผู้รับหนึ่งราย ไม่ใช่ต่อ คบ. (ไม่มี = ข้อมูลเดิม ใช้ formNo) */
+  forms?: number[]
+  /** ผู้รับที่เลขนี้ออกให้ (ไม่มี = ผู้รับตั้งต้นของจุดนั้น) */
+  recipient?: string
+  /** เลขรับ / เลขทะเบียนส่ง ตามที่ธุรการกรอก */
+  number: string
+  /** เลขที่หนังสือ แยกจากเลขทะเบียนส่งของหน่วยงาน */
+  documentNumber?: string
+  /** ค่าจัดเก็บ ISO yyyy-mm-dd (แสดงผลเป็นวันที่ไทย พ.ศ.) */
+  date: string
+  /** HH:mm */
+  time: string
+  /** หน่วยงานที่ลงทะเบียน — ใช้เป็นหัวตราประทับ */
+  unitName: string
+  clerkUserId: string
+  clerkName: string
+  recordedAt: string
+  /** รอบการเสนอ — ตีกลับแล้วเสนอใหม่ต้องลงเลขรอบใหม่ */
+  round: number
+  /** เรื่องของชุดนำส่ง (ไม่มี = ชุดเสนอคำร้องหลัก) */
+  subject?: string
+}
+
+/** เรื่องที่นำส่งผ่านธุรการ (นอกจากชุดเสนอคำร้องหลักที่เดินตาม stage) */
+export type SarabanDispatchFlow = 'kb14' | 'article14' | 'termination' | 'appeal' | 'kb8' | 'kb10' | 'decision'
+
+/**
+ * ชุดนำส่งระหว่างหน่วย (เขต / กอท. / สำนัก/กอง) กับสำนักงานเลขาธิการ — ต้องผ่านธุรการทั้งสองฝั่งเสมอ
+ * up:   ธุรการหน่วย ออกเลขส่ง (director_outgoing) → ธุรการ สลธ. ลงเลขรับ (secretary_incoming) → ผู้รับ
+ * down: ธุรการ สลธ. ออกเลขส่ง (secretary_outgoing) → ธุรการหน่วย ลงเลขรับ (destination_incoming) → ผู้รับ
+ * ระหว่างนำส่ง ผู้รับยังทำงานต่อไม่ได้ เมื่อลงเลขรับครบ ระบบคืน owner/status/next ที่เรื่องนั้นตั้งไว้ให้ผู้รับ
+ */
+export interface SarabanDispatch {
+  postal?: { deliveredAt?: string; trackingNo: string; sentAt: string; recipient: string; address: string; recordedBy: string }
+  id: string
+  flow: SarabanDispatchFlow
+  direction: 'up' | 'down'
+  checkpoint: SarabanCheckpoint
+  /** คบ. ที่ธุรการต้องลงเลขทะเบียนทุกฉบับ */
+  forms: number[]
+  /** เรื่องที่นำส่ง เช่น "คบ.14 บันทึกเพิ่มเติม ครั้งที่ 1 · ขอขยายระยะเวลา" */
+  subject: string
+  /** ธุรการฝั่งหน่วย — ธุรการคดี กอท. หรือธุรการสำนัก/กอง/เขต */
+  unitClerkRole: 'receiver' | 'got_receiver'
+  unitId: string
+  /** รอบทะเบียนของชุดนี้ (ไม่ชนกับเลขของชุดอื่น) */
+  round: number
+  /** ผู้รับเมื่อนำส่งถึง */
+  recipientName: string
+  deliveredStatus: string
+  deliveredNext: string
+  openedAt: string
+  openedBy: string
+}
+
 /** การส่งงานหลังอนุมัติ ใช้แฟ้มเดิมและแยกจากผลพิจารณาคำร้องหลัก */
 export interface ProtectionHandoff {
+  postal?: SarabanDispatch['postal']
   destination: ProtectionHandoffDestination
   step: ProtectionHandoffStep
   originalOwnerUserId: string
@@ -298,8 +412,42 @@ export interface ProtectionHandoff {
 }
 
 export interface CaseItem {
+  policeLetters?: import("../lib/policeLetters").PoliceLetterBundle
+  /** คบ.3/คบ.6 ฉบับใหม่ที่จัดทำเพื่อขยายเวลาในรอบ round (คบ.3/คบ.6 ฉบับที่ kb3Version/kb6Version) */
+  extensionDocs?: { round: number; kb3Version: number; kb6Version: number; preparedAt: string; preparedBy: string }
   protectionHandoff?: ProtectionHandoff
+  /** ทะเบียนหนังสือรับ-ส่งของทุก คบ. ในแฟ้ม (ดู SarabanCheckpoint) */
+  sarabanRecords?: SarabanRecord[]
+  /** ผู้รับเพิ่มเติมที่ธุรการเพิ่มในจุดลงทะเบียนหนึ่งของรอบหนึ่ง (นอกจากผู้รับตั้งต้น) — แต่ละรายต้องได้เลขของตนเอง */
+  sarabanRecipients?: { checkpoint: SarabanCheckpoint; round: number; name: string }[]
+  /** รอบการเสนอปัจจุบันของทะเบียนสารบรรณ — เพิ่มทุกครั้งที่ ผอ.สำนัก/กอง ส่งชุดเสนอขึ้นไป */
+  sarabanRound?: number
+  /** หน่วยงานของ ผอ.สำนัก/กอง ที่ส่งชุดเสนอ — ธุรการของหน่วยนี้เป็นผู้ออกเลขทะเบียนส่ง */
+  sarabanOriginUnitId?: string
+  /** ชุดนำส่งที่รอธุรการอยู่ (ดู SarabanDispatch) */
+  sarabanDispatch?: SarabanDispatch
   demoData?: boolean
+  /**
+   * เรื่องที่ย้ายมาจากระบบเดิม — มีค่าแล้วถือว่าสิ้นสุดและเปิดดูได้อย่างเดียว (isCaseClosed)
+   * migratedFiles คือไฟล์ที่ถ่ายโอนมาพร้อมเรื่อง ใช้แสดงอ้างอิงเท่านั้น
+   */
+  legacySource?: {
+    system: string
+    runId?: string
+    sourceCaseNo?: string
+    sourceUnit?: string
+    migratedFiles?: Array<{
+      fileId: string
+      docCategory: string
+      docLabel: string
+      fileName: string
+      mimeType?: string
+      objectKey?: string
+      objectVersion?: string
+      srcPath?: string
+      fileMtime?: string
+    }>
+  }
   no: string
   form: string
   person: string
@@ -370,6 +518,9 @@ export interface CaseItem {
   kb8Version?: number
   kb8PreviousVersions?: Kb8Revision[]
   extraForms?: number[]
+  approvalNoticeSignature?: import('../lib/noticeDocuments').NoticeSnapshot
+  coordinationApproval?: import('../lib/approvalCoordination').CoordinationApproval
+  attachedFormCopies?: { id: string; formNo: number; createdAt: string; fields: Record<string, any> }[]
   linkedMainCaseId?: string
   mainCaseNo?: string
   mainCaseTitle?: string
@@ -391,6 +542,8 @@ export interface CaseItem {
   /** ผู้ใช้ที่รับเรื่องเข้าระบบ — ถ้าเป็นเจ้าหน้าที่ ป.ป.ท./เจ้าของสำนวนที่รับเองจาก คบ.1/คบ.2 ให้สิทธิ์เห็น/แก้ไขแบบฟอร์มได้ทันทีแม้ยังไม่ได้รับมอบหมายจาก ผอ. */
   receivedByUserId?: string
   intakeUnit?: string
+  /** เลขสารบัญที่ผู้รับเรื่องกรอกตอนรับเอกสารต้นทางเข้าทะเบียน (กรอกอิสระ) */
+  archiveNo?: string
   orgUnitId?: string
   createdAt?: string
   updatedAt?: string
@@ -430,6 +583,8 @@ export interface CaseItem {
   /** ขั้นที่ 1 — คบ.2 บันทึกไว้ก่อน ยังรอพยานเข้ามาลงนาม คบ.1 */
   kb1SignaturePending?: boolean
   kb1SignedAt?: string
+  /** บันทึกแบบ คบ.1 ของแฟ้มนี้แล้ว — ปลดล็อกขั้นเชื่อมโยงคดีหลักและกลั่นกรองความเร่งด่วน */
+  kb1CompletedAt?: string
   /** ขั้นที่ 1 — ค้นหาแล้วไม่พบเลขคดีหลักจากกิจกรรม 4/5 */
   mainCaseNotFound?: boolean
   /** ขั้นที่ 1 — เหตุผลที่เชื่อมโยงเลขสำนวนหลักไม่ได้ บังคับบันทึกก่อนตั้งสถานะ "ไม่พบคดี" (WIT0215) */
@@ -448,6 +603,8 @@ export interface CaseItem {
   /** TC-161 — รอบ Revision ของ คบ.3 (ฉบับที่ 1 = ฉบับแรก) ฉบับเดิมถูกเก็บไว้ใน kb3PreviousVersions ไม่แก้ทับ */
   kb3Version?: number
   kb3PreviousVersions?: FormRevisionEntry[]
+  /** หนังสือแจ้งให้มีมาตรการช่วยเหลือแก่พยาน (แบบ 18, เรื่องส่งต่อกรมคุ้มครองสิทธิฯ) — ฉบับเดิมที่ถูกส่งคืนแก้ไข เก็บไว้เป็นประวัติ */
+  article14LetterPreviousVersions?: Array<{ version: number; returnedAt: string; returnedBy: string; returnReason: string }>
   /** ขั้นที่ 3 — Fast Track: ส่งตรง ผอ.สำนัก/กอง โดยไม่ผ่าน ผบช.ชั้นต้น */
   fastTracked?: boolean
   /** WIT0501 — เจ้าหน้าที่เจ้าของสำนวนกดบันทึกแบบ คบ.6 ของแฟ้มนี้แล้ว (ชุดเสนอมี คบ.6 จริง) */
@@ -460,6 +617,31 @@ export interface CaseItem {
   kb6DirectorSignedBy?: string
   kb6DeputySignedAt?: string
   kb6DeputySignedBy?: string
+  /**
+   * FB-018 — ผลความเห็นรองเลขาธิการฯ ข้อ 12: เห็นควร (ส่งเลขาธิการฯ ต่อ) / ไม่เห็นควร (ต้องส่งกลับแก้ไข)
+   * ไม่ระบุ = เห็นควร (โหมดสาธิตกดผ่านได้ทันที) · ล้างเมื่อรอบนั้นถูกส่งกลับ
+   */
+  kb6DeputyOpinionChoice?: 'agree' | 'disagree'
+  /** ผลความเห็นเลขาธิการใน คบ.6 ข้อ 13 แยกจากผลของรองเลขาธิการ */
+  kb6SecretaryOpinionChoice?: 'agree' | 'disagree'
+  /** ข้อสั่งการพร้อมสำเนา คบ.6 ที่เลขาธิการลงนาม สำหรับรอบให้ดำเนินการเพิ่มเติม */
+  secretaryContinuation?: {
+    destination: 'owner' | 'got'
+    instruction: string
+    signedBy: string
+    signedAt: string
+    version: number
+    fields: Record<string, any>
+    signatures: Record<string, { signed: boolean; signerName: string; signedAt: string; signatureImage?: string }>
+  }
+
+  /** FB-018 — ปลายทางที่รองเลขาธิการฯ ส่งกลับล่าสุด: เจ้าของเรื่อง (owner) หรือ กอท. (got) */
+  returnDestination?: 'owner' | 'got'
+  /**
+   * FB-018 — รอบแก้ไขที่ กอท. รับไปทำต่อก่อนเสนออนุมัติ: ผู้รับผิดชอบ กอท. แก้ คบ.6 แล้วเสนอผ่านสาย
+   * ผบช.ต้น กอท. → ผอ. กอท. กลับถึงรองเลขาธิการฯ · ล้างเมื่อรองเลขาธิการฯ เห็นควรและส่งเลขาธิการฯ
+   */
+  gotRevision?: { assigneeUserId: string; assigneeName: string; at: string; by: string }
   kb6SecretarySignedAt?: string
   kb6SecretarySignedBy?: string
   /** TC-161 — รอบ Revision ของ คบ.6 (ฉบับที่ 1 = ฉบับแรก) ฉบับเดิมถูกเก็บไว้ใน kb6PreviousVersions ไม่แก้ทับ */
@@ -469,6 +651,7 @@ export interface CaseItem {
   preliminaryDecision?: NoticeDecisionDraft
   noticeDecisionDrafts?: Partial<Record<9 | 10, NoticeDecisionDraft>>
   preliminaryDecisionHistory?: NoticeDecisionSelectionEvent[]
+  nonApprovalDestination?: ProtectionHandoffDestination
   resultNotices?: Partial<Record<9 | 10, ResultNoticeDocument>>
   kb9Signed?: boolean
   kb10Signed?: boolean
@@ -480,6 +663,8 @@ export interface CaseItem {
   kb8SubmittedBy?: string
   kb9SignedAt?: string
   kb9SignedBy?: string
+  kb10DispatchRequestedAt?: string
+  kb10DispatchNumbering?: { number: string; registryNumber?: string; unitName?: string; date: string; at: string; by: string }
   kb10SignedAt?: string
   kb10SignedBy?: string
   /**
@@ -546,8 +731,15 @@ export interface CaseItem {
   orderedMethods?: ProtectionMethodNo[]
   /** วิธีตามข้อ 15 ที่ได้รับอนุมัติ — เลือกได้อิสระมากกว่า 1 วิธี (WIT0603 / WIT0813) */
   approvedMethods?: ProtectionMethodNo[]
+  /** การเลือกแนวทางของเจ้าหน้าที่ กอท. ตอนเปิดงาน — ดำเนินการตาม คบ.6 หรือเลือกวิธีใหม่ */
+  methodChoice?: MethodChoice
   /** เส้นทางปฏิบัติแยกรายวิธี — เปิดพร้อมกันได้ */
   methodTracks?: ProtectionMethodTrack[]
+  /**
+   * งานคุ้มครองชั่วคราวตาม คบ.5 ที่แยกออกเมื่อคำร้องหลักเปิดงานของตัวเอง (พยานลงนาม คบ.11)
+   * คำร้องหลักเริ่มชุดวิธีใหม่ใน methodTracks ส่วนชุดนี้มีผลต่อจนวิธีแรกของคำร้องหลักเริ่มปฏิบัติจริง
+   */
+  temporaryProtection?: TemporaryProtectionRecord
   /** ความยินยอมของพยานตาม คบ.11 / คบ.5 */
   consents?: ConsentRecord[]
   /** WIT0812 — ข้อเสนอแนวทางหลังพยานไม่ยินยอม ที่เสนอผ่านลำดับผู้บังคับบัญชา */
@@ -578,8 +770,12 @@ export interface CaseItem {
   terminationApproval?: TerminationApproval
   kb16?: Kb16Order
   kb17?: Kb17Notice
+  /** ปิดเฉพาะชุดเอกสาร คบ.15–17 ไม่ปิดแฟ้มส่งต่อหรืออุทธรณ์ */
+  terminationDocumentsClosedAt?: string
   /** อุทธรณ์คำสั่งยุติ (คบ.17) แยกจากอุทธรณ์คำสั่งไม่อนุมัติ (คบ.10) */
   appealAgainst?: 'kb10' | 'kb17'
+  appealKb10?: { createdAt: string; fields: Record<string, string>; snapshot?: import('../lib/noticeDocuments').NoticeSnapshot }
+  appealClosedAt?: string
   appealResolution?: AppealResolution
   /** Sheet 09B — ลำดับชั้นของแฟ้มอุทธรณ์ (WIT0914-WIT0919) เดินทีละขั้น ข้ามไม่ได้ */
   appealFolder?: AppealFolder
@@ -798,6 +994,12 @@ export interface MethodPrivacy {
 
 /** 08B — ประสานหน่วยงานอื่นตามข้อ 15(4) (WIT0842-0851) */
 export interface CoordinationLetterDraft {
+  policeKind?: import("../lib/policeLetters").PoliceLetterKind
+  enclosure?: string
+  contact?: string
+  contactPhone?: string
+  fax?: string
+  signatureImage?: string
   registryNo: string
   registryDate: string
   subject: string
@@ -806,11 +1008,59 @@ export interface CoordinationLetterDraft {
   signerPosition: string
 }
 
+/**
+ * เจ้าหน้าที่ส่งหนังสือประสานให้ธุรการหน่วยเจ้าของเรื่องออกเลขหนังสือ (ขาออก) ก่อนนำส่ง
+ * pending  — รอธุรการออกเลข (เจ้าหน้าที่แก้หนังสือไม่ได้)
+ * returned — ธุรการส่งคืนให้เจ้าหน้าที่แก้ไข แล้วส่งขอเลขใหม่
+ * numbered — ธุรการออกเลข/วันที่แล้ว (เก็บใน letterDraft) เจ้าหน้าที่หรือธุรการกดนำส่งได้
+ * sent     — นำส่งหนังสือแล้ว
+ */
+export interface CoordinationLetterNumbering {
+  status: 'pending' | 'returned' | 'numbered' | 'sent'
+  clerkRole: 'receiver' | 'got_receiver'
+  unitId: string
+  requestedAt: string
+  requestedBy: string
+  numberedAt?: string
+  numberedBy?: string
+  returnedAt?: string
+  returnedBy?: string
+  returnNote?: string
+  sentAt?: string
+  sentBy?: string
+}
+
+/** หน่วยงานปลายทางของวิธีที่ 4 — กรมการปกครอง / ตำรวจ / ทหาร / กรมคุ้มครองสิทธิและเสรีภาพ */
+export type CoordinationAgencyType = 'dopa' | 'police' | 'military' | 'rlpd'
+
+export interface TemporaryProtectionRecord {
+  approvedMethods: ProtectionMethodNo[]
+  methodChoice?: MethodChoice
+  methodTracks: ProtectionMethodTrack[]
+  /** หนังสือวิธีที่ 4 ของงานชั่วคราว — ไม่นับเป็นหนังสือของคำร้องหลัก */
+  letterIds: string[]
+  separatedAt: string
+  closedAt?: string
+  closeReason?: string
+}
+
+export interface MethodChoice {
+  mode: 'kb4' | 'kb6' | 'new'
+  methods: ProtectionMethodNo[]
+  agencyType?: CoordinationAgencyType
+  at: string
+  by: string
+}
+
 export interface MethodCoordination {
+  /** ไม่มีค่า = ตำรวจ (ข้อมูลเดิมก่อนมีตัวเลือกหน่วยงาน) */
+  agencyType?: CoordinationAgencyType
   agency: string
   province?: string
   stationId?: string
   letterDraft?: CoordinationLetterDraft
+  /** ธุรการออกเลขหนังสือประสานก่อนนำส่ง (ไม่มีค่า = ยังไม่ส่งขอเลข / ข้อมูลเดิม) */
+  letterNumbering?: CoordinationLetterNumbering
   replyEvidenceName?: string
   contactPosition?: string
   contactPhone?: string
@@ -852,6 +1102,8 @@ export interface ProtectionMethodTrack {
 // ---------------------------------------------------------------------------
 
 export interface OfficialLetter {
+  replyToLetterId?: string
+  attachmentSnapshot?: { versionId: string; registryNo: string; registryDate: string; signedHtml: string }
   draftSnapshot?: CoordinationLetterDraft
   id: string
   direction: 'outgoing' | 'incoming'
@@ -881,7 +1133,12 @@ export interface OfficialLetter {
 export type Article14Step =
   | 'proposal_draft'
   | 'supervisor_review'
+  /** ลำดับชั้น 4 ชั้น: ผบช.ชั้นต้น → ผอ.สำนัก/กอง → รองเลขาธิการ → เลขาธิการ */
+  | 'director_review'
+  | 'deputy_review'
   | 'secretary_review'
+  /** เสนอก่อนครบ 6 เดือน — เลขาธิการเห็นชอบแล้วรอ/ส่งคณะกรรมการ (ข้อมูลเก่าที่ค้างรอมติก็ใช้ขั้นนี้)
+   * กรณีใกล้ครบ/ครบเพดาน เลขาธิการเห็นชอบแล้วไปขั้น letter_sent ทันที */
   | 'committee_pending'
   | 'committee_rejected'
   | 'letter_sent'
@@ -895,6 +1152,9 @@ export type Article14Step =
  * WIT0713 — ผลพิจารณาแขนงที่ 4 "เห็นควรตามข้อ 14"
  * เป็นทางเข้าแท็บ 08C ตั้งแต่ชั้นรับผลพิจารณา โดยไม่ต้องรอให้คุ้มครองใกล้ครบเพดาน
  */
+/** ชั้นผู้พิจารณาเรื่องส่งต่อกรมคุ้มครองสิทธิฯ */
+export type Article14ReviewLevel = 'supervisor' | 'director' | 'deputy_secretary' | 'secretary'
+
 export interface Article14Referral {
   at: string
   by: string
@@ -909,12 +1169,29 @@ export interface Article14Case {
   /** เหตุความไม่ปลอดภัยที่ยังคงอยู่แม้ครบเพดาน */
   threatSummary: string
   riskAssessment: string
-  /** ความเห็นว่าควรใช้มาตรการทั่วไปหรือมาตรการพิเศษ */
-  recommendedMeasure: 'general' | 'special' | ''
+  /** เลิกใช้แล้ว — ฟอร์มข้อ 14 ไม่มีช่องเลือกมาตรการ คงไว้เพื่ออ่านข้อมูลเก่า */
+  recommendedMeasure?: 'general' | 'special' | ''
+  /** ฉบับของหนังสือแจ้งให้มีมาตรการช่วยเหลือแก่พยาน (แบบ 18) ที่แนบกับรอบเสนอล่าสุด (ฉบับที่ 1 = เสนอครั้งแรก เพิ่มทุกครั้งที่เสนอ Revision ใหม่) */
+  letterVersion?: number
+  /** ฉบับของหนังสือที่เจ้าหน้าที่เปิดแบบฟอร์มและกด "บันทึกหนังสือ" แล้ว — ส่งให้ผู้บังคับบัญชาชั้นต้นได้เมื่อตรงกับ letterVersion */
+  letterSavedVersion?: number
+  /** เตรียมหนังสือฉบับใหม่ของ Revision แล้ว แต่เจ้าหน้าที่ยังไม่กดส่งให้พิจารณาตามลำดับชั้น */
+  revisionPreparedAt?: string
+  /** ความเห็นแต่ละชั้นของรอบเสนอปัจจุบัน (ล้างทุกครั้งที่ส่งรอบใหม่) */
+  approvals?: Array<{ level: Article14ReviewLevel; by: string; at: string; note: string }>
   supervisorNote?: string
   supervisorAt?: string
   secretaryNote?: string
   secretaryAt?: string
+  secretarySignature?: { name: string; at: string; image?: string }
+  /**
+   * เสนอก่อนครบ 6 เดือน (เหลือเกิน 30 วันก่อนครบเพดาน) — เลขาธิการเห็นชอบแล้วต้องส่งคณะกรรมการ
+   * ซึ่งพิจารณาในอีกกิจกรรม ส่วนกรณีใกล้ครบ/ครบเพดานใช้สายเดิมไปส่งหนังสือถึงกรมทันที
+   */
+  earlyReferral?: boolean
+  /** เจ้าหน้าที่ส่งเรื่องให้คณะกรรมการแล้ว (เฉพาะ earlyReferral) */
+  committeeSentAt?: string
+  committeeSentBy?: string
   committeeResolutionNo?: string
   committeeResolvedAt?: string
   committeeApproved?: boolean
@@ -937,6 +1214,8 @@ export interface Article14Case {
   /** วันเริ่มมาตรการภายใต้หน่วยงานใหม่ + ฐานกฎหมายที่ใช้ (แยกจากมาตรการเบื้องต้นของ ป.ป.ท.) */
   successorStartedAt?: string
   successorLegalBasis?: string
+  /** หน่วยงานปลายทางที่เลือกตอนเสนอ (ตัวเลือกเดียวกับข้อ 4 ของ คบ.4/คบ.6) — ไม่มีค่า = กรมคุ้มครองสิทธิและเสรีภาพ (ข้อมูลเดิม) */
+  targetAgencyType?: CoordinationAgencyType
   revisions: Array<{ at: string; by: string; reason: string }>
 }
 
@@ -1001,8 +1280,18 @@ export interface TerminationAdditionalReason {
   recordedBy: string
 }
 
+/**
+ * FB-029 — เหตุสิ้นสุดการคุ้มครองตามระเบียบข้อ 18
+ * แยกฐานเหตุจากการรับคำอุทธรณ์และเงื่อนไขข้อความในแม่แบบ
+ */
+export type TerminationClause = 1 | 2 | 3 | 4
+
+/** ลำดับชั้นลงนาม คบ.15 */
+export type Kb15ApprovalStage = 'supervisor' | 'director' | 'deputy_secretary' | 'secretary'
+
 /** คบ.15 — รายงานการให้ความคุ้มครองสิ้นสุด (WIT1129) */
 export interface Kb15Report {
+  bundledForms?: boolean
   version: number
   createdAt: string
   createdBy: string
@@ -1012,14 +1301,34 @@ export interface Kb15Report {
   /** WIT1126 / WIT1127 — เอกสารต้นเรื่อง (คบ.7 ที่พยานยื่น หรือหนังสือภายนอก) ที่อัปโหลดเข้ากับแฟ้มเดิม */
   triggerDocumentName?: string
   triggerReceivedAt?: string
+  /** FB-029 — ข้อระเบียบที่เจ้าหน้าที่เลือกตอนจัดทำ คบ.15 · ไม่มีค่า (ข้อมูลเดิม) ถือว่าอุทธรณ์ได้ */
+  regulationClause?: TerminationClause
+  article19Reason?: 1 | 2 | 3 | 4 | 5
+  /** วันเกิดเหตุตามหลักฐาน แยกจากวันที่จัดทำและวันที่เสนอ */
+  occurredAt?: string
+  proposedEndAt?: string
+  facts?: string
+  /** หลักฐานที่ตรวจยืนยันจากแฟ้มเดิม ณ ตอนเสนอ */
+  basis?: {
+    kb7?: { applicant: string; receivedAt: string; requestedEndAt: string; reason: string; documentName: string; signed: boolean }
+    expiry?: { orderRef: string; currentEndAt: string; capAt: string; extensionIds: string[] }
+    referral?: { agency: string; documentName: string; effectiveAt: string; legalBasis: string }
+  }
+  formSnapshot?: Record<string, any>
+  headSignature?: { signed: boolean; signerName: string; signedAt: string; signatureImage?: string }
   summary: string
   evidenceNote?: string
+  /** submitted = อยู่ระหว่างเสนอตามลำดับชั้น (ดู approvalStage) · endorsed = เลขาธิการลงนาม คบ.15 แล้ว */
   status: 'draft' | 'submitted' | 'returned' | 'endorsed'
+  /** ชั้นที่ต้องตรวจ/ลงนามถัดไป: ผอ.กอง/สำนัก → รองเลขาธิการ → เลขาธิการ · ไม่มีค่า (ข้อมูลเดิม) ถือเป็น director */
+  approvalStage?: Kb15ApprovalStage
+  /** ความเห็นและการลงนามของแต่ละชั้นในฉบับนี้ — ส่งคืนแล้วเริ่มใหม่ในฉบับถัดไป */
+  approvalHistory?: Array<{ role: Kb15ApprovalStage; by: string; at: string; note: string; endorsed: boolean }>
   reviewedAt?: string
   reviewedBy?: string
   reviewNote?: string
   /** ฉบับก่อนหน้าที่ถูกแทนที่ — เก็บไว้ ห้ามแก้ทับ */
-  previousVersions?: Array<{ version: number; createdAt: string; summary: string }>
+  previousVersions?: Array<{ version: number; createdAt: string; summary: string; report?: Omit<Kb15Report, 'previousVersions'> }>
 }
 
 /**
@@ -1035,6 +1344,10 @@ export interface TerminationApproval {
 
 /** คบ.16 — คำสั่งยุติการคุ้มครอง (WIT1138-1140) */
 export interface Kb16Order {
+  signatureImage?: string
+  kb15Version?: number
+  regulationClause?: TerminationClause
+  formSnapshot?: Record<string, any>
   orderNo: string
   reason: string
   /** draft = เจ้าหน้าที่กำลังกรอกในแฟ้ม · submitted = เสนอผู้มีอำนาจลงนามแล้ว (WIT1138 → WIT1139) */
@@ -1075,6 +1388,13 @@ export interface Kb17DeliveryAttempt {
 
 /** คบ.17 — หนังสือแจ้งคำสั่งยุติและสิทธิอุทธรณ์ (WIT1141-1146) */
 export interface Kb17Notice {
+  signatureImage?: string
+  orderNo?: string
+  orderIssuedAt?: string
+  orderEffectiveAt?: string
+  reason?: string
+  regulationClause?: TerminationClause
+  formSnapshot?: Record<string, any>
   documentName?: string
   /** draft = เจ้าหน้าที่กรอกในแฟ้ม · submitted = เสนอเลขาธิการ ป.ป.ท. ลงนามแล้ว (WIT1141 → ลงนาม → WIT1142) */
   status?: 'draft' | 'submitted'
@@ -1281,8 +1601,6 @@ export interface AppealFolder {
   stage: AppealFolderStage
   /** WIT0911/WIT0912 — ช่องทางและหลักฐานการรับคำอุทธรณ์เข้าระบบครั้งแรก */
   intake?: AppealIntake
-  /** ผบช.ชั้นต้น/ผอ.สำนัก/กอง มอบหมายเจ้าหน้าที่อุทธรณ์ให้ชัดเจน — เปลี่ยนเจ้าของเรื่องได้เฉพาะทางนี้ ไม่ใช่อัตโนมัติ */
-  appealOfficer?: { name: string; userId?: string; at: string; by: string; note?: string }
   /** WIT0914 — วันที่รับแจ้งผลจริงที่ใช้คำนวณกรอบ 30 วัน และจำนวนวันที่ล่าช้า (ถ้ามี) */
   checkedAt?: string
   checkedBy?: string
@@ -1293,6 +1611,11 @@ export interface AppealFolder {
   lateAcceptedAt?: string
   lateAcceptedBy?: string
   lateAcceptNote?: string
+  /**
+   * บันทึกเพิ่มเติม (อุทธรณ์) ของ คบ.3/คบ.6 — แนบต่อท้ายฉบับเดิม (ฉบับเดิมเก็บไว้ไม่แก้ทับ) แบบเดียวกับรอบขยายเวลา
+   * เจ้าหน้าที่จัดทำในชั้นความเห็นเจ้าหน้าที่ ส่วนข้อ 10–13 ของ คบ.6 ลงตามความเห็นแต่ละชั้นของแฟ้มอุทธรณ์
+   */
+  addendum?: { kb3Version: number; kb6Version: number; preparedAt: string; preparedBy: string; freshDrafts?: boolean; savedForms?: Partial<Record<3 | 6, string>> }
   officerOpinion?: AppealOpinion
   supervisorOpinion?: AppealOpinion
   directorOpinion?: AppealOpinion
@@ -1307,6 +1630,7 @@ export interface AppealFolder {
 /** ผลวินิจฉัยอุทธรณ์ของคณะกรรมการ ป.ป.ท. (WIT0920-0922) */
 export interface AppealResolution {
   resolutionNo: string
+  destination?: 'original_owner' | 'got'
   resolvedAt: string
   outcome: 'uphold' | 'overturn'
   note: string

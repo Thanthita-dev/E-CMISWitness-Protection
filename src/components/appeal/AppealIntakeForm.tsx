@@ -4,12 +4,16 @@ import { CaseItem } from '../../types/case'
 import { AppealIntakeInput } from '../../store/useCaseStore'
 import { showToast, showConfirmAlert, confirmBody } from '../../lib/swal'
 import { ATTACHMENT_ACCEPT, getAttachmentRejection } from '../../lib/fileValidation'
+import { VoiceTextarea } from '../common/VoiceTextarea'
+import { daysUntil } from '../../lib/utils'
+import { APPEAL_WINDOW_DAYS } from '../../lib/constants'
 
 interface AppealIntakeFormProps {
   caseItem: CaseItem
   /** ข้อความปุ่มยืนยัน — Kb17Section ใช้ข้อความเดิม 'มีอุทธรณ์ภายในกำหนด (WIT1147)' เพื่อไม่ให้ selector เดิมพัง */
   submitLabel: string
-  onSubmit: (reason: string, intake: AppealIntakeInput) => void
+  /** lateReason — มีค่าเมื่อยื่นเกินกรอบ 30 วัน (รับเรื่องแล้วแฟ้มไปรอ ผบช.ชั้นต้นรับไว้) */
+  onSubmit: (reason: string, intake: AppealIntakeInput, lateReason?: string) => void
   /** WIT0912 — ธุรการสำนัก/กองรับได้เฉพาะช่องทางหนังสือ ช่องทางวาจาต้องให้เจ้าหน้าที่บันทึกถ้อยคำ */
   letterOnly?: boolean
 }
@@ -26,6 +30,11 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
   const [channel, setChannel] = useState<Channel>('letter')
   const [documentSource, setDocumentSource] = useState<'appellant_document' | 'agency_form'>('appellant_document')
   const [saving, setSaving] = useState(false)
+  /** WIT0914 — ตรวจกรอบ 30 วันตอนรับคำอุทธรณ์เลย ค่าบวก = ยื่นช้ากว่ากำหนดกี่วัน */
+  const dueAt = caseItem.kb17?.deliveredAt ? caseItem.kb17.appealDueAt : caseItem.appealDueAt
+  const left = daysUntil(dueAt)
+  const lateDays = left !== null && left < 0 ? Math.abs(left) : 0
+  const [lateReason, setLateReason] = useState('')
 
   // ช่องทางหนังสือ — รับผ่านสารบรรณกลาง
   const [registryNo, setRegistryNo] = useState('')
@@ -53,6 +62,11 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
     if (saving) return
     if (!reason.trim()) {
       showToast('กรุณาระบุเหตุผลในการอุทธรณ์')
+      return
+    }
+
+    if (lateDays > 0 && !lateReason.trim()) {
+      showToast('ยื่นเกินกำหนดแล้ว — ต้องบันทึกเหตุผลความล่าช้า (ห้ามปัดตก)')
       return
     }
 
@@ -98,11 +112,18 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
             ['ช่องทาง', 'ด้วยวาจา (บันทึกถ้อยคำและให้ลงชื่อ)'],
             ['เหตุผลในการอุทธรณ์', reason.trim()],
           ]
+    if (lateDays > 0) summary.push(['ยื่นช้ากว่ากำหนด', `${lateDays} วัน — ${lateReason.trim()}`])
 
     showConfirmAlert({
       icon: 'question',
       title: `${submitLabel}?`,
-      html: confirmBody('รับคำร้องอุทธรณ์เข้าระบบและผูกกับแฟ้มเดิม (ไม่มีเลข คบ.)', summary, 'นำเรื่องเข้าสู่กระบวนการพิจารณาต่อไป'),
+      html: confirmBody(
+        'รับคำร้องอุทธรณ์เข้าระบบและผูกกับแฟ้มเดิม (ไม่มีเลข คบ.)',
+        summary,
+        lateDays > 0
+          ? 'แฟ้มไปอยู่กับ <strong>ผบช.ชั้นต้น</strong> เพื่อรับเรื่องไว้ — <strong>ไม่ปัดตกอัตโนมัติ</strong> · จัดทำ คบ.3/คบ.6 บันทึกเพิ่มเติม (อุทธรณ์) ให้ในแฟ้มคดี'
+          : 'แฟ้มเข้าชั้น<strong>ความเห็นเจ้าหน้าที่</strong> · จัดทำ คบ.3/คบ.6 บันทึกเพิ่มเติม (อุทธรณ์) ให้ในแฟ้มคดี'
+      ),
       showCancelButton: true,
       confirmButtonText: 'ยืนยัน',
       cancelButtonText: 'ยกเลิก',
@@ -136,7 +157,7 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
               signedRecordDataUrl: documentDataUrl,
             }
 
-      try { onSubmit(reason.trim(), intake) } finally { setSaving(false) }
+      try { onSubmit(reason.trim(), intake, lateDays > 0 ? lateReason.trim() : undefined) } finally { setSaving(false) }
     })
   }
 
@@ -147,7 +168,7 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
         <div><h2 className="text-lg font-bold text-navy">รับเอกสารคำอุทธรณ์</h2><p className="mt-1 text-muted">ผูกกับแฟ้ม {caseItem.no} โดยไม่สร้างคำร้อง คบ.1 ใหม่</p></div>
       </div>
       <div className="space-y-1.5">
-        <span className="ws-label !mb-0">ช่องทางการยื่นอุทธรณ์ *</span>
+        <span className="ws-label !mb-0">ช่องทางการยื่นอุทธรณ์ <span className="text-danger">*</span></span>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -177,7 +198,7 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
       {channel === 'letter' ? (
         <div className="space-y-4">
           <div>
-            <label htmlFor="appeal-document-source" className="ws-label">ประเภทเอกสารคำอุทธรณ์ *</label>
+            <label htmlFor="appeal-document-source" className="ws-label">ประเภทเอกสารคำอุทธรณ์ <span className="text-danger">*</span></label>
             <select id="appeal-document-source" data-testid="appeal-intake-document-source" className="ws-input" value={documentSource} onChange={(e) => setDocumentSource(e.target.value as typeof documentSource)}>
               <option value="appellant_document">เอกสารที่ผู้ร้องจัดทำเอง (เขียนมือ / พิมพ์)</option>
               <option value="agency_form">แบบคำอุทธรณ์ของ ป.ป.ท. ที่ผู้ร้องกรอกและลงชื่อ</option>
@@ -185,7 +206,7 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="ws-label">เลขรับสารบรรณกลาง *</label>
+              <label className="ws-label">เลขรับสารบรรณกลาง <span className="text-danger">*</span></label>
               <input
                 value={registryNo}
                 onChange={(e) => setRegistryNo(e.target.value)}
@@ -195,7 +216,7 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
               />
             </div>
             <div>
-              <label className="ws-label">วันที่รับครั้งแรก *</label>
+              <label className="ws-label">วันที่รับครั้งแรก <span className="text-danger">*</span></label>
               <input
                 type="date"
                 value={firstReceivedAt}
@@ -206,7 +227,7 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
             </div>
           </div>
           <div>
-            <label className="ws-label">อัปโหลดเอกสารคำอุทธรณ์ *</label>
+            <label className="ws-label">อัปโหลดเอกสารคำอุทธรณ์ <span className="text-danger">*</span></label>
             <div className="flex flex-wrap items-center gap-2">
               <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy transition hover:bg-slate-50 focus-within:ring-[3px] focus-within:ring-[rgba(202,166,49,0.18)]">
                 <i className="fa-solid fa-cloud-arrow-up" />
@@ -231,8 +252,8 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
       ) : (
         <div className="space-y-2">
           <div>
-            <label className="ws-label">บันทึกถ้อยคำผู้ยื่นอุทธรณ์ *</label>
-            <textarea
+            <label className="ws-label">บันทึกถ้อยคำผู้ยื่นอุทธรณ์ <span className="text-danger">*</span></label>
+            <VoiceTextarea
               rows={3}
               value={statement}
               onChange={(e) => setStatement(e.target.value)}
@@ -249,10 +270,10 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
               data-testid="appeal-intake-signed"
               className="ws-checkbox"
             />
-            ผู้ยื่นลงลายมือชื่อรับรองบันทึกถ้อยคำแล้ว *
+            ผู้ยื่นลงลายมือชื่อรับรองบันทึกถ้อยคำแล้ว <span className="text-danger">*</span>
           </label>
           <div>
-            <label className="ws-label">ไฟล์บันทึกถ้อยคำที่ลงลายมือชื่อ *</label>
+            <label className="ws-label">ไฟล์บันทึกถ้อยคำที่ลงลายมือชื่อ <span className="text-danger">*</span></label>
             <div className="flex flex-wrap items-center gap-2">
               <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-[0.45rem] rounded-lg border border-[#9aabba] bg-white px-4 py-[0.68rem] text-[0.88rem] font-semibold text-navy transition hover:bg-slate-50 focus-within:ring-[3px] focus-within:ring-[rgba(202,166,49,0.18)]">
                 <i className="fa-solid fa-cloud-arrow-up" />
@@ -277,8 +298,8 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
       )}
 
       <div>
-        <label className="ws-label">เหตุผลในการอุทธรณ์ *</label>
-        <textarea
+        <label className="ws-label">เหตุผลในการอุทธรณ์ <span className="text-danger">*</span></label>
+        <VoiceTextarea
           rows={3}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -288,10 +309,23 @@ export const AppealIntakeForm: React.FC<AppealIntakeFormProps> = ({ caseItem, su
         />
       </div>
 
-      <p className="text-[0.8rem] text-muted">
-        <i className="fa-solid fa-circle-info mr-1" />
-        คำอุทธรณ์ไม่มีเลข คบ.
-      </p>
+      {lateDays > 0 && (
+        <div>
+          <label className="ws-label">
+            เหตุผลความล่าช้า (ยื่นเกินกรอบ {APPEAL_WINDOW_DAYS} วัน มา {lateDays} วัน) <span className="text-danger">*</span>
+          </label>
+          <VoiceTextarea
+            rows={3}
+            value={lateReason}
+            onChange={(e) => setLateReason(e.target.value)}
+            placeholder="เช่น พยานเจ็บป่วยเข้ารักษาตัวในโรงพยาบาลตลอดช่วงกรอบเวลาอุทธรณ์"
+            data-testid="appeal-late-reason"
+            className="ws-input"
+          />
+          <p className="mt-1 text-[0.8rem] text-muted">ไม่ปัดตกอัตโนมัติ — แฟ้มไปให้ ผบช.ชั้นต้นรับเรื่องไว้ แล้วคณะกรรมการเป็นผู้ตัดสิน</p>
+        </div>
+      )}
+
 
       <div className="ws-actions justify-end">
         <Button

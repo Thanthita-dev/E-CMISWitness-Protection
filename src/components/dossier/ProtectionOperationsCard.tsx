@@ -1,6 +1,10 @@
+import { canActOnKb14 } from '../protection/Kb14DecisionActions'
 import React, { useState } from 'react'
+import { isReviewerFor, reviewLevelLabel } from '../../lib/protectionHandoff'
+import { sarabanInTransit } from '../../lib/saraban'
 import { Link } from '@tanstack/react-router'
 import { Button } from '../common/Button'
+import { isExternalRound, reportSourceLabel } from '../../lib/kb13'
 import { CaseItem } from '../../types/case'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -14,6 +18,7 @@ import {
 } from '../../lib/constants'
 import { formatThaiDate, daysUntil, daysElapsed, currentReportPeriod, thaiMonthName } from '../../lib/utils'
 import { showToast } from '../../lib/swal'
+import { VoiceTextarea } from '../common/VoiceTextarea'
 
 interface ProtectionOperationsCardProps {
   caseItem: CaseItem
@@ -56,8 +61,10 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
   const isOfficer = isCaseWorkerRole(currentRole)
   const isProtection = currentRole === 'protection' || currentRole === 'admin'
   const isSecretary = currentRole === 'secretary' || currentRole === 'admin'
-  const isSupervisor = currentRole === 'supervisor' || currentRole === 'admin'
-  const isDirector = currentRole === 'director' || currentRole === 'admin'
+  /** คบ.7: เลขาธิการลงนามได้เมื่อเอกสารถึงแล้ว (ผ่านธุรการสำนักงานเลขาธิการ) */
+  const canDecideTermination = isSecretary && !sarabanInTransit(caseItem, 'termination')
+  const isSupervisor = isReviewerFor(currentRole, 'supervisor', caseItem)
+  const isDirector = isReviewerFor(currentRole, 'director', caseItem)
 
   const slaStarted = Boolean(caseItem.policeAckAt)
   const daysLeft = daysUntil(caseItem.protectionEndAt)
@@ -65,6 +72,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
   const period = currentReportPeriod()
   const reportedThisPeriod = (caseItem.monthlyReports || []).some((r) => r.period === period)
   const pendingExtension = (caseItem.extensionRequests || []).find((r) => r.status === 'pending')
+  const showExtensionBanner = Boolean(pendingExtension && !canActOnKb14(pendingExtension, currentRole, caseItem))
   const withdrawal = caseItem.withdrawalRequest
   const termination = caseItem.terminationRequest
 
@@ -75,7 +83,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
   }
 
   const hasPendingDecision = Boolean(
-    pendingExtension || termination?.status === 'pending' || withdrawal?.status === 'pending' || caseItem.transferRequest?.status === 'pending'
+    showExtensionBanner || withdrawal?.status === 'pending' || caseItem.transferRequest?.status === 'pending'
   )
 
   if (!slaStarted && !hasPendingDecision) return null
@@ -119,11 +127,11 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
       )}
 
       {/* Pending decisions banners */}
-      {pendingExtension && (
+      {showExtensionBanner && pendingExtension && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-[0.8rem] space-y-2">
           <div className="font-bold text-blue-900">
             <i className="fa-solid fa-clock-rotate-left mr-1.5" />
-            คำขอขยายระยะเวลา (คบ.14) — ยื่นตรงถึงเลขาธิการ ป.ป.ท.
+            คำขอขยายระยะเวลา (คบ.14)
           </div>
           <div className="text-blue-800">
             ขอขยาย {pendingExtension.durationDays} วัน · ยื่นโดย {pendingExtension.requestedBy} เมื่อ {pendingExtension.requestedAt}
@@ -145,50 +153,12 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
         </div>
       )}
 
-      {termination?.status === 'pending' && (
-        <div className="rounded-xl border border-slate-300 bg-slate-50 p-4 text-[0.8rem] space-y-2">
-          <div className="font-bold text-navy">
-            <i className="fa-solid fa-circle-stop mr-1.5" />
-            คบ.7 คำร้องขอยุติการคุ้มครองพยาน — รอเลขาธิการ ป.ป.ท. ลงนาม
-          </div>
-          <div className="text-slate-700">{termination.reason}</div>
-          {isSecretary && (
-            <div className="flex justify-end gap-2 border-t border-slate-200 pt-2">
-              <Button
-                type="button"
-                onClick={() => {
-                  decideTermination(caseItem.no, false, 'ยังไม่สมควรยุติ ให้คุ้มครองต่อเนื่อง')
-                  showToast('ไม่อนุมัติการยุติ · คุ้มครองต่อเนื่อง')
-                  done()
-                }}
-                variant="secondary"
-                size="md"
-              >
-                ไม่อนุมัติยุติ
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  decideTermination(caseItem.no, true, 'ลงนามรับรองสั่งยุติการปฏิบัติงานคุ้มครองพยาน')
-                  showToast('เลขาธิการ ป.ป.ท. ลงนามสั่งยุติการคุ้มครองแล้ว')
-                  done()
-                }}
-                variant="primary"
-                size="md"
-              >
-                ลงนามสั่งยุติ (คบ.7)
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
       {withdrawal?.status === 'pending' && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-[0.8rem] space-y-2">
           <div className="font-bold text-amber-900">
             <i className="fa-solid fa-person-walking-arrow-right mr-1.5" />
             พยานขอถอนตัวจากการคุ้มครอง — บันทึกเป็น คบ.3 · รอ
-            {withdrawal.approvalStage === 'supervisor' ? ' ผู้บังคับบัญชาชั้นต้น' : ' ผอ.สำนัก/กอง'} พิจารณา
+            {' '}{reviewLevelLabel(withdrawal.approvalStage === 'supervisor' ? 'supervisor' : 'director', caseItem)} พิจารณา
           </div>
           <div className="text-slate-700">{withdrawal.reason}</div>
 
@@ -255,7 +225,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-[0.8rem]">
           <div className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="font-bold text-navy">รายงานผลประจำเดือน (คบ.13)</div>
+              <div className="font-bold text-navy">รายงานผลประจำเดือน (คบ.13 / หนังสือภายนอก)</div>
               {/* เส้นทางเต็มของรอบรายงาน (WIT1004-WIT1013) อยู่ที่แท็บ 10 — ที่นี่แสดงผลย่อและสถานะลงนาม */}
               <Link
                 to="/protection-monitor"
@@ -275,19 +245,33 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
                     <span>งวด {thaiMonthName(r.period)}</span>
                     <span className="text-[0.8rem] text-muted">{r.submittedAt}</span>
                   </div>
-                  <div className="text-slate-600 mt-0.5">{r.summary}</div>
-                  <div className="text-[0.8rem] text-muted mt-0.5">
-                    ผู้รายงาน: {r.submittedBy} · เหตุสำคัญ {r.incidentCount} ครั้ง
-                  </div>
-                  {/* WIT1006 / WIT1007 — ลงนามที่รายการแบบฟอร์ม คบ.13 ในแฟ้ม ที่นี่แสดงสถานะอย่างเดียว */}
-                  <div className="text-[0.8rem] mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                    <span className={r.officerSignedAt ? 'text-emerald-700 font-semibold' : 'text-amber-700'}>
-                      {r.officerSignedAt ? `✓ เจ้าหน้าที่ลงนาม (${r.officerSignedBy})` : 'รอเจ้าหน้าที่ลงนาม'}
-                    </span>
-                    <span className={r.witnessSignedAt ? 'text-emerald-700 font-semibold' : 'text-amber-700'}>
-                      {r.witnessSignedAt ? `✓ พยานรับรอง (${r.witnessSignedBy})` : 'รอพยานลงนามรับรอง'}
-                    </span>
-                  </div>
+                  <div className="text-[0.8rem] font-semibold text-navy mt-0.5">แบบรายงาน: {reportSourceLabel(r)}</div>
+                  {isExternalRound(r) && r.externalLetter ? (
+                    <div className="text-[0.8rem] text-slate-700 mt-1 space-y-0.5 break-words">
+                      <div>หน่วยงาน: {r.externalLetter.agency} · หนังสือเลขที่ {r.externalLetter.letterNo}</div>
+                      <a href={r.externalLetter.documentUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue underline break-all">
+                        {r.externalLetter.documentName}
+                      </a>
+                    </div>
+                  ) : isExternalRound(r) ? (
+                    <div className="text-[0.8rem] text-amber-700 mt-1">รอบันทึกรับหนังสือ</div>
+                  ) : (
+                    <>
+                    <div className="text-slate-600 mt-0.5">{r.summary}</div>
+                    <div className="text-[0.8rem] text-muted mt-0.5">
+                      ผู้รายงาน: {r.submittedBy} · เหตุสำคัญ {r.incidentCount} ครั้ง
+                    </div>
+                    {/* WIT1006 / WIT1007 — ลงนามที่รายการแบบฟอร์ม คบ.13 ในแฟ้ม ที่นี่แสดงสถานะอย่างเดียว */}
+                    <div className="text-[0.8rem] mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                      <span className={r.officerSignedAt ? 'text-emerald-700 font-semibold' : 'text-amber-700'}>
+                        {r.officerSignedAt ? `✓ เจ้าหน้าที่ลงนาม (${r.officerSignedBy})` : 'รอเจ้าหน้าที่ลงนาม'}
+                      </span>
+                      <span className={r.witnessSignedAt ? 'text-emerald-700 font-semibold' : 'text-amber-700'}>
+                        {r.witnessSignedAt ? `✓ พยานรับรอง (${r.witnessSignedBy})` : 'รอพยานลงนามรับรอง'}
+                      </span>
+                    </div>
+                    </>
+                  )}
                 </div>
               ))
             )}
@@ -395,7 +379,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
       {panel === 'report' && (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 text-[0.8rem]">
           <div className="font-bold text-navy">รายงานผลการปฏิบัติงานประจำงวด {thaiMonthName(period)}</div>
-          <textarea
+          <VoiceTextarea
             rows={3}
             value={reportSummary}
             onChange={(e) => setReportSummary(e.target.value)}
@@ -440,7 +424,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
             placeholder="หัวข้อเหตุการณ์ เช่น พบบุคคลต้องสงสัยเฝ้าสังเกตการณ์"
             className="ws-input w-full"
           />
-          <textarea
+          <VoiceTextarea
             rows={3}
             value={eventDetail}
             onChange={(e) => setEventDetail(e.target.value)}
@@ -487,7 +471,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
               ))}
             </select>
           </div>
-          <textarea
+          <VoiceTextarea
             rows={3}
             value={extReason}
             onChange={(e) => setExtReason(e.target.value)}
@@ -558,7 +542,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
               </option>
             ))}
           </select>
-          <textarea
+          <VoiceTextarea
             rows={3}
             value={transferReason}
             onChange={(e) => setTransferReason(e.target.value)}
@@ -587,7 +571,7 @@ export const ProtectionOperationsCard: React.FC<ProtectionOperationsCardProps> =
           <p className="text-amber-800">
             เสนอชี้แจงและส่งต่อตามลำดับขั้นให้ผู้บังคับบัญชาชั้นต้นและ ผอ.สำนัก/กอง อนุมัติการถอนตัว
           </p>
-          <textarea
+          <VoiceTextarea
             rows={3}
             value={withdrawReason}
             onChange={(e) => setWithdrawReason(e.target.value)}

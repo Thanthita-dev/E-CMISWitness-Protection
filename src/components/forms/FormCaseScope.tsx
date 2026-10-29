@@ -1,7 +1,7 @@
 import React from 'react'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { useCaseStore } from '../../store/useCaseStore'
-import { CASE_CLOSED_NOTICE, isCaseClosed } from '../../lib/permissions'
+import { CASE_CLOSED_NOTICE, LEGACY_CASE_NOTICE, isCaseClosed, isLegacyCase } from '../../lib/permissions'
 
 /**
  * แฟ้มที่หน้าแบบฟอร์มกำลังเปิดอยู่ (จาก ?caseNo=) — ให้ช่องกรอก/แท็บไฟล์ในแบบรู้ว่าแฟ้มปิดงานคุ้มครองแล้วหรือไม่
@@ -17,14 +17,22 @@ export const useIsFormCaseClosed = (formId: number): boolean => {
   return useCaseStore((s) => isCaseClosed(caseNo ? s.cases.find((c) => c.no === caseNo) : undefined))
 }
 
+/** แบบ คบ. ฉบับนี้อยู่ในแฟ้มที่ย้ายมาจากระบบเดิมหรือไม่ — ใช้เลือกข้อความป้ายล็อก */
+export const useIsFormCaseLegacy = (formId: number): boolean => {
+  const scopeCaseNo = React.useContext(FormCaseScope)
+  const ownerCaseNo = useFormDraftStore((s) => s.draftCaseNo[formId])
+  const caseNo = scopeCaseNo ?? ownerCaseNo
+  return useCaseStore((s) => isLegacyCase(caseNo ? s.cases.find((c) => c.no === caseNo) : undefined))
+}
+
 /** ป้ายแจ้งแฟ้มที่ปิดงานคุ้มครองแล้ว (WIT1148) — ใช้ทั้งหน้าแฟ้มและหน้าแบบฟอร์ม */
-export const CaseClosedBanner: React.FC = () => (
+export const CaseClosedBanner: React.FC<{ legacy?: boolean }> = ({ legacy }) => (
   <div
     data-testid="case-closed-banner"
     role="status"
     className="ws-readonly text-[0.88rem] font-semibold leading-relaxed text-ink"
   >
     <i className="fa-solid fa-lock mr-1.5" />
-    {CASE_CLOSED_NOTICE}
+    {legacy ? LEGACY_CASE_NOTICE : CASE_CLOSED_NOTICE}
   </div>
 )

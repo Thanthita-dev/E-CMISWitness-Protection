@@ -1,3 +1,4 @@
+import { ECMIS_USER_DIRECTORY } from './constants'
 import { canOperateHandoff } from './protectionHandoff'
 import type { UserRole } from '../types/user'
 import type { CaseItem, ProtectionHandoffDestination } from '../types/case'
@@ -38,6 +39,7 @@ export interface NoticeSnapshot {
   reason: string
   signedAt: string
   signedBy: string
+  signatureImage?: string
   signatureMode: 'simulated'
   signatureVerification: 'simulated_original' | 'not_covered_by_original_signature'
 }
@@ -79,8 +81,9 @@ export const hasSignedResultNotice = (item?: CaseItem): boolean =>
   Boolean(item?.resultNotices?.[9]?.original || (item?.resultNotices?.[10]?.original && !item.appealKb6Version))
 export const noticeForCase = (item?: CaseItem): ResultNoticeDocument | undefined =>
   item?.activity7State === 'approved' ? item.resultNotices?.[9] : item?.activity7State === 'rejected' ? item.resultNotices?.[10] : undefined
+/** คบ.9 ไม่เติมรายละเอียดหลังลงนามในระบบ — ช่องเลขที่/วันที่หนังสือเว้นว่างให้เขียนมือ จึงไม่บังคับก่อนส่ง */
 export const missingNoticeFields = (document: ResultNoticeDocument): string[] =>
-  document.policy.requiredForSend.filter((key) => !document.fields[key]?.trim())
+  document.formNo === 9 ? [] : document.policy.requiredForSend.filter((key) => !document.fields[key]?.trim())
 export const noticeCanSign = (document: ResultNoticeDocument): boolean =>
   !document.original && document.policy.requiredForSend.every((key) =>
     Boolean(document.fields[key]?.trim()) || (document.policy.confirmed && document.policy.allowedAfterSigning.includes(key)))
@@ -99,6 +102,13 @@ export const signNoticeSnapshot = (document: ResultNoticeDocument, item: CaseIte
   }
   const signed = { ...document, fields, original: cloneNotice(snapshot), versions: [cloneNotice(snapshot)] }
   return { ...signed, status: missingNoticeFields(signed).length ? 'signed_incomplete' : 'completed' }
+}
+
+export const kb10ClerkAllowed = (role: UserRole, item: Partial<Pick<CaseItem, 'assignedOfficerUserId' | 'orgUnitId' | 'nonApprovalDestination'>>, orgUnitId?: string | null): boolean => {
+  if (role === 'admin') return true
+  if (item.nonApprovalDestination === 'got') return role === 'got_receiver' && orgUnitId === 'central-gmc'
+  const ownerUnit = ECMIS_USER_DIRECTORY.find((user) => user.id === item.assignedOfficerUserId)?.orgUnitId || item.orgUnitId
+  return (role === 'receiver' || role === 'got_receiver') && Boolean(ownerUnit && orgUnitId === ownerUnit)
 }
 
 export const noticeWorkerAllowed = (role: UserRole, item: CaseItem, userId: string): boolean => {

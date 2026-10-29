@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { formatThaiDate, formatThaiDateTime, getCaseFormNumbers, parseAnyDate, toIsoDate, toIsoDateTimeLocal } from './utils'
+import { formatThaiDate, formatThaiDateTime, getCaseFormNumbers, isPetitionAwaitingAssignment, parseAnyDate, toIsoDate, toIsoDateTimeLocal } from './utils'
+
+describe('getCaseFormNumbers — เรื่องจากระบบเดิม', () => {
+  it('stage terminated: ไม่เติม คบ.3 แสดงเฉพาะแบบที่ถ่ายโอนมาจริง', () => {
+    const legacy = { form: 'คำร้อง', stage: 'terminated', legacySource: { migratedFiles: [{ docCategory: 'KB01' }] } }
+    expect(getCaseFormNumbers(legacy)).toEqual([1])
+    expect(getCaseFormNumbers({ form: 'คบ.1', stage: 'terminated' })).toContain(3)
+  })
+})
 
 describe('getCaseFormNumbers', () => {
   it('ประเมินเป็นกรณีปกติ: ซ่อน คบ.4/คบ.5 ที่เคยแนบเพิ่มไว้ในแฟ้ม (WIT0411)', () => {
@@ -10,7 +18,7 @@ describe('getCaseFormNumbers', () => {
       urgencyAssessedAt: '13/09/2569 10:00',
       extraForms: [4, 5, 9],
     })
-    expect(forms).toEqual([1, 3, 6, 9])
+    expect(forms).toEqual([1, 3, 6, 9, 10])
   })
 
   it('ประเมินเป็นกรณีเร่งด่วน: แสดง คบ.4/คบ.5 ตามเส้นทาง Fast Track', () => {
@@ -84,5 +92,32 @@ describe('วันที่แบบราชการ "4 สิงหาคม
     expect(toIsoDateTimeLocal('4 สิงหาคม 2569 09.15 น.')).toBe('2026-08-04T09:15')
     expect(toIsoDateTimeLocal('2026-08-04T09:15')).toBe('2026-08-04T09:15')
     expect(toIsoDateTimeLocal('abc')).toBe('')
+  })
+})
+
+describe('isPetitionAwaitingAssignment', () => {
+  it('คำร้องดิบก่อน ผอ. มอบหมาย — ยังไม่มีแบบ คบ.', () => {
+    expect(isPetitionAwaitingAssignment({ form: 'คำร้อง', stage: 'receiver_intake' })).toBe(true)
+    expect(isPetitionAwaitingAssignment({ form: 'คำร้อง', stage: 'officer_intake' })).toBe(true)
+    expect(isPetitionAwaitingAssignment({ form: 'คำร้อง', stage: 'director_assign' })).toBe(true)
+  })
+
+  it('มอบหมายแล้ว หรือรับเป็น คบ.1/คบ.2 มาแต่แรก — แสดงแบบ คบ. ตามปกติ', () => {
+    expect(isPetitionAwaitingAssignment({ form: 'คำร้อง', stage: 'staff_review' })).toBe(false)
+    expect(isPetitionAwaitingAssignment({ form: 'คบ.1', stage: 'officer_intake' })).toBe(false)
+    expect(isPetitionAwaitingAssignment({ form: 'คบ.2', stage: 'receiver_intake' })).toBe(false)
+  })
+})
+
+
+describe('ชุดร่างแจ้งผลก่อนเลขาธิการเลือกผล', () => {
+  const base = { form: 'คบ.1', stage: 'staff_review', urgency: 'normal' }
+  it('เตรียมทั้ง คบ.9 และ คบ.10 พร้อม คบ.6', () => {
+    expect(getCaseFormNumbers(base)).toEqual(expect.arrayContaining([6, 9, 10]))
+  })
+  it.each([9, 10] as const)('เลือก คบ.%s แล้วซ่อนร่างอีกผล', formNo => {
+    const forms = getCaseFormNumbers({ ...base, extraForms: [9, 10], preliminaryDecision: { formNo } })
+    expect(forms).toContain(formNo)
+    expect(forms).not.toContain(formNo === 9 ? 10 : 9)
   })
 })

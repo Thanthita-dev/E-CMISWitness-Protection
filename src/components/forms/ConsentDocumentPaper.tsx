@@ -64,7 +64,7 @@ export const ConsentDocumentPaper: React.FC<{
         <div
           key={n}
           data-testid={`consent-paper-page-${n}`}
-          className="paper-a4 relative rounded-sm bg-white px-14 pt-8 pb-16 text-[#111827] leading-relaxed shadow-md text-[14px] font-sarabun select-text"
+          className="paper-a4 kb-paper relative rounded-sm bg-white shadow-md select-text"
           style={{ width: A4_WIDTH, zoom }}
         >
           <div className="text-center font-black text-rose-600 text-xl leading-none mb-3">ลับ</div>

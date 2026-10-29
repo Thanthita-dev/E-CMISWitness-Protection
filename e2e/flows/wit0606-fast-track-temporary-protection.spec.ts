@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { fillKb5Period } from '../journeys/journey-helpers'
 
 /**
  * Sheet 06 · WIT0603 → WIT0614 — เส้นทางเร่งด่วน คบ.4 / คบ.5 และการคุ้มครองชั่วคราว
@@ -13,8 +14,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  *                        → WIT0613 ส่งวิธีที่อนุมัติไปแท็บ 08 · และ WIT0614 คำร้องหลักเดินคู่ขนาน
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 const KB4_FORM_URL = `/form/4?caseNo=${CASE_NO}`
 const OFFICER = 'นางสาวอรุณี ใจมั่น'
 const DIRECTOR = 'นายวีระยุทธ พิทักษ์ธรรม'
@@ -59,13 +60,15 @@ test.describe('WIT0603–WIT0614 — เส้นทางเร่งด่ว�
     await page.goto(DOSSIER_URL)
 
     // WIT0603 — ยังเลือกวิธีไม่ครบ จึงยังส่งให้ ผอ. ไม่ได้
-    await expect(page.getByTestId('fast-track-card')).toHaveAttribute('data-fast-track-step', 'drafting')
+    await expect(page.getByTestId('fast-track-submit-panel')).toHaveAttribute('data-fast-track-step', 'drafting')
     await expect(page.getByTestId('fast-track-submit-button')).toBeDisabled()
 
     // WIT0603 — ติ๊กวิธีตามข้อ 15 ในแบบ คบ.4 ได้มากกว่าหนึ่งวิธี
     await page.goto(KB4_FORM_URL)
     await page.getByTestId('kb4-method-option-1').click()
     await page.getByTestId('kb4-method-option-3').click()
+    // WIT0603 — ระบุช่วงวันที่คุ้มครองชั่วคราวในร่าง คบ.5 (ใช้ตรวจเพดานรวม 180 วัน)
+    await fillKb5Period(page, CASE_NO)
 
     // ค่าที่ติ๊กผูกกับแฟ้มจริง ไม่ใช่แค่ตัวหนังสือบนเอกสาร — การ์ดในแฟ้มอ่านค่าได้ทันที
     await page.goto(DOSSIER_URL)
@@ -155,13 +158,12 @@ test.describe('WIT0606 แขนง "ไม่ครบ" — วงตีกล�
     await page.goto(DOSSIER_URL)
 
     // WIT0606 แขนง "ไม่ครบ" → WIT0607 บันทึกเหตุผลและประเด็นแก้ไข
-    await page.getByTestId('fast-track-incomplete-button').click()
-    await page.getByTestId('fast-track-return-issue').selectOption('kb5_draft_incomplete')
+    await page.getByTestId('return-case-button').click()
+    await page.getByTestId('return-issue-select').selectOption('kb5_draft_incomplete')
     await page
-      .getByTestId('fast-track-return-note')
+      .getByTestId('return-note-input')
       .fill('ร่างคำสั่ง คบ.5 ยังไม่ระบุชุดเจ้าพนักงานและช่วงเวลาคุ้มครอง ให้เติมให้ครบแล้วเสนอใหม่')
-    await page.getByTestId('fast-track-return-confirm').click()
-    await confirmDialog(page, 'ยืนยันส่งกลับแก้ไข', 'ไม่ผ่านผู้บังคับบัญชาชั้นต้น')
+    await page.getByTestId('return-confirm-button').click()
 
     await expect.poll(async () => (await readCase(page, CASE_NO))?.stage).toBe('staff_review')
 

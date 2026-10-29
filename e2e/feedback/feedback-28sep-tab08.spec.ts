@@ -8,7 +8,7 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * - TC-033 (ติดขัด) ข้อ 14 ต้องบันทึกหนังสือตอบรับจากกรม (WIT0860) ก่อนส่งมอบ (WIT0861)
  */
 
-const CASE_NO = 'WP-2569-000501'
+const CASE_NO = '0501/2569'
 const METHOD2_URL = `/protection-method/2?caseNo=${CASE_NO}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
@@ -73,24 +73,26 @@ test.describe('Feedback 28 Sep · แท็บ 08', () => {
 
   test('TC-033 · [ข้อ 14] ต้องบันทึกหนังสือตอบรับจากกรม (WIT0860) ก่อนส่งมอบ (WIT0861) — ส่งมอบก่อนไม่ได้', async ({ page }) => {
     await seedMockState(page, 'Case 5', 'officer')
-    // เดินตามผัง: เจ้าหน้าที่เสนอ → ผบช. → เลขาธิการ → คณะกรรมการเห็นชอบส่งกรม
+    // เดินตามผัง: เจ้าหน้าที่เสนอ → ผบช. → ผอ. → รองเลขาฯ → เลขาธิการเห็นชอบ → ส่งคืนเจ้าหน้าที่
     await page.goto('/article14')
     await page.getByRole('textbox', { name: 'เหตุความไม่ปลอดภัยที่ยังคงอยู่' }).fill('ยังมีภัยต่อเนื่อง')
     await page.getByRole('textbox', { name: /รายงานผล \/ ประเมินความเสี่ยง/ }).fill('อ้างอิง คบ.13')
     await page.getByTestId('submit-article14-proposal').click()
-    await confirmDialog(page, 'ยืนยันเสนอ')
-    for (const role of ['supervisor', 'secretary']) {
+    await confirmDialog(page, 'ยืนยันจัดทำ')
+    // สร้างหนังสือแจ้งกรมฯ แล้วพาเข้าแฟ้ม — เจ้าหน้าที่กด "ส่งให้ผู้บังคับบัญชาชั้นต้น" ที่การ์ดท้ายแฟ้มเอง
+    // เปิดแบบฟอร์มหนังสือส่งกรมคุ้มครองสิทธิฯ แล้วกด "บันทึกหนังสือ" ก่อน ปุ่มส่งจึงกดได้
+    await page.goto(`/form/18?caseNo=${CASE_NO}`)
+    await page.getByRole('button', { name: /บันทึกหนังสือ$/ }).click()
+    await page.goto(`/dossier/${encodeURIComponent(CASE_NO)}`)
+    await page.getByTestId('article14-review-footer').getByTestId('article14-submit-review').click()
+    await page.getByRole('button', { name: 'ยืนยันส่ง', exact: true }).click()
+    await page.locator('.swal2-popup:not(.swal2-toast)').waitFor({ state: 'detached' })
+    for (const role of ['supervisor', 'director', 'deputy_secretary', 'secretary']) {
       await switchRole(page, role)
       await page.goto('/article14')
       await page.getByTestId('article14-endorse-button').click()
       await confirmDialog(page, 'ยืนยันเห็นชอบ')
     }
-    await switchRole(page, 'committee')
-    await page.goto('/article14')
-    await page.getByPlaceholder('เลขที่มติ / ครั้งที่ประชุม').fill('มติที่ 33/2569')
-    await page.getByPlaceholder('สาระสำคัญของมติ').fill('เห็นชอบส่งกรม')
-    await page.getByTestId('article14-committee-approve').click()
-    await confirmDialog(page, 'ยืนยันมติ')
 
     await switchRole(page, 'officer')
     await page.goto('/article14')
@@ -103,7 +105,7 @@ test.describe('Feedback 28 Sep · แท็บ 08', () => {
 
     // 1) บันทึกหนังสือขาออก → ยังส่งมอบไม่ได้ ต้องบันทึกหนังสือตอบรับก่อน (WIT0860)
     await page.locator('input[placeholder="เลขที่หนังสือ (สารบรรณเดิม)"]').fill('ปปท 0033/9001')
-    await page.getByRole('button', { name: 'บันทึกหนังสือขาออก' }).click()
+    await page.getByTestId('article14-record-delivery').click()
     await confirmDialog(page, 'ยืนยันบันทึก')
     await expect(handoverBtn).toHaveCount(0)
     await captureEvidence(page, 'TC-033-b', page.getByTestId('article14-record-reply'), 'ต้องบันทึกหนังสือตอบรับจากกรมก่อน (WIT0860)')

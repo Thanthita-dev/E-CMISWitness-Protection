@@ -13,8 +13,8 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * assertion ตามปกติ — ถ้า flow ติดขัดจริงถือเป็นความล้มเหลวจริงที่ต้องรู้ว่าติดขั้นไหน
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
   const dialog = page.locator('.swal2-popup:not(.swal2-toast)')
@@ -87,10 +87,6 @@ test('TC-016 · เส้นทางปกติแบบเต็ม รับ
     // เจ้าของสำนวนที่ได้รับมอบหมายเปิดแฟ้ม — บันทึกแบบ คบ.1 ให้สมบูรณ์ (WIT0404)
     await switchRole(page, 'officer')
     await page.goto(DOSSIER_URL)
-    // เจ้าของสำนวนเชื่อมโยงเลขสำนวนหลัก (WIT0212/0214)
-    await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
-    await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
-    expect((await readCase(page, CASE_NO))?.mainCaseStatus).toBe('linked')
     await formRow(page, 'คบ.1').getByRole('link', { name: 'เปิดแบบฟอร์ม' }).click()
     await expect(page).toHaveURL(/\/form\/1/)
     for (let i = 0; i < 6; i++) {
@@ -98,6 +94,10 @@ test('TC-016 · เส้นทางปกติแบบเต็ม รับ
     }
     await page.getByRole('button', { name: 'บันทึกแบบ คบ.1' }).click()
     await page.goto(DOSSIER_URL)
+    // หลังบันทึก คบ.1 เจ้าของสำนวนเชื่อมโยงเลขสำนวนหลัก (WIT0212/0214)
+    await page.getByRole('button', { name: 'ยืนยันเชื่อมโยงคดี' }).click()
+    await expect(page.getByText('เชื่อมโยงแล้ว')).toBeVisible()
+    expect((await readCase(page, CASE_NO))?.mainCaseStatus).toBe('linked')
   })
 
   // ============================================================

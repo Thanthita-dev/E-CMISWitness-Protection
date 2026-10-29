@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Button } from '../common/Button'
 import { CaseItem } from '../../types/case'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import { ECMIS_USER_DIRECTORY } from '../../lib/constants'
+import { assignableOfficers, canAssignInUnit } from '../../lib/officerAssignment'
 import { showToast } from '../../lib/swal'
 
 interface DirectorAssignmentCardProps {
@@ -19,12 +19,16 @@ interface DirectorAssignmentCardProps {
  * (flow WIT0215 / NOTE03_CASE) — บันทึกเหตุผลไว้แล้วเดินเรื่องตามปกติ
  */
 export const DirectorAssignmentCard: React.FC<DirectorAssignmentCardProps> = ({ caseItem }) => {
-  const { currentRole } = useAuthStore()
+  const { currentRole, currentOrgUnitId, currentDirectorUserId } = useAuthStore()
   const { assignOfficer } = useCaseStore()
 
+  /**
+   * มอบหมายได้เฉพาะเจ้าหน้าที่ในสังกัดเดียวกับ ผอ. — ผอ. สำนักงาน ป.ป.ท. เขต เห็นเฉพาะเจ้าหน้าที่ในเขตตน
+   * ผอ. ส่วนกลางเห็นเฉพาะเจ้าหน้าที่ส่วนกลาง (Super Admin เห็นทุกหน่วย)
+   */
   const officers = useMemo(
-    () => ECMIS_USER_DIRECTORY.filter((u) => (u.roles.includes('officer') || u.roles.includes('case_owner')) && u.active),
-    []
+    () => assignableOfficers(currentRole, currentOrgUnitId),
+    [currentRole, currentOrgUnitId]
   )
 
   /**
@@ -43,9 +47,18 @@ export const DirectorAssignmentCard: React.FC<DirectorAssignmentCardProps> = ({ 
   }, [caseItem.mainCaseLeadOfficerUserId, caseItem.mainCaseLeadOfficer, officers])
 
   const [officerId, setOfficerId] = useState(suggestedOfficer?.id || officers[0]?.id || '')
+  /** สลับหน่วยงานที่ TopBar แล้วผู้ที่เลือกไว้ไม่อยู่ในสังกัดใหม่ — เลือกคนแรกของสังกัดใหม่แทน */
+  useEffect(() => {
+    if (!officers.some((o) => o.id === officerId)) setOfficerId(suggestedOfficer?.id && officers.some((o) => o.id === suggestedOfficer.id) ? suggestedOfficer.id : officers[0]?.id || '')
+  }, [officers, officerId, suggestedOfficer])
   const [isEditingOfficer, setIsEditingOfficer] = useState(false)
 
-  const isDirector = currentRole === 'director' || currentRole === 'admin'
+  useEffect(() => {
+    setOfficerId(officers.find((o) => o.id === caseItem.assignedOfficerUserId)?.id || suggestedOfficer?.id || officers[0]?.id || '')
+    setIsEditingOfficer(false)
+  }, [caseItem.no, caseItem.assignedOfficerUserId, officers, suggestedOfficer, currentDirectorUserId])
+
+  const isDirector = canAssignInUnit(currentRole, currentOrgUnitId, caseItem)
   const isAssigned = Boolean(caseItem.assignedOfficerUserId)
 
   const handleAssign = () => {
@@ -54,7 +67,10 @@ export const DirectorAssignmentCard: React.FC<DirectorAssignmentCardProps> = ({ 
       return
     }
     const wasEditing = isEditingOfficer
-    assignOfficer(caseItem.no, officerId)
+    if (!assignOfficer(caseItem.no, officerId)) {
+      showToast('ไม่สามารถมอบหมายได้ กรุณาเลือกเจ้าหน้าที่และสำนวนในหน่วยงานของตน')
+      return
+    }
     setIsEditingOfficer(false)
     showToast(wasEditing ? 'เปลี่ยนเจ้าของสำนวนเรียบร้อยแล้ว' : 'มอบหมายเจ้าของสำนวนเรียบร้อยแล้ว')
   }
@@ -113,7 +129,7 @@ export const DirectorAssignmentCard: React.FC<DirectorAssignmentCardProps> = ({ 
               <Button
                 type="button"
                 onClick={() => {
-                  setOfficerId(caseItem.assignedOfficerUserId || suggestedOfficer?.id || officers[0]?.id || '')
+                  setOfficerId(officers.find((o) => o.id === caseItem.assignedOfficerUserId)?.id || suggestedOfficer?.id || officers[0]?.id || '')
                   setIsEditingOfficer(true)
                 }}
                 variant="secondary"
@@ -144,12 +160,14 @@ export const DirectorAssignmentCard: React.FC<DirectorAssignmentCardProps> = ({ 
               )}
 
               <div>
-                <label className="block text-[0.8rem] font-semibold text-slate-700 mb-1">เลือกเจ้าหน้าที่เจ้าของสำนวน *</label>
+                <label htmlFor="director-assign-officer" className="block text-[0.8rem] font-semibold text-slate-700 mb-1">เลือกเจ้าหน้าที่เจ้าของสำนวน <span className="text-danger">*</span></label>
                 <select
+                  id="director-assign-officer"
                   value={officerId}
                   onChange={(e) => setOfficerId(e.target.value)}
                   className="ws-input w-full text-ink"
                 >
+                  {officers.length === 0 && <option value="">ไม่พบเจ้าหน้าที่ในสังกัดนี้</option>}
                   {officers.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.name} — {o.position} ({o.unit})
@@ -176,6 +194,7 @@ export const DirectorAssignmentCard: React.FC<DirectorAssignmentCardProps> = ({ 
             <Button
               type="button"
               onClick={handleAssign}
+              disabled={!officerId || !officers.some((o) => o.id === officerId)}
               variant="primary"
               size="md"
             >
@@ -186,7 +205,9 @@ export const DirectorAssignmentCard: React.FC<DirectorAssignmentCardProps> = ({ 
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-[0.8rem] text-muted">
-          แฟ้มนี้อยู่ระหว่างรอ ผอ.สำนัก/กอง จัดสรรเจ้าของสำนวน (เข้าสู่ระบบด้วยบทบาท ผอ.สำนัก/กอง เพื่อดำเนินการ)
+          {currentRole === 'director' || currentRole === 'got_director'
+            ? 'มอบหมายได้เฉพาะสำนวนและเจ้าหน้าที่ในหน่วยงานของตน หากแฟ้มไม่ระบุหน่วยงาน กรุณาตรวจข้อมูลผู้รับเรื่อง'
+            : 'แฟ้มนี้อยู่ระหว่างรอ ผอ.สำนัก/กอง จัดสรรเจ้าของสำนวน (เข้าสู่ระบบด้วยบทบาท ผอ.สำนัก/กอง เพื่อดำเนินการ)'}
         </div>
       )}
     </section>

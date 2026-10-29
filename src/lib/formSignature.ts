@@ -1,5 +1,7 @@
-import { CaseItem, Kb6SignerRole, MonthlyReport, OutgoingNoticeFormNo } from '../types/case'
+import { AppealFolderStage, CaseItem, ExtensionRequest, Kb6SignerRole, MonthlyReport, OutgoingNoticeFormNo } from '../types/case'
+import { isKb14StageReviewer, isGotIntakeCase } from './protectionHandoff'
 import { UserRole } from '../types/user'
+import { sarabanInTransit } from './saraban'
 
 /**
  * แหล่งความจริงเดียวของ "แบบ คบ. ฉบับใดลงนามอย่างไร"
@@ -124,12 +126,16 @@ export const OUTGOING_NOTICES: Record<OutgoingNoticeFormNo, OutgoingNoticeMeta> 
   },
 }
 
-/** ช่องลายมือชื่อท้ายบันทึกข้อตกลง คบ.11 */
+/** ช่องลายมือชื่อท้ายบันทึกข้อตกลง คบ.11 — ไม่ลงนามพยานในการทำข้อตกลงในระบบ (ช่องบนแบบพิมพ์คงไว้ให้ลงมือ) */
 export const KB11_SIGN_SLOTS = [
   { key: 'kb11-witness', label: 'พยานผู้รับการคุ้มครอง', role: 'พยาน' },
   { key: 'kb11-officer', label: 'ผู้ให้การคุ้มครอง (เจ้าพนักงาน ป.ป.ท.)', role: 'เจ้าพนักงาน ป.ป.ท.' },
-  { key: 'kb11-attest1', label: 'พยานในการทำข้อตกลง คนที่ 1', role: 'พยานในการทำข้อตกลง' },
-  { key: 'kb11-attest2', label: 'พยานในการทำข้อตกลง คนที่ 2', role: 'พยานในการทำข้อตกลง' },
+] as const
+
+/** ช่องลายมือชื่อท้ายบันทึกข้อเท็จจริง คบ.3 — ผู้ให้ถ้อยคำลงนามต่อหน้าเจ้าพนักงาน (ไม่บังคับก่อนบันทึก) */
+export const KB3_SIGN_SLOTS = [
+  { key: 'kb3-witness', label: 'ผู้ให้ถ้อยคำ', role: 'ผู้ให้ถ้อยคำ' },
+  { key: 'kb3-officer', label: 'เจ้าพนักงาน ป.ป.ท.', role: 'เจ้าพนักงาน' },
 ] as const
 
 /**
@@ -171,9 +177,10 @@ export const getFormSignatureKind = (formNo: number): FormSignatureKind | null =
 /**
  * รอบรายงาน คบ.13 ที่รอลงนามอยู่ — WIT1005 จัดทำแล้วแต่ยังลงนามไม่ครบสองช่อง
  * เรียงตามลำดับที่บันทึกไว้ จึงหยิบรอบเก่าสุดที่ยังค้างก่อน ไม่ข้ามรอบที่ยังไม่รับรอง
+ * รอบหนังสือภายนอก (source = external) ไม่มีการลงนามในระบบ จึงไม่นับเป็นรอบค้าง
  */
 export const pendingKb13Report = (caseItem: CaseItem): MonthlyReport | undefined =>
-  (caseItem.monthlyReports || []).find((r) => !r.officerSignedAt || !r.witnessSignedAt)
+  (caseItem.monthlyReports || []).find((r) => r.source !== 'external' && (!r.officerSignedAt || !r.witnessSignedAt))
 
 /** รอบล่าสุดที่ลงนามครบทั้งสองช่องแล้ว — ใช้แสดงสถานะเมื่อไม่มีรอบค้าง */
 export const latestSignedKb13Report = (caseItem: CaseItem): MonthlyReport | undefined =>
@@ -191,6 +198,121 @@ export const outgoingTrackMatches = (meta: OutgoingNoticeMeta, caseItem: CaseIte
  */
 export const outgoingSubmitted = (meta: OutgoingNoticeMeta, caseItem: CaseItem): boolean =>
   meta.track === 'rejected' ? (caseItem.nonApprovalStep || 0) >= 2 : (caseItem.approvalStep || 0) >= 2
+
+export interface ActiveExtensionDocs {
+  round: number
+  kb3Version: number
+  kb6Version: number
+  request?: ExtensionRequest
+  editable: boolean
+}
+
+/** คบ.3/คบ.6 ฉบับขยายเวลาที่ยังอยู่ในรอบพิจารณา (ยังไม่มีคำขอ หรือคำขอยังเป็น submitted/pending/returned) */
+export function getActiveExtensionDocs(c: CaseItem): ActiveExtensionDocs | null {
+  const docs = c.extensionDocs
+  if (!docs) return null
+  const request = c.extensionRequests?.[docs.round - 1]
+  if (request && !['submitted', 'pending', 'returned'].includes(request.status)) return null
+  return {
+    round: docs.round,
+    kb3Version: docs.kb3Version,
+    kb6Version: docs.kb6Version,
+    request,
+    editable: !request || request.status === 'returned' || !request.kb6Snapshot,
+  }
+}
+
+/**
+ * บันทึกเพิ่มเติม (ขอขยายระยะเวลา) ของ คบ.3/คบ.6/คบ.14 — หนึ่งรายการต่อการขอขยายหนึ่งครั้ง แนบต่อท้ายแบบฉบับเดิม
+ * ฉบับเดิมของ คบ.3/คบ.6 ไม่ถูกนับเป็นฉบับใหม่ ครั้งที่ของบันทึก = ครั้งที่ขอขยาย (round)
+ */
+export const addendumLabel = (round: number) => `บันทึกเพิ่มเติม ครั้งที่ ${round}`
+
+export interface ExtensionAddendum {
+  round: number
+  /** เลขรุ่นภายในของร่าง คบ.3/คบ.6 ที่ใช้เป็นบันทึกนี้ (ไม่แสดงต่อผู้ใช้) — คบ.14 ไม่มี */
+  version?: number
+  request?: ExtensionRequest
+  /** บันทึกล่าสุด — คบ.3/คบ.6 คือร่างที่เปิดในแบบฟอร์ม, คบ.14 คือคำขอล่าสุด */
+  current: boolean
+}
+
+/** เลขรุ่นภายในของ คบ.3/คบ.6 ที่เป็นบันทึกเพิ่มเติมครั้งที่ round */
+export function extensionAddendumVersion(c: CaseItem, formNo: 3 | 6, round: number): number | undefined {
+  const docs = c.extensionDocs
+  if (docs?.round === round) return formNo === 3 ? docs.kb3Version : docs.kb6Version
+  const req = c.extensionRequests?.[round - 1]
+  return formNo === 3 ? req?.kb3DocVersion ?? req?.docVersion : req?.docVersion
+}
+
+/** ครั้งที่ของบันทึกเพิ่มเติมที่ใช้รุ่นภายใน version (undefined = เป็นฉบับเดิม/ฉบับแก้ไขของฉบับเดิม) */
+export function addendumRoundForVersion(c: CaseItem, formNo: 3 | 6, version: number): number | undefined {
+  const rounds = Math.max(c.extensionDocs?.round || 0, c.extensionRequests?.length || 0)
+  for (let round = 1; round <= rounds; round++) if (extensionAddendumVersion(c, formNo, round) === version) return round
+  return undefined
+}
+
+/** บันทึกเพิ่มเติมของ คบ.3/คบ.6 ที่จัดทำประกอบแฟ้มอุทธรณ์ — แยกจากครั้งที่ของการขอขยายเวลา */
+export const APPEAL_ADDENDUM_LABEL = 'ฉบับใหม่สำหรับอุทธรณ์'
+
+/** รุ่นภายในของ คบ.3/คบ.6 ที่เป็นบันทึกเพิ่มเติม (อุทธรณ์) */
+export function appealAddendumVersion(c: CaseItem, formNo: 3 | 6): number | undefined {
+  const addendum = c.appealFolder?.addendum
+  return addendum ? (formNo === 3 ? addendum.kb3Version : addendum.kb6Version) : undefined
+}
+
+/** รุ่นนี้เป็นบันทึกเพิ่มเติม (ขยายเวลาหรืออุทธรณ์) ไม่ใช่ฉบับเดิม/ฉบับแก้ไขของฉบับเดิม */
+export const isAddendumVersion = (c: CaseItem, formNo: 3 | 6, version: number): boolean =>
+  addendumRoundForVersion(c, formNo, version) !== undefined || appealAddendumVersion(c, formNo) === version
+
+/** ป้ายของรุ่นภายใน — บันทึกเพิ่มเติมครั้งที่ N / บันทึกเพิ่มเติม (อุทธรณ์) / ฉบับเดิม */
+export function versionLabelFor(c: CaseItem, formNo: 3 | 6, version: number): string {
+  if (appealAddendumVersion(c, formNo) === version) return APPEAL_ADDENDUM_LABEL
+  const round = addendumRoundForVersion(c, formNo, version)
+  return round ? addendumLabel(round) : `ฉบับเดิม (ฉบับที่ ${version})`
+}
+
+/** ขั้นแฟ้มอุทธรณ์ที่บันทึกเพิ่มเติม (อุทธรณ์) ยังเป็นร่าง — ตั้งแต่รับเรื่องจนถึงก่อนเสนอ ผบช.ชั้นต้น */
+export const APPEAL_ADDENDUM_DRAFT_STAGES: AppealFolderStage[] = ['received', 'late_pending', 'officer_opinion']
+
+/** บันทึกเพิ่มเติม (อุทธรณ์) ยังแก้ไขได้ — ตั้งแต่รับคำอุทธรณ์จนกว่าเจ้าหน้าที่จะเสนอ ผบช.ชั้นต้น */
+export const appealAddendumEditable = (c: CaseItem): boolean =>
+  Boolean(c.appealFolder?.addendum) && APPEAL_ADDENDUM_DRAFT_STAGES.includes(c.appealFolder!.stage)
+
+/** รายการบันทึกเพิ่มเติมของแบบ เรียงตามครั้งที่ขอขยาย */
+export function extensionAddenda(c: CaseItem, formNo: 3 | 6 | 14): ExtensionAddendum[] {
+  const requests = c.extensionRequests || []
+  if (formNo === 14) return requests.map((request, i) => ({ round: i + 1, request, current: i === requests.length - 1 }))
+  const rounds = Math.max(c.extensionDocs?.round || 0, requests.length)
+  const lastRound = c.extensionDocs?.round
+  const list: ExtensionAddendum[] = []
+  for (let round = 1; round <= rounds; round++) {
+    const version = extensionAddendumVersion(c, formNo, round)
+    if (!version) continue
+    list.push({ round, version, request: requests[round - 1], current: round === lastRound })
+  }
+  return list
+}
+
+/** ขั้นอนุมัติ คบ.14 ↔ ผู้ลงนามข้อ 10–13 ใน คบ.6 */
+export function extensionKb6SignerFor(stage: ExtensionRequest['approvalStage']): Kb6Signer | undefined {
+  const role: Kb6SignerRole | undefined =
+    stage === 'supervisor' ? 'supervisor' : stage === 'director' ? 'director' : stage === 'deputy_secretary' ? 'deputy' : stage === 'secretary' ? 'secretary' : undefined
+  return role ? KB6_SIGNERS.find((s) => s.role === role) : undefined
+}
+
+/** ผู้ลงนาม คบ.6 ฉบับขยายเวลาที่ถึงคิวของบทบาทนี้ (null = ไม่มี) */
+export function extensionKb6PendingSigner(c: CaseItem, role: string): Kb6Signer | null {
+  const active = getActiveExtensionDocs(c)
+  const request = active?.request
+  if (!request?.kb6Snapshot || !['submitted', 'pending'].includes(request.status)) return null
+  /** อยู่ระหว่างธุรการลงทะเบียนนำส่ง — ยังไม่ถึงคิวผู้ลงนาม */
+  if (c.sarabanDispatch?.flow === 'kb14') return null
+  const signer = extensionKb6SignerFor(request.approvalStage || 'supervisor')
+  if (!signer || request.kb6Signatures?.[signer.role]) return null
+  if (isKb14StageReviewer(role, request.approvalStage || 'supervisor', c)) return signer
+  return null
+}
 
 export interface SignEligibilityInput {
   formNo: number
@@ -211,6 +333,7 @@ export interface Kb11GateResult {
 }
 
 export const kb11Gate = (caseItem: CaseItem): Kb11GateResult => {
+  if (caseItem.appealResolution?.outcome === 'overturn') return sarabanInTransit(caseItem, 'appeal') ? { unlocked: false, reason: 'รอธุรการลงรับผลอุทธรณ์และส่งต่อ' } : { unlocked: true }
   if (caseItem.activity7State === 'rejected') return { unlocked: false, reason: 'ผลไม่อนุมัติใช้ คบ.10 ไม่เข้าสู่ข้อตกลง คบ.11' }
   if (!caseItem.kb9Signed) return { unlocked: false, reason: 'คบ.9 ยังไม่ผ่านการลงนามของเลขาธิการ ป.ป.ท.' }
   if (!caseItem.dispatchedAt) return { unlocked: false, reason: 'ยังไม่ได้บันทึกการส่ง/มอบ คบ.9 (ช่องทางและวันที่ส่ง)' }
@@ -232,9 +355,18 @@ export const canEditKb6Opinion = (
   currentRole: UserRole,
   caseItem: CaseItem
 ): boolean => {
+  if (caseItem.appealFolder?.addendum) {
+    return caseItem.appealFolder.stage === signer.role && !sarabanInTransit(caseItem, 'appeal') &&
+      (currentRole === 'admin' || currentRole === signer.userRole || (signer.role === 'supervisor' && isKb14StageReviewer(currentRole, 'supervisor', caseItem)) || (signer.role === 'director' && isKb14StageReviewer(currentRole, 'director', caseItem)))
+  }
   if (signer.signedAt(caseItem)) return false
   if (caseItem.stage !== signer.stage) return false
-  return currentRole === 'admin' || currentRole === signer.userRole
+  /** FB-018 — รอบแก้ไขที่ กอท. รับไปทำ: ผบช.ต้น กอท. / ผอ. กอท. ลงนามข้อ 10 / 11 แทนสายของสำนัก/กอง */
+  const gotStandIn =
+    (Boolean(caseItem.gotRevision) || isGotIntakeCase(caseItem)) &&
+    ((signer.userRole === 'supervisor' && currentRole === 'got_supervisor') ||
+      (signer.userRole === 'director' && currentRole === 'got_director'))
+  return currentRole === 'admin' || currentRole === signer.userRole || gotStandIn
 }
 
 /**
@@ -252,7 +384,7 @@ export const canSignFormNow = ({
   if (!kind) return false
 
   if (kind === 'kb6') {
-    return KB6_SIGNERS.some((s) => canEditKb6Opinion(s, currentRole, caseItem))
+    return KB6_SIGNERS.some((s) => canEditKb6Opinion(s, currentRole, caseItem)) || extensionKb6PendingSigner(caseItem, currentRole) !== null
   }
 
   if (kind === 'outgoing') {
@@ -268,6 +400,7 @@ export const canSignFormNow = ({
       if (!caseItem.kb11Signed) return false
       if (!(caseItem.approvedMethods || []).includes(1)) return false
       if (!caseItem.kb8SubmittedAt) return false
+      if (sarabanInTransit(caseItem, 'kb8')) return false // ขาไป/ขากลับยังอยู่ระหว่างธุรการ
       return isAdmin || currentRole === 'secretary'
     }
     if (formNo === 9 || formNo === 10) return false // หนังสือแจ้งผลลงนามพร้อมการพิจารณาที่หน้าเลขาธิการ
@@ -291,11 +424,35 @@ export const canSignFormNow = ({
 }
 
 /**
+ * ตำแหน่งผู้ลงนามที่ถึงคิวของผู้ใช้คนนี้ในแบบ คบ. ฉบับนี้ (null = ยังไม่ถึงคิว)
+ * ใช้แสดงกรอบแดงและป้าย "รอลงนาม: ..." ในรายการแบบฟอร์มของแฟ้ม — เงื่อนไขเดียวกับ canSignFormNow
+ */
+export const pendingSignerLabel = (input: SignEligibilityInput): string | null => {
+  if (!canSignFormNow(input)) return null
+  const { formNo, caseItem, currentRole } = input
+  const kind = getFormSignatureKind(formNo)
+  if (kind === 'kb6') {
+    const signer =
+      KB6_SIGNERS.find((s) => canEditKb6Opinion(s, currentRole, caseItem)) ||
+      extensionKb6PendingSigner(caseItem, currentRole)
+    return signer ? signer.signerRole : null
+  }
+  if (kind === 'outgoing') return 'เลขาธิการ ป.ป.ท.'
+  if (kind === 'kb13') {
+    const report = pendingKb13Report(caseItem)
+    const slot = KB13_SIGN_SLOTS.find((s) => report && !s.signedAt(report))
+    return slot ? slot.label : null
+  }
+  return KB11_SIGN_SLOTS[1].label
+}
+
+/**
  * เจ้าหน้าที่เสนอ คบ.8 เข้ารอบลงนามได้หรือยัง — WIT0817 (จัดทำร่าง) เสร็จแล้ว
  * และยังไม่เคยเสนอ/ยังไม่ได้ลงนาม ใช้ตัดสินปุ่ม "ส่งเสนอเลขาธิการฯ ลงนาม" ในรายการแบบฟอร์มของแฟ้ม
  */
 export const canSubmitKb8Now = (caseItem: CaseItem, canEditDossier: boolean): boolean => {
   if (caseItem.kb8SignedAt || caseItem.kb8SubmittedAt) return false
+  if (sarabanInTransit(caseItem, 'kb8')) return false
   if (!caseItem.kb11Signed) return false
   if (!(caseItem.approvedMethods || []).includes(1)) return false
   return canEditDossier
@@ -314,6 +471,40 @@ export const isFormFullySigned = (
   if (kind === 'kb13')
     return (caseItem.monthlyReports || []).length > 0 && !pendingKb13Report(caseItem)
   return false
+}
+
+/** ช่องลายมือชื่อบนกระดาษของแต่ละแบบ (signKey ใน paper/formPages) — ใช้ตัดสินว่าแบบลงนามครบแล้วหรือยัง */
+export const FORM_SIGN_KEYS: Record<number, string[]> = {
+  1: ['kb1-applicant', 'kb1-officer'],
+  3: ['kb3-witness', 'kb3-officer'],
+  4: ['kb4-officer', 'kb4-director'],
+  5: ['kb5-director', 'kb5-witness'],
+  7: ['kb7-applicant'],
+  11: KB11_SIGN_SLOTS.map((slot) => slot.key),
+  12: ['kb12-attest-sender', 'kb12-attest-receiver'],
+  14: ['kb14-witness'],
+  15: ['kb15-officer'],
+  16: ['kb16-authority'],
+  17: ['kb17-signer'],
+}
+
+/**
+ * แถวแบบฟอร์มในแฟ้ม: เหลือง = ยังลงนามไม่ครบ · เขียว = ลงนามครบแล้ว
+ * แบบที่มีลำดับลงนามของตัวเอง (คบ.6 / หนังสือส่งออก / คบ.11 / คบ.13) ใช้เกณฑ์ isFormFullySigned
+ * แบบอื่นดูช่องลายมือชื่อบนกระดาษของแฟ้มนี้ครบทุกช่อง — signatures ต้องเป็นของแฟ้มนี้แล้ว
+ */
+export const isFormSignedForCase = (
+  formNo: number,
+  caseItem: CaseItem,
+  signatures: Record<string, { signed?: boolean } | undefined>,
+): boolean => {
+  // คบ.1 ใช้ลายมือชื่อผู้ยื่น/พยานจากขั้นรับเรื่อง ไม่รอลายมือชื่อเจ้าหน้าที่ซ้ำ
+  if (formNo === 1) return Boolean(caseItem.kb1SignedAt || signatures['kb1-applicant']?.signed)
+  if (getFormSignatureKind(formNo) && isFormFullySigned(formNo, caseItem)) return true
+  if (formNo === 16 && caseItem.kb16?.signedAt) return true
+  if (formNo === 17 && caseItem.kb17?.signedAt) return true
+  const keys = FORM_SIGN_KEYS[formNo]
+  return Boolean(keys?.length) && keys.every((key) => Boolean(signatures[key]?.signed))
 }
 
 /**

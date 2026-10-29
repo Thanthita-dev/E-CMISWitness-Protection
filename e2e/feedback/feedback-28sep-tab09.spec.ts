@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { captureEvidence } from '../helpers/evidence'
 import { readCase, seedMockState, switchRole } from '../helpers/seed'
+import { passSarabanCheckpoint } from '../helpers/saraban'
 
 /**
  * Feedback 28 Sep · แท็บ 09A/09B (TC-034, TC-036, TC-037, TC-039)
@@ -11,9 +12,9 @@ import { readCase, seedMockState, switchRole } from '../helpers/seed'
  * TC-039 Case 4.1 — ธุรการสำนัก/กองรับคำอุทธรณ์ (WIT0912) เข้าแฟ้มเดิม แล้วเรื่องเดินต่อที่เจ้าหน้าที่
  */
 
-const CASE_NO = 'WP-2569-000501'
-const DOSSIER_URL = `/dossier/${CASE_NO}`
-const APPEAL_URL = `/appeal-folder/${CASE_NO}`
+const CASE_NO = '0501/2569'
+const DOSSIER_URL = `/dossier/${encodeURIComponent(CASE_NO)}`
+const APPEAL_URL = `/appeal-folder/${encodeURIComponent(CASE_NO)}`
 
 async function confirmDialog(page: Page, buttonName: string, expectedText?: string | RegExp) {
   const dialog = page.locator('.swal2-popup:not(.swal2-toast)')
@@ -97,20 +98,25 @@ test.describe('Feedback 28 Sep · 09A/09B', () => {
     await page.getByTestId('appeal-opinion-note').fill('ตรวจแล้ว ลงนามเสนอรองเลขาธิการฯ')
     await page.getByTestId('appeal-opinion-submit').click()
     await confirmDialog(page, 'ยืนยัน', 'รองเลขาธิการฯ')
+    // ผอ.ลงนามเสนอ → ธุรการหน่วย → ธุรการ สลธ. จึงถึงรองเลขาธิการฯ
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver', { afterRole: 'director' })
 
     const folder = (await readCase(page, CASE_NO))?.appealFolder as Record<string, any>
     expect(folder.stage).toBe('deputy')
     expect(folder.directorOpinion.note).toContain('ลงนามเสนอ')
   })
 
-  test('TC-037 · [BUG-006] หลังมีมติยืนคำสั่งเดิมแล้วไม่มีทางส่งกลับเข้าสายพิจารณา (มติเป็นที่สุด)', async ({ page }) => {
+  test('TC-037 · [BUG-006] หลังมีมติยกคำร้องแล้วไม่มีทางส่งกลับเข้าสายพิจารณา (มติเป็นที่สุด)', async ({ page }) => {
     await seedMockState(page, 'Case 4.3', 'committee')
     await page.goto(APPEAL_URL)
 
     await page.getByTestId('appeal-resolution-no').fill('มติที่ 55/2569')
     await page.getByTestId('appeal-resolution-note').fill('พยานหลักฐานใหม่ไม่เปลี่ยนสาระสำคัญของคำสั่งเดิม')
     await page.getByTestId('appeal-resolution-uphold').click()
-    await confirmDialog(page, 'ยืนยันมติยืนคำสั่งเดิม', 'เป็นที่สุด')
+    await confirmDialog(page, 'ยืนยันมติยกคำร้อง', 'เป็นที่สุด')
+    await passSarabanCheckpoint(page, CASE_NO, 'secretary_receiver')
+    await passSarabanCheckpoint(page, CASE_NO, 'receiver')
 
     expect((await readCase(page, CASE_NO))?.appealResolution).toBeTruthy()
     await captureEvidence(page, 'TC-037-a', page.getByTestId('appeal-folder-stage'), 'มติเป็นที่สุดแล้ว ไม่มีปุ่มส่งกลับเข้าสายพิจารณา')

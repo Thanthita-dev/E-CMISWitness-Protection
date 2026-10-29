@@ -1,7 +1,11 @@
+import { terminationTriggerReference } from '../../lib/terminationRules'
 import { Button } from '../common/Button'
 import React from 'react'
 import { showToast } from '../../lib/swal'
-import { Area, DateField, EditorShell, Field, Grid, Section } from './fields/FormKit'
+import { Area, DateField, EditorShell, Field, Grid, Section, Select } from './fields/FormKit'
+import { TerminationReasonFields } from '../protection/TerminationReasonFields'
+import { useFormDraftStore, selectCaseDraft } from '../../store/useFormDraftStore'
+import { useCaseStore } from '../../store/useCaseStore'
 
 interface Kb15FormEditorProps {
   onSaved?: () => void
@@ -14,7 +18,10 @@ interface Kb15FormEditorProps {
  * อยู่ที่แถว คบ.15 ในรายการแบบฟอร์มของแฟ้มคำร้อง ที่เดียวกับ คบ.8 และ คบ.14
  * เพื่อไม่ให้มีสองทางส่งเรื่องเดียวกัน
  */
-export const Kb15FormEditor: React.FC<Kb15FormEditorProps> = ({ onSaved }) => (
+export const Kb15FormEditor: React.FC<Kb15FormEditorProps> = ({ onSaved }) => {
+  const caseNo = useFormDraftStore(s => s.draftCaseNo[15])
+  const caseItem = useCaseStore(s => caseNo ? s.getCase(caseNo) : undefined)
+  return (
   <EditorShell
     code="คบ.15"
     formId={15}
@@ -24,6 +31,26 @@ export const Kb15FormEditor: React.FC<Kb15FormEditorProps> = ({ onSaved }) => (
       <Button
         type="button"
         onClick={() => {
+          if (caseItem && !caseItem.terminationTrigger && !caseItem.kb15) {
+            const draft = selectCaseDraft(useFormDraftStore.getState(), 15, caseItem.no)
+            const ref = terminationTriggerReference(caseItem, draft)
+            useCaseStore.getState().recordTerminationTrigger(caseItem.no, {
+              source: 'due_or_officer',
+              ref,
+              receivedAt: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()),
+              detail: String(draft['ข้อเท็จจริง'] || ''),
+            })
+            if (!useCaseStore.getState().getCase(caseItem.no)?.terminationTrigger) {
+              showToast('ไม่สามารถบันทึกเรื่องยุติได้ กรุณาตรวจสิทธิ์ผู้รับผิดชอบ', 'warning')
+              return
+            }
+          }
+          if (caseItem) {
+            const latest = useCaseStore.getState().getCase(caseItem.no)
+            useCaseStore.getState().updateCase(caseItem.no, {
+              extraForms: Array.from(new Set([...(latest?.extraForms || []), 15, 16, 17])),
+            })
+          }
           showToast('บันทึกแบบ คบ.15 เรียบร้อยแล้ว')
           onSaved?.()
         }}
@@ -37,8 +64,7 @@ export const Kb15FormEditor: React.FC<Kb15FormEditorProps> = ({ onSaved }) => (
     {/* ---------- WIT1130 — กฎที่ต้องเห็นตลอดเวลา ---------- */}
     <div className="ws-callout text-[0.88rem] leading-relaxed">
       <i className="fa-solid fa-triangle-exclamation mr-1.5" />
-      <strong>ข้อควรทราบ:</strong> การจัดทำ คบ.15 ยังไม่ทำให้การคุ้มครองสิ้นสุด สถานะ "ยุติ" เกิดขึ้นเมื่อมีคำสั่ง คบ.16
-      ที่ลงนามแล้วและถึงวันที่คำสั่งมีผลเท่านั้น
+      <strong>ข้อควรทราบ:</strong> การจัดทำ คบ.15 ยังไม่ทำให้การคุ้มครองสิ้นสุด ต้องตรวจฐานเหตุและวันที่เกิดเหตุจริงแยกจากวันที่จัดทำเอกสาร กรณีข้อ 19 ต้องมีคำสั่งลงนามและถึงวันที่มีผล
     </div>
 
     <Section title="พยานและคำสั่งเดิม">
@@ -60,18 +86,10 @@ export const Kb15FormEditor: React.FC<Kb15FormEditorProps> = ({ onSaved }) => (
     </Section>
 
     <Section title="เหตุแห่งการยุติและผลการคุ้มครอง">
-      {/* WIT1126-WIT1128 — เลขอ้างอิงของเหตุยุติ ใช้เป็นเงื่อนไขของปุ่ม "ส่งตรวจ" ในแฟ้ม */}
-      <Field
-        formId={15}
-        name="อ้างอิงเหตุยุติ"
-        label="อ้างอิง คบ.7 / เลขหนังสือขอยุติ / คำสั่งที่ครบกำหนด"
-        placeholder="เช่น คบ.7 เลขรับ 042/2569"
-        required
-      />
-      <Area formId={15} name="เหตุยุติ" label="เหตุแห่งการยุติ" rows={3} required />
-      <Area formId={15} name="สรุปผล" label="สรุปผลการให้ความคุ้มครองและหลักฐานประกอบ" rows={5} />
-      <Area formId={15} name="ความเห็นลำดับชั้น" label="ความเห็นตามลำดับชั้น" rows={4} />
+      <TerminationReasonFields caseItem={caseItem} />
+      <p className="text-[0.85rem] text-muted">ความเห็น ผอ. รองเลขาธิการ และเลขาธิการ บันทึกโดยผู้พิจารณาในขั้นตรวจและลงนาม คบ.15</p>
       <Area formId={15} name="เอกสารแนบ" label="เอกสารแนบ" rows={3} />
     </Section>
   </EditorShell>
 )
+}

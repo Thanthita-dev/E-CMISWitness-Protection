@@ -5,6 +5,8 @@ export interface FormMeta {
   d: string
   pages?: number
   roles?: string[]
+  /** แบบที่จัดทำเฉพาะในเส้นทางงานของตัวเอง (เช่น ส่งต่อข้อ 14) — ไม่แสดงในตัวเลือก "แนบแบบฟอร์ม" ของแฟ้ม */
+  flowOnly?: true
 }
 
 export interface FormDraftState {

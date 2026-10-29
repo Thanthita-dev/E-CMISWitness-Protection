@@ -2,7 +2,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { chromium } from '@playwright/test'
 const base = JSON.parse(await readFile(new URL('../src/mock-states/Case 1.7 - วิธีที่ 1.json', import.meta.url), 'utf8'))
-const caseNo = 'WP-2569-000604'
+const caseNo = '0604/2569'
 const output = []
 const browser = await chromium.launch()
 try {
@@ -17,7 +17,7 @@ try {
       const { activateCaseForms } = await import('/src/lib/formPrefill.ts')
       const { selectCaseDraft } = await import('/src/store/useFormDraftStore.ts')
       const store = useCaseStore.getState(), auth = useAuthStore.getState(), forms = useFormDraftStore.getState()
-      const original = structuredClone(store.getCase('WP-2569-000501'))
+      const original = structuredClone(store.getCase('0501/2569'))
       const originalDraft = structuredClone(selectCaseDraft(forms, 6, original.no))
       const newCase = { ...structuredClone(original), no: caseNo, demoData: true,
         documents: (original.documents || []).map((doc,index) => ({ ...doc, id: `DOC-${caseNo}-${index}` })) }
@@ -46,7 +46,7 @@ try {
       return Object.fromEntries(Object.keys(localStorage).filter(key=>key.startsWith('ecmis-')).map(key=>[key,localStorage.getItem(key)]))
     }, { approved, caseNo })
     const name = approved ? 'Method 4 - อีกเคส (อนุมัติแล้ว)' : 'Method 4 - อีกเคส (รอเลขาธิการ)'
-    output.push({ name, group: 'วิธีที่ 4 · แฟ้มแยก WP-2569-000604', description: `${caseNo} · วิธีที่ 4 ประสานหน่วยงานอื่น · ${approved ? 'อนุมัติและลงนาม คบ.9 แล้ว รอเติมรายละเอียด' : 'รอเลขาธิการพิจารณา'} · มีแฟ้มเดิม WP-2569-000501 วิธีที่ 1 แยกกัน`, to: `/dossier/${caseNo}`, capturedAt: new Date().toISOString(), localStorageData: data })
+    output.push({ name, group: 'วิธีที่ 4 · แฟ้มแยก 0604/2569', description: `${caseNo} · วิธีที่ 4 ประสานหน่วยงานอื่น · ${approved ? 'อนุมัติและลงนาม คบ.9 แล้ว รอเติมรายละเอียด' : 'รอเลขาธิการพิจารณา'} · มีแฟ้มเดิม 0501/2569 วิธีที่ 1 แยกกัน`, to: `/dossier/${encodeURIComponent(caseNo)}`, capturedAt: new Date().toISOString(), localStorageData: data })
     await context.close()
   }
 } finally { await browser.close() }

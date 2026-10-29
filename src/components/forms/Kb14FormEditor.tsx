@@ -1,14 +1,14 @@
+import { addendumLabel } from '../../lib/formSignature'
 import { addProtectionMonths, calendarDays, monthLabel, legacyMonthLabel, protectionMonths } from '../../lib/protectionMonths'
 import { Button } from '../common/Button'
 import React, { useEffect, useState } from 'react'
 import { useFormDraftStore } from '../../store/useFormDraftStore'
 import { useCaseStore } from '../../store/useCaseStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import { formatThaiDate, daysUntil, addDays } from '../../lib/utils'
+import { formatThaiDate, daysUntil, addDays, caseNoSeq } from '../../lib/utils'
 import { deriveEpisode, summarizeEpisode } from '../../lib/episode'
 import { showToast } from '../../lib/swal'
 import { Area, DocHeaderFields, EditorShell, Field, Grid, Section, ThaiDateFields } from './fields/FormKit'
-import { Kb14DecisionActions } from '../protection/Kb14DecisionActions'
 
 interface Kb14FormEditorProps {
   onSaved?: () => void
@@ -42,19 +42,28 @@ export const Kb14FormEditor: React.FC<Kb14FormEditorProps> = ({ onSaved, caseNo:
   const isOfficer = ['officer', 'case_owner', 'got_officer', 'admin'].includes(currentRole)
   const editable = latest && (latest.status === 'returned' || latest.status === 'submitted') ? latest : undefined
   const canDraft =
-    isOfficer && !summary?.atCap && (!latest || latest.status === 'returned' || latest.status === 'rejected' || latest.status === 'submitted' && !latest.formSnapshot)
+    isOfficer && !summary?.atCap && (!latest || ['returned', 'rejected', 'approved'].includes(latest.status) || latest.status === 'submitted' && !latest.formSnapshot)
 
   useEffect(() => {
     if (!selected) return
     const store = useFormDraftStore.getState()
     store.ensureDraftForCase(14, selected.no, { 'ชื่อพยาน': selected.person, 'รวมเดือน': String(protectionMonths(selected)), 'เหตุผลขยายเวลา': latest?.reason || '', 'ขยายวัน': String(latest?.durationDays || 30), ...(latest?.formSnapshot || {}), periodFrom: latest?.periodFrom || (selected.protectionEndAt ? addDays(selected.protectionEndAt, 1).slice(0, 10) : ''), attachments: latest?.attachments || ['คบ.13 รอบล่าสุด', 'ผลประเมินความเสี่ยงล่าสุด'] })
+    /** รอบใหม่หลังอนุมัติครั้งก่อน: ช่วงขยายเริ่มต่อจากวันสิ้นสุดล่าสุด ไม่ใช้วันที่/เหตุผล/ความเห็นของฉบับที่อนุมัติไปแล้ว */
+    const roundStart = selected.protectionEndAt ? addDays(selected.protectionEndAt, 1).slice(0, 10) : ''
+    const current = store.getDraft(14)
+    if (latest?.status === 'approved' && roundStart && (!current.periodFrom || current.periodFrom < roundStart)) {
+      store.updateField(14, 'periodFrom', roundStart)
+      for (const key of Object.keys(current)) if (/^(ขยายเริ่ม|ขยายถึง|ถึง)(วันที่|เดือน|พ\.ศ\.)$/.test(key) || key.startsWith('ความเห็น') || key === 'เหตุผลขยายเวลา') store.updateField(14, key, '')
+      store.updateField(14, 'รวมเดือน', String(protectionMonths(selected)))
+      store.updateField(14, 'คุ้มครองครั้งที่', String(requests.filter((r) => r.status === 'approved').length + 2))
+    }
     const saved = store.getDraft(14)
-    if (selected.demoData && !latest?.formSnapshot) {
+    if (selected.demoData && (!latest?.formSnapshot || latest.status === 'approved') && !saved['เหตุผลขยายเวลา']) {
       const now = new Date()
       const defaults: Record<string, any> = {
-        'เลขที่แบบ': `สาธิต-${selected.no.slice(-6)}`, 'ปีที่ยื่น': String(now.getFullYear() + 543),
+        'เลขที่แบบ': `สาธิต-${caseNoSeq(selected.no)}`, 'ปีที่ยื่น': String(now.getFullYear() + 543),
         'วันเดือนปี': now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
-        'ชื่อพยาน': selected.person, 'เลขคดี': selected.mainCaseNo || `คดีสาธิต/${selected.no.slice(-6)}`,
+        'ชื่อพยาน': selected.person, 'เลขคดี': selected.mainCaseNo || `คดีสาธิต/${caseNoSeq(selected.no)}`,
         'รวมปี': '0', 'รวมเดือน': '2', 'รวมวัน': '0',
         'เหตุผลขยายเวลา': 'ข้อมูลสาธิต: ยังมีภัยคุกคามต่อพยาน จึงขอขยายเวลาคุ้มครองเพิ่ม 1 เดือน เพื่อดำเนินมาตรการเดิมและติดตามความปลอดภัยต่อเนื่อง',
         'ครั้งที่': '1', 'ปีครั้งที่': String(now.getFullYear() + 543), 'มติวันที่': String(now.getDate()),
@@ -89,7 +98,8 @@ export const Kb14FormEditor: React.FC<Kb14FormEditorProps> = ({ onSaved, caseNo:
       title="หนังสือขยายระยะเวลาการคุ้มครองพยาน"
       hint="ผู้บังคับบัญชาชั้นต้น → ผอ.กอง → รองเลขาธิการ → เลขาธิการ"
       footer={
-        protectionCases.length > 0 && (canDraft || (isOfficer && editable?.status === 'returned')) ? (
+        /** ส่ง/ส่งต่อ คบ.14 ทำที่ footer หน้าแฟ้มและหน้าขยายเวลา (Kb14ForwardFooter) — หน้านี้บันทึกอย่างเดียว */
+        protectionCases.length > 0 && canDraft ? (
           <Button
             type="button"
             onClick={() => {
@@ -97,30 +107,24 @@ export const Kb14FormEditor: React.FC<Kb14FormEditorProps> = ({ onSaved, caseNo:
               if (!reason || !String(reason).trim()) {
                 return showToast('กรุณาระบุข้อพิจารณาและเหตุผลในการขยายระยะเวลา')
               }
-              if (!selected) return
-              const fieldsDate = (prefix: string) => {
-                const y = Number(draft[`${prefix}พ.ศ.`]); const m = Number(draft[`${prefix}เดือน`]); const d = Number(draft[`${prefix}วันที่`])
-                return y && m && d ? `${y > 2400 ? y - 543 : y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` : undefined
-              }
-              const periodFrom = fieldsDate('ขยายเริ่ม') || draft.periodFrom || (selected.protectionEndAt ? addDays(selected.protectionEndAt, 1).slice(0, 10) : '')
-              if (!periodFrom) return showToast('กรุณาระบุวันเริ่มขยายเวลา', 'warning')
-              const periodTo = addProtectionMonths(periodFrom, months)
-              const days = calendarDays(periodFrom, periodTo)
-              const capEnd = summary?.startedAt ? addProtectionMonths(summary.startedAt, 6) : undefined
-              if (months < 1 || months > 2 || capEnd && periodTo > capEnd) return showToast('ขยายได้ครั้งละไม่เกิน 2 เดือน และรวมไม่เกิน 6 เดือน', 'warning')
-              updateField(14, 'ขยายวัน', String(days))
-              useCaseStore.getState().draftKb14(selected.no, { reason: String(reason), durationDays: days, durationMonths: months, periodFrom, periodTo, attachments: draft.attachments || latest?.attachments || [], gapDays: draft.gapDays, gapReason: draft.gapReason, formSnapshot: { ...draft, 'ขยายวัน': String(days), 'ขยายเดือน': String(months), periodFrom, periodTo, 'ขยายถึงวันที่': periodTo.slice(8), 'ขยายถึงเดือน': String(Number(periodTo.slice(5, 7))), 'ขยายถึงพ.ศ.': String(Number(periodTo.slice(0, 4)) + 543) } })
-              showToast('ส่งแบบ คบ.14 ให้ผู้บังคับบัญชาชั้นต้นแล้ว')
+              const periodFrom = draft.periodFrom
+              if (periodFrom) updateField(14, 'ขยายวัน', String(calendarDays(periodFrom, addProtectionMonths(periodFrom, months))))
+              showToast('บันทึกแบบ คบ.14 เรียบร้อยแล้ว')
               onSaved?.()
             }}
             className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg px-6 py-[0.68rem] text-[0.88rem] font-semibold text-white transition bg-navy hover:bg-blue"
           >
-            <i className="fa-solid fa-floppy-disk" />
-            ส่งให้ผู้บังคับบัญชาชั้นต้น
+            <i className="fa-solid fa-check" />
+            บันทึกแบบ คบ.14
           </Button>
         ) : undefined
       }
     >
+      {selected?.extensionDocs && (latest?.kb6Snapshot || !latest || latest.status === 'returned') && (
+        <div className="ws-callout text-[0.88rem] leading-relaxed" data-testid="kb14-attached-docs">
+          แนบ คบ.3 และ คบ.6 {addendumLabel(selected.extensionDocs.round)}
+        </div>
+      )}
       {protectionCases.length === 0 ? (
         <div className="rounded-lg border border-dashed border-[#aebdca] p-6 text-center text-[0.8rem] text-muted">
           ยังไม่มีพยานที่อยู่ระหว่างการคุ้มครอง
@@ -276,7 +280,7 @@ export const Kb14FormEditor: React.FC<Kb14FormEditorProps> = ({ onSaved, caseNo:
           {latest && (
             <div className="ws-readonly text-[0.88rem] leading-relaxed text-muted">
               <div>
-                <strong>คบ.14 ฉบับที่ {latest.version || 1}</strong> · ขอขยาย {latest.durationMonths ? monthLabel(latest.durationMonths) : legacyMonthLabel(latest.durationDays)}
+                <strong>คบ.14 {addendumLabel(requests.length)}{(latest.version || 1) > 1 ? ` · แก้ไขครั้งที่ ${(latest.version || 1) - 1}` : ''}</strong> · ขอขยาย {latest.durationMonths ? monthLabel(latest.durationMonths) : legacyMonthLabel(latest.durationDays)}
                 {latest.locked && <span className="ml-1.5 text-success font-bold">· ล็อกฉบับลงนาม</span>}
               </div>
               <div>เหตุผล: {latest.reason}</div>
@@ -297,18 +301,6 @@ export const Kb14FormEditor: React.FC<Kb14FormEditorProps> = ({ onSaved, caseNo:
             </div>
           )}
 
-          {/* ---------- WIT1117-WIT1123 — ผู้ตรวจตรวจเอกสาร / เลขาธิการ ป.ป.ท. พิจารณา ---------- */}
-          {selected && latest && (latest.status === 'submitted' || latest.status === 'pending') && (
-            <div className="rounded-lg border border-line p-3">
-              <Kb14DecisionActions
-                caseItem={selected}
-                proposal={latest}
-                role={currentRole}
-                onDone={onSaved}
-                className="space-y-2"
-              />
-            </div>
-          )}
         </>
       )}
     </EditorShell>
